@@ -1,0 +1,129 @@
+[
+  {
+    "id": "aa48ff5d-a46a-4e7b-801e-202d98bde8d4",
+    "orderId": "9f47729f-78c9-4e1e-bfc0-ab0d94bea488",
+    "number": "NF-1777400343163",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size"
+            },
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material"
+            }
+          ],
+          "quantity": 1,
+          "unitCost": 27,
+          "unitPrice": 44.4
+        }
+      ],
+      "totalPrice": 44.4,
+      "issuedAt": "2026-04-28T18:19:03.163Z"
+    },
+    "createdAt": "2026-04-28T18:19:03.163Z"
+  },
+  {
+    "id": "8478ce69-fa27-4ee7-9d15-0222f3834801",
+    "orderId": "1",
+    "number": "NF-1777460500134",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 12
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 5
+            }
+          ],
+          "quantity": 5,
+          "unitCost": 25,
+          "unitPrice": 162
+        }
+      ],
+      "totalPrice": 162,
+      "issuedAt": "2026-04-29T11:01:40.134Z"
+    },
+    "createdAt": "2026-04-29T11:01:40.134Z"
+  },
+  {
+    "id": "f164b00f-ecfc-45cb-8d13-28221b8b94ad",
+    "orderId": "2",
+    "number": "NF-1777462006581",
+    "data": {
+      "customer": "bb17a71e-ff3b-41ed-b0c7-09c347621dbe",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 5
+            },
+            {
+              "variableId": "variable-small",
+              "groupId": "group-size",
+              "quantity": 3
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 2
+            }
+          ],
+          "quantity": 5,
+          "unitCost": 27,
+          "unitPrice": 174
+        }
+      ],
+      "totalPrice": 174,
+      "issuedAt": "2026-04-29T11:26:46.581Z"
+    },
+    "createdAt": "2026-04-29T11:26:46.581Z"
+  },
+  {
+    "id": "19d1762f-ef6a-4d0a-93c6-ab801ca6e490",
+    "orderId": "3",
+    "number": "NF-1777466143099",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 1
+            }
+          ],
+          "quantity": 1,
+          "unitCost": 27,
+          "unitPrice": 44.4
+        }
+      ],
+      "totalPrice": 44.4,
+      "issuedAt": "2026-04-29T12:35:43.099Z"
+    },
+    "createdAt": "2026-04-29T12:35:43.099Z"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "group-material",
+    "name": "Material",
+    "productId": "product-1",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10
+  },
+  {
+    "id": "group-size",
+    "name": "Tamanho",
+    "productId": "product-1",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  }
+]

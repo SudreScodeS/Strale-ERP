@@ -1,0 +1,34 @@
+[
+  {
+    "id": "f03d6e26-bc6a-4094-a98e-4e28655718bc",
+    "type": "sale",
+    "amount": 162,
+    "description": "Pedido: Microsoft",
+    "date": "2026-04-29T11:02:44.439Z",
+    "orderId": "1"
+  },
+  {
+    "id": "0f38e89f-a799-4516-b5ee-9f07f064aeac",
+    "type": "sale",
+    "amount": 174,
+    "description": "Pedido: Mendes",
+    "date": "2026-04-29T11:26:46.568Z",
+    "orderId": "2"
+  },
+  {
+    "id": "2013d91a-962f-44e5-8ccd-d7392520505b",
+    "type": "sale",
+    "amount": 44.4,
+    "description": "Pedido: Teste",
+    "date": "2026-04-29T12:35:43.088Z",
+    "orderId": "3"
+  },
+  {
+    "id": "483d8992-6b71-4dbd-9e68-b817adcb500d",
+    "type": "purchase",
+    "amount": 500,
+    "description": "Nylon 100x",
+    "date": "2026-04-28T00:00:00.000Z",
+    "orderId": "po-1777466512598-ce840592"
+  }
+]

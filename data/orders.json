@@ -1,0 +1,97 @@
+[
+  {
+    "id": "1",
+    "userId": "user-admin",
+    "name": "Microsoft",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 12
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 5
+          }
+        ],
+        "quantity": 5,
+        "unitCost": 25,
+        "unitPrice": 162
+      }
+    ],
+    "totalCost": 125,
+    "totalPrice": 162,
+    "logoCost": 10,
+    "status": "completed",
+    "createdAt": "2026-04-29T11:01:40.121Z"
+  },
+  {
+    "id": "2",
+    "userId": "bb17a71e-ff3b-41ed-b0c7-09c347621dbe",
+    "name": "Mendes",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 5
+          },
+          {
+            "variableId": "variable-small",
+            "groupId": "group-size",
+            "quantity": 3
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 2
+          }
+        ],
+        "quantity": 5,
+        "unitCost": 27,
+        "unitPrice": 174
+      }
+    ],
+    "totalCost": 135,
+    "totalPrice": 174,
+    "logoCost": 10,
+    "status": "completed",
+    "createdAt": "2026-04-29T11:26:46.568Z"
+  },
+  {
+    "id": "3",
+    "userId": "user-admin",
+    "name": "Teste",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 1
+          }
+        ],
+        "quantity": 1,
+        "unitCost": 27,
+        "unitPrice": 44.4
+      }
+    ],
+    "totalCost": 27,
+    "totalPrice": 44.4,
+    "logoCost": 10,
+    "status": "completed",
+    "createdAt": "2026-04-29T12:35:43.088Z"
+  }
+]

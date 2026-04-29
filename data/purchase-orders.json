@@ -1,0 +1,15 @@
+[
+  {
+    "id": "po-1777466512598-ce840592",
+    "supplierId": "4f8bb389-d168-4c7b-a39f-10f75af37062",
+    "items": [
+      {
+        "variableId": "variable-nylon",
+        "quantity": 100,
+        "unitCost": 5
+      }
+    ],
+    "status": "ordered",
+    "createdAt": "2026-04-28T00:00:00.000Z"
+  }
+]

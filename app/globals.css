@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --brand-blue: #0033ff;
+  --brand-blue-dark: #0026bf;
+  --brand-blue-soft: #e6ecff;
+  --surface: #ffffff;
+  --surface-soft: #f8faff;
+  --surface-muted: #eef2ff;
+  --border: #dbe3ff;
+  --text-muted: #475569;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html[data-theme='dark'] {
+  --background: #080b17;
+  --foreground: #e5e7eb;
+  --surface: #111827;
+  --surface-soft: #0f172a;
+  --surface-muted: #1e293b;
+  --border: #334155;
+  --text-muted: #94a3b8;
+  --brand-blue: #3d63ff;
+  --brand-blue-dark: #2747dd;
+  --brand-blue-soft: #1b2559;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.brand-primary {
+  background: var(--brand-blue);
+  color: #ffffff;
+}
+
+.brand-primary:hover {
+  background: var(--brand-blue-dark);
+}
+
+.brand-soft {
+  background: var(--brand-blue-soft);
+  color: var(--brand-blue-dark);
+}
+
+.bg-white { background-color: var(--surface) !important; }
+.bg-slate-50 { background-color: var(--surface-soft) !important; }
+.bg-slate-100 { background-color: var(--surface-muted) !important; }
+.border-slate-200 { border-color: var(--border) !important; }
+.text-slate-900 { color: var(--foreground) !important; }
+.text-slate-700, .text-slate-600, .text-slate-500 { color: var(--text-muted) !important; }

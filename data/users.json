@@ -1,0 +1,18 @@
+[
+  {
+    "id": "user-admin",
+    "username": "admin",
+    "email": "admin@nexsys.com",
+    "password": "$2a$10$elEB.1cZwT3ZdObTWWhCmegsPFmG/E8jEW7MKUypFu5kIrvb8yRK6",
+    "role": "admin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Mendes Molestado",
+    "email": "molestation@molestadinho.com",
+    "password": "$2a$10$UAXVC75YMI3pJJ5AUNb9b.qJgD97vh6Ot9YwThqrN07D4hX20myAy",
+    "role": "seller",
+    "createdAt": "2026-04-29T15:28:30.246Z"
+  }
+]
