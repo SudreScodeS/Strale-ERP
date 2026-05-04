@@ -127,6 +127,42 @@ export default function Home() {
           </section>
         ) : null}
 
+        {/* DETECÇÃO DE FRAUDE — RESUMO */}
+        {summary.fraudDetection.flaggedTotal > 0 || summary.fraudDetection.pendingReviewCount > 0 ? (
+          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            <MetricCard
+              title="Fraude — Sinalizados"
+              value={`${summary.fraudDetection.flaggedTotal}`}
+              note="Pedidos suspeitos ou bloqueados"
+            />
+            <MetricCard
+              title="Fraude — Pendentes"
+              value={`${summary.fraudDetection.pendingReviewCount}`}
+              note="Aguardando revisão do admin"
+            />
+            <MetricCard
+              title="Fraude — Score médio"
+              value={`${summary.fraudDetection.avgRiskScore}`}
+              note="Risco médio de todos os pedidos"
+            />
+          </div>
+        ) : null}
+
+        {summary.fraudDetection.pendingReviewCount > 0 ? (
+          <section className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-red-900">🛡️ Alertas de Fraude</h3>
+            <p className="mt-1 text-sm text-red-700">
+              {summary.fraudDetection.pendingReviewCount} pedido(s) sinalizado(s) aguardando revisão.
+            </p>
+            <a
+              href="/fraud"
+              className="mt-3 inline-block text-sm font-semibold text-red-700 hover:text-red-900 transition"
+            >
+              Ver detalhes e revisar →
+            </a>
+          </section>
+        ) : null}
+
         {/* SEÇÃO DE ÚLTIMOS PEDIDOS */}
         <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold text-slate-900">Últimos pedidos</h3>
@@ -182,6 +218,13 @@ summary (retornado por getDashboardSummary):
     highDemandCount: number,      // Itens com alta demanda
     topAlerts: Alert[],           // Alertas mais importantes
     forecastAccuracy: string,     // Confiabilidade da análise
+  },
+  fraudDetection: {           // Detecção de fraude
+    totalAnalyzed: number,        // Total de pedidos analisados
+    flaggedTotal: number,         // Pedidos sinalizados
+    suspicious24h: number,        // Sinalizados nas últimas 24h
+    avgRiskScore: number,         // Score médio de risco
+    pendingReviewCount: number,   // Pendentes de revisão
   }
 }
 */

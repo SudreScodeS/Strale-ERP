@@ -144,3 +144,41 @@ export interface GlobalConfig {
   systemName: string; // Nome do sistema exibido na UI
   companyName: string; // Nome da empresa exibido na UI
 }
+
+// ==========================================
+// DETECÇÃO DE FRAUDE
+// ==========================================
+
+// Registro individual de análise de fraude para um pedido
+// Cada vez que um pedido é finalizado, uma análise é gerada e salva
+export interface FraudAnalysisLog {
+  id: string;                    // ID único do log de análise
+  orderId: string;               // Pedido analisado
+  userId: string;                // Usuário que fez o pedido
+  userName: string;              // Nome do usuário (desnormalizado para consulta rápida)
+  orderTotal: number;            // Valor total do pedido analisado
+  riskScore: number;             // Pontuação de risco (0 a 100)
+  riskLevel: 'baixo' | 'médio' | 'alto' | 'crítico'; // Classificação do risco
+  flags: string[];               // Lista de bandeiras/motivos que compõem o score
+  status: 'aprovado' | 'suspeito' | 'bloqueado'; // Resultado da análise
+  reviewedBy?: string;           // ID do admin que revisou (se revisado)
+  reviewedAt?: Date;             // Data da revisão
+  reviewNote?: string;           // Nota da revisão
+  createdAt: Date;               // Data da análise
+}
+
+// Resumo do perfil de risco de um usuário
+// Usado para contextualizar análises individuais
+export interface UserRiskProfile {
+  userId: string;
+  totalOrders: number;           // Total de pedidos do usuário
+  totalSpent: number;            // Total gasto pelo usuário
+  avgOrderValue: number;         // Valor médio dos pedidos
+  maxOrderValue: number;         // Maior pedido já feito
+  ordersLast24h: number;         // Pedidos nas últimas 24h
+  ordersLast7d: number;          // Pedidos nos últimos 7 dias
+  daysSinceFirstOrder: number;   // Dias desde o primeiro pedido
+  daysSinceLastOrder: number;    // Dias desde o último pedido
+  cancelledOrders: number;       // Pedidos cancelados
+  riskScore: number;             // Score geral do perfil
+}

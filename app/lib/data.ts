@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier } from '../../types';
+import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier, FraudAnalysisLog } from '../../types';
 
 // DIRETÓRIO DE ARMAZENAMENTO DOS DADOS
 // Todos os arquivos JSON ficam nesta pasta
@@ -296,6 +296,41 @@ export const supplierData = {
     const suppliers = readJsonFile<Supplier>('suppliers.json');
     suppliers.push(supplier);
     writeJsonFile('suppliers.json', suppliers);
+  },
+};
+
+// ==========================================
+// GERENCIAMENTO DE LOGS DE DETECÇÃO DE FRAUDE
+// ==========================================
+
+export const fraudLogData = {
+  // Lista todos os logs de análise de fraude
+  getAll: () => readJsonFile<FraudAnalysisLog>('fraud-logs.json'),
+
+  // Busca log por ID
+  getById: (id: string) => readJsonFile<FraudAnalysisLog>('fraud-logs.json').find(l => l.id === id),
+
+  // Busca logs de um pedido específico
+  getByOrderId: (orderId: string) => readJsonFile<FraudAnalysisLog>('fraud-logs.json').filter(l => l.orderId === orderId),
+
+  // Busca logs de um usuário específico
+  getByUserId: (userId: string) => readJsonFile<FraudAnalysisLog>('fraud-logs.json').filter(l => l.userId === userId),
+
+  // Registra nova análise de fraude
+  create: (log: FraudAnalysisLog) => {
+    const logs = readJsonFile<FraudAnalysisLog>('fraud-logs.json');
+    logs.push(log);
+    writeJsonFile('fraud-logs.json', logs);
+  },
+
+  // Atualiza log (usado para revisão de admin)
+  update: (id: string, updates: Partial<FraudAnalysisLog>) => {
+    const logs = readJsonFile<FraudAnalysisLog>('fraud-logs.json');
+    const index = logs.findIndex(l => l.id === id);
+    if (index !== -1) {
+      logs[index] = { ...logs[index], ...updates };
+      writeJsonFile('fraud-logs.json', logs);
+    }
   },
 };
 

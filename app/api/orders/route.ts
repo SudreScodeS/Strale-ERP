@@ -135,11 +135,11 @@ export async function POST(request: Request) {
     const orderName = name?.trim() || `Pedido ${new Date().toLocaleString()}`;
 
     // PROCESSA PEDIDO COMPLETO (veja business.ts para detalhes)
-    // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal
-    const { order, invoice } = finalizarPedido(payload.userId, orderName, items, logoColors);
+    // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal, detecção de fraude
+    const { order, invoice, fraudLog } = finalizarPedido(payload.userId, orderName, items, logoColors);
 
-    // Retorna pedido e nota fiscal gerados
-    return NextResponse.json({ order, invoice });
+    // Retorna pedido, nota fiscal e resultado da análise de fraude
+    return NextResponse.json({ order, invoice, fraudAnalysis: fraudLog });
   } catch (error) {
     // Erro genérico - em produção, logar erro específico
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao finalizar pedido.' }, { status: 500 });

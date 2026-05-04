@@ -5,6 +5,7 @@
 import { productData, variableData, orderData, userData } from './data';
 import { getFinanceSummary, getStockAlertsByLevel } from './business';
 import { getDemandForecastSummary } from './demand-forecast';
+import { getFraudSummary } from './fraud-detection';
 
 export function getDashboardSummary() {
   const products = productData.getAll();
@@ -23,6 +24,9 @@ export function getDashboardSummary() {
 
   // Previsão de demanda — resumo para o dashboard
   const forecast = getDemandForecastSummary();
+
+  // Detecção de fraude — resumo para o dashboard
+  const fraud = getFraudSummary();
 
   return {
     productsCount: products.length,
@@ -44,6 +48,14 @@ export function getDashboardSummary() {
         .flatMap((f) => f.alerts.map((alert) => ({ variable: f.variableName, message: alert })))
         .slice(0, 5),
       forecastAccuracy: forecast.forecastAccuracy,
+    },
+    // Dados de detecção de fraude
+    fraudDetection: {
+      totalAnalyzed: fraud.totalAnalyzed,
+      flaggedTotal: fraud.flaggedTotal,
+      suspicious24h: fraud.suspicious24hCount,
+      avgRiskScore: fraud.avgRiskScore,
+      pendingReviewCount: fraud.pendingReview.length,
     },
   };
 }

@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { calculateLogoCost, calculateSalePrice, isLowStock } from '../../config/global';
 import { productData, variableData, groupData, orderData, financeData, invoiceData, purchaseOrderData } from './data';
 import { Order, OrderItem, LogoAnalysis, Invoice, Variable } from '../../types';
+import { runFraudAnalysis } from './fraud-detection';
 
 function getNextOrderId(): string {
   const maxOrderId = orderData
@@ -83,7 +84,7 @@ export function calculateItemCost(productId: string, variableIds: string[], quan
 // 4. Registra transação financeira
 // 5. Baixa estoque das variáveis utilizadas
 // 6. Gera nota fiscal
-export function finalizarPedido(userId: string, name: string, items: OrderItem[], logoColors: number): { order: Order; invoice: Invoice } {
+export function finalizarPedido(userId: string, name: string, items: OrderItem[], logoColors: number): { order: Order; invoice: Invoice; fraudLog: import('../../types').FraudAnalysisLog } {
   // Cálculo dos custos
   const totalCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const logoCost = calculateLogoCost(logoColors);
@@ -147,7 +148,14 @@ export function finalizarPedido(userId: string, name: string, items: OrderItem[]
 
   invoiceData.create(invoice);
 
-  return { order, invoice };
+  // ═══════════════════════════════════════
+  // DETECÇÃO DE FRAUDE — executada automaticamente
+  // Analisa o pedido contra regras de comportamento e valor
+  // Salva log de análise e retorna resultado junto com o pedido
+  // ═══════════════════════════════════════
+  const fraudLog = runFraudAnalysis(order);
+
+  return { order, invoice, fraudLog };
 }
 
 // ==========================================
