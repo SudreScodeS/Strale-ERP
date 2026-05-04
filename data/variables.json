@@ -30,21 +30,5 @@
     "stock": 1,
     "groupId": "group-size",
     "createdAt": "2026-01-01T00:00:00.000Z"
-  },
-  {
-    "id": "7cbcc95c-f558-4b52-a20f-3866b14bdfc3",
-    "groupId": "79812aa9-cb5a-4cbe-a1c8-5a431e873b21",
-    "name": "Qled 55",
-    "additionalPrice": 1500,
-    "stock": 15,
-    "createdAt": "2026-04-30T20:44:06.711Z"
-  },
-  {
-    "id": "6df63450-fc10-488a-9c98-82c761fcfaa7",
-    "groupId": "669641e4-35e8-4efe-96f4-532be2ed4ec8",
-    "name": "Oled 55",
-    "additionalPrice": 3500,
-    "stock": 10,
-    "createdAt": "2026-04-30T20:44:32.423Z"
   }
 ]

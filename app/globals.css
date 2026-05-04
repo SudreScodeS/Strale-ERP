@@ -31,6 +31,59 @@ html[data-theme='dark'] {
   --brand-blue: #3d63ff;
   --brand-blue-dark: #2747dd;
   --brand-blue-soft: #1b2559;
+  color-scheme: dark;
+}
+
+html[data-theme='dark'] body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html[data-theme='dark'] .bg-white {
+  background-color: var(--surface) !important;
+}
+
+html[data-theme='dark'] .bg-slate-50 {
+  background-color: var(--surface-soft) !important;
+}
+
+html[data-theme='dark'] .bg-slate-100 {
+  background-color: var(--surface-muted) !important;
+}
+
+html[data-theme='dark'] .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+
+html[data-theme='dark'] .border-slate-200 {
+  border-color: var(--border) !important;
+}
+
+html[data-theme='dark'] .text-slate-900 {
+  color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .text-slate-700,
+html[data-theme='dark'] .text-slate-600,
+html[data-theme='dark'] .text-slate-500 {
+  color: var(--text-muted) !important;
+}
+
+html[data-theme='dark'] .text-slate-400,
+html[data-theme='dark'] .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme='dark'] .hover\:bg-slate-100:hover {
+  background-color: var(--surface-muted) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-slate-50:hover {
+  background-color: var(--surface-soft) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-blue-50:hover {
+  background-color: rgba(59, 130, 246, 0.24) !important;
 }
 
 body {
@@ -53,9 +106,28 @@ body {
   color: var(--brand-blue-dark);
 }
 
-.bg-white { background-color: var(--surface) !important; }
-.bg-slate-50 { background-color: var(--surface-soft) !important; }
-.bg-slate-100 { background-color: var(--surface-muted) !important; }
-.border-slate-200 { border-color: var(--border) !important; }
-.text-slate-900 { color: var(--foreground) !important; }
-.text-slate-700, .text-slate-600, .text-slate-500 { color: var(--text-muted) !important; }
+.bg-white {
+  background-color: var(--surface) !important;
+}
+
+.bg-slate-50 {
+  background-color: var(--surface-soft) !important;
+}
+
+.bg-slate-100 {
+  background-color: var(--surface-muted) !important;
+}
+
+.border-slate-200 {
+  border-color: var(--border) !important;
+}
+
+.text-slate-900 {
+  color: var(--foreground) !important;
+}
+
+.text-slate-700,
+.text-slate-600,
+.text-slate-500 {
+  color: var(--text-muted) !important;
+}
