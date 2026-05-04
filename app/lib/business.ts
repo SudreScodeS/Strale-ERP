@@ -21,22 +21,14 @@ function getNextOrderId(): string {
 }
 
 // ==========================================
-// ANÁLISE DE LOGO (VIA GOOGLE CLOUD VISION)
+// ANÁLISE DE LOGO (LOCAL VIA SHARP)
 // ==========================================
 
-// A análise real de logo é feita via API endpoint /api/logo-analysis
-// que utiliza Google Cloud Vision para detectar cores dominantes.
+// A análise de logo é feita via API endpoint /api/logo-analysis
+// que utiliza sharp (biblioteca local) para detectar cores dominantes.
+// O Google Cloud Vision é opcional — só é usado se GOOGLE_VISION_API_KEY estiver configurado.
+// O fluxo principal: Frontend → /api/logo-analysis (POST com imagem) → análise local → cores reais
 // Esta função agora serve apenas como fallback/compatibilidade.
-// O fluxo principal: Frontend → /api/logo-analysis (POST com imagem) → Vision API → cores reais
-//
-// Para configurar a API:
-//   1. Crie um projeto no Google Cloud Console
-//   2. Ative a Cloud Vision API
-//   3. Crie uma API Key ou Service Account
-//   4. Configure no .env.local:
-//      GOOGLE_VISION_API_KEY=sua-chave-aqui
-//      ou
-//      GOOGLE_APPLICATION_CREDENTIALS=/caminho/para/service-account.json
 
 export async function analisarLogo(imageFile: { size: number } | null): Promise<LogoAnalysis> {
   // DEPRECATED: Esta função não deve mais ser usada diretamente.

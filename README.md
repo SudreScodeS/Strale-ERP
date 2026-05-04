@@ -2,316 +2,210 @@
 
 ## 🎯 Visão Geral
 
-O **Simple ERP** é um sistema completo de gestão empresarial desenvolvido em **Next.js 16** com **TypeScript** e **Tailwind CSS**. Especializado em empresas que trabalham com produtos customizáveis (como camisetas, canecas, brindes personalizados), oferece módulos integrados de estoque, vendas, finanças e emissão de notas fiscais.
+O **Simple ERP** é um sistema completo de gestão empresarial desenvolvido em **Next.js 16** com **TypeScript** e **Tailwind CSS**. Especializado em empresas que trabalham com produtos customizáveis (como sacolas personalizadas, televisões, etc.), oferece módulos integrados de estoque, vendas, finanças, previsão de demanda, detecção de fraude e assistente inteligente — **tudo 100% local, sem dependência de APIs externas de IA**.
 
-**Diferencial**: Arquitetura preparada para crescimento, com abstração de dados que facilita migração para PostgreSQL e integrações com APIs externas.
+## 🧠 Módulos Inteligentes (100% Locais)
+
+### 📈 Previsão de Demanda
+- Análise de histórico de vendas por semana ISO
+- Regressão linear para detecção de tendências (crescente/estável/decrescente)
+- Previsão de demanda semanal e mensal com ajuste de tendência
+- Recomendação de reposição de estoque (meta: 4 semanas de cobertura)
+- Detecção de excesso de estoque (>8 semanas de demanda parada)
+- Classificação de risco: alto, médio, baixo, sem risco
+
+### 🛡️ Detecção de Fraude
+- Score de risco 0-100 com 11 regras de análise
+- Análise automática a cada pedido finalizado
+- Regras: valor alto, frequência, intervalo entre pedidos, quantidades anormais, usuário novo, cancelamentos, produtos atípicos
+- Classificação: aprovado (<40), suspeito (40-69), bloqueado (70+)
+- Logs de análise salvos para auditoria e revisão por admin
+- Dashboard com pendentes de revisão e tendências semanais
+
+### 🤖 Assistente Inteligente
+- Perguntas em linguagem natural (português)
+- 20+ intenções: "produto mais vendido", "estoque baixo", "lucro total", "previsão de demanda", etc.
+- Pattern matching local — sem APIs externas, sem ChatGPT
+- Respostas com dados reais do sistema
+- Interface de chat com sugestões clicáveis
+
+### 🎨 Análise de Logo (Local)
+- Detecção de cores dominantes via **sharp** (processamento local de imagem)
+- Quantização por bucketing para identificar cores significativas
+- Nomeação automática das cores em português
+- Classificação de complexidade (simple/moderate/complex)
+- Google Cloud Vision é **opcional** — funciona sem nenhuma configuração externa
 
 ## 🏗️ Arquitetura Técnica
 
 ### Tecnologias Principais
-- **Frontend**: Next.js 16 (App Router), React 18, TypeScript 5.x, Tailwind CSS
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS
 - **Backend**: API Routes do Next.js (Serverless Functions)
-- **Autenticação**: JWT (JSON Web Tokens) + bcrypt para hash seguro de senhas
-- **Banco de Dados**: JSON files local (preparado para PostgreSQL)
-- **Estado**: Client-side state management com React hooks
-- **Build**: Turbopack para desenvolvimento rápido
+- **Autenticação**: JWT + bcryptjs
+- **Banco de Dados**: JSON files (preparado para PostgreSQL)
+- **Processamento de Imagem**: sharp (local, sem API externa)
+- **IDs**: UUID v4
 
 ### Estrutura de Diretórios
 ```
-📁 Simple-erp/
-├── 📁 app/                    # Next.js App Router
-│   ├── 📁 api/               # Endpoints REST da API
-│   │   ├── 📁 auth/          # Autenticação (login/register)
-│   │   ├── 📁 inventory/     # Gestão de produtos/estoque
-│   │   ├── 📁 orders/        # Pedidos de venda
-│   │   ├── 📁 finance/       # Relatórios financeiros
-│   │   ├── 📁 dashboard/     # Métricas do dashboard
-│   │   └── 📁 config/        # Configurações globais
-│   ├── 📁 components/        # Componentes React reutilizáveis
-│   ├── 📁 lib/              # Lógica de negócio e utilitários
-│   │   ├── 📄 data.ts        # Camada de abstração de dados
-│   │   ├── 📄 auth.ts        # Autenticação e autorização
-│   │   ├── 📄 business.ts    # Regras de negócio
-│   │   └── 📄 dashboard.ts   # Lógica do dashboard
-│   ├── 📄 layout.tsx         # Layout principal da aplicação
-│   ├── 📄 page.tsx           # Dashboard administrativo
-│   ├── 📄 globals.css        # Estilos globais
-│   └── 📁 [páginas]/         # Páginas específicas (login, sales, etc.)
-├── 📁 config/                # Configurações globais editáveis
-│   └── 📄 global.ts          # Regras de negócio configuráveis
-├── 📁 types/                 # Definições TypeScript
-│   └── 📄 index.ts           # Interfaces e tipos do sistema
-├── 📁 data/                  # "Banco de dados" JSON
-│   ├── 📄 users.json         # Usuários do sistema
-│   ├── 📄 products.json      # Produtos base
-│   ├── 📄 groups.json        # Grupos de configuração
-│   ├── 📄 variables.json     # Variáveis de produto
-│   ├── 📄 orders.json        # Pedidos de venda
-│   ├── 📄 finance.json       # Registros financeiros
-│   ├── 📄 invoices.json      # Notas fiscais
-│   ├── 📄 suppliers.json     # Fornecedores
-│   └── 📄 purchase-orders.json # Pedidos de compra
-├── 📄 package.json           # Dependências e scripts
-├── 📄 tailwind.config.js     # Configuração Tailwind CSS
-└── 📄 README.md              # Esta documentação
+📁 Simple-ERP/
+├── 📁 app/
+│   ├── 📁 api/
+│   │   ├── 📁 assistant/       # Assistente inteligente
+│   │   ├── 📁 auth/            # Login / Registro
+│   │   ├── 📁 config/          # Configurações globais
+│   │   ├── 📁 dashboard/       # Métricas consolidadas
+│   │   ├── 📁 demand-forecast/ # Previsão de demanda
+│   │   ├── 📁 finance/         # Financeiro
+│   │   ├── 📁 fraud/           # Detecção de fraude
+│   │   ├── 📁 inventory/       # Estoque (produto/grupo/variável)
+│   │   ├── 📁 logo-analysis/   # Análise de imagem
+│   │   ├── 📁 orders/          # Pedidos
+│   │   ├── 📁 purchases/       # Compras
+│   │   ├── 📁 suppliers/       # Fornecedores
+│   │   ├── 📁 system/          # Health check do sistema
+│   │   └── 📁 users/           # Usuários
+│   ├── 📁 components/          # UI reutilizável (Sidebar, MetricCard, etc.)
+│   ├── 📁 lib/
+│   │   ├── 📄 assistant.ts     # Motor de consultas em linguagem natural
+│   │   ├── 📄 auth.ts          # Autenticação JWT
+│   │   ├── 📄 authClient.ts    # Helpers de auth no client
+│   │   ├── 📄 business.ts      # Regras de negócio (preço, pedidos, estoque)
+│   │   ├── 📄 color-analyzer.ts# Análise de cores via sharp
+│   │   ├── 📄 dashboard.ts     # Lógica do dashboard principal
+│   │   ├── 📄 data.ts          # Camada de abstração de dados
+│   │   ├── 📄 demand-forecast.ts# Motor de previsão de demanda
+│   │   ├── 📄 fraud-detection.ts# Motor de detecção de fraude
+│   │   ├── 📄 inventory.ts     # Consultas de estoque
+│   │   └── 📄 vision.ts        # Análise de logo (local + Google Vision opcional)
+│   ├── 📁 assistant/           # Chat do assistente
+│   ├── 📁 demand-forecast/     # Dashboard de previsão
+│   ├── 📁 fraud/               # Dashboard de fraudes
+│   ├── 📁 finance/             # Dashboard financeiro
+│   ├── 📁 inventory/           # Gestão de estoque
+│   ├── 📁 login/               # Login
+│   ├── 📁 purchases/           # Compras
+│   ├── 📁 register/            # Registro
+│   ├── 📁 sales/               # Pedidos (criar + buscar)
+│   └── 📁 users/               # Gestão de usuários
+├── 📁 config/
+│   └── 📄 global.ts            # Configurações editáveis
+├── 📁 data/                    # JSON files (banco de dados)
+│   ├── 📄 finance.json
+│   ├── 📄 fraud-logs.json
+│   ├── 📄 groups.json
+│   ├── 📄 invoices.json
+│   ├── 📄 orders.json
+│   ├── 📄 products.json
+│   ├── 📄 purchase-orders.json
+│   ├── 📄 suppliers.json
+│   ├── 📄 users.json
+│   └── 📄 variables.json
+├── 📁 types/
+│   └── 📄 index.ts             # Interfaces globais
+└── 📄 package.json
 ```
 
-## 🚀 Funcionalidades Principais
+## 🚀 Funcionalidades
 
-### 1. 📦 Gestão de Produtos e Estoque
-- **Produtos Base**: Cadastro de produtos principais (camiseta, caneca, boné, etc.)
-- **Grupos de Configuração**: Categorias de personalização (tamanho, cor, material, estampa)
-- **Variáveis**: Opções específicas dentro de cada grupo (P/M/G/XG para tamanho)
-- **Controle de Estoque**: Quantidade individual por variável com alertas automáticos
-- **Preços Dinâmicos**: Custo base do produto + adicionais por variável selecionada
+### 📦 Estoque
+- Produtos base com grupos de configuração (Material, Tamanho, etc.)
+- Variáveis com estoque individual e preço adicional
+- Alertas automáticos: crítico (≤10) e atenção (≤30)
 
-### 2. 🛒 Sistema de Vendas
-- **Pedidos Customizáveis**: Cliente escolhe produto + variações + upload de logo
-- **Análise de Logo**: Simulação de IA para contar cores do logo (preparado para API real)
-- **Cálculo Automático**: Preço = custo + markup configurável + custo do logo
-- **Baixa Automática**: Estoque reduzido automaticamente na venda
-- **Nota Fiscal**: Geração automática de NF com dados completos do pedido
+### 🛒 Vendas
+- Fluxo completo: selecionar produto → variáveis → upload logo → calcular preço → finalizar
+- Carrinho de compras com múltiplos itens
+- Cálculo automático: custo + markup + custo do logo
+- Baixa automática do estoque
+- Geração de nota fiscal
 
-### 3. 💰 Gestão Financeira
-- **Registro Automático**: Toda venda gera entrada no financeiro
-- **Relatórios**: Totais de vendas, despesas e cálculo de lucros
-- **Margem Configurável**: Percentual de lucro ajustável globalmente
-- **Histórico Completo**: Rastreamento de todas as transações
+### 💰 Financeiro
+- Registro automático de vendas
+- Controle de despesas e compras
+- Cálculo de lucro (vendas - despesas)
 
-### 4. 🔐 Controle de Acesso
-- **Dois Níveis**: Admin (acesso total) e Seller (apenas vendas próprias)
-- **Autenticação JWT**: Sessões seguras com expiração automática
-- **Proteção de Rotas**: Middleware que valida permissões automaticamente
-- **Páginas Protegidas**: Redirecionamento inteligente baseado na role
+### 🔐 Autenticação
+- Dois perfis: admin (acesso total) e seller (vendas)
+- JWT com expiração
+- Proteção de rotas e páginas
 
-## 📊 Regras de Negócio
+## 🔌 API Endpoints (13 rotas)
 
-### Cálculos de Preço
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/api/auth/login` | Login |
+| POST | `/api/auth/register` | Registro (admin) |
+| GET | `/api/inventory` | Listar estoque |
+| POST/PATCH | `/api/inventory` | Criar/atualizar produto/grupo/variável |
+| GET/POST/PATCH/DELETE | `/api/orders` | CRUD de pedidos |
+| GET/POST | `/api/finance` | Financeiro |
+| GET | `/api/dashboard` | Métricas do dashboard |
+| POST | `/api/logo-analysis` | Análise de logo |
+| GET/PATCH | `/api/fraud` | Detecção de fraude |
+| GET | `/api/demand-forecast` | Previsão de demanda |
+| POST | `/api/assistant` | Assistente inteligente |
+| GET | `/api/system` | Health check do sistema |
+| GET/POST | `/api/suppliers` | Fornecedores |
+| GET/POST/PATCH | `/api/purchases` | Pedidos de compra |
+
+## 📊 Fluxo Completo de Pedido
+
 ```
-Preço de Venda = (Custo Base + Σ Custos das Variáveis) × (1 + Margem/100) + Custo do Logo
-
-Exemplo Prático:
-- Camiseta básica: R$ 20,00
-- Tamanho G: +R$ 3,00
-- Logo 3 cores: +R$ 30,00
-- Subtotal: R$ 53,00
-- Margem 20%: +R$ 10,60
-- Preço Final: R$ 63,60
-```
-
-### Alertas de Estoque
-- **Configurável Globalmente**: Padrão ≤ 5 unidades por variável
-- **Personalizável por Produto**: Produtos críticos podem ter limites diferentes
-- **Sugestão Automática**: Sistema identifica itens para reposição
-
-### Personalização de Logo
-- **Análise Simulada**: Baseada no tamanho do arquivo de imagem
-- **Custo por Cor**: Configurável (padrão: R$ 10 por cor detectada)
-- **Integração Futura**: Preparado para APIs como Google Vision, AWS Rekognition
-
-## 🛠️ Instalação e Configuração
-
-### Pré-requisitos
-- **Node.js**: Versão 18.0 ou superior
-- **npm** ou **yarn**: Gerenciador de pacotes
-- **Git**: Para clonar o repositório
-
-### Instalação Rápida
-```bash
-# 1. Clonar o repositório
-git clone [url-do-repositorio]
-cd Simple-erp
-
-# 2. Instalar dependências
-npm install
-
-# 3. Executar em desenvolvimento
-npm run dev
-
-# 4. Acessar no navegador
-# http://localhost:3000
+1. Usuário seleciona produto e variáveis
+2. Upload de logo (análise local via sharp)
+3. Sistema detecta cores dominantes automaticamente
+4. Preço calculado: custo + variáveis + logo + margem
+5. Pedido finalizado → dispara:
+   ├── ✅ Baixa de estoque das variáveis
+   ├── ✅ Registro financeiro automático
+   ├── ✅ Geração de nota fiscal
+   └── ✅ Análise de fraude (score 0-100)
+6. Dashboard atualizado com novos dados
 ```
 
-### Build para Produção
-```bash
-# Build otimizado
-npm run build
+## ⚙️ Configurações (`config/global.ts`)
 
-# Executar em produção
-npm start
-```
-
-### Configuração Inicial
-1. **Primeiro Login**: Use as credenciais padrão
-   - Usuário: `admin`
-   - Senha: `admin123`
-
-2. **Ajustes Iniciais**:
-   - Modificar configurações em `config/global.ts`
-   - Cadastrar produtos e variações
-   - Testar fluxo completo de vendas
-
-## 🔌 API Endpoints
-
-### Autenticação
-```http
-POST /api/auth/login       # Login de usuário
-POST /api/auth/register    # Cadastro (apenas admin)
-```
-
-### Gestão de Estoque
-```http
-GET  /api/inventory        # Listar produtos, grupos e variáveis
-POST /api/inventory        # Criar produto/grupo/variável
-PATCH /api/inventory       # Atualizar estoque/preços
-```
-
-### Vendas e Pedidos
-```http
-GET  /api/orders           # Listar pedidos (com filtro por role)
-POST /api/orders           # Criar/finalizar pedido
-PATCH /api/orders          # Atualizar status do pedido
-```
-
-### Financeiro
-```http
-GET /api/finance           # Relatório financeiro
-POST /api/finance          # Registrar transação manual
-```
-
-### Dashboard e Configurações
-```http
-GET /api/dashboard         # Métricas consolidadas
-GET /api/config            # Configurações globais
-```
-
-## ⚙️ Configurações Editáveis
-
-### Arquivo `config/global.ts`
 ```typescript
 export const globalConfig = {
-  profitMargin: 20,        // Margem de lucro em %
-  logoPricePerColor: 10,   // R$ por cor na logo
-  minStockAlert: 5,        // Alerta quando estoque ≤ 5
-  systemName: 'Simple ERP', // Nome exibido no sistema
-  companyName: 'Minha Empresa' // Para notas fiscais
+  profitMargin: 20,          // Margem de lucro em %
+  logoPricePerColor: 10,     // R$ por cor detectada na logo
+  minStockAlert: 5,          // Alerta quando estoque ≤ 5
+  systemName: 'Simple ERP',  // Nome do sistema
+  companyName: 'North Bag',  // Nome da empresa
 };
 ```
 
-### Como Modificar Configurações
-1. Editar valores em `config/global.ts`
-2. Testar impacto nos cálculos
-3. Verificar relatórios e preços
-4. Fazer backup antes de alterações em produção
+## 🛠️ Instalação
 
-## 🚀 Migração para Produção
-
-### Banco de Dados
-**Atual**: JSON files para simplicidade de desenvolvimento
-**Produção**: PostgreSQL recomendado
-
-#### Passos para Migração:
-1. **Instalar PostgreSQL** e criar banco
-2. **Configurar conexão** em variável de ambiente
-3. **Instalar ORM** (recomendado: Prisma ou Drizzle)
-4. **Migrar dados** dos JSON para tabelas SQL
-5. **Atualizar `lib/data.ts`** com queries SQL
-
-### Segurança em Produção
 ```bash
-# Variáveis de ambiente obrigatórias
-JWT_SECRET=chave-secreta-muito-forte-aqui
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
-NODE_ENV=production
+git clone https://github.com/SudreScodeS/Simple-ERP.git
+cd Simple-ERP
+npm install
+npm run dev
 ```
 
-### Melhorias de Performance
-- **Redis**: Para cache de sessões e dados frequentes
-- **CDN**: Para assets estáticos (imagens, CSS, JS)
-- **Database Indexing**: Índices em campos de busca frequente
-- **Pagination**: Em listagens grandes de pedidos/produtos
+Acesse `http://localhost:3000` — Login padrão: `admin` / `admin123`
 
-## 🧪 Desenvolvimento
+## 🧪 Validação do Sistema
 
-### Scripts Disponíveis
 ```bash
-npm run dev          # Desenvolvimento com hot reload
-npm run build        # Build para produção
-npm run start        # Executar build de produção
-npm run lint         # Verificar qualidade do código
-npm test            # Executar testes (quando implementados)
+# Health check via API
+curl http://localhost:3000/api/system
+
+# Ou via interface: acesse qualquer página do dashboard
 ```
 
-### Convenções de Código
-- **TypeScript**: Tipagem estrita obrigatória
-- **Componentes**: Funções nomeadas com props tipadas
-- **API**: Padrão REST com códigos HTTP apropriados
-- **Estado**: Client-side com hooks do React
-- **Commits**: Padrão Conventional Commits
+O endpoint `/api/system` verifica:
+- ✅ Integridade de todos os arquivos JSON
+- ✅ Funcionamento de cada módulo (dados, financeiro, estoque, previsão, fraude, assistente)
+- ✅ Disponibilidade do sharp (análise de imagem)
+- ✅ Status geral do sistema
 
-### Debugging
-- **API Routes**: Logs aparecem no terminal do servidor
-- **Client-side**: React DevTools no navegador
-- **Database**: Verificar arquivos JSON em `/data/`
-- **Network**: Aba Network do DevTools para requests
+## 📝 Licença
 
-## 📈 Monitoramento e Logs
-
-### Métricas Essenciais
-- **Performance**: Tempo de resposta das APIs
-- **Uptime**: Disponibilidade do sistema
-- **Vendas**: Volume diário de pedidos
-- **Estoque**: Itens com estoque crítico
-
-### Logs Importantes
-- Tentativas de login (sucesso/falha)
-- Erros em cálculos de preço
-- Baixas de estoque abaixo do mínimo
-- Modificações em configurações globais
-
-## 🔄 Roadmap de Melhorias
-
-### Próximas Versões (Planejado)
-1. **v2.0**: Dashboard com gráficos e métricas em tempo real
-2. **v2.1**: Integração com gateways de pagamento
-3. **v2.2**: Sistema de notificações push/email
-4. **v2.3**: Mobile app com React Native
-5. **v2.4**: Multi-empresa (mesmo sistema para várias empresas)
-
-### Funcionalidades Futuras
-- ✅ Relatórios avançados (PDF/Excel)
-- ✅ Integração com marketplaces (Mercado Livre, Shopify)
-- ✅ Controle de qualidade de produtos
-- ✅ Gestão avançada de fornecedores
-- ✅ Sistema de devoluções e trocas
-- ✅ API para integrações externas
-- ✅ Backup automático e recuperação
-
-## 🆘 Suporte e Troubleshooting
-
-### Problemas Comuns
-
-**Erro de Login**:
-- Verificar se usuário existe em `data/users.json`
-- Confirmar senha (lembrar: senhas são hasheadas)
-
-**Preços Incorretos**:
-- Verificar configurações em `config/global.ts`
-- Checar se variáveis têm preços adicionais corretos
-
-**Estoque Não Baixa**:
-- Confirmar que pedido foi finalizado com sucesso
-- Verificar se variáveis existem e têm estoque
-
-### Backup Essencial
-- Pasta `/data/` completa (todos os JSON)
-- Arquivo `config/global.ts`
-- Logs do sistema (se implementados)
-
-## 📝 Licença e Créditos
-
-**Desenvolvido com ❤️ para empresas que valorizam eficiência e controle total dos seus processos.**
+Desenvolvido com ❤️ para empresas que valorizam eficiência e controle total.
 
 ---
 
-**🚀 Pronto para escalar seu negócio? O Simple ERP cresce com você!**
+**🚀 100% local. Zero dependência externa de IA. Cresce com você.**
