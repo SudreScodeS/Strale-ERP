@@ -84,7 +84,6 @@ function queryTopProducts(): AssistantResponse {
   const orders = orderData.getAll().filter(o => o.status === 'completed');
   const products = productData.getAll();
 
-  // Conta quantas vezes cada produto aparece nos pedidos
   const productSales = new Map<string, { name: string; totalQty: number; totalRevenue: number; orderCount: number }>();
 
   for (const order of orders) {
@@ -95,13 +94,13 @@ function queryTopProducts(): AssistantResponse {
 
       if (existing) {
         existing.totalQty += item.quantity;
-        existing.totalRevenue += item.unitPrice * item.quantity;
+        existing.totalRevenue += item.unitPrice;
         existing.orderCount += 1;
       } else {
         productSales.set(item.productId, {
           name,
           totalQty: item.quantity,
-          totalRevenue: item.unitPrice * item.quantity,
+          totalRevenue: item.unitPrice,
           orderCount: 1,
         });
       }
@@ -111,10 +110,11 @@ function queryTopProducts(): AssistantResponse {
   const sorted = Array.from(productSales.values()).sort((a, b) => b.totalQty - a.totalQty);
 
   if (sorted.length === 0) {
+    return { answer: 'Nenhum pedido registrado ainda.', type: 'text' };
   }
 
   const lines = sorted.map((p, i) =>
-    `${i + 1}. **${p.name}** — ${p.totalQty} unidades vendidas, ${formatCurrency(p.totalRevenue)} em receita (${p.orderCount} pedidos)`
+    `${i + 1}. **${p.name}** — ${p.totalQty} unidades, ${formatCurrency(p.totalRevenue)} em receita (${p.orderCount} itens em pedidos)`
   );
 
   return {
@@ -482,7 +482,15 @@ function querySystemSummary(): AssistantResponse {
 /** Ajuda */
 function queryHelp(): AssistantResponse {
   return {
-    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "ajuda"`,
+    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "como usar"`,
+    type: 'text',
+  };
+}
+
+/** Como usar o sistema */
+function queryHowToUse(): AssistantResponse {
+  return {
+    answer: `**Como usar o ${globalConfig.systemName}:**\n\n**1. Cadastre o estoque**\nAcesse Estoque no menu. Crie um produto base, depois crie grupos (ex: Material, Tamanho) e variáveis dentro de cada grupo (ex: Nylon, TNT, Pequeno, Grande). Cada variável tem seu proprio estoque.\n\n**2. Registre pedidos**\nAcesse Pedidos > Criar pedido. Selecione o produto, escolha as variáveis e quantidades. O preco e calculado automaticamente com a margem de lucro. Voce pode adicionar varios itens ao carrinho.\n\n**3. Acompanhe o financeiro**\nToda venda gera um registro financeiro automaticamente. Acesse Financeiro para ver receita, despesas e lucro.\n\n**4. Faca compras**\nQuando o estoque estiver baixo, acesse Compras para registrar reposicao de fornecedores. O estoque e atualizado automaticamente.\n\n**5. Configuracoes**\nAdmin pode ajustar margem de lucro, preco da logo e limites de alerta em Configuracoes.`,
     type: 'text',
   };
 }
@@ -509,6 +517,11 @@ function detectIntent(question: string): () => AssistantResponse {
   // Ajuda
   if (containsAny(q, 'ajuda', 'help', 'opcoes', 'opcoes', 'o que voce faz', 'o que vc faz', 'comandos')) {
     return queryHelp;
+  }
+
+  // Como usar
+  if (containsAny(q, 'como usar', 'como funciona', 'tutorial', 'guia', 'como cadastrar', 'como fazer', 'como criar')) {
+    return queryHowToUse;
   }
 
   // Resumo geral
@@ -572,7 +585,7 @@ function detectIntent(question: string): () => AssistantResponse {
   }
 
   // Usuários
-  if (containsAny(q, 'usuario cadastrado', 'usuário cadastrado', 'lista usuario', 'lista usuário', 'quem usa')) {
+  if (containsAny(q, 'usuario', 'usuário', 'usuarios', 'usuários', 'quem usa', 'conta')) {
     return queryUsers;
   }
 

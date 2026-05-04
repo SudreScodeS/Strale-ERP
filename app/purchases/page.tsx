@@ -208,16 +208,7 @@ export default function PurchasesPage() {
           </div>
 
           <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
-              <button
-                type="button"
-                onClick={() => void loadDashboard()}
-                className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
-              >
-                Atualizar
-              </button>
-            </div>
+            <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
             <form className="mt-4 grid gap-3 rounded-3xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
               <input
                 value={supplierName}

@@ -26,6 +26,8 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const updated = updateServerConfig(body);
+  // systemName and companyName are dev-only — not editable via API
+  const { systemName, companyName, ...safeUpdates } = body;
+  const updated = updateServerConfig(safeUpdates);
   return NextResponse.json({ config: updated, message: 'Configurações atualizadas com sucesso.' });
 }

@@ -19,8 +19,8 @@ export default function AdminPage() {
     profitMargin: 20,
     logoPricePerColor: 10,
     minStockAlert: 5,
-    systemName: 'Simple ERP',
-    companyName: 'North Bag',
+    systemName: '',
+    companyName: '',
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
@@ -188,63 +188,6 @@ export default function AdminPage() {
             </div>
           </section>
 
-          {/* Seção: Identidade */}
-          <section
-            className="rounded-2xl p-6 shadow-sm"
-            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-          >
-            <div className="mb-6">
-              <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                Identidade do Sistema
-              </h3>
-              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                Nome do sistema e da empresa exibidos na interface e relatórios.
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <label className="block space-y-2">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Nome do Sistema
-                </span>
-                <input
-                  type="text"
-                  value={config.systemName}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, systemName: e.target.value }))}
-                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
-                  style={{
-                    background: 'var(--input-bg)',
-                    border: '1px solid var(--input-border)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                  Exibido no sidebar e títulos das páginas.
-                </p>
-              </label>
-
-              <label className="block space-y-2">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Nome da Empresa
-                </span>
-                <input
-                  type="text"
-                  value={config.companyName}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, companyName: e.target.value }))}
-                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
-                  style={{
-                    background: 'var(--input-bg)',
-                    border: '1px solid var(--input-border)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                  Exibido nos cabeçalhos e notas fiscais.
-                </p>
-              </label>
-            </div>
-          </section>
-
           {/* Preview dos efeitos */}
           <section
             className="rounded-2xl p-6 shadow-sm"
@@ -253,7 +196,7 @@ export default function AdminPage() {
             <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
               Preview dos Efeitos
             </h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
               <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
                 <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Exemplo: Custo R$ 100</p>
                 <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -274,13 +217,6 @@ export default function AdminPage() {
                   ≤ {config.minStockAlert}
                 </p>
                 <p className="text-xs" style={{ color: 'var(--text-faint)' }}>unidades dispara alerta</p>
-              </div>
-              <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
-                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Sistema</p>
-                <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {config.systemName}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{config.companyName}</p>
               </div>
             </div>
           </section>

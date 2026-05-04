@@ -137,13 +137,18 @@ export async function DELETE(request: Request) {
 
   const existing = userData.getById(id);
   if (!existing) {
-    return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });
+    return NextResponse.json({ error: 'Usuario nao encontrado.' }, { status: 404 });
   }
 
-  if (existing.username === 'admin') {
-    return NextResponse.json({ error: 'Não é permitido excluir o usuário admin principal.' }, { status: 400 });
+  // Prevent deleting the last admin
+  if (existing.role === 'admin') {
+    const allUsers = userData.getAll();
+    const adminCount = allUsers.filter(u => u.role === 'admin').length;
+    if (adminCount <= 1) {
+      return NextResponse.json({ error: 'Nao e possivel excluir o ultimo administrador. Crie outro admin antes.' }, { status: 400 });
+    }
   }
 
   userData.delete(id);
-  return NextResponse.json({ message: 'Usuário excluído com sucesso.' });
+  return NextResponse.json({ message: 'Usuario excluido com sucesso.' });
 }

@@ -100,7 +100,11 @@ export default function UsersPage() {
         <PageHeader title="Usuarios" description="Gerencie contas do sistema." />
 
         {message && (
-          <div className="mb-4 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success-border)' }}>
+          <div className="mb-4 rounded-lg px-4 py-2 text-xs" style={{
+            background: message.includes('excluido') || message.includes('criado') || message.includes('atualizado') ? 'var(--success-bg)' : 'var(--danger-bg)',
+            color: message.includes('excluido') || message.includes('criado') || message.includes('atualizado') ? 'var(--success)' : 'var(--danger)',
+            border: `1px solid ${message.includes('excluido') || message.includes('criado') || message.includes('atualizado') ? 'var(--success-border)' : 'var(--danger-border)'}`,
+          }}>
             {message}
           </div>
         )}
@@ -151,16 +155,14 @@ export default function UsersPage() {
                       >
                         Editar
                       </button>
-                      {user.username !== 'admin' && (
-                        <button
-                          type="button"
-                          onClick={() => void handleDeleteUser(user)}
-                          className="rounded px-2 py-1 text-[10px] font-medium transition-colors"
-                          style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}
-                        >
-                          Excluir
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteUser(user)}
+                        className="rounded px-2 py-1 text-[10px] font-medium transition-colors"
+                        style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}
+                      >
+                        Excluir
+                      </button>
                     </div>
                   </div>
                 ))

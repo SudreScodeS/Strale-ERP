@@ -21,6 +21,7 @@ const SUGGESTIONS = [
   'Usuarios',
   'Despesas',
   'Resumo do sistema',
+  'Como usar',
 ];
 
 function ChatBubble({ message }: { message: ChatMessage }) {
