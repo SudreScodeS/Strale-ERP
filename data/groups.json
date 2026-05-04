@@ -12,5 +12,21 @@
     "name": "Tamanho",
     "productId": "product-1",
     "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "79812aa9-cb5a-4cbe-a1c8-5a431e873b21",
+    "productId": "af810666-8b2a-45ec-a52b-861d74cebf42",
+    "name": "Samsung",
+    "watchStockAlert": 10,
+    "criticalStockAlert": 5,
+    "createdAt": "2026-04-30T20:42:53.701Z"
+  },
+  {
+    "id": "669641e4-35e8-4efe-96f4-532be2ed4ec8",
+    "productId": "af810666-8b2a-45ec-a52b-861d74cebf42",
+    "name": "LG",
+    "watchStockAlert": 10,
+    "criticalStockAlert": 5,
+    "createdAt": "2026-04-30T20:43:23.508Z"
   }
 ]

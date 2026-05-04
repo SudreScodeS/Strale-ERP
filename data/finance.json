@@ -1,13 +1,5 @@
 [
   {
-    "id": "f03d6e26-bc6a-4094-a98e-4e28655718bc",
-    "type": "sale",
-    "amount": 162,
-    "description": "Pedido: Microsoft",
-    "date": "2026-04-29T11:02:44.439Z",
-    "orderId": "1"
-  },
-  {
     "id": "0f38e89f-a799-4516-b5ee-9f07f064aeac",
     "type": "sale",
     "amount": 174,
@@ -30,5 +22,21 @@
     "description": "Nylon 100x",
     "date": "2026-04-28T00:00:00.000Z",
     "orderId": "po-1777466512598-ce840592"
+  },
+  {
+    "id": "9e4a2f5d-19a5-4e38-afa9-ed579895a066",
+    "type": "sale",
+    "amount": 162,
+    "description": "Pedido: Microsoft",
+    "date": "2026-04-30T20:36:44.460Z",
+    "orderId": "1"
+  },
+  {
+    "id": "1d36a148-ebd3-4d0f-b878-e3877814757c",
+    "type": "sale",
+    "amount": 39.6,
+    "description": "Pedido: Vovozy",
+    "date": "2026-04-30T20:41:37.259Z",
+    "orderId": "4"
   }
 ]

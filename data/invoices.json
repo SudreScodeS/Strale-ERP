@@ -125,5 +125,36 @@
       "issuedAt": "2026-04-29T12:35:43.099Z"
     },
     "createdAt": "2026-04-29T12:35:43.099Z"
+  },
+  {
+    "id": "2ec8ced7-3612-4987-a464-259ab4997d48",
+    "orderId": "4",
+    "number": "NF-1777581697289",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-small",
+              "groupId": "group-size",
+              "quantity": 1
+            }
+          ],
+          "quantity": 1,
+          "unitCost": 23,
+          "unitPrice": 27.6
+        }
+      ],
+      "totalPrice": 39.6,
+      "issuedAt": "2026-04-30T20:41:37.289Z"
+    },
+    "createdAt": "2026-04-30T20:41:37.289Z"
   }
 ]
