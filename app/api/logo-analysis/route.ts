@@ -1,6 +1,7 @@
 // app/api/logo-analysis/route.ts
-// API endpoint para análise real de logo
-// Google Cloud Vision (se configurado) → análise local com sharp (fallback automático)
+// API endpoint para análise inteligente de imagem
+// Separa automaticamente: cor do PRODUTO vs cores da LOGO
+// Retorna dados completos para geração de prévia visual
 
 import { NextResponse } from 'next/server';
 import { analyzeLogoImage, validateImage } from '../../lib/vision';
@@ -14,37 +15,36 @@ export async function POST(request: Request) {
     const file = formData.get('logo') as File | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'Nenhum arquivo de imagem enviado.' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Nenhum arquivo de imagem enviado.' }, { status: 400 });
     }
 
     const validation = validateImage(file);
     if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     const analysis = await analyzeLogoImage(file);
 
     if (!analysis.safeSearch.safe) {
       return NextResponse.json(
-        {
-          error: `Imagem rejeitada: ${analysis.safeSearch.issues.join(', ')}. Envie uma imagem apropriada.`,
-        },
+        { error: `Imagem rejeitada: ${analysis.safeSearch.issues.join(', ')}. Envie uma imagem apropriada.` },
         { status: 422 },
       );
     }
 
     return NextResponse.json({
+      // Cores da LOGO (elementos gráficos, texto)
       colors: analysis.significantColorCount,
       colorDetails: analysis.colors.slice(0, 8),
+
+      // Cor do PRODUTO (sacola, camiseta, etc)
+      productColor: analysis.productColorHex,
+      productColorRgb: analysis.productColorRgb,
+
+      // Metadados
       complexity: analysis.complexity,
       description: analysis.description,
-      source: analysis.source, // 'google-vision' ou 'local'
+      source: analysis.source,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno na análise de logo.';

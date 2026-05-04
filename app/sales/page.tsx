@@ -58,6 +58,8 @@ export default function SalesPage() {
   const [logoAnalysisResult, setLogoAnalysisResult] = useState<{
     colors: number;
     colorDetails: { hex: string; rgb: { r: number; g: number; b: number }; score: number; pixelFraction: number }[];
+    productColor: string | null;      // Cor do produto detectada (ex: cor da sacola)
+    productColorRgb: { r: number; g: number; b: number } | null;
     complexity: string;
     description: string;
     source?: string;
@@ -698,16 +700,43 @@ export default function SalesPage() {
               </div>
             ) : logoAnalysisResult ? (
               <div className="mt-3 space-y-2">
+                {/* Resumo da análise */}
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
                   <p className="text-sm font-semibold text-emerald-800">
-                    ✓ {logoColors} {logoColors === 1 ? 'cor da logo' : 'cores da logo'} detectada{logoColors === 1 ? '' : 's'} (fundo ignorado)
+                    ✓ Análise inteligente concluída
                   </p>
                   <p className="mt-1 text-xs text-emerald-700">{logoAnalysisResult.description}</p>
-                  <p className="mt-1 text-xs text-emerald-700">Complexidade: {logoAnalysisResult.complexity}</p>
                   <p className="mt-1 text-xs text-emerald-600">
-                    {logoAnalysisResult.source === 'google-vision' ? '🔍 Google Cloud Vision AI' : '🎨 Análise local (sharp)'}
+                    {logoAnalysisResult.source === 'google-vision' ? '🔍 Google Cloud Vision AI' : '🎨 Análise local com separação espacial'}
                   </p>
                 </div>
+
+                {/* Cor do produto detectada */}
+                {logoAnalysisResult.productColor ? (
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-blue-800">🎨 Cor do produto detectada:</span>
+                      <span
+                        className="inline-block h-5 w-5 rounded-full border-2 border-white shadow"
+                        style={{ backgroundColor: logoAnalysisResult.productColor }}
+                      />
+                      <span className="font-mono text-xs text-blue-700">{logoAnalysisResult.productColor}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-blue-600">Esta cor será trocada pela variável selecionada na prévia</p>
+                  </div>
+                ) : null}
+
+                {/* Cores da logo */}
+                {logoColors > 0 ? (
+                  <div className="rounded-2xl border border-purple-200 bg-purple-50 p-3">
+                    <p className="text-sm font-semibold text-purple-800">
+                      🏷️ {logoColors} {logoColors === 1 ? 'cor da logo' : 'cores da logo'} detectada{logoColors === 1 ? '' : 's'}
+                    </p>
+                    <p className="text-xs text-purple-600">Estas cores serão mantidas na prévia (elementos gráficos/texto)</p>
+                  </div>
+                ) : null}
+
+                {/* Swatches de cores da logo */}
                 {logoAnalysisResult.colorDetails.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {logoAnalysisResult.colorDetails.map((color, i) => (
@@ -814,21 +843,27 @@ export default function SalesPage() {
               />
               <div className="mt-3 space-y-1">
                 {selectedMaterialName ? (
-                  <p className="text-xs text-slate-500">Material: {selectedMaterialName}</p>
+                  <p className="text-xs text-slate-500">📦 Material: {selectedMaterialName}</p>
                 ) : null}
                 {selectedColorHex ? (
                   <p className="text-xs text-slate-500">
-                    Cor: <span className="inline-block h-3 w-3 rounded-full border border-slate-300 align-middle" style={{ backgroundColor: selectedColorHex }} />
+                    🎨 Cor aplicada: <span className="inline-block h-3 w-3 rounded-full border border-slate-300 align-middle" style={{ backgroundColor: selectedColorHex }} />
+                    {' '}na imagem do produto
+                  </p>
+                ) : null}
+                {logoAnalysisResult?.productColor && !selectedColorHex ? (
+                  <p className="text-xs text-amber-600">
+                    ⚠️ Selecione uma variável de cor para trocar a cor do produto na prévia
                   </p>
                 ) : null}
                 {logoDataUrl ? (
-                  <p className="text-xs text-emerald-600">✓ Logo aplicada na prévia</p>
+                  <p className="text-xs text-emerald-600">🏷️ Logo posicionada sobre o produto</p>
                 ) : (
-                  <p className="text-xs text-slate-400">Envie uma logo para ver a composição</p>
+                  <p className="text-xs text-slate-400">Envie uma logo para ver a composição completa</p>
                 )}
               </div>
               <p className="mt-2 text-[10px] text-slate-400">
-                A prévia é atualizada automaticamente ao mudar produto, variáveis ou logo.
+                Prévia atualiza automaticamente: cor do produto + logo posicionada.
               </p>
             </div>
           </div>

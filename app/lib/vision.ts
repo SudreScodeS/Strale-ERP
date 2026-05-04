@@ -1,9 +1,9 @@
 // app/lib/vision.ts
-// Serviço de análise de logo com Google Cloud Vision + fallback local real
-// Prioridade: Vision API (se configurada) → análise local com sharp (sempre funciona)
-// Zero config necessário para funcionar — a análise local é real, não simulada
+// Serviço de análise de imagem com separação PRODUTO vs LOGO
+// Google Cloud Vision (se configurado) → análise local com sharp (fallback automático)
+// CORRIGIDO: agora retorna cores do produto E cores da logo separadamente
 
-import { analyzeColorsLocally, LocalColorInfo } from './color-analyzer';
+import { analyzeColorsLocally, analyzeImageComposition, LocalColorInfo } from './color-analyzer';
 
 export interface VisionColorInfo {
   hex: string;
@@ -13,62 +13,54 @@ export interface VisionColorInfo {
 }
 
 export interface VisionAnalysisResult {
+  // Cores da LOGO (elementos gráficos, texto)
   colors: VisionColorInfo[];
   significantColorCount: number;
+
+  // Cor do PRODUTO (sacola, camiseta, etc)
+  productColorHex: string | null;
+  productColorRgb: { r: number; g: number; b: number } | null;
+
   complexity: 'simple' | 'moderate' | 'complex';
   description: string;
   safeSearch: {
     safe: boolean;
     issues: string[];
   };
-  source: 'google-vision' | 'local'; // Indica qual método foi usado
+  source: 'google-vision' | 'local';
 }
 
 // Limites de validação de imagem
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff'];
 
-// Limiar para considerar uma cor "significativa" na contagem
-const SIGNIFICANT_COLOR_THRESHOLD = 0.03; // 3% dos pixels
+const SIGNIFICANT_COLOR_THRESHOLD = 0.03;
 
 export function validateImage(file: File): { valid: boolean; error?: string } {
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    return {
-      valid: false,
-      error: `Formato não suportado: ${file.type}. Use PNG, JPEG, WebP, GIF, BMP ou TIFF.`,
-    };
+    return { valid: false, error: `Formato não suportado: ${file.type}. Use PNG, JPEG, WebP, GIF, BMP ou TIFF.` };
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    return {
-      valid: false,
-      error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo: 10MB.`,
-    };
+    return { valid: false, error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo: 10MB.` };
   }
   return { valid: true };
 }
 
-// Converte File para base64 puro (sem prefixo data:)
 async function fileToBase64(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  return buffer.toString('base64');
+  return Buffer.from(arrayBuffer).toString('base64');
 }
 
-// Converte File para Buffer (para análise local)
 async function fileToBuffer(file: File): Promise<Buffer> {
   const arrayBuffer = await file.arrayBuffer();
   return Buffer.from(arrayBuffer);
 }
 
 // ============================================================
-// MÉTODO 1: Autenticação via API Key
+// Google Cloud Vision (método API Key)
 // ============================================================
-async function analyzeWithApiKey(
-  base64Image: string,
-  apiKey: string,
-): Promise<VisionAnalysisResult> {
+async function analyzeWithApiKey(base64Image: string, apiKey: string): Promise<VisionAnalysisResult> {
   const endpoint = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-
   const requestBody = {
     requests: [
       {
@@ -88,125 +80,67 @@ async function analyzeWithApiKey(
     body: JSON.stringify(requestBody),
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Vision API erro (${response.status}): ${errorBody}`);
-  }
-
-  const data = await response.json();
-  return parseVisionResponse(data);
+  if (!response.ok) throw new Error(`Vision API erro (${response.status}): ${await response.text()}`);
+  return parseVisionResponse(await response.json());
 }
 
 // ============================================================
-// MÉTODO 2: Autenticação via Service Account
+// Google Cloud Vision (método Service Account)
 // ============================================================
 async function getServiceAccountAccessToken(): Promise<string> {
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (!credentialsPath) {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS não configurado.');
-  }
+  if (!credentialsPath) throw new Error('GOOGLE_APPLICATION_CREDENTIALS não configurado.');
 
   const fs = await import('fs');
-  const credentialsRaw = fs.readFileSync(credentialsPath, 'utf-8');
-  const credentials = JSON.parse(credentialsRaw);
-
+  const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf-8'));
   const now = Math.floor(Date.now() / 1000);
-  const expiry = now + 3600;
 
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const payload = {
+  const encodedHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const encodedPayload = Buffer.from(JSON.stringify({
     iss: credentials.client_email,
     scope: 'https://www.googleapis.com/auth/cloud-vision',
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
-    exp: expiry,
-  };
-
-  const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
-  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    exp: now + 3600,
+  })).toString('base64url');
 
   const crypto = await import('crypto');
   const sign = crypto.createSign('RSA-SHA256');
-  sign.update(signatureInput);
+  sign.update(`${encodedHeader}.${encodedPayload}`);
   sign.end();
   const signature = sign.sign(credentials.private_key, 'base64url');
-
-  const jwt = `${signatureInput}.${signature}`;
 
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${encodedHeader}.${encodedPayload}.${signature}`,
   });
 
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text();
-    throw new Error(`Falha ao obter access token: ${errorText}`);
-  }
-
-  const tokenData = await tokenResponse.json();
-  return tokenData.access_token;
+  if (!tokenResponse.ok) throw new Error(`Falha ao obter access token: ${await tokenResponse.text()}`);
+  return (await tokenResponse.json()).access_token;
 }
 
-async function analyzeWithServiceAccount(
-  base64Image: string,
-): Promise<VisionAnalysisResult> {
+async function analyzeWithServiceAccount(base64Image: string): Promise<VisionAnalysisResult> {
   const accessToken = await getServiceAccountAccessToken();
-
-  const endpoint = 'https://vision.googleapis.com/v1/images:annotate';
-
-  const requestBody = {
-    requests: [
-      {
-        image: { content: base64Image },
-        features: [
-          { type: 'IMAGE_PROPERTIES', maxResults: 1 },
-          { type: 'LABEL_DETECTION', maxResults: 5 },
-          { type: 'SAFE_SEARCH_DETECTION' },
-        ],
-      },
-    ],
-  };
-
-  const response = await fetch(endpoint, {
+  const response = await fetch('https://vision.googleapis.com/v1/images:annotate', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(requestBody),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({
+      requests: [{ image: { content: base64Image }, features: [{ type: 'IMAGE_PROPERTIES', maxResults: 1 }, { type: 'LABEL_DETECTION', maxResults: 5 }, { type: 'SAFE_SEARCH_DETECTION' }] }],
+    }),
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Vision API erro (${response.status}): ${errorBody}`);
-  }
-
-  const data = await response.json();
-  return parseVisionResponse(data);
+  if (!response.ok) throw new Error(`Vision API erro (${response.status}): ${await response.text()}`);
+  return parseVisionResponse(await response.json());
 }
 
-// ============================================================
-// Parse da resposta da Vision API
-// ============================================================
 function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResult {
   const responses = (data.responses || []) as Record<string, unknown>[];
-  if (responses.length === 0) {
-    throw new Error('Vision API retornou resposta vazia.');
-  }
-
+  if (responses.length === 0) throw new Error('Vision API retornou resposta vazia.');
   const response = responses[0];
 
-  // Extrair cores dominantes
   const imageProps = response.imagePropertiesAnnotation as Record<string, unknown> | undefined;
-  const dominantColors = (imageProps?.dominantColors as Record<string, unknown>)?.colors as
-    | Array<{
-        color: { red: number; green: number; blue: number };
-        score: number;
-        pixelFraction: number;
-      }>
-    | undefined;
+  const dominantColors = (imageProps?.dominantColors as Record<string, unknown>)?.colors as Array<{ color: { red: number; green: number; blue: number }; score: number; pixelFraction: number }> | undefined;
 
   const colors: VisionColorInfo[] = (dominantColors || []).map((entry) => {
     const r = Math.round(entry.color.red || 0);
@@ -220,10 +154,7 @@ function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResul
     };
   });
 
-  const significantColorCount = Math.max(
-    1,
-    colors.filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD).length,
-  );
+  const significantColorCount = Math.max(1, colors.filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD).length);
 
   const labelAnnotations = response.labelAnnotations as Array<{ description: string; score: number }> | undefined;
   const topLabels = (labelAnnotations || []).slice(0, 3).map((l) => l.description);
@@ -236,45 +167,51 @@ function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResul
   const safeSearch = response.safeSearchAnnotation as Record<string, string> | undefined;
   const issues: string[] = [];
   const dangerLevels = ['LIKELY', 'VERY_LIKELY'];
-
   if (dangerLevels.includes(safeSearch?.adult || '')) issues.push('conteúdo adulto');
   if (dangerLevels.includes(safeSearch?.violence || '')) issues.push('violência');
   if (dangerLevels.includes(safeSearch?.racy || '')) issues.push('conteúdo sugestivo');
-  if (dangerLevels.includes(safeSearch?.spoof || '')) issues.push('falsificação');
-  if (dangerLevels.includes(safeSearch?.medical || '')) issues.push('conteúdo médico');
 
   return {
     colors,
     significantColorCount,
+    productColorHex: null, // Google Vision não separa produto/Logo
+    productColorRgb: null,
     complexity,
     description,
-    safeSearch: {
-      safe: issues.length === 0,
-      issues,
-    },
+    safeSearch: { safe: issues.length === 0, issues },
     source: 'google-vision',
   };
 }
 
 // ============================================================
-// Análise local (fallback real, sem API key)
+// Análise LOCAL (sharp) — agora com separação PRODUTO vs LOGO
 // ============================================================
 async function analyzeLocally(file: File): Promise<VisionAnalysisResult> {
   const buffer = await fileToBuffer(file);
-  const localResult = await analyzeColorsLocally(buffer);
 
-  const colors: VisionColorInfo[] = localResult.colors.map((c) => ({
+  // Usa a nova análise espacial que separa produto de logo
+  const composition = await analyzeImageComposition(buffer);
+
+  const colors: VisionColorInfo[] = composition.logoColors.map((c) => ({
     hex: c.hex,
     rgb: c.rgb,
     score: c.pixelFraction,
     pixelFraction: c.pixelFraction,
   }));
 
+  // Se não encontrou cores de logo, usa cores gerais como fallback
+  const effectiveColors = colors.length > 0 ? colors : composition.allClusters
+    .filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD)
+    .slice(0, 8)
+    .map((c) => ({ hex: c.hex, rgb: c.rgb, score: c.pixelFraction, pixelFraction: c.pixelFraction }));
+
   return {
-    colors,
-    significantColorCount: localResult.significantColorCount,
-    complexity: localResult.complexity,
-    description: localResult.description,
+    colors: effectiveColors,
+    significantColorCount: composition.logoColorCount || effectiveColors.length,
+    productColorHex: composition.productColorHex,
+    productColorRgb: composition.productColor?.rgb || null,
+    complexity: composition.complexity,
+    description: composition.description,
     safeSearch: { safe: true, issues: [] },
     source: 'local',
   };
@@ -285,34 +222,25 @@ async function analyzeLocally(file: File): Promise<VisionAnalysisResult> {
 // ============================================================
 export async function analyzeLogoImage(file: File): Promise<VisionAnalysisResult> {
   const validation = validateImage(file);
-  if (!validation.valid) {
-    throw new Error(validation.error);
-  }
+  if (!validation.valid) throw new Error(validation.error);
 
   const base64Image = await fileToBase64(file);
-
-  // Tenta Google Cloud Vision primeiro (se configurado)
   const apiKey = process.env.GOOGLE_VISION_API_KEY;
   const hasServiceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   if (apiKey) {
-    try {
-      return await analyzeWithApiKey(base64Image, apiKey);
-    } catch (error) {
-      console.warn('[Vision API] Falha com API Key, usando análise local:', error);
+    try { return await analyzeWithApiKey(base64Image, apiKey); } catch (e) {
+      console.warn('[Vision API] Falha com API Key, usando análise local:', e);
       return analyzeLocally(file);
     }
   }
 
   if (hasServiceAccount) {
-    try {
-      return await analyzeWithServiceAccount(base64Image);
-    } catch (error) {
-      console.warn('[Vision API] Falha com Service Account, usando análise local:', error);
+    try { return await analyzeWithServiceAccount(base64Image); } catch (e) {
+      console.warn('[Vision API] Falha com Service Account, usando análise local:', e);
       return analyzeLocally(file);
     }
   }
 
-  // Sem credenciais → usa análise local real
   return analyzeLocally(file);
 }

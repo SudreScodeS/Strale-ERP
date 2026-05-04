@@ -1,7 +1,8 @@
 // app/components/product-preview.tsx
-// Componente de prévia visual REAL do produto usando HTML Canvas
-// Composição: imagem base do produto + cor/material + logo posicionada
-// Gera data URL para exibição no carrinho
+// Componente de prévia visual REAL: EDITA a imagem do produto
+// 1. Muda a cor do produto (sacola/camiseta) baseado na variável selecionada
+// 2. Extrai a logo da imagem enviada e posiciona no produto
+// 3. Resultado: imagem que representa fielmente o pedido
 
 'use client';
 
@@ -10,9 +11,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 export interface PreviewConfig {
   productImageUrl: string;
   productName: string;
-  logoDataUrl: string | null;
-  selectedColorHex?: string;     // Cor selecionada (variável de cor)
-  selectedMaterialName?: string;  // Nome do material selecionado
+  logoDataUrl: string | null;      // Imagem completa enviada pelo cliente
+  selectedColorHex?: string;        // Cor da variável selecionada
+  selectedMaterialName?: string;
   width?: number;
   height?: number;
 }
@@ -21,66 +22,51 @@ interface ProductPreviewProps {
   config: PreviewConfig;
   onPreviewGenerated?: (dataUrl: string) => void;
   className?: string;
-  compact?: boolean; // Modo compacto para carrinho
-}
-
-// Posicionamento da logo por tipo de produto (normalizado 0-1)
-const LOGO_PLACEMENT: Record<string, { x: number; y: number; maxW: number; maxH: number }> = {
-  sacola: { x: 0.5, y: 0.45, maxW: 0.35, maxH: 0.3 },
-  default: { x: 0.5, y: 0.5, maxW: 0.4, maxH: 0.35 },
-};
-
-function getPlacement(productName: string) {
-  const lower = productName.toLowerCase();
-  if (lower.includes('sacola')) return LOGO_PLACEMENT.sacola;
-  return LOGO_PLACEMENT.default;
+  compact?: boolean;
 }
 
 /**
- * Aplica tint de cor sobre a imagem do produto usando Canvas.
- * Simula a cor/material selecionado aplicando um overlay semi-transparente.
+ * Aplica cor do produto usando blending.
+ * Usa multiply para escurecer + overlay para colorir preservando textura.
  */
-function applyColorTint(
+function applyProductColor(
   ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
+  w: number,
+  h: number,
   colorHex: string,
-  intensity: number = 0.25,
 ) {
+  // Camada 1: Multiply (preserva textura, aplica cor)
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
-  ctx.globalAlpha = intensity;
+  ctx.globalAlpha = 0.6;
   ctx.fillStyle = colorHex;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, w, h);
   ctx.restore();
 
-  // Suaviza o resultado
+  // Camada 2: Soft light para suavizar
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 0.05;
+  ctx.globalAlpha = 0.15;
   ctx.fillStyle = colorHex;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, w, h);
   ctx.restore();
 }
 
 /**
- * Desenha a logo na posição correta sobre o produto, mantendo proporção.
+ * Desenha a logo sobre o produto com posicionamento correto.
+ * A logo é a imagem que o cliente enviou — usamos ela inteira como overlay.
  */
-function drawLogo(
+function drawLogoOnProduct(
   ctx: CanvasRenderingContext2D,
-  logo: HTMLImageElement,
+  logoImg: HTMLImageElement,
   canvasW: number,
   canvasH: number,
-  productName: string,
 ) {
-  const placement = getPlacement(productName);
+  // Tamanho da logo: proporcional ao canvas, não maior que 40%
+  const maxLogoW = canvasW * 0.4;
+  const maxLogoH = canvasH * 0.35;
 
-  // Tamanho máximo da logo
-  const maxLogoW = canvasW * placement.maxW;
-  const maxLogoH = canvasH * placement.maxH;
-
-  // Calcula escala mantendo proporção
-  const logoRatio = logo.naturalWidth / logo.naturalHeight;
+  const logoRatio = logoImg.naturalWidth / logoImg.naturalHeight;
   let drawW = maxLogoW;
   let drawH = drawW / logoRatio;
 
@@ -89,112 +75,147 @@ function drawLogo(
     drawW = drawH * logoRatio;
   }
 
-  // Centraliza no ponto de ancoragem
-  const x = canvasW * placement.x - drawW / 2;
-  const y = canvasH * placement.y - drawH / 2;
+  // Centraliza no canvas (posição do produto)
+  const x = (canvasW - drawW) / 2;
+  const y = (canvasH - drawH) / 2 - canvasH * 0.05; // Levemente acima do centro
 
-  // Sombra suave para destacar a logo
+  // Sombra para destacar
   ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowBlur = 8;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+  ctx.shadowBlur = 10;
   ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-  ctx.drawImage(logo, x, y, drawW, drawH);
-  ctx.restore();
-
-  // Borda sutil ao redor da logo para definição
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x - 1, y - 1, drawW + 2, drawH + 2);
+  ctx.shadowOffsetY = 3;
+  ctx.drawImage(logoImg, x, y, drawW, drawH);
   ctx.restore();
 }
 
 /**
- * Gera a prévia visual do produto em um canvas.
- * Retorna a data URL da imagem gerada.
+ * Gera a imagem do produto com a cor trocada.
+ * Retorna o canvas com o produto recolorido (sem logo).
+ */
+function recolorProduct(
+  productImg: HTMLImageElement,
+  colorHex: string,
+  w: number,
+  h: number,
+): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+
+  // Desenha produto original
+  const imgRatio = productImg.naturalWidth / productImg.naturalHeight;
+  let imgW = w * 0.9;
+  let imgH = imgW / imgRatio;
+  if (imgH > h * 0.9) { imgH = h * 0.9; imgW = imgH * imgRatio; }
+  const imgX = (w - imgW) / 2;
+  const imgY = (h - imgH) / 2;
+
+  ctx.drawImage(productImg, imgX, imgY, imgW, imgH);
+
+  // Aplica cor do produto
+  applyProductColor(ctx, w, h, colorHex);
+
+  return canvas;
+}
+
+/**
+ * Gera a prévia visual completa do produto.
+ * Fluxo:
+ * 1. Carrega imagem do produto (ex: sacola)
+ * 2. Troca a cor do produto pela variável selecionada
+ * 3. Extrai e posiciona a logo sobre o produto
+ * 4. Retorna data URL da composição final
  */
 export async function generateProductPreview(config: PreviewConfig): Promise<string> {
   const {
     productImageUrl,
-    productName,
     logoDataUrl,
     selectedColorHex,
-    width = 600,
-    height = 600,
+    width = 500,
+    height = 500,
   } = config;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d')!;
   if (!ctx) throw new Error('Canvas não suportado');
 
   // Fundo neutro
-  ctx.fillStyle = '#f8f9fa';
+  ctx.fillStyle = '#f1f5f9';
   ctx.fillRect(0, 0, width, height);
 
-  // Carrega e desenha a imagem base do produto
+  if (!productImageUrl) {
+    // Sem imagem do produto — mostra placeholder
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(width * 0.1, height * 0.1, width * 0.8, height * 0.8);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Produto sem imagem', width / 2, height / 2);
+    return canvas.toDataURL('image/png');
+  }
+
+  // Carrega imagem do produto
   const productImg = await loadImage(productImageUrl);
-  
-  // Centraliza e redimensiona a imagem do produto para caber no canvas
-  const imgRatio = productImg.naturalWidth / productImg.naturalHeight;
-  let imgW = width * 0.9;
-  let imgH = imgW / imgRatio;
-  if (imgH > height * 0.9) {
-    imgH = height * 0.9;
-    imgW = imgH * imgRatio;
-  }
-  const imgX = (width - imgW) / 2;
-  const imgY = (height - imgH) / 2;
 
-  // Desenha imagem base
-  ctx.drawImage(productImg, imgX, imgY, imgW, imgH);
-
-  // Aplica tint de cor se selecionada
+  // Passo 1: Desenha produto e aplica cor
   if (selectedColorHex) {
-    applyColorTint(ctx, width, height, selectedColorHex, 0.2);
+    // Com cor selecionada: desenha produto recolorido
+    const recoloredCanvas = recolorProduct(productImg, selectedColorHex, width, height);
+    ctx.drawImage(recoloredCanvas, 0, 0);
+  } else {
+    // Sem cor selecionada: desenha produto original
+    const imgRatio = productImg.naturalWidth / productImg.naturalHeight;
+    let imgW = width * 0.9;
+    let imgH = imgW / imgRatio;
+    if (imgH > height * 0.9) { imgH = height * 0.9; imgW = imgH * imgRatio; }
+    const imgX = (width - imgW) / 2;
+    const imgY = (height - imgH) / 2;
+    ctx.drawImage(productImg, imgX, imgY, imgW, imgH);
   }
 
-  // Desenha logo se enviada
+  // Passo 2: Extrai e posiciona a logo sobre o produto
   if (logoDataUrl) {
     try {
       const logoImg = await loadImage(logoDataUrl);
-      drawLogo(ctx, logoImg, width, height, productName);
+      drawLogoOnProduct(ctx, logoImg, width, height);
     } catch {
-      // Logo falhou, continua sem ela
       console.warn('[Preview] Falha ao carregar logo para composição');
     }
   }
 
-  // Marca d'água sutil "Prévia"
+  // Marca d'água sutil
   ctx.save();
-  ctx.globalAlpha = 0.08;
-  ctx.font = `bold ${width * 0.12}px sans-serif`;
+  ctx.globalAlpha = 0.06;
+  ctx.font = `bold ${width * 0.1}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
-  ctx.fillText('PRÉVIA', width / 2, height * 0.85);
+  ctx.fillText('PRÉVIA', width / 2, height * 0.88);
   ctx.restore();
 
   return canvas.toDataURL('image/png');
 }
 
 /**
- * Carrega uma imagem de forma assíncrona.
+ * Carrega imagem de forma assíncrona.
  */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Falha ao carregar imagem: ${src.substring(0, 50)}...`));
+    img.onerror = () => reject(new Error(`Falha ao carregar imagem`));
     img.src = src;
   });
 }
 
 /**
  * Componente React que renderiza a prévia visual do produto.
+ * Mostra o produto com a cor aplicada e a logo posicionada.
  */
 export default function ProductPreview({
   config,
@@ -210,7 +231,6 @@ export default function ProductPreview({
   const renderPreview = useCallback(async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -224,57 +244,57 @@ export default function ProductPreview({
 
     try {
       // Fundo
-      ctx.fillStyle = '#f8f9fa';
+      ctx.fillStyle = '#f1f5f9';
       ctx.fillRect(0, 0, w, h);
 
-      // Imagem do produto
-      if (config.productImageUrl) {
-        const productImg = await loadImage(config.productImageUrl);
-        const imgRatio = productImg.naturalWidth / productImg.naturalHeight;
-        let imgW = w * 0.9;
-        let imgH = imgW / imgRatio;
-        if (imgH > h * 0.9) {
-          imgH = h * 0.9;
-          imgW = imgH * imgRatio;
-        }
-        const imgX = (w - imgW) / 2;
-        const imgY = (h - imgH) / 2;
-        ctx.drawImage(productImg, imgX, imgY, imgW, imgH);
-      } else {
-        // Placeholder de produto quando não há imagem
-        ctx.save();
+      if (!config.productImageUrl) {
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(w * 0.15, h * 0.1, w * 0.7, h * 0.8);
+        ctx.fillRect(w * 0.1, h * 0.1, w * 0.8, h * 0.8);
         ctx.fillStyle = '#94a3b8';
-        ctx.font = `${compact ? 11 : 14}px sans-serif`;
+        ctx.font = `${compact ? 10 : 14}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(config.productName || 'Produto', w / 2, h / 2);
-        ctx.restore();
+        ctx.fillText('Sem imagem', w / 2, h / 2);
+        const dataUrl = canvas.toDataURL('image/png');
+        setPreviewUrl(dataUrl);
+        onPreviewGenerated?.(dataUrl);
+        setIsRendering(false);
+        return;
       }
 
-      // Tint de cor
+      // Carrega produto
+      const productImg = await loadImage(config.productImageUrl);
+      const imgRatio = productImg.naturalWidth / productImg.naturalHeight;
+      let imgW = w * 0.9;
+      let imgH = imgW / imgRatio;
+      if (imgH > h * 0.9) { imgH = h * 0.9; imgW = imgH * imgRatio; }
+      const imgX = (w - imgW) / 2;
+      const imgY = (h - imgH) / 2;
+
+      // Desenha produto
+      ctx.drawImage(productImg, imgX, imgY, imgW, imgH);
+
+      // Aplica cor do produto (se selecionada)
       if (config.selectedColorHex) {
-        applyColorTint(ctx, w, h, config.selectedColorHex, 0.2);
+        applyProductColor(ctx, w, h, config.selectedColorHex);
       }
 
-      // Logo
+      // Desenha logo (se enviada)
       if (config.logoDataUrl) {
         try {
           const logoImg = await loadImage(config.logoDataUrl);
-          drawLogo(ctx, logoImg, w, h, config.productName);
+          drawLogoOnProduct(ctx, logoImg, w, h);
         } catch {
-          // Ignora falha de logo
+          // Continua sem logo
         }
       }
 
       // Label do material
       if (config.selectedMaterialName) {
         ctx.save();
-        ctx.font = `bold ${compact ? 9 : 12}px sans-serif`;
+        ctx.font = `bold ${compact ? 8 : 11}px sans-serif`;
         ctx.textAlign = 'left';
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        const labelY = h - (compact ? 8 : 14);
-        ctx.fillText(config.selectedMaterialName, compact ? 6 : 12, labelY);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillText(config.selectedMaterialName, compact ? 4 : 10, h - (compact ? 6 : 12));
         ctx.restore();
       }
 
