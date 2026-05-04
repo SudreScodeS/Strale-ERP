@@ -1,0 +1,325 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { PageHeader } from '../components/ui';
+import { ProtectedPage } from '../components/protected';
+import { getAuthHeaders } from '../lib/authClient';
+
+interface ConfigData {
+  profitMargin: number;
+  logoPricePerColor: number;
+  minStockAlert: number;
+  systemName: string;
+  companyName: string;
+}
+
+export default function AdminPage() {
+  const [config, setConfig] = useState<ConfigData>({
+    profitMargin: 20,
+    logoPricePerColor: 10,
+    minStockAlert: 5,
+    systemName: 'Simple ERP',
+    companyName: 'North Bag',
+  });
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+  const [saving, setSaving] = useState(false);
+
+  async function loadConfig() {
+    try {
+      const response = await fetch('/api/config', {
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (response.ok && data.config) {
+        setConfig(data.config);
+      } else {
+        setMessage(data.error || 'Erro ao carregar configurações.');
+        setMessageType('error');
+      }
+    } catch {
+      setMessage('Erro ao conectar com o servidor.');
+      setMessageType('error');
+    }
+  }
+
+  useEffect(() => {
+    void loadConfig();
+  }, []);
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/config', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(config),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Configurações salvas com sucesso! As alterações já estão ativas no sistema.');
+        setMessageType('success');
+        if (data.config) {
+          setConfig(data.config);
+        }
+      } else {
+        setMessage(data.error || 'Erro ao salvar configurações.');
+        setMessageType('error');
+      }
+    } catch {
+      setMessage('Erro ao conectar com o servidor.');
+      setMessageType('error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ProtectedPage allowedRoles={['admin']}>
+      <div>
+        <PageHeader
+          title="Administração"
+          description="Configure parâmetros globais do sistema. As alterações são aplicadas imediatamente e persistem no servidor."
+        />
+
+        {message ? (
+          <div
+            className="mb-6 rounded-2xl p-4 text-sm font-medium"
+            style={{
+              background: messageType === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)',
+              color: messageType === 'success' ? 'var(--success)' : 'var(--danger)',
+              border: `1px solid ${messageType === 'success' ? 'var(--success-border)' : 'var(--danger-border)'}`,
+            }}
+          >
+            {message}
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSave} className="space-y-8">
+          {/* Seção: Regras de Negócio */}
+          <section
+            className="rounded-2xl p-6 shadow-sm"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <div className="mb-6">
+              <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                💰 Regras de Negócio
+              </h3>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                Configure margens, preços e limites que afetam cálculos em todo o sistema.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Margem de Lucro (%)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  max={1000}
+                  step={0.5}
+                  value={config.profitMargin}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, profitMargin: Number(e.target.value) }))}
+                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                  Ex: 20 = custo + 20%. Atual: {config.profitMargin}%
+                </p>
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Preço por Cor na Logo (R$)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={config.logoPricePerColor}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, logoPricePerColor: Number(e.target.value) }))}
+                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                  Custo adicional por cor detectada na logo do cliente.
+                </p>
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Alerta de Estoque Mínimo
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  value={config.minStockAlert}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, minStockAlert: Number(e.target.value) }))}
+                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                  Alerta quando estoque ≤ este valor. Atual: {config.minStockAlert}
+                </p>
+              </label>
+            </div>
+          </section>
+
+          {/* Seção: Identidade */}
+          <section
+            className="rounded-2xl p-6 shadow-sm"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <div className="mb-6">
+              <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                🏢 Identidade do Sistema
+              </h3>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                Nome do sistema e da empresa exibidos na interface e relatórios.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Nome do Sistema
+                </span>
+                <input
+                  type="text"
+                  value={config.systemName}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, systemName: e.target.value }))}
+                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                  Exibido no sidebar e títulos das páginas.
+                </p>
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Nome da Empresa
+                </span>
+                <input
+                  type="text"
+                  value={config.companyName}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, companyName: e.target.value }))}
+                  className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                  Exibido nos cabeçalhos e notas fiscais.
+                </p>
+              </label>
+            </div>
+          </section>
+
+          {/* Preview dos efeitos */}
+          <section
+            className="rounded-2xl p-6 shadow-sm"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+              📊 Preview dos Efeitos
+            </h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Exemplo: Custo R$ 100</p>
+                <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                  → R$ {(100 + (100 * config.profitMargin) / 100).toFixed(2)}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>com {config.profitMargin}% margem</p>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Logo com 3 cores</p>
+                <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                  → R$ {(3 * config.logoPricePerColor).toFixed(2)}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{config.logoPricePerColor} × 3 cores</p>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Estoque alerta</p>
+                <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                  ≤ {config.minStockAlert}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>unidades dispara alerta</p>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Sistema</p>
+                <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {config.systemName}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{config.companyName}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Botão salvar */}
+          <div className="flex items-center gap-4">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex h-12 items-center justify-center rounded-xl px-8 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: 'var(--brand-blue)' }}
+            >
+              {saving ? (
+                <>
+                  <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Salvando…
+                </>
+              ) : (
+                'Salvar Configurações'
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadConfig()}
+              className="inline-flex h-12 items-center justify-center rounded-xl px-6 text-sm font-medium transition-colors"
+              style={{
+                background: 'var(--surface-muted)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              Restaurar padrão
+            </button>
+          </div>
+        </form>
+      </div>
+    </ProtectedPage>
+  );
+}

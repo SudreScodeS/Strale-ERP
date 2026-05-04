@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { userData } from '../../../../app/lib/data';
-import { hashPassword } from '../../../../app/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { userData } from '../../../lib/data';
+import { hashPassword } from '../../../lib/auth';
 
 export async function POST(request: Request) {
   const body = await request.json();

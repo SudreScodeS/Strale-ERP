@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
+import { globalConfig } from '../../config/global';
 
 // ==========================================
 // TIPOS
@@ -54,14 +55,11 @@ const SUGGESTIONS = [
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
 
-  // Formata markdown simples: **bold** e listas com •
   const formatContent = (text: string) => {
     return text
       .split('\n')
       .map((line, i) => {
-        // Bold
         let formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // Italic (underscores)
         formatted = formatted.replace(/_(.*?)_/g, '<em>$1</em>');
         return `<div key="${i}">${formatted}</div>`;
       })
@@ -71,21 +69,31 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div
-        className={`max-w-[80%] rounded-3xl px-5 py-4 text-sm leading-relaxed ${
+        className={`max-w-[80%] rounded-2xl px-5 py-4 text-sm leading-relaxed ${
           isUser
-            ? 'bg-blue-600 text-white rounded-br-lg'
-            : 'bg-white border border-slate-200 text-slate-800 shadow-sm rounded-bl-lg'
+            ? 'rounded-br-md'
+            : 'rounded-bl-md shadow-sm'
         }`}
+        style={
+          isUser
+            ? { background: 'var(--brand-blue)', color: '#ffffff' }
+            : { background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }
+        }
       >
         {isUser ? (
           <p>{message.content}</p>
         ) : (
           <div
-            className="space-y-1 [&_strong]:font-semibold [&_strong]:text-slate-900 [&_em]:italic [&_em]:text-slate-500"
-            dangerouslySetInnerHTML={{ __html: formatContent(message.content) }}
+            className="space-y-1 [&_strong]:font-semibold [&_em]:italic"
+            style={{ '--chat-strong': 'var(--text-primary)', '--chat-em': 'var(--text-muted)' } as React.CSSProperties}
+            dangerouslySetInnerHTML={{
+              __html: formatContent(message.content)
+                .replace(/<strong>/g, '<strong style="color:var(--text-primary)">')
+                .replace(/<em>/g, '<em style="color:var(--text-muted)">'),
+            }}
           />
         )}
-        <p className={`mt-2 text-[10px] ${isUser ? 'text-blue-200' : 'text-slate-400'}`}>
+        <p className={`mt-2 text-[10px] ${isUser ? 'opacity-60' : ''}`} style={isUser ? {} : { color: 'var(--text-faint)' }}>
           {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -101,7 +109,22 @@ function SuggestionChips({ onSelect }: { onSelect: (query: string) => void }) {
         <button
           key={s.query}
           onClick={() => onSelect(s.query)}
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+          className="rounded-full px-4 py-2 text-xs font-medium transition-all hover:shadow-sm"
+          style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            color: 'var(--text-secondary)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--brand-blue)';
+            e.currentTarget.style.color = 'var(--brand-blue)';
+            e.currentTarget.style.background = 'var(--brand-blue-soft)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--card-border)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
+            e.currentTarget.style.background = 'var(--card-bg)';
+          }}
         >
           {s.label}
         </button>
@@ -216,22 +239,30 @@ export default function AssistantPage() {
       {/* CABEÇALHO */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-blue-700">ERP Modular</p>
-          <h2 className="text-3xl font-semibold text-slate-900">🤖 Assistente</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand-blue)' }}>
+            {globalConfig.systemName}
+          </p>
+          <h2 className="mt-1 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+            🤖 Assistente
+          </h2>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
             Pergunte sobre vendas, estoque, financeiro, fraudes ou previsão. Respostas com dados reais.
           </p>
         </div>
         <button
           onClick={handleClear}
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+          className="rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+          style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
         >
-          🧹 Limpar chat
+          🧹 Limpar
         </button>
       </div>
 
       {/* ÁREA DE MENSAGENS */}
-      <div className="flex-1 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-6">
+      <div
+        className="flex-1 overflow-y-auto rounded-2xl p-6"
+        style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}
+      >
         {messages.map((msg, i) => (
           <ChatBubble key={i} message={msg} />
         ))}
@@ -239,11 +270,14 @@ export default function AssistantPage() {
         {/* Indicador de digitação */}
         {isLoading && (
           <div className="mb-4 flex justify-start">
-            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: '0ms' }} />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: '150ms' }} />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: '300ms' }} />
+            <div
+              className="rounded-2xl px-5 py-4 shadow-sm"
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '0ms' }} />
+                <div className="h-2 w-2 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '150ms' }} />
+                <div className="h-2 w-2 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -269,12 +303,18 @@ export default function AssistantPage() {
           onKeyDown={handleKeyDown}
           placeholder="Digite sua pergunta... (ex: 'produto mais vendido')"
           disabled={isLoading}
-          className="flex-1 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
+          className="flex-1 rounded-xl px-5 py-3 text-sm transition-all disabled:opacity-50"
+          style={{
+            background: 'var(--input-bg)',
+            border: '1px solid var(--input-border)',
+            color: 'var(--text-primary)',
+          }}
         />
         <button
           onClick={() => handleSend()}
           disabled={isLoading || !input.trim()}
-          className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'var(--brand-blue)' }}
         >
           {isLoading ? '⏳' : 'Enviar'}
         </button>
