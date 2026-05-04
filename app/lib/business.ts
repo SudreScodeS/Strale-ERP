@@ -20,18 +20,29 @@ function getNextOrderId(): string {
 }
 
 // ==========================================
-// ANÁLISE DE LOGO (SERVIÇO EXTERNO SIMULADO)
+// ANÁLISE DE LOGO (VIA GOOGLE CLOUD VISION)
 // ==========================================
 
-// SIMULA ANÁLISE DE LOGO PARA PERSONALIZAÇÃO DE PRODUTOS
-// Atualmente simula análise baseada no tamanho do arquivo
-// FUTURO: Integrar com API real de visão computacional (ex: Google Vision, AWS Rekognition)
-// Recebe arquivo de imagem e retorna análise com quantidade de cores e custo
+// A análise real de logo é feita via API endpoint /api/logo-analysis
+// que utiliza Google Cloud Vision para detectar cores dominantes.
+// Esta função agora serve apenas como fallback/compatibilidade.
+// O fluxo principal: Frontend → /api/logo-analysis (POST com imagem) → Vision API → cores reais
+//
+// Para configurar a API:
+//   1. Crie um projeto no Google Cloud Console
+//   2. Ative a Cloud Vision API
+//   3. Crie uma API Key ou Service Account
+//   4. Configure no .env.local:
+//      GOOGLE_VISION_API_KEY=sua-chave-aqui
+//      ou
+//      GOOGLE_APPLICATION_CREDENTIALS=/caminho/para/service-account.json
+
 export async function analisarLogo(imageFile: { size: number } | null): Promise<LogoAnalysis> {
-  // Aqui podemos integrar API externa real no futuro.
-  // Exemplo: await fetch('https://api.logoservice.com/analyze', ...)
-  // Por enquanto, simula baseado no tamanho do arquivo (mais cores = arquivo maior)
-  const colors = imageFile ? Math.max(1, Math.min(5, imageFile.size % 6)) : 1;
+  // DEPRECATED: Esta função não deve mais ser usada diretamente.
+  // A análise real é feita via /api/logo-analysis endpoint.
+  // Mantida apenas para compatibilidade com código legado.
+  console.warn('[DEPRECATED] analisarLogo() chamada diretamente. Use /api/logo-analysis endpoint.');
+  const colors = imageFile ? Math.max(1, Math.min(5, Math.ceil(imageFile.size / 100000))) : 1;
   const cost = calculateLogoCost(colors);
   return { colors, cost };
 }

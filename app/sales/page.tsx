@@ -42,6 +42,14 @@ export default function SalesPage() {
   const [orderName, setOrderName] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('');
+  const [logoAnalysisResult, setLogoAnalysisResult] = useState<{
+    colors: number;
+    colorDetails: { hex: string; rgb: { r: number; g: number; b: number }; score: number; pixelFraction: number }[];
+    complexity: string;
+    description: string;
+  } | null>(null);
+  const [logoAnalyzing, setLogoAnalyzing] = useState(false);
+  const [logoAnalysisError, setLogoAnalysisError] = useState('');
   const [cartItems, setCartItems] = useState<
     {
       productId: string;
@@ -122,15 +130,52 @@ export default function SalesPage() {
   useEffect(() => {
     if (!logoFile) {
       setLogoPreviewUrl('');
+      setLogoAnalysisResult(null);
+      setLogoAnalysisError('');
       return;
     }
     const objectUrl = URL.createObjectURL(logoFile);
     setLogoPreviewUrl(objectUrl);
+
+    // Análise real via Google Cloud Vision
+    setLogoAnalyzing(true);
+    setLogoAnalysisError('');
+    setLogoAnalysisResult(null);
+
+    const analyzeLogo = async () => {
+      try {
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+
+        const response = await fetch('/api/logo-analysis', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setLogoAnalysisError(data.error || 'Falha na análise da logo.');
+          return;
+        }
+
+        setLogoAnalysisResult(data);
+      } catch {
+        setLogoAnalysisError('Erro ao conectar com o serviço de análise.');
+      } finally {
+        setLogoAnalyzing(false);
+      }
+    };
+
+    void analyzeLogo();
+
     return () => URL.revokeObjectURL(objectUrl);
   }, [logoFile]);
 
   const selectedProduct = inventory.find((product) => product.id === selectedProductId);
-  const logoColors = logoFile ? Math.max(1, Math.min(5, Math.ceil(logoFile.size / 100000))) : 1;
+  // Cores reais da análise Vision API (fallback = 1 se ainda não analisou)
+  const logoColors = logoAnalysisResult?.colors ?? 1;
   const logoCost = calculateLogoCost(logoColors);
 
   const selectedVariablesList = useMemo(() => {
@@ -539,14 +584,58 @@ export default function SalesPage() {
             <p className="font-semibold text-slate-900">Upload de logo</p>
             <input
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff"
               aria-label="Upload de logo"
-              onChange={(event) => setLogoFile(event.target.files?.[0] || null)}
+              onChange={(event) => {
+                const file = event.target.files?.[0] || null;
+                setLogoFile(file);
+              }}
               className="mt-3 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3"
             />
-            <p className="mt-3 text-sm text-slate-600">
-              A função <code>analisarLogo</code> simula detecção de cores para cálculo de preço. Cada cor custa R$ {globalConfig.logoPricePerColor}.
-            </p>
+            {logoAnalyzing ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-blue-600">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Analisando logo com Google Vision AI…
+              </div>
+            ) : logoAnalysisError ? (
+              <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {logoAnalysisError}
+              </div>
+            ) : logoAnalysisResult ? (
+              <div className="mt-3 space-y-2">
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-sm font-semibold text-emerald-800">
+                    ✓ Análise concluída — {logoColors} {logoColors === 1 ? 'cor dominante' : 'cores dominantes'} detectada{logoColors === 1 ? '' : 's'}
+                  </p>
+                  <p className="mt-1 text-xs text-emerald-700">{logoAnalysisResult.description}</p>
+                  <p className="mt-1 text-xs text-emerald-700">Complexidade: {logoAnalysisResult.complexity}</p>
+                </div>
+                {logoAnalysisResult.colorDetails.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {logoAnalysisResult.colorDetails.map((color, i) => (
+                      <div
+                        key={`${color.hex}-${i}`}
+                        className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs"
+                      >
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-slate-300"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="font-mono text-slate-600">{color.hex}</span>
+                        <span className="text-slate-400">{(color.pixelFraction * 100).toFixed(1)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-slate-600">
+                Envie uma imagem para análise automática de cores via Google Vision AI. Cada cor detectada custa R$ {globalConfig.logoPricePerColor}.
+              </p>
+            )}
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
@@ -596,7 +685,7 @@ export default function SalesPage() {
                 <span>R$ {cartItemsCost.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-slate-700">
-                <span>Custo da logo</span>
+                <span>Custo da logo ({logoColors} {logoColors === 1 ? 'cor' : 'cores'})</span>
                 <span>R$ {logoCost.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between font-semibold text-slate-900">
