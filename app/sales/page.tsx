@@ -47,6 +47,7 @@ export default function SalesPage() {
     colorDetails: { hex: string; rgb: { r: number; g: number; b: number }; score: number; pixelFraction: number }[];
     complexity: string;
     description: string;
+    source?: string;
   } | null>(null);
   const [logoAnalyzing, setLogoAnalyzing] = useState(false);
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
@@ -612,6 +613,9 @@ export default function SalesPage() {
                   </p>
                   <p className="mt-1 text-xs text-emerald-700">{logoAnalysisResult.description}</p>
                   <p className="mt-1 text-xs text-emerald-700">Complexidade: {logoAnalysisResult.complexity}</p>
+                  <p className="mt-1 text-xs text-emerald-600">
+                    {logoAnalysisResult.source === 'google-vision' ? '🔍 Google Cloud Vision AI' : '🎨 Análise local (sharp)'}
+                  </p>
                 </div>
                 {logoAnalysisResult.colorDetails.length > 0 ? (
                   <div className="flex flex-wrap gap-2">

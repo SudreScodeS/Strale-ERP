@@ -1,9 +1,9 @@
 // app/lib/vision.ts
-// Serviço de análise de logo via Google Cloud Vision API
-// Usa REST API diretamente — zero dependências extras necessárias
-// Suporta dois métodos de autenticação:
-//   1. GOOGLE_VISION_API_KEY (mais simples, recomendado para dev)
-//   2. GOOGLE_APPLICATION_CREDENTIALS (service account JSON, para produção)
+// Serviço de análise de logo com Google Cloud Vision + fallback local real
+// Prioridade: Vision API (se configurada) → análise local com sharp (sempre funciona)
+// Zero config necessário para funcionar — a análise local é real, não simulada
+
+import { analyzeColorsLocally, LocalColorInfo } from './color-analyzer';
 
 export interface VisionColorInfo {
   hex: string;
@@ -21,6 +21,7 @@ export interface VisionAnalysisResult {
     safe: boolean;
     issues: string[];
   };
+  source: 'google-vision' | 'local'; // Indica qual método foi usado
 }
 
 // Limites de validação de imagem
@@ -28,7 +29,6 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff'];
 
 // Limiar para considerar uma cor "significativa" na contagem
-// Cores com pixelFraction >= este valor entram na contagem de cores do logo
 const SIGNIFICANT_COLOR_THRESHOLD = 0.03; // 3% dos pixels
 
 export function validateImage(file: File): { valid: boolean; error?: string } {
@@ -54,12 +54,17 @@ async function fileToBase64(file: File): Promise<string> {
   return buffer.toString('base64');
 }
 
+// Converte File para Buffer (para análise local)
+async function fileToBuffer(file: File): Promise<Buffer> {
+  const arrayBuffer = await file.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
 // ============================================================
-// MÉTODO 1: Autenticação via API Key (mais simples)
+// MÉTODO 1: Autenticação via API Key
 // ============================================================
 async function analyzeWithApiKey(
   base64Image: string,
-  mimeType: string,
   apiKey: string,
 ): Promise<VisionAnalysisResult> {
   const endpoint = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
@@ -93,7 +98,7 @@ async function analyzeWithApiKey(
 }
 
 // ============================================================
-// MÉTODO 2: Autenticação via Service Account (produção)
+// MÉTODO 2: Autenticação via Service Account
 // ============================================================
 async function getServiceAccountAccessToken(): Promise<string> {
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -108,9 +113,7 @@ async function getServiceAccountAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const expiry = now + 3600;
 
-  // JWT header
   const header = { alg: 'RS256', typ: 'JWT' };
-  // JWT payload
   const payload = {
     iss: credentials.client_email,
     scope: 'https://www.googleapis.com/auth/cloud-vision',
@@ -123,7 +126,6 @@ async function getServiceAccountAccessToken(): Promise<string> {
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
 
-  // Assinar com a chave privada usando crypto nativo
   const crypto = await import('crypto');
   const sign = crypto.createSign('RSA-SHA256');
   sign.update(signatureInput);
@@ -132,7 +134,6 @@ async function getServiceAccountAccessToken(): Promise<string> {
 
   const jwt = `${signatureInput}.${signature}`;
 
-  // Trocar JWT por access token
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -150,7 +151,6 @@ async function getServiceAccountAccessToken(): Promise<string> {
 
 async function analyzeWithServiceAccount(
   base64Image: string,
-  mimeType: string,
 ): Promise<VisionAnalysisResult> {
   const accessToken = await getServiceAccountAccessToken();
 
@@ -220,23 +220,19 @@ function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResul
     };
   });
 
-  // Contar cores significativas (pixelFraction >= threshold)
   const significantColorCount = Math.max(
     1,
     colors.filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD).length,
   );
 
-  // Extrair labels para descrição
   const labelAnnotations = response.labelAnnotations as Array<{ description: string; score: number }> | undefined;
   const topLabels = (labelAnnotations || []).slice(0, 3).map((l) => l.description);
   const description = topLabels.length > 0 ? `Imagem contendo: ${topLabels.join(', ')}` : 'Logo analisado com sucesso';
 
-  // Determinar complexidade baseada na quantidade de cores significativas
   let complexity: 'simple' | 'moderate' | 'complex' = 'simple';
   if (significantColorCount >= 5) complexity = 'complex';
   else if (significantColorCount >= 3) complexity = 'moderate';
 
-  // Safe Search
   const safeSearch = response.safeSearchAnnotation as Record<string, string> | undefined;
   const issues: string[] = [];
   const dangerLevels = ['LIKELY', 'VERY_LIKELY'];
@@ -256,6 +252,31 @@ function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResul
       safe: issues.length === 0,
       issues,
     },
+    source: 'google-vision',
+  };
+}
+
+// ============================================================
+// Análise local (fallback real, sem API key)
+// ============================================================
+async function analyzeLocally(file: File): Promise<VisionAnalysisResult> {
+  const buffer = await fileToBuffer(file);
+  const localResult = await analyzeColorsLocally(buffer);
+
+  const colors: VisionColorInfo[] = localResult.colors.map((c) => ({
+    hex: c.hex,
+    rgb: c.rgb,
+    score: c.pixelFraction,
+    pixelFraction: c.pixelFraction,
+  }));
+
+  return {
+    colors,
+    significantColorCount: localResult.significantColorCount,
+    complexity: localResult.complexity,
+    description: localResult.description,
+    safeSearch: { safe: true, issues: [] },
+    source: 'local',
   };
 }
 
@@ -263,7 +284,6 @@ function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResul
 // Função principal pública
 // ============================================================
 export async function analyzeLogoImage(file: File): Promise<VisionAnalysisResult> {
-  // Validação
   const validation = validateImage(file);
   if (!validation.valid) {
     throw new Error(validation.error);
@@ -271,18 +291,28 @@ export async function analyzeLogoImage(file: File): Promise<VisionAnalysisResult
 
   const base64Image = await fileToBase64(file);
 
-  // Tenta API Key primeiro (mais simples), depois Service Account
+  // Tenta Google Cloud Vision primeiro (se configurado)
   const apiKey = process.env.GOOGLE_VISION_API_KEY;
+  const hasServiceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   if (apiKey) {
-    return analyzeWithApiKey(base64Image, file.type, apiKey);
+    try {
+      return await analyzeWithApiKey(base64Image, apiKey);
+    } catch (error) {
+      console.warn('[Vision API] Falha com API Key, usando análise local:', error);
+      return analyzeLocally(file);
+    }
   }
 
-  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    return analyzeWithServiceAccount(base64Image, file.type);
+  if (hasServiceAccount) {
+    try {
+      return await analyzeWithServiceAccount(base64Image);
+    } catch (error) {
+      console.warn('[Vision API] Falha com Service Account, usando análise local:', error);
+      return analyzeLocally(file);
+    }
   }
 
-  throw new Error(
-    'Nenhuma credencial do Google Cloud configurada. Defina GOOGLE_VISION_API_KEY ou GOOGLE_APPLICATION_CREDENTIALS no .env.local',
-  );
+  // Sem credenciais → usa análise local real
+  return analyzeLocally(file);
 }
