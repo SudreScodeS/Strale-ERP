@@ -53,6 +53,7 @@ export function Sidebar({ children }: SidebarProps) {
     { href: '/inventory', label: 'Estoque', roles: ['admin'] },
     { href: '/demand-forecast', label: 'Previsão', roles: ['admin'] },
     { href: '/fraud', label: 'Fraude', roles: ['admin'] },
+    { href: '/assistant', label: 'Assistente', roles: ['admin', 'seller'] },
     { href: '/users', label: 'Usuários', roles: ['admin'] },
     { href: '/sales', label: 'Pedidos', roles: ['admin', 'seller'] },
     { href: '/finance', label: 'Financeiro', roles: ['admin'] },
