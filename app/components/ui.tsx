@@ -51,6 +51,7 @@ export function Sidebar({ children }: SidebarProps) {
   const navItems = [
     { href: '/', label: 'Dashboard', roles: ['admin'] },
     { href: '/inventory', label: 'Estoque', roles: ['admin'] },
+    { href: '/demand-forecast', label: 'Previsão', roles: ['admin'] },
     { href: '/users', label: 'Usuários', roles: ['admin'] },
     { href: '/sales', label: 'Pedidos', roles: ['admin', 'seller'] },
     { href: '/finance', label: 'Financeiro', roles: ['admin'] },

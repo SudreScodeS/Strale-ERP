@@ -85,6 +85,48 @@ export default function Home() {
           />
         </div>
 
+        {/* TERCEIRA LINHA: ALERTAS DE PREVISÃO DE DEMANDA */}
+        {summary.demandForecast.criticalRiskCount > 0 || summary.demandForecast.watchRiskCount > 0 ? (
+          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            <MetricCard
+              title="Previsão — Risco alto"
+              value={`${summary.demandForecast.criticalRiskCount}`}
+              note="Itens que podem faltar em breve"
+            />
+            <MetricCard
+              title="Previsão — Atenção"
+              value={`${summary.demandForecast.watchRiskCount}`}
+              note="Itens em nível de alerta de demanda"
+            />
+            <MetricCard
+              title="Previsão — Excesso"
+              value={`${summary.demandForecast.overstockedCount}`}
+              note="Estoque acima da demanda estimada"
+            />
+          </div>
+        ) : null}
+
+        {/* ALERTAS RESUMIDOS DE PREVISÃO */}
+        {summary.demandForecast.topAlerts.length > 0 ? (
+          <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-amber-900">🔔 Alertas de Previsão de Demanda</h3>
+            <div className="mt-3 space-y-2">
+              {summary.demandForecast.topAlerts.map((alert, i) => (
+                <div key={i} className="rounded-2xl border border-amber-200 bg-white px-4 py-2 text-sm">
+                  <span className="font-semibold text-amber-800">{alert.variable}:</span>{' '}
+                  <span className="text-amber-700">{alert.message}</span>
+                </div>
+              ))}
+            </div>
+            <a
+              href="/demand-forecast"
+              className="mt-3 inline-block text-sm font-semibold text-amber-700 hover:text-amber-900 transition"
+            >
+              Ver análise completa →
+            </a>
+          </section>
+        ) : null}
+
         {/* SEÇÃO DE ÚLTIMOS PEDIDOS */}
         <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold text-slate-900">Últimos pedidos</h3>
@@ -132,7 +174,15 @@ summary (retornado por getDashboardSummary):
   profit: number,             // Lucro total (vendas - despesas)
   lowStockCount: number,      // Número de itens com estoque crítico
   watchStockCount: number,    // Número de itens em atenção
-  recentOrders: Order[]       // Últimos 5 pedidos por data
+  recentOrders: Order[],      // Últimos 5 pedidos por data
+  demandForecast: {           // Previsão de demanda
+    criticalRiskCount: number,    // Itens com risco alto de falta
+    watchRiskCount: number,       // Itens em atenção
+    overstockedCount: number,     // Itens com excesso de estoque
+    highDemandCount: number,      // Itens com alta demanda
+    topAlerts: Alert[],           // Alertas mais importantes
+    forecastAccuracy: string,     // Confiabilidade da análise
+  }
 }
 */
 

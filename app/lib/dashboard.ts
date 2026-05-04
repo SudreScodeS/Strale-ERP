@@ -4,6 +4,7 @@
 
 import { productData, variableData, orderData, userData } from './data';
 import { getFinanceSummary, getStockAlertsByLevel } from './business';
+import { getDemandForecastSummary } from './demand-forecast';
 
 export function getDashboardSummary() {
   const products = productData.getAll();
@@ -20,6 +21,9 @@ export function getDashboardSummary() {
       createdByName: users.find((user) => user.id === order.userId)?.username || order.userId,
     }));
 
+  // Previsão de demanda — resumo para o dashboard
+  const forecast = getDemandForecastSummary();
+
   return {
     productsCount: products.length,
     variablesCount: variables.length,
@@ -29,5 +33,17 @@ export function getDashboardSummary() {
     lowStockCount: stockAlerts.critical.length,
     watchStockCount: stockAlerts.watch.length,
     recentOrders,
+    // Dados de previsão de demanda
+    demandForecast: {
+      criticalRiskCount: forecast.criticalRisk.length,
+      watchRiskCount: forecast.watchRisk.length,
+      overstockedCount: forecast.overstocked.length,
+      highDemandCount: forecast.highDemand.length,
+      topAlerts: forecast.criticalRisk
+        .concat(forecast.watchRisk)
+        .flatMap((f) => f.alerts.map((alert) => ({ variable: f.variableName, message: alert })))
+        .slice(0, 5),
+      forecastAccuracy: forecast.forecastAccuracy,
+    },
   };
 }
