@@ -112,7 +112,7 @@ export default function AdminPage() {
           >
             <div className="mb-6">
               <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                💰 Regras de Negócio
+                Regras de Negocio
               </h3>
               <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
                 Configure margens, preços e limites que afetam cálculos em todo o sistema.
@@ -195,7 +195,7 @@ export default function AdminPage() {
           >
             <div className="mb-6">
               <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                🏢 Identidade do Sistema
+                Identidade do Sistema
               </h3>
               <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
                 Nome do sistema e da empresa exibidos na interface e relatórios.
@@ -251,7 +251,7 @@ export default function AdminPage() {
             style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
           >
             <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-              📊 Preview dos Efeitos
+              Preview dos Efeitos
             </h3>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>

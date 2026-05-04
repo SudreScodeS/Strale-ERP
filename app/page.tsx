@@ -1,191 +1,157 @@
-// app/page.tsx
-// Página principal do Dashboard Administrativo
-// Exibe visão geral completa do sistema ERP
-// Acesso restrito: apenas usuários com role 'admin'
-// Funcionalidade: Métricas principais + últimos pedidos
+'use client';
 
-import { getDashboardSummary } from './lib/dashboard';
+import { useEffect, useState } from 'react';
 import { MetricCard, PageHeader } from './components/ui';
 import { ProtectedPage } from './components/protected';
+import { getAuthHeaders } from './lib/authClient';
 
-// ==========================================
-// COMPONENTE DA PÁGINA PRINCIPAL
-// ==========================================
+interface DashboardOrder {
+  id: string;
+  name: string;
+  totalPrice: number;
+  status: string;
+  createdByName: string;
+  createdAt: string;
+}
 
-// DASHBOARD ADMINISTRATIVO PRINCIPAL
-// Página inicial após login de admin
-// Mostra KPIs principais e atividade recente
+interface DashboardSummary {
+  productsCount: number;
+  variablesCount: number;
+  ordersCount: number;
+  totalSales: number;
+  profit: number;
+  lowStockCount: number;
+  watchStockCount: number;
+  recentOrders: DashboardOrder[];
+}
+
 export default function Home() {
-  // Busca dados consolidados do dashboard
-  // Inclui contadores, totais financeiros, alertas de estoque
-  const summary = getDashboardSummary();
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+
+  useEffect(() => {
+    fetch('/api/dashboard', { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => setSummary(data.summary))
+      .catch(() => {});
+  }, []);
+
+  if (!summary) {
+    return (
+      <ProtectedPage allowedRoles={['admin']}>
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand-blue)]" />
+        </div>
+      </ProtectedPage>
+    );
+  }
+
+  const stockStatus = summary.lowStockCount > 0
+    ? { label: 'Atenção', color: 'var(--danger)' }
+    : summary.watchStockCount > 0
+    ? { label: 'Observar', color: 'var(--warning)' }
+    : { label: 'Normal', color: 'var(--success)' };
 
   return (
-    // PROTEÇÃO DE ACESSO: Apenas admins podem ver esta página
     <ProtectedPage allowedRoles={['admin']}>
       <div>
-        {/* CABEÇALHO DA PÁGINA */}
-        <PageHeader
-          title="Dashboard"
-          description="Visão geral dos módulos de estoque, vendas, finanças e notas fiscais."
-        />
+        <PageHeader title="Dashboard" description="Visao geral do negocio." />
 
-        {/* PRIMEIRA LINHA: MÉTRICAS DE ESTOQUE E VENDAS */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* CONTADOR DE PRODUTOS BASE */}
-          <MetricCard
-            title="Produtos"
-            value={`${summary.productsCount}`}
-            note="Produtos base cadastrados"
-          />
-
-          {/* CONTADOR DE VARIAÇÕES DE PRODUTO */}
-          <MetricCard
-            title="Variações"
-            value={`${summary.variablesCount}`}
-            note="Itens de configuração dinâmica"
-          />
-
-          {/* CONTADOR TOTAL DE PEDIDOS */}
-          <MetricCard
-            title="Pedidos"
-            value={`${summary.ordersCount}`}
-            note="Pedidos finalizados até agora"
-          />
+        {/* Metricas principais */}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard title="Produtos" value={String(summary.productsCount)} note={`${summary.variablesCount} variacoes`} />
+          <MetricCard title="Pedidos" value={String(summary.ordersCount)} note="total finalizados" />
+          <MetricCard title="Receita" value={`R$ ${summary.totalSales.toFixed(2)}`} note="vendas acumuladas" />
+          <MetricCard title="Lucro" value={`R$ ${summary.profit.toFixed(2)}`} note="receita menos despesas" />
         </div>
 
-        {/* SEGUNDA LINHA: MÉTRICAS FINANCEIRAS E ALERTAS */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-4">
-          {/* TOTAL DE VENDAS ACUMULADO */}
-          <MetricCard
-            title="Total vendido"
-            value={`R$ ${summary.totalSales.toFixed(2)}`}
-            note="Registro financeiro automático"
-          />
-
-          {/* LUCRO CALCULADO (VENDAS - DESPESAS) */}
-          <MetricCard
-            title="Lucro"
-            value={`R$ ${summary.profit.toFixed(2)}`}
-            note="Vendas menos despesas"
-          />
-
-          {/* CONTADOR DE ITENS EM ESTADO DE ATENÇÃO */}
-          <MetricCard
-            title="Estoque em atenção"
-            value={`${summary.watchStockCount}`}
-            note="Itens abaixo do limite de observação"
-          />
-
-          {/* CONTADOR DE ITENS COM ESTOQUE CRÍTICO */}
-          <MetricCard
-            title="Estoque crítico"
-            value={`${summary.lowStockCount}`}
-            note="Itens abaixo do limite crítico"
-          />
-        </div>
-
-        {/* TERCEIRA LINHA: ALERTAS DE PREVISÃO DE DEMANDA */}
-        {summary.demandForecast.criticalRiskCount > 0 || summary.demandForecast.watchRiskCount > 0 ? (
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <MetricCard
-              title="Previsão — Risco alto"
-              value={`${summary.demandForecast.criticalRiskCount}`}
-              note="Itens que podem faltar em breve"
-            />
-            <MetricCard
-              title="Previsão — Atenção"
-              value={`${summary.demandForecast.watchRiskCount}`}
-              note="Itens em nível de alerta de demanda"
-            />
-            <MetricCard
-              title="Previsão — Excesso"
-              value={`${summary.demandForecast.overstockedCount}`}
-              note="Estoque acima da demanda estimada"
-            />
-          </div>
-        ) : null}
-
-        {/* ALERTAS RESUMIDOS DE PREVISÃO */}
-        {summary.demandForecast.topAlerts.length > 0 ? (
-          <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-amber-900">🔔 Alertas de Previsão de Demanda</h3>
-            <div className="mt-3 space-y-2">
-              {summary.demandForecast.topAlerts.map((alert, i) => (
-                <div key={i} className="rounded-2xl border border-amber-200 bg-white px-4 py-2 text-sm">
-                  <span className="font-semibold text-amber-800">{alert.variable}:</span>{' '}
-                  <span className="text-amber-700">{alert.message}</span>
-                </div>
-              ))}
+        {/* Alertas de estoque — apenas se houver */}
+        {(summary.lowStockCount > 0 || summary.watchStockCount > 0) && (
+          <div className="mt-5">
+            <div
+              className="flex items-center gap-4 rounded-2xl p-5"
+              style={{
+                background: summary.lowStockCount > 0 ? 'var(--danger-bg)' : 'var(--warning-bg)',
+                border: `1px solid ${summary.lowStockCount > 0 ? 'var(--danger-border)' : 'var(--warning-border)'}`,
+              }}
+            >
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ background: stockStatus.color }}
+              >
+                {summary.lowStockCount + summary.watchStockCount}
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Itens com estoque baixo
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {summary.lowStockCount > 0 && `${summary.lowStockCount} criticos`}
+                  {summary.lowStockCount > 0 && summary.watchStockCount > 0 && ' · '}
+                  {summary.watchStockCount > 0 && `${summary.watchStockCount} em atencao`}
+                </p>
+              </div>
+              <a
+                href="/inventory"
+                className="ml-auto text-xs font-semibold transition-opacity hover:opacity-70"
+                style={{ color: 'var(--brand-blue)' }}
+              >
+                Ver estoque
+              </a>
             </div>
-            <a
-              href="/demand-forecast"
-              className="mt-3 inline-block text-sm font-semibold text-amber-700 hover:text-amber-900 transition"
-            >
-              Ver análise completa →
-            </a>
-          </section>
-        ) : null}
-
-        {/* DETECÇÃO DE FRAUDE — RESUMO */}
-        {summary.fraudDetection.flaggedTotal > 0 || summary.fraudDetection.pendingReviewCount > 0 ? (
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <MetricCard
-              title="Fraude — Sinalizados"
-              value={`${summary.fraudDetection.flaggedTotal}`}
-              note="Pedidos suspeitos ou bloqueados"
-            />
-            <MetricCard
-              title="Fraude — Pendentes"
-              value={`${summary.fraudDetection.pendingReviewCount}`}
-              note="Aguardando revisão do admin"
-            />
-            <MetricCard
-              title="Fraude — Score médio"
-              value={`${summary.fraudDetection.avgRiskScore}`}
-              note="Risco médio de todos os pedidos"
-            />
           </div>
-        ) : null}
+        )}
 
-        {summary.fraudDetection.pendingReviewCount > 0 ? (
-          <section className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-red-900">🛡️ Alertas de Fraude</h3>
-            <p className="mt-1 text-sm text-red-700">
-              {summary.fraudDetection.pendingReviewCount} pedido(s) sinalizado(s) aguardando revisão.
-            </p>
+        {/* Ultimos pedidos */}
+        <section
+          className="mt-6 rounded-2xl p-6"
+          style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Ultimos pedidos
+            </h3>
             <a
-              href="/fraud"
-              className="mt-3 inline-block text-sm font-semibold text-red-700 hover:text-red-900 transition"
+              href="/sales"
+              className="text-xs font-medium transition-opacity hover:opacity-70"
+              style={{ color: 'var(--brand-blue)' }}
             >
-              Ver detalhes e revisar →
+              Ver todos
             </a>
-          </section>
-        ) : null}
+          </div>
 
-        {/* SEÇÃO DE ÚLTIMOS PEDIDOS */}
-        <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-900">Últimos pedidos</h3>
-
-          <div className="mt-4 space-y-4 text-slate-700">
-            {/* VERIFICA SE HÁ PEDIDOS PARA EXIBIR */}
+          <div className="mt-4 divide-y" style={{ borderColor: 'var(--border)' }}>
             {summary.recentOrders.length === 0 ? (
-              // MENSAGEM QUANDO NÃO HÁ PEDIDOS
-              <p className="text-sm text-slate-500">Nenhum pedido registrado ainda.</p>
+              <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
+                Nenhum pedido registrado.
+              </p>
             ) : (
-              // LISTA OS ÚLTIMOS PEDIDOS
               summary.recentOrders.map((order) => (
-                <div key={order.id} className="rounded-3xl border border-slate-200 p-4">
-                  {/* ID DO PEDIDO */}
-                  <p className="font-semibold text-slate-900">{order.name || `Pedido ${order.id}`}</p>
-                  <p className="text-sm text-slate-500">ID: {order.id}</p>
-                  <p className="text-sm text-slate-500">Criado por: {order.createdByName}</p>
-
-                  {/* VALOR TOTAL DO PEDIDO */}
-                  <p className="text-sm text-slate-500">Total: R$ {order.totalPrice.toFixed(2)}</p>
-
-                  {/* STATUS ATUAL DO PEDIDO */}
-                  <p className="text-sm text-slate-500">Status: {order.status}</p>
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {order.name || `Pedido ${order.id}`}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                      {order.createdByName} · {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                      R$ {order.totalPrice.toFixed(2)}
+                    </span>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                      style={{
+                        background: order.status === 'completed' ? 'var(--success-bg)' : order.status === 'cancelled' ? 'var(--danger-bg)' : 'var(--warning-bg)',
+                        color: order.status === 'completed' ? 'var(--success)' : order.status === 'cancelled' ? 'var(--danger)' : 'var(--warning)',
+                      }}
+                    >
+                      {order.status === 'completed' ? 'ok' : order.status === 'cancelled' ? 'canc.' : 'pend.'}
+                    </span>
+                  </div>
                 </div>
               ))
             )}
@@ -195,57 +161,3 @@ export default function Home() {
     </ProtectedPage>
   );
 }
-
-// ==========================================
-// ESTRUTURA DOS DADOS EXIBIDOS
-// ==========================================
-
-/*
-summary (retornado por getDashboardSummary):
-{
-  productsCount: number,      // Total de produtos base
-  variablesCount: number,     // Total de variações de produto
-  ordersCount: number,        // Total de pedidos finalizados
-  totalSales: number,         // Soma de todas as vendas
-  profit: number,             // Lucro total (vendas - despesas)
-  lowStockCount: number,      // Número de itens com estoque crítico
-  watchStockCount: number,    // Número de itens em atenção
-  recentOrders: Order[],      // Últimos 5 pedidos por data
-  demandForecast: {           // Previsão de demanda
-    criticalRiskCount: number,    // Itens com risco alto de falta
-    watchRiskCount: number,       // Itens em atenção
-    overstockedCount: number,     // Itens com excesso de estoque
-    highDemandCount: number,      // Itens com alta demanda
-    topAlerts: Alert[],           // Alertas mais importantes
-    forecastAccuracy: string,     // Confiabilidade da análise
-  },
-  fraudDetection: {           // Detecção de fraude
-    totalAnalyzed: number,        // Total de pedidos analisados
-    flaggedTotal: number,         // Pedidos sinalizados
-    suspicious24h: number,        // Sinalizados nas últimas 24h
-    avgRiskScore: number,         // Score médio de risco
-    pendingReviewCount: number,   // Pendentes de revisão
-  }
-}
-*/
-
-// ==========================================
-// FUNCIONALIDADES DO DASHBOARD
-// ==========================================
-
-// MÉTRICAS PRINCIPAIS:
-// - Visão geral do negócio em tempo real
-// - Alertas visuais para situações críticas (estoque baixo)
-// - Tendências de vendas e lucros
-
-// INTERAÇÕES POSSÍVEIS:
-// - Clicar nos cards para ir para páginas detalhadas
-// - Expandir seção de últimos pedidos
-// - Filtros por período (futuro)
-
-// MELHORIAS FUTURAS:
-// 1. Gráficos de tendência (vendas por mês)
-// 2. Alertas mais detalhados (produtos específicos em falta)
-// 3. Links diretos para ações (reposição de estoque)
-// 4. Notificações em tempo real
-// 5. Export de relatório do dashboard

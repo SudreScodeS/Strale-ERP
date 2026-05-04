@@ -1,57 +1,28 @@
-// app/assistant/page.tsx
-// Página do Assistente Inteligente Local
-// Interface de chat que responde perguntas com dados reais do sistema
-// Sem IA externa — pattern matching + consultas internas
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
 import { globalConfig } from '../../config/global';
 
-// ==========================================
-// TIPOS
-// ==========================================
-
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-  type?: 'text' | 'table' | 'metric' | 'list';
-  icon?: string;
   timestamp: Date;
 }
 
-interface AssistantResponse {
-  answer: string;
-  data?: unknown;
-  type: 'text' | 'table' | 'metric' | 'list';
-  icon?: string;
-}
-
-// ==========================================
-// SUGESTÕES DE PERGUNTAS
-// ==========================================
-
 const SUGGESTIONS = [
-  { label: '📦 Produto mais vendido', query: 'produto mais vendido' },
-  { label: '⚠️ Estoque baixo', query: 'estoque baixo' },
-  { label: '💰 Lucro total', query: 'lucro total' },
-  { label: '📋 Pedidos recentes', query: 'pedidos recentes' },
-  { label: '📊 Ticket médio', query: 'ticket médio' },
-  { label: '📈 Previsão de demanda', query: 'previsão de demanda' },
-  { label: '🛡️ Fraudes detectadas', query: 'fraudes detectadas' },
-  { label: '🏢 Resumo do sistema', query: 'resumo do sistema' },
-  { label: '📅 Vendas por período', query: 'vendas por período' },
-  { label: '👥 Usuários', query: 'usuários cadastrados' },
-  { label: '💸 Despesas', query: 'despesas' },
-  { label: '❓ Ajuda', query: 'ajuda' },
+  'Produto mais vendido',
+  'Estoque baixo',
+  'Lucro total',
+  'Pedidos recentes',
+  'Ticket medio',
+  'Previsao de demanda',
+  'Vendas por periodo',
+  'Usuarios',
+  'Despesas',
+  'Resumo do sistema',
 ];
 
-// ==========================================
-// COMPONENTES
-// ==========================================
-
-/** Balão de mensagem do chat */
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
 
@@ -67,12 +38,10 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   };
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
-        className={`max-w-[80%] rounded-2xl px-5 py-4 text-sm leading-relaxed ${
-          isUser
-            ? 'rounded-br-md'
-            : 'rounded-bl-md shadow-sm'
+        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+          isUser ? 'rounded-br-md' : 'rounded-bl-md'
         }`}
         style={
           isUser
@@ -85,7 +54,6 @@ function ChatBubble({ message }: { message: ChatMessage }) {
         ) : (
           <div
             className="space-y-1 [&_strong]:font-semibold [&_em]:italic"
-            style={{ '--chat-strong': 'var(--text-primary)', '--chat-em': 'var(--text-muted)' } as React.CSSProperties}
             dangerouslySetInnerHTML={{
               __html: formatContent(message.content)
                 .replace(/<strong>/g, '<strong style="color:var(--text-primary)">')
@@ -93,7 +61,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             }}
           />
         )}
-        <p className={`mt-2 text-[10px] ${isUser ? 'opacity-60' : ''}`} style={isUser ? {} : { color: 'var(--text-faint)' }}>
+        <p className={`mt-1.5 text-[10px] ${isUser ? 'opacity-50' : ''}`} style={isUser ? {} : { color: 'var(--text-faint)' }}>
           {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -101,49 +69,11 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-/** Sugestões clicáveis */
-function SuggestionChips({ onSelect }: { onSelect: (query: string) => void }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {SUGGESTIONS.map((s) => (
-        <button
-          key={s.query}
-          onClick={() => onSelect(s.query)}
-          className="rounded-full px-4 py-2 text-xs font-medium transition-all hover:shadow-sm"
-          style={{
-            background: 'var(--card-bg)',
-            border: '1px solid var(--card-border)',
-            color: 'var(--text-secondary)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--brand-blue)';
-            e.currentTarget.style.color = 'var(--brand-blue)';
-            e.currentTarget.style.background = 'var(--brand-blue-soft)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--card-border)';
-            e.currentTarget.style.color = 'var(--text-secondary)';
-            e.currentTarget.style.background = 'var(--card-bg)';
-          }}
-        >
-          {s.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ==========================================
-// PÁGINA PRINCIPAL
-// ==========================================
-
 export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Olá! 👋 Sou o assistente do **Simple ERP**. Pergunte qualquer coisa sobre vendas, estoque, financeiro, fraudes ou previsão de demanda.\n\nDigite sua pergunta ou clique em uma sugestão abaixo.',
-      type: 'text',
-      icon: '🤖',
+      content: 'Ola! Sou o assistente do **' + globalConfig.systemName + '**. Pergunte sobre vendas, estoque, financeiro ou previsao de demanda.',
       timestamp: new Date(),
     },
   ]);
@@ -152,12 +82,10 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll para última mensagem
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Focus no input ao carregar
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -166,23 +94,14 @@ export default function AssistantPage() {
     const q = (question || input).trim();
     if (!q || isLoading) return;
 
-    // Adiciona mensagem do usuário
-    const userMsg: ChatMessage = {
-      role: 'user',
-      content: q,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { role: 'user', content: q, timestamp: new Date() }]);
     setInput('');
     setIsLoading(true);
 
     try {
       const res = await fetch('/api/assistant', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ question: q }),
       });
 
@@ -191,24 +110,17 @@ export default function AssistantPage() {
         throw new Error(err.error || 'Erro ao consultar assistente');
       }
 
-      const data: AssistantResponse = await res.json();
-
-      const assistantMsg: ChatMessage = {
-        role: 'assistant',
-        content: data.answer,
-        type: data.type,
-        icon: data.icon,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMsg]);
+      const data = await res.json();
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, timestamp: new Date() }]);
     } catch (error) {
-      const errorMsg: ChatMessage = {
-        role: 'assistant',
-        content: `❌ Erro: ${error instanceof Error ? error.message : 'Não foi possível processar sua pergunta.'}`,
-        type: 'text',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Erro: ${error instanceof Error ? error.message : 'Nao foi possivel processar.'}`,
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -222,62 +134,49 @@ export default function AssistantPage() {
     }
   }
 
-  function handleClear() {
-    setMessages([
-      {
-        role: 'assistant',
-        content: 'Chat limpo! 🧹 Faça uma nova pergunta.',
-        type: 'text',
-        icon: '🤖',
-        timestamp: new Date(),
-      },
-    ]);
-  }
-
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      {/* CABEÇALHO */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand-blue)' }}>
             {globalConfig.systemName}
           </p>
-          <h2 className="mt-1 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
-            🤖 Assistente
+          <h2 className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            Assistente
           </h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Pergunte sobre vendas, estoque, financeiro, fraudes ou previsão. Respostas com dados reais.
+          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+            Respostas baseadas em dados reais do sistema
           </p>
         </div>
         <button
-          onClick={handleClear}
-          className="rounded-xl px-4 py-2 text-sm font-medium transition-colors"
-          style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          onClick={() =>
+            setMessages([
+              { role: 'assistant', content: 'Chat limpo. Faca uma nova pergunta.', timestamp: new Date() },
+            ])
+          }
+          className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+          style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
         >
-          🧹 Limpar
+          Limpar
         </button>
       </div>
 
-      {/* ÁREA DE MENSAGENS */}
+      {/* Chat area */}
       <div
-        className="flex-1 overflow-y-auto rounded-2xl p-6"
+        className="flex-1 overflow-y-auto rounded-xl p-5"
         style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}
       >
         {messages.map((msg, i) => (
           <ChatBubble key={i} message={msg} />
         ))}
 
-        {/* Indicador de digitação */}
         {isLoading && (
-          <div className="mb-4 flex justify-start">
-            <div
-              className="rounded-2xl px-5 py-4 shadow-sm"
-              style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-            >
+          <div className="mb-3 flex justify-start">
+            <div className="rounded-xl px-4 py-3" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '0ms' }} />
-                <div className="h-2 w-2 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '150ms' }} />
-                <div className="h-2 w-2 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '300ms' }} />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '0ms' }} />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '150ms' }} />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -286,37 +185,48 @@ export default function AssistantPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* SUGESTÕES (mostra apenas quando chat está vazio ou com poucas mensagens) */}
-      {messages.length <= 2 && (
-        <div className="mt-4">
-          <SuggestionChips onSelect={(q) => handleSend(q)} />
-        </div>
-      )}
+      {/* Suggestions — always visible */}
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            onClick={() => handleSend(s.toLowerCase())}
+            className="rounded-full px-3 py-1.5 text-[11px] font-medium transition-all"
+            style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--brand-blue)';
+              e.currentTarget.style.color = 'var(--brand-blue)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.color = 'var(--text-muted)';
+            }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
 
-      {/* INPUT */}
-      <div className="mt-4 flex gap-3">
+      {/* Input */}
+      <div className="mt-3 flex gap-2">
         <input
           ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Digite sua pergunta... (ex: 'produto mais vendido')"
+          placeholder="Digite sua pergunta..."
           disabled={isLoading}
-          className="flex-1 rounded-xl px-5 py-3 text-sm transition-all disabled:opacity-50"
-          style={{
-            background: 'var(--input-bg)',
-            border: '1px solid var(--input-border)',
-            color: 'var(--text-primary)',
-          }}
+          className="flex-1 rounded-xl px-4 py-3 text-sm transition-all disabled:opacity-50"
+          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
         />
         <button
           onClick={() => handleSend()}
           disabled={isLoading || !input.trim()}
-          className="rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: 'var(--brand-blue)' }}
         >
-          {isLoading ? '⏳' : 'Enviar'}
+          Enviar
         </button>
       </div>
     </div>

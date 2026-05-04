@@ -265,7 +265,7 @@ export function forecastVariable(
   if (dailyDemand > 0 && daysOfStock <= 3) {
     riskLevel = 'alto';
     riskLabel = `RISCO ALTO — ${daysOfStock} dias de estoque`;
-    alerts.push(`⚠️ Estoque pode acabar em ${daysOfStock} dias com demanda atual`);
+    alerts.push(`Estoque pode acabar em ${daysOfStock} dias com demanda atual`);
   } else if (dailyDemand > 0 && daysOfStock <= 7) {
     riskLevel = 'alto';
     riskLabel = `Risco alto — ${daysOfStock} dias de estoque`;
@@ -280,10 +280,10 @@ export function forecastVariable(
 
   // Alertas de tendência
   if (trendResult.direction === 'crescente' && trendResult.percent > 20) {
-    alerts.push(`📈 Demanda crescente (+${trendResult.percent}%) — considere aumentar estoque`);
+    alerts.push(`Demanda crescente (+${trendResult.percent}%) — considere aumentar estoque`);
   }
   if (trendResult.direction === 'decrescente' && trendResult.percent > 20) {
-    alerts.push(`📉 Demanda em queda (-${trendResult.percent}%) — avalie reduzir compras`);
+    alerts.push(`Demanda em queda (-${trendResult.percent}%) — avalie reduzir compras`);
   }
 
   // Sugestão de reposição: cobrir ~4 semanas de demanda
@@ -293,7 +293,7 @@ export function forecastVariable(
 
   // Excesso de estoque: se tem mais de 8 semanas de demanda parada
   if (avgWeekly > 0 && variable.stock > avgWeekly * 8 && trendResult.direction !== 'crescente') {
-    alerts.push(`📦 Excesso de estoque — ${Math.round(variable.stock / avgWeekly)} semanas de demanda parada`);
+    alerts.push(`Excesso de estoque — ${Math.round(variable.stock / avgWeekly)} semanas de demanda parada`);
   }
 
   return {

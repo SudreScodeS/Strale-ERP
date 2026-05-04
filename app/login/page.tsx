@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '../components/ui';
+import { globalConfig } from '../../config/global';
 import { parseJwt } from '../lib/authClient';
 
 export default function LoginPage() {
@@ -22,7 +22,7 @@ export default function LoginPage() {
       const user = parseJwt(data.token);
       if (!user) {
         window.localStorage.removeItem('erp-token');
-        setMessage('Sessão inválida após o login. Atualize a página e tente novamente.');
+        setMessage('Sessao invalida. Tente novamente.');
         return;
       }
       window.location.href = user.role === 'admin' ? '/' : '/sales';
@@ -32,34 +32,55 @@ export default function LoginPage() {
   }
 
   return (
-    <div>
-      <PageHeader title="Login" description="Acesso básico ao sistema ERP. O token JWT é armazenado localmente para simular autenticação." />
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {globalConfig.systemName}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+            Faca login para continuar
+          </p>
+        </div>
 
-      <form onSubmit={handleLogin} className="max-w-2xl rounded-3xl bg-white p-8 shadow-sm">
-        <div className="grid gap-5">
-          <label className="space-y-2 text-slate-700">
-            <span>Usuário</span>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Usuario
+            </label>
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="w-full rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
             />
-          </label>
-          <label className="space-y-2 text-slate-700">
-            <span>Senha</span>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Senha
+            </label>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="w-full rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
             />
-          </label>
-          <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
+          </div>
+          <button
+            className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-all"
+            style={{ background: 'var(--brand-blue)' }}
+            type="submit"
+          >
             Entrar
           </button>
-          {message ? <p className="text-sm text-slate-600">{message}</p> : null}
-        </div>
-      </form>
+          {message && (
+            <p className="text-center text-xs" style={{ color: 'var(--danger)' }}>
+              {message}
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

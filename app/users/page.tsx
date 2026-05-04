@@ -13,7 +13,7 @@ interface UserItem {
   createdAt: string;
 }
 
-function UsersPageContent() {
+export default function UsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -21,19 +21,12 @@ function UsersPageContent() {
   const [role, setRole] = useState<'admin' | 'seller'>('seller');
   const [message, setMessage] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [busyUserId, setBusyUserId] = useState<string | null>(null);
 
   async function loadUsers() {
-    const response = await fetch('/api/users', {
-      cache: 'no-store',
-      headers: getAuthHeaders(),
-    });
+    const response = await fetch('/api/users', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
-    if (response.ok) {
-      setUsers(data.users || []);
-    } else {
-      setMessage(data.error || 'Falha ao carregar usuários.');
-    }
+    if (response.ok) setUsers(data.users || []);
+    else setMessage(data.error || 'Falha ao carregar.');
   }
 
   useEffect(() => {
@@ -50,33 +43,12 @@ function UsersPageContent() {
     });
     const data = await response.json();
     if (response.ok) {
-      setMessage(data.message || 'Usuário criado com sucesso.');
-      setUsername('');
-      setEmail('');
-      setPassword('');
-      setRole('seller');
+      setMessage('Usuario criado.');
+      setUsername(''); setEmail(''); setPassword(''); setRole('seller');
       setUsers((prev) => [data.user, ...prev]);
     } else {
-      setMessage(data.error || 'Falha ao criar usuário.');
+      setMessage(data.error || 'Falha ao criar.');
     }
-  }
-
-  async function handleStartEdit(user: UserItem) {
-    setEditingUserId(user.id);
-    setUsername(user.username);
-    setEmail(user.email);
-    setPassword('');
-    setRole(user.role);
-    setMessage(`Editando usuário ${user.username}.`);
-  }
-
-  function handleCancelEdit() {
-    setEditingUserId(null);
-    setUsername('');
-    setEmail('');
-    setPassword('');
-    setRole('seller');
-    setMessage('');
   }
 
   async function handleUpdateUser(event: React.FormEvent<HTMLFormElement>) {
@@ -86,164 +58,190 @@ function UsersPageContent() {
       method: 'PATCH',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
-        id: editingUserId,
-        username,
-        email,
-        password: password || undefined,
-        role,
-      }),
+      body: JSON.stringify({ id: editingUserId, username, email, password: password || undefined, role }),
     });
     const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error || 'Falha ao atualizar usuário.');
-      return;
+    if (response.ok) {
+      setMessage('Usuario atualizado.');
+      setEditingUserId(null); setUsername(''); setEmail(''); setPassword(''); setRole('seller');
+      await loadUsers();
+    } else {
+      setMessage(data.error || 'Falha ao atualizar.');
     }
-    setMessage(data.message || 'Usuário atualizado com sucesso.');
-    handleCancelEdit();
-    await loadUsers();
   }
 
   async function handleDeleteUser(user: UserItem) {
-    if (!confirm(`Deseja realmente excluir o usuário ${user.username}?`)) return;
-    setBusyUserId(user.id);
+    if (!confirm(`Excluir ${user.username}?`)) return;
     const response = await fetch(`/api/users?id=${encodeURIComponent(user.id)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
     const data = await response.json();
-    setBusyUserId(null);
     if (response.ok) {
-      setMessage(data.message || 'Usuário excluído com sucesso.');
-      setUsers((prev) => prev.filter((item) => item.id !== user.id));
-      if (editingUserId === user.id) {
-        handleCancelEdit();
-      }
+      setMessage('Usuario excluido.');
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      if (editingUserId === user.id) { setEditingUserId(null); setUsername(''); setEmail(''); setPassword(''); }
     } else {
-      setMessage(data.error || 'Falha ao excluir usuário.');
+      setMessage(data.error || 'Falha ao excluir.');
     }
   }
 
+  function handleStartEdit(user: UserItem) {
+    setEditingUserId(user.id);
+    setUsername(user.username);
+    setEmail(user.email);
+    setPassword('');
+    setRole(user.role);
+  }
+
   return (
-    <div>
-      <PageHeader title="Gestão de Usuários" description="Visualize usuários existentes e crie novas contas para vendedores ou administradores." />
+    <ProtectedPage allowedRoles={['admin']}>
+      <div>
+        <PageHeader title="Usuarios" description="Gerencie contas do sistema." />
 
-      {message ? <div className="mb-6 rounded-3xl border border-slate-200 bg-emerald-50 p-4 text-slate-800">{message}</div> : null}
+        {message && (
+          <div className="mb-4 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success-border)' }}>
+            {message}
+          </div>
+        )}
 
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="text-xl font-semibold text-slate-900">Usuários cadastrados</h3>
+        <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+          {/* Lista */}
+          <div
+            className="rounded-xl p-5"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Cadastrados</h3>
               <button
                 type="button"
                 onClick={() => void loadUsers()}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
               >
-                Atualizar lista
+                Atualizar
               </button>
             </div>
-            <div className="mt-5 space-y-4">
+            <div className="mt-4 space-y-3">
               {users.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhum usuário cadastrado ainda.</p>
+                <p className="py-6 text-center text-xs" style={{ color: 'var(--text-faint)' }}>Nenhum usuario.</p>
               ) : (
                 users.map((user) => (
-                  <div key={user.id} className="rounded-3xl border border-slate-200 p-4">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-900">{user.username}</p>
-                        <p className="text-sm text-slate-500">{user.email}</p>
-                      </div>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">{user.role}</span>
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between rounded-lg p-3"
+                    style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{user.username}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{user.email}</p>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500">Criado em {new Date(user.createdAt).toLocaleString()}</p>
-                    <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)' }}
+                      >
+                        {user.role}
+                      </span>
                       <button
                         type="button"
-                        onClick={() => void handleStartEdit(user)}
-                        className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700"
+                        onClick={() => handleStartEdit(user)}
+                        className="rounded px-2 py-1 text-[10px] font-medium transition-colors"
+                        style={{ background: 'var(--brand-blue-soft)', color: 'var(--brand-blue)' }}
                       >
-                        Atualizar
+                        Editar
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDeleteUser(user)}
-                        disabled={busyUserId === user.id || user.username === 'admin'}
-                        className="rounded-2xl bg-rose-600 px-4 py-2 text-sm text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
-                      >
-                        Excluir
-                      </button>
+                      {user.username !== 'admin' && (
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteUser(user)}
+                          className="rounded px-2 py-1 text-[10px] font-medium transition-colors"
+                          style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}
+                        >
+                          Excluir
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-        </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-900">{editingUserId ? 'Atualizar usuário' : 'Criar novo usuário'}</h3>
-          <form className="mt-6 space-y-4" onSubmit={editingUserId ? handleUpdateUser : handleCreateUser}>
-            <label className="block text-slate-700">
-              Nome de usuário
-              <input
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
-              />
-            </label>
-            <label className="block text-slate-700">
-              E-mail
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
-              />
-            </label>
-            <label className="block text-slate-700">
-              Senha
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
-              />
-            </label>
-            <label className="block text-slate-700">
-              Papel
-              <select
-                value={role}
-                onChange={(event) => setRole(event.target.value as 'admin' | 'seller')}
-                className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
-              >
-                <option value="seller">Vendedor</option>
-                <option value="admin">Administrador</option>
-              </select>
-            </label>
-            <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
-              {editingUserId ? 'Salvar atualização' : 'Criar usuário'}
-            </button>
-            {editingUserId ? (
-              <button
-                className="ml-3 inline-flex h-12 items-center justify-center rounded-3xl border border-slate-200 px-6 text-slate-700 transition hover:bg-slate-100"
-                type="button"
-                onClick={handleCancelEdit}
-              >
-                Cancelar edição
-              </button>
-            ) : null}
-          </form>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-export default function UsersPage() {
-  return (
-    <ProtectedPage allowedRoles={['admin']}>
-      <UsersPageContent />
+          {/* Formulario */}
+          <div
+            className="rounded-xl p-5"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {editingUserId ? 'Editar usuario' : 'Novo usuario'}
+            </h3>
+            <form className="mt-4 space-y-3" onSubmit={editingUserId ? handleUpdateUser : handleCreateUser}>
+              <div>
+                <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Usuario</label>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full rounded-lg px-3 py-2 text-sm"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>E-mail</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg px-3 py-2 text-sm"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Senha</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={editingUserId ? 'Deixe vazio para manter' : ''}
+                  className="w-full rounded-lg px-3 py-2 text-sm"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Papel</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as 'admin' | 'seller')}
+                  className="w-full rounded-lg px-3 py-2 text-sm"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="seller">Vendedor</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all"
+                  style={{ background: 'var(--brand-blue)' }}
+                  type="submit"
+                >
+                  {editingUserId ? 'Salvar' : 'Criar'}
+                </button>
+                {editingUserId && (
+                  <button
+                    type="button"
+                    onClick={() => { setEditingUserId(null); setUsername(''); setEmail(''); setPassword(''); setRole('seller'); }}
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                    style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
     </ProtectedPage>
   );
 }

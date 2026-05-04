@@ -3,10 +3,10 @@
 // Interpreta perguntas em linguagem natural e responde com dados reais do sistema
 // Arquitetura: Pattern matching + funções de consulta tipadas
 
-import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData, fraudLogData } from './data';
+import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData } from './data';
 import { getFinanceSummary, getStockAlertsByLevel } from './business';
 import { getDemandForecastSummary } from './demand-forecast';
-import { getFraudSummary } from './fraud-detection';
+import { globalConfig } from '../../config/global';
 
 // ==========================================
 // TIPOS
@@ -111,7 +111,6 @@ function queryTopProducts(): AssistantResponse {
   const sorted = Array.from(productSales.values()).sort((a, b) => b.totalQty - a.totalQty);
 
   if (sorted.length === 0) {
-    return { answer: 'Nenhum pedido registrado ainda. Não há dados de vendas para analisar.', type: 'text', icon: '📦' };
   }
 
   const lines = sorted.map((p, i) =>
@@ -119,10 +118,9 @@ function queryTopProducts(): AssistantResponse {
   );
 
   return {
-    answer: `📦 **Produtos mais vendidos:**\n\n${lines.join('\n')}`,
+    answer: `**Produtos mais vendidos:**\n\n${lines.join('\n')}`,
     data: sorted,
     type: 'list',
-    icon: '📦',
   };
 }
 
@@ -132,7 +130,6 @@ function queryLowStock(): AssistantResponse {
   const groups = groupData.getAll();
 
   if (alerts.critical.length === 0 && alerts.watch.length === 0) {
-    return { answer: '✅ Todos os itens estão com estoque adequado. Nenhum alerta no momento.', type: 'text', icon: '✅' };
   }
 
   const lines: string[] = [];
@@ -155,10 +152,9 @@ function queryLowStock(): AssistantResponse {
   }
 
   return {
-    answer: `⚠️ **Alertas de estoque:**\n\n${lines.join('\n')}`,
+    answer: `**Alertas de estoque:**\n\n${lines.join('\n')}`,
     data: { critical: alerts.critical, watch: alerts.watch },
     type: 'list',
-    icon: '⚠️',
   };
 }
 
@@ -167,10 +163,9 @@ function queryProfit(): AssistantResponse {
   const finance = getFinanceSummary();
 
   return {
-    answer: `💰 **Resumo financeiro:**\n\n• Total de vendas: ${formatCurrency(finance.totalSales)}\n• Total de despesas: ${formatCurrency(finance.totalExpenses)}\n• **Lucro: ${formatCurrency(finance.profit)}**`,
+    answer: `**Resumo financeiro:**\n\n• Total de vendas: ${formatCurrency(finance.totalSales)}\n• Total de despesas: ${formatCurrency(finance.totalExpenses)}\n• **Lucro: ${formatCurrency(finance.profit)}**`,
     data: finance,
     type: 'metric',
-    icon: '💰',
   };
 }
 
@@ -180,10 +175,9 @@ function queryTotalSales(): AssistantResponse {
   const orders = orderData.getAll().filter(o => o.status === 'completed');
 
   return {
-    answer: `📈 **Total de vendas:** ${formatCurrency(finance.totalSales)}\n\n• ${orders.length} pedidos finalizados\n• Ticket médio: ${orders.length > 0 ? formatCurrency(finance.totalSales / orders.length) : 'N/A'}`,
+    answer: `**Total de vendas:** ${formatCurrency(finance.totalSales)}\n\n• ${orders.length} pedidos finalizados\n• Ticket médio: ${orders.length > 0 ? formatCurrency(finance.totalSales / orders.length) : 'N/A'}`,
     data: { totalSales: finance.totalSales, orderCount: orders.length },
     type: 'metric',
-    icon: '📈',
   };
 }
 
@@ -200,7 +194,7 @@ function queryRecentOrders(): AssistantResponse {
   const lines: string[] = [];
 
   if (todayOrders.length > 0) {
-    lines.push(`📅 **Pedidos de hoje:** ${todayOrders.length}\n`);
+    lines.push(`**Pedidos de hoje:** ${todayOrders.length}\n`);
     for (const o of todayOrders) {
       const user = users.find(u => u.id === o.userId);
       lines.push(`  • #${o.id} — ${o.name} — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`);
@@ -208,7 +202,7 @@ function queryRecentOrders(): AssistantResponse {
     lines.push('');
   }
 
-  lines.push('🕐 **Últimos 5 pedidos:**');
+  lines.push('**Últimos 5 pedidos:**');
   for (const o of recentOrders) {
     const user = users.find(u => u.id === o.userId);
     lines.push(`  • #${o.id} ${o.name} — ${formatCurrency(o.totalPrice)} — ${formatDate(o.createdAt)} — ${user?.username || o.userId}`);
@@ -218,7 +212,6 @@ function queryRecentOrders(): AssistantResponse {
     answer: lines.join('\n'),
     data: { todayCount: todayOrders.length, recent: recentOrders },
     type: 'list',
-    icon: '📋',
   };
 }
 
@@ -230,10 +223,9 @@ function queryOrderCount(): AssistantResponse {
   const cancelled = orders.filter(o => o.status === 'cancelled');
 
   return {
-    answer: `📊 **Total de pedidos:** ${orders.length}\n\n• Finalizados: ${completed.length}\n• Pendentes: ${pending.length}\n• Cancelados: ${cancelled.length}`,
+    answer: `**Total de pedidos:** ${orders.length}\n\n• Finalizados: ${completed.length}\n• Pendentes: ${pending.length}\n• Cancelados: ${cancelled.length}`,
     data: { total: orders.length, completed: completed.length, pending: pending.length, cancelled: cancelled.length },
     type: 'metric',
-    icon: '📊',
   };
 }
 
@@ -251,10 +243,9 @@ function queryProducts(): AssistantResponse {
   });
 
   return {
-    answer: `📦 **Produtos cadastrados:** ${products.length}\n\n${lines.join('\n')}`,
+    answer: `**Produtos cadastrados:** ${products.length}\n\n${lines.join('\n')}`,
     data: products,
     type: 'list',
-    icon: '📦',
   };
 }
 
@@ -263,7 +254,6 @@ function queryTicketMedio(): AssistantResponse {
   const orders = orderData.getAll().filter(o => o.status === 'completed');
 
   if (orders.length === 0) {
-    return { answer: 'Nenhum pedido finalizado para calcular o ticket médio.', type: 'text', icon: '📊' };
   }
 
   const total = orders.reduce((sum, o) => sum + o.totalPrice, 0);
@@ -272,10 +262,9 @@ function queryTicketMedio(): AssistantResponse {
   const min = Math.min(...orders.map(o => o.totalPrice));
 
   return {
-    answer: `📊 **Ticket médio:** ${formatCurrency(avg)}\n\n• Maior pedido: ${formatCurrency(max)}\n• Menor pedido: ${formatCurrency(min)}\n• Total de pedidos: ${orders.length}\n• Soma total: ${formatCurrency(total)}`,
+    answer: `**Ticket médio:** ${formatCurrency(avg)}\n\n• Maior pedido: ${formatCurrency(max)}\n• Menor pedido: ${formatCurrency(min)}\n• Total de pedidos: ${orders.length}\n• Soma total: ${formatCurrency(total)}`,
     data: { avg, max, min, count: orders.length },
     type: 'metric',
-    icon: '📊',
   };
 }
 
@@ -291,10 +280,9 @@ function queryUsers(): AssistantResponse {
   });
 
   return {
-    answer: `👥 **Usuários cadastrados:** ${users.length}\n\n${lines.join('\n')}`,
+    answer: `**Usuários cadastrados:** ${users.length}\n\n${lines.join('\n')}`,
     data: users,
     type: 'list',
-    icon: '👥',
   };
 }
 
@@ -320,7 +308,6 @@ function queryMostActiveUser(): AssistantResponse {
   const sorted = Array.from(userCounts.values()).sort((a, b) => b.count - a.count);
 
   if (sorted.length === 0) {
-    return { answer: 'Nenhum pedido registrado para identificar o usuário mais ativo.', type: 'text', icon: '👤' };
   }
 
   const top = sorted[0];
@@ -329,10 +316,9 @@ function queryMostActiveUser(): AssistantResponse {
   );
 
   return {
-    answer: `👤 **Usuário mais ativo:** ${top.name} com ${top.count} pedidos\n\n${lines.join('\n')}`,
+    answer: `**Usuário mais ativo:** ${top.name} com ${top.count} pedidos\n\n${lines.join('\n')}`,
     data: sorted,
     type: 'list',
-    icon: '👤',
   };
 }
 
@@ -366,42 +352,12 @@ function queryDemandForecast(): AssistantResponse {
   }
 
   if (lines.length === 0) {
-    return { answer: '📈 Nenhum alerta de previsão de demanda no momento. Estoque e demanda estão equilibrados.', type: 'text', icon: '📈' };
   }
 
   return {
-    answer: `📈 **Previsão de Demanda:**\n\n${lines.join('\n')}\n\n_Confiabilidade: ${forecast.forecastAccuracy}_`,
+    answer: `**Previsão de Demanda:**\n\n${lines.join('\n')}\n\n_Confiabilidade: ${forecast.forecastAccuracy}_`,
     data: forecast,
     type: 'list',
-    icon: '📈',
-  };
-}
-
-/** Fraudes detectadas */
-function queryFraud(): AssistantResponse {
-  const fraud = getFraudSummary();
-
-  const lines: string[] = [
-    `📊 **Total analisados:** ${fraud.totalAnalyzed}`,
-    `✅ Aprovados: ${fraud.approvedCount}`,
-    `⚠️ Suspeitos: ${fraud.suspiciousCount}`,
-    `🚫 Bloqueados: ${fraud.blockedCount}`,
-    `📈 Score médio de risco: ${fraud.avgRiskScore}/100`,
-  ];
-
-  if (fraud.pendingReview.length > 0) {
-    lines.push('');
-    lines.push(`⏳ **${fraud.pendingReview.length} pedido(s) pendente(s) de revisão:**`);
-    for (const log of fraud.pendingReview.slice(0, 5)) {
-      lines.push(`  • #${log.orderId} — ${log.userName} — Score: ${log.riskScore} — ${log.riskLevel}`);
-    }
-  }
-
-  return {
-    answer: `🛡️ **Detecção de Fraude:**\n\n${lines.join('\n')}`,
-    data: fraud,
-    type: 'metric',
-    icon: '🛡️',
   };
 }
 
@@ -410,16 +366,14 @@ function querySuppliers(): AssistantResponse {
   const suppliers = supplierData.getAll();
 
   if (suppliers.length === 0) {
-    return { answer: 'Nenhum fornecedor cadastrado no sistema.', type: 'text', icon: '🏭' };
   }
 
   const lines = suppliers.map(s => `• **${s.name}**${s.contact ? ` — ${s.contact}` : ''}`);
 
   return {
-    answer: `🏭 **Fornecedores cadastrados:** ${suppliers.length}\n\n${lines.join('\n')}`,
+    answer: `**Fornecedores cadastrados:** ${suppliers.length}\n\n${lines.join('\n')}`,
     data: suppliers,
     type: 'list',
-    icon: '🏭',
   };
 }
 
@@ -428,7 +382,6 @@ function queryPurchaseOrders(): AssistantResponse {
   const pos = purchaseOrderData.getAll();
 
   if (pos.length === 0) {
-    return { answer: 'Nenhum pedido de compra registrado.', type: 'text', icon: '🛒' };
   }
 
   const pending = pos.filter(p => p.status === 'pending');
@@ -436,10 +389,9 @@ function queryPurchaseOrders(): AssistantResponse {
   const received = pos.filter(p => p.status === 'received');
 
   return {
-    answer: `🛒 **Pedidos de compra:** ${pos.length}\n\n• Pendentes: ${pending.length}\n• Enviados: ${ordered.length}\n• Recebidos: ${received.length}`,
+    answer: `**Pedidos de compra:** ${pos.length}\n\n• Pendentes: ${pending.length}\n• Enviados: ${ordered.length}\n• Recebidos: ${received.length}`,
     data: { total: pos.length, pending: pending.length, ordered: ordered.length, received: received.length },
     type: 'metric',
-    icon: '🛒',
   };
 }
 
@@ -455,10 +407,9 @@ function queryHighStock(): AssistantResponse {
   });
 
   return {
-    answer: `📦 **Estoque por variável (maior → menor):**\n\n${lines.join('\n')}`,
+    answer: `**Estoque por variável (maior → menor):**\n\n${lines.join('\n')}`,
     data: sorted,
     type: 'list',
-    icon: '📦',
   };
 }
 
@@ -478,10 +429,9 @@ function querySalesByPeriod(): AssistantResponse {
   const sum = (arr: typeof orders) => arr.reduce((s, o) => s + o.totalPrice, 0);
 
   return {
-    answer: `📅 **Vendas por período:**\n\n• **Hoje:** ${today.length} pedidos — ${formatCurrency(sum(today))}\n• **Últimos 7 dias:** ${week.length} pedidos — ${formatCurrency(sum(week))}\n• **Mês atual:** ${month.length} pedidos — ${formatCurrency(sum(month))}`,
+    answer: `**Vendas por período:**\n\n• **Hoje:** ${today.length} pedidos — ${formatCurrency(sum(today))}\n• **Últimos 7 dias:** ${week.length} pedidos — ${formatCurrency(sum(week))}\n• **Mês atual:** ${month.length} pedidos — ${formatCurrency(sum(month))}`,
     data: { today: today.length, week: week.length, month: month.length, todayTotal: sum(today), weekTotal: sum(week), monthTotal: sum(month) },
     type: 'metric',
-    icon: '📅',
   };
 }
 
@@ -494,24 +444,22 @@ function queryExpenses(): AssistantResponse {
 
   const lines: string[] = [];
   if (purchases.length > 0) {
-    lines.push(`🛒 **Compras:** ${purchases.length} registros — ${formatCurrency(purchases.reduce((s, r) => s + r.amount, 0))}`);
+    lines.push(`**Compras:** ${purchases.length} registros — ${formatCurrency(purchases.reduce((s, r) => s + r.amount, 0))}`);
     for (const p of purchases.slice(-5)) {
       lines.push(`  • ${p.description} — ${formatCurrency(p.amount)} — ${formatDate(p.date)}`);
     }
   }
   if (expenses.length > 0) {
-    lines.push(`💸 **Despesas:** ${expenses.length} registros — ${formatCurrency(expenses.reduce((s, r) => s + r.amount, 0))}`);
+    lines.push(`**Despesas:** ${expenses.length} registros — ${formatCurrency(expenses.reduce((s, r) => s + r.amount, 0))}`);
   }
 
   if (lines.length === 0) {
-    return { answer: 'Nenhuma despesa ou compra registrada.', type: 'text', icon: '💸' };
   }
 
   return {
-    answer: `💸 **Despesas e compras:** ${formatCurrency(total)} no total\n\n${lines.join('\n')}`,
+    answer: `**Despesas e compras:** ${formatCurrency(total)} no total\n\n${lines.join('\n')}`,
     data: { total, purchases: purchases.length, expenses: expenses.length },
     type: 'metric',
-    icon: '💸',
   };
 }
 
@@ -525,28 +473,25 @@ function querySystemSummary(): AssistantResponse {
   const alerts = getStockAlertsByLevel();
 
   return {
-    answer: `🏢 **Resumo do Simple ERP:**\n\n📦 ${products.length} produtos — ${variables.length} variações\n📋 ${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n👥 ${users.length} usuários\n💰 Vendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n⚠️ ${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
+    answer: `**Resumo do Simple ERP:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
     data: { products: products.length, variables: variables.length, orders: orders.length, users: users.length, finance },
     type: 'metric',
-    icon: '🏢',
   };
 }
 
-/** Ajuda — lista de perguntas suportadas */
+/** Ajuda */
 function queryHelp(): AssistantResponse {
   return {
-    answer: `🤖 **Assistente Simple ERP — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas" / "quanto vendeu"\n• "ticket médio"\n• "pedidos recentes" / "pedidos de hoje"\n• "quantos pedidos"\n• "vendas por período"\n\n**Estoque:**\n• "estoque baixo" / "estoque crítico"\n• "estoque alto" / "maior estoque"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas" / "compras"\n\n**Previsão:**\n• "previsão de demanda"\n• "demanda"\n\n**Fraude:**\n• "fraudes" / "pedidos suspeitos"\n\n**Outros:**\n• "usuários" / "quem fez mais pedidos"\n• "fornecedores"\n• "pedidos de compra"\n• "resumo do sistema"\n• "ajuda"\n\nDigite qualquer pergunta e eu respondo com dados reais! 🚀`,
+    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "ajuda"`,
     type: 'text',
-    icon: '🤖',
   };
 }
 
 /** Não entendi a pergunta */
 function queryFallback(): AssistantResponse {
   return {
-    answer: `🤔 Não entendi sua pergunta. Tente algo como:\n\n• "produto mais vendido"\n• "estoque baixo"\n• "lucro total"\n• "pedidos recentes"\n• "previsão de demanda"\n\nDigite **"ajuda"** para ver todas as opções.`,
+    answer: `Nao entendi. Tente:\n\n• "produto mais vendido"\n• "estoque baixo"\n• "lucro total"\n• "pedidos recentes"\n• "previsao de demanda"\n\nDigite **"ajuda"** para ver todas as opcoes.`,
     type: 'text',
-    icon: '🤔',
   };
 }
 
@@ -562,7 +507,7 @@ function detectIntent(question: string): () => AssistantResponse {
   const q = question;
 
   // Ajuda
-  if (containsAny(q, 'ajuda', 'help', 'opcoes', 'opções', 'o que voce faz', 'o que vc faz', 'comandos')) {
+  if (containsAny(q, 'ajuda', 'help', 'opcoes', 'opcoes', 'o que voce faz', 'o que vc faz', 'comandos')) {
     return queryHelp;
   }
 
@@ -624,11 +569,6 @@ function detectIntent(question: string): () => AssistantResponse {
   // Previsão de demanda
   if (containsAny(q, 'previsao', 'previsão', 'demanda', 'tendencia', 'tendência')) {
     return queryDemandForecast;
-  }
-
-  // Fraudes
-  if (containsAny(q, 'fraude', 'fraud', 'suspeito', 'bloqueado', 'risco', 'score')) {
-    return queryFraud;
   }
 
   // Usuários

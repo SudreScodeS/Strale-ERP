@@ -5,10 +5,9 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData, fraudLogData } from '../../lib/data';
+import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData } from '../../lib/data';
 import { getFinanceSummary, getStockAlertsByLevel } from '../../lib/business';
 import { getDemandForecastSummary } from '../../lib/demand-forecast';
-import { getFraudSummary } from '../../lib/fraud-detection';
 import { processQuestion } from '../../lib/assistant';
 
 interface ModuleCheck {
@@ -77,15 +76,7 @@ export async function GET() {
     checks.push({ name: 'Previsão de Demanda', status: 'error', message: `Erro: ${error instanceof Error ? error.message : 'desconhecido'}` });
   }
 
-  // 6. Verificar detecção de fraude
-  try {
-    const fraud = getFraudSummary();
-    checks.push({ name: 'Detecção de Fraude', status: 'ok', message: `${fraud.totalAnalyzed} analisados, ${fraud.flaggedTotal} sinalizados` });
-  } catch (error) {
-    checks.push({ name: 'Detecção de Fraude', status: 'error', message: `Erro: ${error instanceof Error ? error.message : 'desconhecido'}` });
-  }
-
-  // 7. Verificar assistente
+  // 6. Verificar assistente
   try {
     const response = processQuestion('ajuda');
     const status = response.answer.length > 0 ? 'ok' : 'warning';

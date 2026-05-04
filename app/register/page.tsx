@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '../components/ui';
+import { globalConfig } from '../../config/global';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -18,7 +18,7 @@ export default function RegisterPage() {
     });
     const data = await response.json();
     if (response.ok) {
-      setMessage('Registro criado com sucesso. Faça login em seguida.');
+      setMessage('Conta criada. Faca login.');
       setUsername('');
       setEmail('');
       setPassword('');
@@ -28,43 +28,67 @@ export default function RegisterPage() {
   }
 
   return (
-    <div>
-      <PageHeader title="Cadastro" description="Crie novos vendedores. O administrador já está configurado no sistema." />
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {globalConfig.systemName}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+            Criar conta de vendedor
+          </p>
+        </div>
 
-      <form onSubmit={handleRegister} className="max-w-2xl rounded-3xl bg-white p-8 shadow-sm">
-        <div className="grid gap-5">
-          <label className="space-y-2 text-slate-700">
-            <span>Nome de usuário</span>
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Usuario
+            </label>
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="w-full rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
             />
-          </label>
-          <label className="space-y-2 text-slate-700">
-            <span>E-mail</span>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              E-mail
+            </label>
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="w-full rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
             />
-          </label>
-          <label className="space-y-2 text-slate-700">
-            <span>Senha</span>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Senha
+            </label>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="w-full rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
             />
-          </label>
-          <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
+          </div>
+          <button
+            className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-all"
+            style={{ background: 'var(--brand-blue)' }}
+            type="submit"
+          >
             Criar conta
           </button>
-          {message ? <p className="text-sm text-slate-600">{message}</p> : null}
-        </div>
-      </form>
+          {message && (
+            <p className="text-center text-xs" style={{ color: message.includes('Falha') || message.includes('Erro') ? 'var(--danger)' : 'var(--success)' }}>
+              {message}
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

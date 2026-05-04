@@ -4,74 +4,101 @@ import { useEffect, useState } from 'react';
 import { PageHeader, MetricCard } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
-import { FinancialRecord } from '../../types';
+
+interface FinancialRecord {
+  id: string;
+  type: 'sale' | 'purchase' | 'expense';
+  amount: number;
+  description: string;
+  date: string;
+}
 
 export default function FinancePage() {
   const [records, setRecords] = useState<FinancialRecord[]>([]);
   const [totalSales, setTotalSales] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [profit, setProfit] = useState(0);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   async function loadFinance() {
-    const response = await fetch('/api/finance', {
-      cache: 'no-store',
-      headers: getAuthHeaders(),
-    });
+    const response = await fetch('/api/finance', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (!response.ok) {
-      setMessage(data.error || 'Falha ao carregar financeiro.');
+      setError(data.error || 'Falha ao carregar financeiro.');
       return;
     }
     setRecords(data.records || []);
     setTotalSales(data.totalSales || 0);
     setTotalExpenses(data.totalExpenses || 0);
     setProfit(data.profit || 0);
-    setMessage('');
+    setError('');
   }
 
   useEffect(() => {
     void loadFinance();
   }, []);
 
+  const typeLabel: Record<string, string> = { sale: 'Venda', purchase: 'Compra', expense: 'Despesa' };
+  const typeColor: Record<string, string> = {
+    sale: 'var(--success)',
+    purchase: 'var(--info)',
+    expense: 'var(--danger)',
+  };
+
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
-        <PageHeader title="Financeiro" description="Visão financeira com vendas, despesas e lucro integrado ao fluxo de pedidos." />
-        <div className="mb-5">
+        <PageHeader title="Financeiro" description="Vendas, despesas e lucro." />
+
+        <div className="mb-5 flex items-center gap-3">
           <button
             type="button"
             onClick={() => void loadFinance()}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
           >
-            Atualizar financeiro
+            Atualizar
           </button>
+          {error && <p className="text-xs" style={{ color: 'var(--danger)' }}>{error}</p>}
         </div>
-        {message ? <p className="mb-4 text-sm text-rose-600">{message}</p> : null}
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <MetricCard title="Total vendido" value={`R$ ${totalSales.toFixed(2)}`} />
-          <MetricCard title="Total gasto" value={`R$ ${totalExpenses.toFixed(2)}`} />
+        <div className="grid gap-4 sm:grid-cols-3">
+          <MetricCard title="Receita" value={`R$ ${totalSales.toFixed(2)}`} />
+          <MetricCard title="Despesas" value={`R$ ${totalExpenses.toFixed(2)}`} />
           <MetricCard title="Lucro" value={`R$ ${profit.toFixed(2)}`} />
         </div>
 
-        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-900">Histórico financeiro</h3>
-          <div className="mt-6 space-y-4">
+        <section
+          className="mt-6 rounded-xl p-5"
+          style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+        >
+          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historico</h3>
+          <div className="mt-3 divide-y" style={{ borderColor: 'var(--border)' }}>
             {records.length === 0 ? (
-              <p className="text-sm text-slate-500">Nenhum registro financeiro encontrado.</p>
+              <p className="py-6 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
+                Nenhum registro.
+              </p>
             ) : (
               records.map((record) => (
-                <div key={record.id} className="rounded-3xl border border-slate-200 p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-slate-900">{record.description || record.type.toUpperCase()}</p>
-                      <p className="text-sm text-slate-500">Tipo: {record.type}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-semibold text-slate-900">R$ {record.amount.toFixed(2)}</p>
-                      <p className="text-xs text-slate-500">{new Date(record.date).toLocaleDateString()}</p>
-                    </div>
+                <div key={record.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {record.description || typeLabel[record.type]}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                      {new Date(record.date).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                      style={{ background: 'var(--surface-muted)', color: typeColor[record.type] || 'var(--text-muted)' }}
+                    >
+                      {typeLabel[record.type] || record.type}
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                      R$ {record.amount.toFixed(2)}
+                    </span>
                   </div>
                 </div>
               ))

@@ -136,10 +136,9 @@ export async function POST(request: Request) {
 
     // PROCESSA PEDIDO COMPLETO (veja business.ts para detalhes)
     // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal, detecção de fraude
-    const { order, invoice, fraudLog } = finalizarPedido(payload.userId, orderName, items, logoColors);
+    const { order, invoice } = finalizarPedido(payload.userId, orderName, items, logoColors);
 
-    // Retorna pedido, nota fiscal e resultado da análise de fraude
-    return NextResponse.json({ order, invoice, fraudAnalysis: fraudLog });
+    return NextResponse.json({ order, invoice });
   } catch (error) {
     // Erro genérico - em produção, logar erro específico
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao finalizar pedido.' }, { status: 500 });

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Simple ERP',
-  description: 'ERP modular para gestão empresarial com estoque, vendas, financeiro e notas fiscais.',
+  description: 'ERP modular para gestao empresarial.',
   icons: {
     icon: '/LogoE.svg',
     shortcut: '/LogoE.svg',
@@ -29,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-slate-50 text-slate-900 antialiased">
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="min-h-full">
         <Sidebar>{children}</Sidebar>
       </body>
     </html>
