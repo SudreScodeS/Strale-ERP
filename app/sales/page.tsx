@@ -205,14 +205,25 @@ export default function SalesPage() {
   // Encontra cor selecionada (variável de grupo "Cor" ou similar)
   const selectedColorHex = useMemo(() => {
     if (!selectedProduct) return undefined;
-    // Procura variável de cor nos grupos
     for (const group of selectedProduct.groups) {
       if (group.name.toLowerCase().includes('cor')) {
         for (const v of group.variables) {
           if ((selectedVariables[v.id] || 0) > 0) {
-            // Tenta extrair cor do nome (ex: "Vermelho" → #ff0000)
             return getColorHexFromName(v.name);
           }
+        }
+      }
+    }
+    return undefined;
+  }, [selectedProduct, selectedVariables]);
+
+  // Nome da cor selecionada
+  const selectedColorName = useMemo(() => {
+    if (!selectedProduct) return undefined;
+    for (const group of selectedProduct.groups) {
+      if (group.name.toLowerCase().includes('cor')) {
+        for (const v of group.variables) {
+          if ((selectedVariables[v.id] || 0) > 0) return v.name;
         }
       }
     }
@@ -232,37 +243,7 @@ export default function SalesPage() {
     return undefined;
   }, [selectedProduct, selectedVariables]);
 
-  // Configuração da prévia atual
-  const previewConfig = useMemo(() => ({
-    productImageUrl: selectedProduct?.imageUrl || '',
-    productName: selectedProduct?.name || 'Produto',
-    logoDataUrl: logoDataUrl || null,
-    selectedColorHex,
-    selectedMaterialName,
-  }), [selectedProduct, logoDataUrl, selectedColorHex, selectedMaterialName]);
-
-  // Regenera preview com debounce quando config muda
-  useEffect(() => {
-    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
-
-    previewDebounceRef.current = setTimeout(async () => {
-      if (!previewConfig.productImageUrl && !previewConfig.logoDataUrl) {
-        setCurrentPreviewUrl('');
-        return;
-      }
-      try {
-        const url = await generateProductPreview(previewConfig);
-        setCurrentPreviewUrl(url);
-      } catch (err) {
-        console.warn('[Preview] Falha ao gerar:', err);
-        setCurrentPreviewUrl('');
-      }
-    }, 300); // debounce 300ms
-
-    return () => {
-      if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
-    };
-  }, [previewConfig]);
+  // previewConfig defined below (after currentItemUnitCost)
 
   const filteredOrders = useMemo(() => {
     const term = orderSearch.trim().toLowerCase();
@@ -298,6 +279,37 @@ export default function SalesPage() {
   const cartItemsCost = cartItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const orderCostWithLogo = cartItemsCost + logoCost;
   const salePrice = calculateSalePrice(orderCostWithLogo);
+
+  // Configuração da prévia atual (após cálculos de preço)
+  const previewConfig = useMemo(() => ({
+    productImageUrl: selectedProduct?.imageUrl || '',
+    productName: selectedProduct?.name || 'Produto',
+    logoDataUrl: logoDataUrl || null,
+    selectedColorHex,
+    selectedColorName,
+    selectedMaterialName,
+    quantity,
+    unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost) : 0,
+  }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, quantity, currentItemUnitCost]);
+
+  // Regenera preview com debounce quando config muda
+  useEffect(() => {
+    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    previewDebounceRef.current = setTimeout(async () => {
+      if (!previewConfig.productImageUrl && !previewConfig.logoDataUrl) {
+        setCurrentPreviewUrl('');
+        return;
+      }
+      try {
+        const url = await generateProductPreview(previewConfig);
+        setCurrentPreviewUrl(url);
+      } catch (err) {
+        console.warn('[Preview] Falha ao gerar:', err);
+        setCurrentPreviewUrl('');
+      }
+    }, 300);
+    return () => { if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current); };
+  }, [previewConfig]);
 
   function handleAddItemToCart() {
     if (!selectedProduct) return;
@@ -833,7 +845,7 @@ export default function SalesPage() {
               </div>
             </div>
 
-            {/* PRÉVIA VISUAL EM TEMPO REAL */}
+            {/* PRÉVIA VISUAL EM TEMPO REAL — Card de catálogo */}
             <div className="rounded-3xl border border-slate-200 bg-white p-4">
               <p className="mb-3 text-sm font-semibold text-slate-700">🖼️ Prévia do produto</p>
               <ProductPreview
@@ -841,29 +853,13 @@ export default function SalesPage() {
                 onPreviewGenerated={setCurrentPreviewUrl}
                 className="w-full"
               />
-              <div className="mt-3 space-y-1">
-                {selectedMaterialName ? (
-                  <p className="text-xs text-slate-500">📦 Material: {selectedMaterialName}</p>
-                ) : null}
-                {selectedColorHex ? (
-                  <p className="text-xs text-slate-500">
-                    🎨 Cor aplicada: <span className="inline-block h-3 w-3 rounded-full border border-slate-300 align-middle" style={{ backgroundColor: selectedColorHex }} />
-                    {' '}na imagem do produto
-                  </p>
-                ) : null}
-                {logoAnalysisResult?.productColor && !selectedColorHex ? (
-                  <p className="text-xs text-amber-600">
-                    ⚠️ Selecione uma variável de cor para trocar a cor do produto na prévia
-                  </p>
-                ) : null}
-                {logoDataUrl ? (
-                  <p className="text-xs text-emerald-600">🏷️ Logo posicionada sobre o produto</p>
-                ) : (
-                  <p className="text-xs text-slate-400">Envie uma logo para ver a composição completa</p>
-                )}
-              </div>
+              {!selectedColorHex && logoAnalysisResult?.productColor ? (
+                <p className="mt-2 text-[10px] text-amber-600">
+                  ⚠️ Selecione uma variável de cor para aplicar na imagem do produto
+                </p>
+              ) : null}
               <p className="mt-2 text-[10px] text-slate-400">
-                Prévia atualiza automaticamente: cor do produto + logo posicionada.
+                A prévia mostra exatamente como o produto ficará com as opções selecionadas.
               </p>
             </div>
           </div>
