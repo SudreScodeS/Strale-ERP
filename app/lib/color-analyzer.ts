@@ -1,7 +1,7 @@
 // app/lib/color-analyzer.ts
 // Análise local de cores dominantes usando sharp — zero dependência de API externa
-// Algoritmo: amostragem de pixels → quantização por bucketing → contagem de cores significativas
-// Usado como fallback quando Google Cloud Vision não está configurado
+// Algoritmo: amostragem de pixels → filtragem de fundo → quantização por bucketing → contagem de cores significativas
+// CORRIGIDO: ignora fundo branco, quase-branco, transparente e muito claro
 
 import sharp from 'sharp';
 
@@ -24,24 +24,65 @@ const SIGNIFICANT_COLOR_THRESHOLD = 0.03; // 3% dos pixels
 const BUCKET_BITS = 4; // 16 buckets por canal = 4096 cores possíveis
 const BUCKET_SIZE = 256 >> BUCKET_BITS; // 16
 
+// Limites para detecção de fundo
+const BG_BRIGHTNESS_THRESHOLD = 235; // pixels com brilho >= 235 são considerados fundo claro
+const BG_SATURATION_THRESHOLD = 0.08; // pixels com saturação < 8% e brilho alto são fundo
+const TRANSPARENT_ALPHA_THRESHOLD = 10; // pixels com alpha < 10 são transparentes
+
+/**
+ * Verifica se um pixel deve ser ignorado por ser "fundo".
+ * Critérios:
+ * - Transparente (alpha muito baixo)
+ * - Branco ou quase-branco (brilho >= 235 e baixa saturação)
+ * - Cinza claro (baixa saturação + brilho alto)
+ */
+function isBackgroundPixel(r: number, g: number, b: number, a?: number): boolean {
+  // Transparente
+  if (a !== undefined && a < TRANSPARENT_ALPHA_THRESHOLD) return true;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const brightness = (r * 0.299 + g * 0.587 + b * 0.114); // luminância perceptual
+  const saturation = max > 0 ? (max - min) / max : 0;
+
+  // Branco ou quase-branco
+  if (brightness >= BG_BRIGHTNESS_THRESHOLD && saturation < BG_SATURATION_THRESHOLD) return true;
+
+  // Muito claro e dessaturado (cinza claro, creme, etc)
+  if (brightness >= 240) return true;
+
+  return false;
+}
+
 export async function analyzeColorsLocally(imageBuffer: Buffer): Promise<LocalAnalysisResult> {
-  // Redimensiona para acelerar análise (max 200px no lado maior)
-  // e extrai dados RGB brutos
+  // Extrai dados RGBA brutos (com alpha para detectar transparência)
   const { data, info } = await sharp(imageBuffer)
     .resize(200, 200, { fit: 'inside' })
-    .removeAlpha()
+    .ensureAlpha() // Garante canal alpha
     .raw()
     .toBuffer({ resolveWithObject: true });
 
   const pixelCount = info.width * info.height;
+  const channels = info.channels; // 4 para RGBA
 
-  // Conta cores por bucket (quantização)
+  // Conta cores por bucket (quantização), IGNORANDO fundo
   const bucketMap = new Map<string, { r: number; g: number; b: number; count: number }>();
+  let backgroundPixels = 0;
+  let foregroundPixels = 0;
 
-  for (let i = 0; i < data.length; i += 3) {
+  for (let i = 0; i < data.length; i += channels) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
+    const a = channels === 4 ? data[i + 3] : 255;
+
+    // Ignora pixels de fundo
+    if (isBackgroundPixel(r, g, b, a)) {
+      backgroundPixels++;
+      continue;
+    }
+
+    foregroundPixels++;
 
     // Quantiza para reduzir ruído
     const qr = (r >> BUCKET_BITS) * BUCKET_SIZE + (BUCKET_SIZE >> 1);
@@ -57,21 +98,29 @@ export async function analyzeColorsLocally(imageBuffer: Buffer): Promise<LocalAn
     }
   }
 
+  // Se não encontrou pixels de foreground, retorna vazio (imagem toda em branco)
+  if (foregroundPixels === 0) {
+    return {
+      colors: [],
+      significantColorCount: 0,
+      complexity: 'simple',
+      description: 'Logo não possui cores visíveis (fundo transparente ou imagem em branco).',
+    };
+  }
+
   // Ordena por frequência e pega as top cores
   const sorted = [...bucketMap.values()].sort((a, b) => b.count - a.count);
 
-  // Calcula fração de pixels
+  // Calcula fração de pixels RELATIVA AO FOREGROUND (não ao total)
   const colors: LocalColorInfo[] = sorted.slice(0, 16).map((entry) => ({
     hex: `#${entry.r.toString(16).padStart(2, '0')}${entry.g.toString(16).padStart(2, '0')}${entry.b.toString(16).padStart(2, '0')}`,
     rgb: { r: entry.r, g: entry.g, b: entry.b },
-    pixelFraction: entry.count / pixelCount,
+    pixelFraction: entry.count / foregroundPixels, // Fração sobre foreground, não total
   }));
 
-  // Conta cores significativas
-  const significantColorCount = Math.max(
-    1,
-    colors.filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD).length,
-  );
+  // Conta cores significativas (acima do threshold)
+  const significantColors = colors.filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD);
+  const significantColorCount = Math.max(1, significantColors.length);
 
   // Determina complexidade
   let complexity: 'simple' | 'moderate' | 'complex' = 'simple';
@@ -79,8 +128,10 @@ export async function analyzeColorsLocally(imageBuffer: Buffer): Promise<LocalAn
   else if (significantColorCount >= 3) complexity = 'moderate';
 
   // Descrição baseada nas cores encontradas
-  const topColorNames = colors.slice(0, 3).map((c) => getColorName(c.rgb));
-  const description = `Logo com ${significantColorCount} ${significantColorCount === 1 ? 'cor dominante' : 'cores dominantes'}: ${topColorNames.join(', ')}`;
+  const topColorNames = significantColors.slice(0, 3).map((c) => getColorName(c.rgb));
+  const description = topColorNames.length > 0
+    ? `Logo com ${significantColorCount} ${significantColorCount === 1 ? 'cor dominante' : 'cores dominantes'}: ${topColorNames.join(', ')}`
+    : 'Logo analisado — cores da marca identificadas';
 
   return {
     colors,
@@ -97,9 +148,8 @@ function getColorName(rgb: { r: number; g: number; b: number }): string {
   const min = Math.min(r, g, b);
   const sat = max > 0 ? (max - min) / max : 0;
 
-  // Preto, branco, cinza
+  // Preto, cinza
   if (max < 40) return 'preto';
-  if (min > 220) return 'branco';
   if (sat < 0.1 && max > 40 && min < 220) return 'cinza';
 
   // Cores
