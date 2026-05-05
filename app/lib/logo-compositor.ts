@@ -651,15 +651,15 @@ export function getProductCompositorOptions(
 
   const base: CompositorOptions = {
     blendMode,
-    opacity: brightness < 80 ? 0.85 : 0.92,
+    opacity: brightness < 80 ? 0.90 : 0.97,
     featherRadius: 2,
     fabricTexture: true,
-    textureIntensity: 0.06,
-    shadowBlur: 4,
-    shadowOpacity: brightness < 80 ? 0.08 : 0.15,
-    bgThreshold: 235,
-    matchLighting: true,
-    lightingIntensity: 0.12,
+    textureIntensity: 0.03,
+    shadowBlur: 3,
+    shadowOpacity: brightness < 80 ? 0.06 : 0.08,
+    bgThreshold: 200,
+    matchLighting: false, // Disabled — causes ghost image of product on logo
+    lightingIntensity: 0,
     curvature: 0,
     perspectiveSkew: 0,
     perspectiveTilt: 0,
@@ -677,12 +677,11 @@ export function getProductCompositorOptions(
     case 'caneca':
       base.fabricTexture = false;
       base.textureIntensity = 0;
-      base.shadowBlur = 6;
-      base.shadowOpacity = 0.22;
+      base.shadowBlur = 4;
+      base.shadowOpacity = 0.12;
       base.featherRadius = 1;
       base.curvature = 0.6; // Cylindrical wrap
       base.perspectiveSkew = 3; // Slight angle
-      base.lightingIntensity = 0.18;
       break;
 
     case 'sacola':

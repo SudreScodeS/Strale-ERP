@@ -479,15 +479,15 @@ function drawFallbackBag(
     // Use professional compositor
     const composited = compositeLogo(bagCanvas, logoImage, printArea, {
       blendMode: 'multiply',
-      opacity: 0.92,
+      opacity: 0.97,
       featherRadius: 2,
       fabricTexture: true,
-      textureIntensity: 0.07,
-      shadowBlur: 4,
-      shadowOpacity: 0.15,
-      bgThreshold: 235,
-      matchLighting: true,
-      lightingIntensity: 0.12,
+      textureIntensity: 0.03,
+      shadowBlur: 3,
+      shadowOpacity: 0.08,
+      bgThreshold: 200,
+      matchLighting: false, // Disabled — canvas bag has its own gradients that bleed into logo
+      lightingIntensity: 0,
     });
     ctx.drawImage(composited, 0, 0);
   } else {
