@@ -14,6 +14,7 @@ export interface PreviewConfig {
   selectedColorHex?: string;
   selectedColorName?: string;
   selectedMaterialName?: string;
+  selectedVariables?: string[]; // Todos os nomes das variáveis selecionadas (cor, tamanho, material, etc.)
   quantity?: number;
   unitPrice?: number;
 }
@@ -61,6 +62,7 @@ export default function ProductPreview({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imgError, setImgError] = useState(false);
+  const [imageSource, setImageSource] = useState<'ai' | 'ai-with-logo' | 'composited' | 'generated'>('ai');
 
   const {
     productImageUrl,
@@ -69,6 +71,7 @@ export default function ProductPreview({
     selectedColorHex,
     selectedColorName,
     selectedMaterialName,
+    selectedVariables = [],
     quantity,
     unitPrice,
   } = config;
@@ -77,8 +80,10 @@ export default function ProductPreview({
   const hasRealImage = Boolean(productImageUrl && !imgError);
   const productStyle = getProductStyle(productName);
 
-  // Cache key para a imagem gerada
-  const generationKey = `${productColor}-${productStyle}`;
+  // Cache key para a imagem gerada (inclui variáveis e logo)
+  const logoShortHash = logoDataUrl ? logoDataUrl.substring(logoDataUrl.length - 20) : 'nologo';
+  const variablesKey = selectedVariables.join(',');
+  const generationKey = `${productColor}-${productStyle}-${variablesKey}-${logoShortHash}`;
 
   // ==========================================
   // 1. Gerar/carregar imagem base do produto via IA
@@ -102,16 +107,22 @@ export default function ProductPreview({
       setError('');
 
       try {
+        const body: Record<string, unknown> = {
+          color: productColor,
+          style: productStyle,
+          variables: selectedVariables,
+        };
+        if (logoDataUrl) {
+          body.logoDataUrl = logoDataUrl;
+        }
+
         const response = await fetch('/api/product-image', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...getAuthHeaders(),
           },
-          body: JSON.stringify({
-            color: productColor,
-            style: productStyle,
-          }),
+          body: JSON.stringify(body),
         });
 
         if (cancelled) return;
@@ -137,6 +148,20 @@ export default function ProductPreview({
 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
+
+        // Extrair fonte da imagem do header
+        const src = response.headers.get('X-Image-Source');
+        if (!cancelled) {
+          if (src === 'ai-with-logo') {
+            setImageSource('ai-with-logo');
+          } else if (src === 'composited') {
+            setImageSource('composited');
+          } else if (src === 'generated') {
+            setImageSource('generated');
+          } else {
+            setImageSource('ai');
+          }
+        }
 
         const img = new Image();
         img.onload = () => {
@@ -167,7 +192,7 @@ export default function ProductPreview({
     void generateImage();
 
     return () => { cancelled = true; };
-  }, [generationKey, hasRealImage, productColor, productStyle]);
+  }, [generationKey, hasRealImage, productColor, productStyle, selectedVariables, logoDataUrl]);
 
   // ==========================================
   // 2. Carregar logo como Image
@@ -233,48 +258,54 @@ export default function ProductPreview({
       // Desenha a imagem base
       ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
 
-      // Aplica tint de cor sutil (para ajustar a cor do produto)
-      ctx.save();
-      ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = productColor;
-      ctx.globalAlpha = 0.3;
-      ctx.fillRect(drawX, drawY, drawW, drawH);
-      ctx.restore();
-
-      // Clareia um pouco para manter visibilidade
-      ctx.save();
-      ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = '#ffffff';
-      ctx.globalAlpha = 0.15;
-      ctx.fillRect(drawX, drawY, drawW, drawH);
-      ctx.restore();
-
-      // Composição do logo
-      if (logoImage) {
-        const logoMaxW = drawW * 0.45;
-        const logoMaxH = drawH * 0.3;
-        const logoRatio = logoImage.width / logoImage.height;
-
-        let logoW: number, logoH: number;
-        if (logoRatio > logoMaxW / logoMaxH) {
-          logoW = logoMaxW;
-          logoH = logoW / logoRatio;
-        } else {
-          logoH = logoMaxH;
-          logoW = logoH * logoRatio;
-        }
-
-        const logoX = drawX + (drawW - logoW) / 2;
-        const logoY = drawY + drawH * 0.35;
-
-        // Sombra da logo para profundidade
+      // Se a API já integrou a logo (img2img), NÃO aplicar overlays extras
+      // A imagem já tem a cor correta e a logo integrada pela IA
+      if (imageSource === 'ai-with-logo' || imageSource === 'composited') {
+        // Imagem já processada — desenhar direto sem overlays
+      } else {
+        // Imagem gerada apenas com prompt — aplicar tint de cor sutil
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 3;
-        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = productColor;
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(drawX, drawY, drawW, drawH);
         ctx.restore();
+
+        // Clareia um pouco para manter visibilidade
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.15;
+        ctx.fillRect(drawX, drawY, drawW, drawH);
+        ctx.restore();
+
+        // Composição do logo no Canvas (fallback quando API não integrou)
+        if (logoImage) {
+          const logoMaxW = drawW * 0.45;
+          const logoMaxH = drawH * 0.3;
+          const logoRatio = logoImage.width / logoImage.height;
+
+          let logoW: number, logoH: number;
+          if (logoRatio > logoMaxW / logoMaxH) {
+            logoW = logoMaxW;
+            logoH = logoW / logoRatio;
+          } else {
+            logoH = logoMaxH;
+            logoW = logoH * logoRatio;
+          }
+
+          const logoX = drawX + (drawW - logoW) / 2;
+          const logoY = drawY + drawH * 0.35;
+
+          // Sombra da logo para profundidade
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.3)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 3;
+          ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+          ctx.restore();
+        }
       }
 
     } else {
@@ -290,7 +321,7 @@ export default function ProductPreview({
         onPreviewGenerated(canvas.toDataURL('image/png'));
       } catch { /* ignore */ }
     }
-  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated]);
+  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated, imageSource]);
 
   // Re-renderiza quando dependências mudam
   useEffect(() => {

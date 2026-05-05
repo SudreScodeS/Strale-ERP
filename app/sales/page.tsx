@@ -280,6 +280,10 @@ export default function SalesPage() {
   const salePrice = calculateSalePrice(orderCostWithLogo);
 
   // Configuração da prévia atual (após cálculos de preço)
+  const selectedVariableNames = useMemo(() => {
+    return selectedVariablesList.map(v => v.name);
+  }, [selectedVariablesList]);
+
   const previewConfig = useMemo(() => ({
     productImageUrl: selectedProduct?.imageUrl || '',
     productName: selectedProduct?.name || 'Produto',
@@ -287,9 +291,10 @@ export default function SalesPage() {
     selectedColorHex,
     selectedColorName,
     selectedMaterialName,
+    selectedVariables: selectedVariableNames,
     quantity,
     unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost) : 0,
-  }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, quantity, currentItemUnitCost]);
+  }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, selectedVariableNames, quantity, currentItemUnitCost]);
 
   function handleAddItemToCart() {
     if (!selectedProduct) return;
