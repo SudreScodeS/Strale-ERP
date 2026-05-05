@@ -115,7 +115,7 @@ export async function POST(request: Request) {
 
     // FLUX.1-schnell — rápido (~1-2s), gratuito, qualidade decente
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+      'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
       {
         method: 'POST',
         headers: {
@@ -125,10 +125,9 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
-            width: 768,
-            height: 1024,
+            width: 512,
+            height: 640,
             num_inference_steps: 4, // schnell = 4 steps
-            guidance_scale: 0.0,    // schnell não usa guidance
           },
         }),
       },
