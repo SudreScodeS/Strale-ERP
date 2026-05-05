@@ -30,5 +30,37 @@
     "stock": 1,
     "groupId": "group-size",
     "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "variable-color-azul",
+    "name": "Azul",
+    "additionalPrice": 0,
+    "stock": 100,
+    "groupId": "group-color",
+    "createdAt": "2026-05-06T06:23:00.000Z"
+  },
+  {
+    "id": "variable-color-amarelo",
+    "name": "Amarelo",
+    "additionalPrice": 0,
+    "stock": 100,
+    "groupId": "group-color",
+    "createdAt": "2026-05-06T06:23:00.000Z"
+  },
+  {
+    "id": "variable-color-preto",
+    "name": "Preto",
+    "additionalPrice": 0,
+    "stock": 100,
+    "groupId": "group-color",
+    "createdAt": "2026-05-06T06:23:00.000Z"
+  },
+  {
+    "id": "variable-color-vermelho",
+    "name": "Vermelho",
+    "additionalPrice": 0,
+    "stock": 100,
+    "groupId": "group-color",
+    "createdAt": "2026-05-06T06:23:00.000Z"
   }
 ]
