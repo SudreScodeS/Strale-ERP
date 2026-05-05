@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     const cached = imageCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       console.log(`[product-image] Cache hit for ${cacheKey}`);
-      return new NextResponse(cached.buffer, {
+      return new NextResponse(new Uint8Array(cached.buffer), {
         headers: {
           'Content-Type': 'image/webp',
           'Cache-Control': 'public, max-age=3600',
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     }
 
     const colorName = hexToColorName(color);
-    let response: Response;
+    let response: Response | null = null;
     let imageSource = 'generated';
 
     // Se tem imageUrl, tenta img2img com a foto real como referência
@@ -171,13 +171,13 @@ export async function POST(request: Request) {
           const errText = await response.text();
           console.log(`[product-image] img2img failed (${response.status}): ${errText.substring(0, 200)}`);
           console.log(`[product-image] Falling back to text-to-image...`);
-          response = null as unknown as Response; // Marca para usar text-to-image
+          response = null; // Marca para usar text-to-image
         } else {
           imageSource = 'img2img';
         }
       } else {
         console.log(`[product-image] Failed to fetch product image, using text-to-image`);
-        response = null as unknown as Response;
+        response = null;
       }
     }
 

@@ -5,9 +5,14 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
-import { autoCompositeLogo, getPrintArea, type CompositorOptions } from '../lib/logo-compositor';
+import {
+  autoCompositeLogo,
+  getPrintArea,
+  getProductCompositorOptions,
+  type CompositorOptions,
+} from '../lib/logo-compositor';
 
 export interface PreviewConfig {
   productImageUrl: string;
@@ -55,58 +60,6 @@ function getProductType(productName: string): 'sacola' | 'camiseta' | 'caneca' |
   if (lower.includes('caneca') || lower.includes('mug')) return 'caneca';
   if (lower.includes('sacola') || lower.includes('bag') || lower.includes('tote')) return 'sacola';
   return 'default';
-}
-
-/** Get optimal blend mode based on product and logo brightness */
-function getOptimalBlendMode(
-  productColorHex: string,
-): 'multiply' | 'overlay' | 'soft-light' {
-  const rgb = hexToRgb(productColorHex);
-  if (!rgb) return 'multiply';
-  const brightness = rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114;
-
-  if (brightness > 180) return 'multiply';
-  if (brightness > 100) return 'soft-light';
-  return 'overlay';
-}
-
-/** Get compositor options tuned for product type */
-function getCompositorOptions(
-  productColorHex: string,
-  productType: string,
-): CompositorOptions {
-  const blendMode = getOptimalBlendMode(productColorHex);
-  const rgb = hexToRgb(productColorHex);
-  const brightness = rgb ? rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114 : 200;
-
-  const base: CompositorOptions = {
-    blendMode,
-    opacity: 0.92,
-    featherRadius: 1.5,
-    fabricTexture: true,
-    textureIntensity: 0.05,
-    shadowBlur: 3,
-    shadowOpacity: 0.12,
-    bgThreshold: 235,
-  };
-
-  if (productType === 'camiseta') {
-    base.textureIntensity = 0.08;
-    base.featherRadius = 2;
-  } else if (productType === 'caneca') {
-    base.fabricTexture = false;
-    base.textureIntensity = 0;
-    base.shadowBlur = 5;
-    base.shadowOpacity = 0.2;
-    base.featherRadius = 1;
-  }
-
-  if (brightness < 80) {
-    base.shadowOpacity = 0.08;
-    base.opacity = 0.88;
-  }
-
-  return base;
 }
 
 // Cache global de imagens geradas (sobrevive re-renders)
@@ -162,12 +115,10 @@ export default function ProductPreview({
       setError('');
 
       try {
-        // Envia imageUrl para API usar como referência (img2img)
         const body: Record<string, string> = {
           color: productColor,
           style: productStyle,
         };
-        // Só envia imageUrl se o usuário selecionou um produto com foto
         if (productImageUrl) {
           body.imageUrl = productImageUrl;
         }
@@ -192,7 +143,6 @@ export default function ProductPreview({
           throw new Error(data.error || 'Erro ao gerar imagem');
         }
 
-        // Detecta se veio de img2img ou text-to-image
         const src = response.headers.get('X-Image-Source');
         if (!cancelled) {
           setImageSource(src === 'img2img' ? 'img2img' : 'ai');
@@ -226,21 +176,36 @@ export default function ProductPreview({
   }, [generationKey, showStock, productColor, productStyle, productImageUrl]);
 
   // ==========================================
-  // 2. Carregar logo
+  // 2. Carregar logo (garante re-render quando carregar)
   // ==========================================
   useEffect(() => {
-    if (!logoDataUrl) { setLogoImage(null); return; }
+    if (!logoDataUrl) {
+      setLogoImage(null);
+      return;
+    }
+
+    let cancelled = false;
     const img = new Image();
-    img.onload = () => setLogoImage(img);
-    img.onerror = () => setLogoImage(null);
+    img.onload = () => {
+      if (!cancelled) setLogoImage(img);
+    };
+    img.onerror = () => {
+      if (!cancelled) setLogoImage(null);
+    };
     img.src = logoDataUrl;
+    return () => { cancelled = true; };
   }, [logoDataUrl]);
 
   // ==========================================
   // 3. Renderizar Canvas com composição
+  //
+  // ⚠️ CORREÇÃO CRÍTICA: NÃO incluir `loading` nas dependências!
+  // `loading` muda para false ANTES do logoImage carregar,
+  // causando renderização sem logo (stale closure).
+  //
+  // Dependências corretas: apenas os dados visuais que afetam o canvas.
+  // O guard `if (!baseImage) return` previne renderização prematura.
   // ==========================================
-  // Usa useEffect direto (sem useCallback) para evitar stale closure
-  // Quando logoImage carrega de forma assíncrona, este effect re-executa corretamente
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -255,57 +220,58 @@ export default function ProductPreview({
     ctx.fillStyle = '#e2e8f0';
     ctx.fillRect(0, 0, w, h);
 
-    if (baseImage) {
-      // Calculate product draw area (centered, 90% of canvas)
-      const imgRatio = baseImage.width / baseImage.height;
-      const canvasRatio = w / h;
-      let drawW: number, drawH: number, drawX: number, drawY: number;
+    // Guard: don't render until base image is ready
+    if (!baseImage) return;
 
-      if (imgRatio > canvasRatio) {
-        drawW = w * 0.9;
-        drawH = drawW / imgRatio;
-        drawX = (w - drawW) / 2;
-        drawY = (h - drawH) / 2;
-      } else {
-        drawH = h * 0.9;
-        drawW = drawH * imgRatio;
-        drawX = (w - drawW) / 2;
-        drawY = (h - drawH) / 2;
-      }
+    // Calculate product draw area (centered, 90% of canvas)
+    const imgRatio = baseImage.width / baseImage.height;
+    const canvasRatio = w / h;
+    let drawW: number, drawH: number, drawX: number, drawY: number;
 
-      if (logoImage) {
-        // === COMPOSIÇÃO: produto + logo ===
-        // 1. Desenha produto num canvas temporário
-        const productCanvas = document.createElement('canvas');
-        productCanvas.width = Math.ceil(drawW);
-        productCanvas.height = Math.ceil(drawH);
-        const pCtx = productCanvas.getContext('2d')!;
-        pCtx.drawImage(baseImage, 0, 0, drawW, drawH);
+    if (imgRatio > canvasRatio) {
+      drawW = w * 0.9;
+      drawH = drawW / imgRatio;
+      drawX = (w - drawW) / 2;
+      drawY = (h - drawH) / 2;
+    } else {
+      drawH = h * 0.9;
+      drawW = drawH * imgRatio;
+      drawX = (w - drawW) / 2;
+      drawY = (h - drawH) / 2;
+    }
 
-        // 2. Composita logo sobre o produto
-        const compositorOpts = getCompositorOptions(productColor, productType);
-        const composited = autoCompositeLogo(
-          productCanvas,
-          logoImage,
-          productType,
-          compositorOpts,
-        );
+    if (logoImage) {
+      // === COMPOSIÇÃO PROFISSIONAL: produto + logo ===
 
-        // 3. Desenha resultado no canvas principal
-        ctx.drawImage(composited, drawX, drawY, drawW, drawH);
-      } else {
-        // Sem logo — desenha produto direto
-        ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
-      }
-    } else if (!loading) {
-      // Fallback: desenha sacola no Canvas
-      drawFallbackBag(ctx, w, h, productColor, logoImage);
+      // 1. Desenha produto num canvas temporário (no tamanho de draw)
+      const productCanvas = document.createElement('canvas');
+      productCanvas.width = Math.ceil(drawW);
+      productCanvas.height = Math.ceil(drawH);
+      const pCtx = productCanvas.getContext('2d')!;
+      pCtx.drawImage(baseImage, 0, 0, drawW, drawH);
+
+      // 2. Obtém opções otimizadas para o tipo de produto
+      const compositorOpts = getProductCompositorOptions(productType, productColor);
+
+      // 3. Composita logo sobre o produto com efeitos realistas
+      const composited = autoCompositeLogo(
+        productCanvas,
+        logoImage,
+        productType,
+        compositorOpts,
+      );
+
+      // 4. Desenha resultado no canvas principal
+      ctx.drawImage(composited, drawX, drawY, drawW, drawH);
+    } else {
+      // Sem logo — desenha produto direto
+      ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
     }
 
     if (onPreviewGenerated) {
       try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* */ }
     }
-  }, [baseImage, logoImage, productColor, productType, loading, onPreviewGenerated]);
+  }, [baseImage, logoImage, productColor, productType, onPreviewGenerated]);
 
   // ==========================================
   // Renderização
@@ -412,213 +378,4 @@ export default function ProductPreview({
       </div>
     </div>
   );
-}
-
-// ==========================================
-// FALLBACK: Sacola Canvas
-// ==========================================
-
-function drawFallbackBag(ctx: CanvasRenderingContext2D, w: number, h: number, color: string, logoImage: HTMLImageElement | null) {
-  const bagW = w * 0.5, bagH = bagW * 1.4;
-  const bagX = (w - bagW) / 2, bagY = h * 0.2;
-
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.1)';
-  ctx.beginPath();
-  ctx.ellipse(w / 2, bagY + bagH + 10, bagW * 0.4, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  const gradient = ctx.createLinearGradient(bagX, bagY, bagX + bagW, bagY + bagH);
-  gradient.addColorStop(0, lighten(color, 25));
-  gradient.addColorStop(0.3, lighten(color, 10));
-  gradient.addColorStop(0.5, color);
-  gradient.addColorStop(0.7, darken(color, 10));
-  gradient.addColorStop(1, darken(color, 30));
-
-  ctx.save();
-  ctx.fillStyle = gradient;
-  roundRect(ctx, bagX, bagY, bagW, bagH, 6);
-  ctx.fill();
-
-  ctx.globalAlpha = 0.04;
-  for (let i = 0; i < bagH; i += 3) {
-    ctx.beginPath();
-    ctx.moveTo(bagX, bagY + i);
-    ctx.lineTo(bagX + bagW, bagY + i);
-    ctx.strokeStyle = i % 6 < 3 ? '#000' : '#fff';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-
-  const shine = ctx.createLinearGradient(bagX, bagY, bagX + bagW * 0.4, bagY);
-  shine.addColorStop(0, 'rgba(255,255,255,0.12)');
-  shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine;
-  ctx.fill();
-
-  ctx.fillStyle = darken(color, 15);
-  ctx.globalAlpha = 0.4;
-  ctx.fillRect(bagX, bagY, bagW, 12);
-  ctx.globalAlpha = 1;
-
-  ctx.setLineDash([4, 4]);
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(bagX + 8, bagY + 12);
-  ctx.lineTo(bagX + bagW - 8, bagY + 12);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-
-  drawHandle(ctx, bagX + bagW * 0.28, bagY, color);
-  drawHandle(ctx, bagX + bagW * 0.72, bagY, color);
-
-  if (logoImage) {
-    const printArea = {
-      x: bagX + bagW * 0.15,
-      y: bagY + bagH * 0.25,
-      width: bagW * 0.7,
-      height: bagH * 0.45,
-    };
-    const bagCanvas = document.createElement('canvas');
-    bagCanvas.width = w;
-    bagCanvas.height = h;
-    const bagCtx = bagCanvas.getContext('2d')!;
-    bagCtx.drawImage(ctx.canvas, 0, 0);
-
-    const composited = compositeLogoFallback(bagCanvas, logoImage, printArea, color);
-    ctx.drawImage(composited, 0, 0);
-  } else {
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = `bold ${bagW * 0.09}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.2)';
-    ctx.shadowBlur = 3;
-    ctx.fillText('Logo Aqui', bagX + bagW / 2, bagY + bagH * 0.45);
-    ctx.restore();
-  }
-}
-
-function compositeLogoFallback(
-  productCanvas: HTMLCanvasElement,
-  logoImage: HTMLImageElement,
-  printArea: { x: number; y: number; width: number; height: number },
-  productColor: string,
-): HTMLCanvasElement {
-  const out = document.createElement('canvas');
-  out.width = productCanvas.width;
-  out.height = productCanvas.height;
-  const ctx = out.getContext('2d')!;
-  ctx.drawImage(productCanvas, 0, 0);
-
-  // Process logo: remove white background
-  const logoCanvas = document.createElement('canvas');
-  logoCanvas.width = logoImage.width;
-  logoCanvas.height = logoImage.height;
-  const lCtx = logoCanvas.getContext('2d')!;
-  lCtx.drawImage(logoImage, 0, 0);
-  const imageData = lCtx.getImageData(0, 0, logoImage.width, logoImage.height);
-  const data = imageData.data;
-
-  const cornerIdx = 0;
-  const bgR = data[cornerIdx], bgG = data[cornerIdx + 1], bgB = data[cornerIdx + 2];
-
-  for (let i = 0; i < data.length; i += 4) {
-    const dist = Math.sqrt(
-      (data[i] - bgR) ** 2 + (data[i + 1] - bgG) ** 2 + (data[i + 2] - bgB) ** 2,
-    );
-    if (dist < 60) {
-      data[i + 3] = 0;
-    } else if (dist < 120) {
-      data[i + 3] = Math.round(((dist - 60) / 60) * 255);
-    }
-  }
-  lCtx.putImageData(imageData, 0, 0);
-
-  const maxW = printArea.width * 0.65;
-  const maxH = printArea.height * 0.65;
-  const ratio = logoImage.width / logoImage.height;
-  let lw: number, lh: number;
-  if (ratio > maxW / maxH) { lw = maxW; lh = lw / ratio; } else { lh = maxH; lw = lh * ratio; }
-
-  const lx = printArea.x + (printArea.width - lw) / 2;
-  const ly = printArea.y + (printArea.height - lh) / 2;
-
-  const rgb = hexToRgb(productColor);
-  const brightness = rgb ? rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114 : 200;
-  const blendMode: GlobalCompositeOperation = brightness > 150 ? 'multiply' : 'soft-light';
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.12)';
-  ctx.shadowBlur = 3;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 2;
-  ctx.globalAlpha = 0.12;
-  ctx.drawImage(logoCanvas, lx + 1, ly + 2, lw, lh);
-  ctx.restore();
-
-  ctx.save();
-  ctx.globalAlpha = 0.92;
-  ctx.globalCompositeOperation = blendMode;
-  ctx.drawImage(logoCanvas, lx, ly, lw, lh);
-  ctx.restore();
-
-  return out;
-}
-
-function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, color: string) {
-  const hw = 4, hh = 45;
-  ctx.save();
-  const grad = ctx.createLinearGradient(cx - hw, top, cx + hw, top);
-  grad.addColorStop(0, darken(color, 35));
-  grad.addColorStop(0.3, darken(color, 15));
-  grad.addColorStop(0.5, darken(color, 5));
-  grad.addColorStop(0.7, darken(color, 15));
-  grad.addColorStop(1, darken(color, 35));
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.moveTo(cx - hw, top);
-  ctx.quadraticCurveTo(cx - hw - 2, top - hh, cx - hw, top - hh);
-  ctx.lineTo(cx + hw, top - hh);
-  ctx.quadraticCurveTo(cx + hw + 2, top - hh, cx + hw, top);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function lighten(hex: string, pct: number): string {
-  const c = hexToRgb(hex);
-  if (!c) return hex;
-  return rgbToHex(c.r + (255 - c.r) * pct / 100, c.g + (255 - c.g) * pct / 100, c.b + (255 - c.b) * pct / 100);
-}
-function darken(hex: string, pct: number): string {
-  const c = hexToRgb(hex);
-  if (!c) return hex;
-  return rgbToHex(c.r * (1 - pct / 100), c.g * (1 - pct / 100), c.b * (1 - pct / 100));
-}
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const m = hex.replace('#', '').match(/^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
-}
-function rgbToHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b].map(c => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0')).join('');
 }
