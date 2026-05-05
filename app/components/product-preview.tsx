@@ -1,10 +1,11 @@
 // app/components/product-preview.tsx
-// Prévia do produto: HTML + CSS puro (sem Canvas, sem SVG, sem dependências)
-// Gera sacola realista com textura de tecido, sombras, dobras e alças proporcionais
+// Prévia do produto com IA generativa + Canvas para composição em tempo real
+// Fluxo: IA gera imagem base da sacola → Canvas compõe cor + logo em tempo real
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { getAuthHeaders } from '../lib/authClient';
 
 export interface PreviewConfig {
   productImageUrl: string;
@@ -24,14 +25,12 @@ interface ProductPreviewProps {
   compact?: boolean;
 }
 
-/**
- * Cores padrão para produtos sem cor selecionada.
- */
+// Cores padrão
 const DEFAULT_PRODUCT_COLORS: Record<string, string> = {
-  sacola: '#1e40af',
+  sacola: '#2563eb',
   camiseta: '#f8fafc',
   caneca: '#f8fafc',
-  default: '#1e40af',
+  default: '#2563eb',
 };
 
 function getDefaultColor(productName: string): string {
@@ -42,17 +41,25 @@ function getDefaultColor(productName: string): string {
   return DEFAULT_PRODUCT_COLORS.default;
 }
 
-/**
- * Componente de prévia do produto.
- * Gera uma sacola realista com CSS puro — textura de tecido, sombras,
- * dobras verticais, alças proporcionais e logo centralizada na face frontal.
- */
+// Estilo do produto baseado no nome
+function getProductStyle(productName: string): string {
+  const lower = productName.toLowerCase();
+  if (lower.includes('camiseta') || lower.includes('camisa')) return 'camiseta';
+  if (lower.includes('caneca') || lower.includes('mug')) return 'caneca';
+  return 'sacola';
+}
+
 export default function ProductPreview({
   config,
   onPreviewGenerated,
   className = '',
   compact = false,
 }: ProductPreviewProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [baseImage, setBaseImage] = useState<HTMLImageElement | null>(null);
+  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [imgError, setImgError] = useState(false);
 
   const {
@@ -66,58 +73,292 @@ export default function ProductPreview({
     unitPrice,
   } = config;
 
-  // Cor do produto
   const productColor = selectedColorHex || getDefaultColor(productName);
-
-  // Se tem imagem real do produto
   const hasRealImage = Boolean(productImageUrl && !imgError);
+  const productStyle = getProductStyle(productName);
 
-  // Notifica parent sobre a prévia
-  useMemo(() => {
-    if (onPreviewGenerated) {
-      onPreviewGenerated(`preview:${productName}:${productColor}:${logoDataUrl ? 'logo' : 'no-logo'}`);
+  // Cache key para a imagem gerada
+  const generationKey = `${productColor}-${productStyle}`;
+
+  // ==========================================
+  // 1. Gerar/carregar imagem base da sacola via IA
+  // ==========================================
+  const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+
+  useEffect(() => {
+    if (hasRealImage) return; // Não gera se tem imagem real
+
+    // Verifica cache local (no browser)
+    const cached = imageCacheRef.current.get(generationKey);
+    if (cached) {
+      setBaseImage(cached);
+      return;
     }
-  }, [productName, productColor, logoDataUrl, onPreviewGenerated]);
 
+    let cancelled = false;
+
+    async function generateImage() {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await fetch('/api/product-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            color: productColor,
+            style: productStyle,
+          }),
+        });
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          if (data.fallback) {
+            // Sem token — usa fallback Canvas
+            setBaseImage(null);
+            setError('IA não configurada — usando visual ilustrativo');
+            setLoading(false);
+            return;
+          }
+          if (data.retry) {
+            // Modelo carregando — retry em 3s
+            setTimeout(() => {
+              if (!cancelled) void generateImage();
+            }, 3000);
+            return;
+          }
+          throw new Error(data.error || 'Erro ao gerar imagem');
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        const img = new Image();
+        img.onload = () => {
+          if (cancelled) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          imageCacheRef.current.set(generationKey, img);
+          setBaseImage(img);
+          setLoading(false);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          if (!cancelled) {
+            setError('Erro ao carregar imagem gerada');
+            setLoading(false);
+          }
+        };
+        img.src = url;
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Erro na geração');
+          setLoading(false);
+        }
+      }
+    }
+
+    void generateImage();
+
+    return () => { cancelled = true; };
+  }, [generationKey, hasRealImage, productColor, productStyle]);
+
+  // ==========================================
+  // 2. Carregar logo como Image
+  // ==========================================
+  useEffect(() => {
+    if (!logoDataUrl) {
+      setLogoImage(null);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => setLogoImage(img);
+    img.onerror = () => setLogoImage(null);
+    img.src = logoDataUrl;
+  }, [logoDataUrl]);
+
+  // ==========================================
+  // 3. Renderizar no Canvas (composição em tempo real)
+  // ==========================================
+  const renderCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Limpa
+    ctx.clearRect(0, 0, w, h);
+
+    // Fundo
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 0, w, h);
+
+    if (hasRealImage) {
+      // Modo imagem real: desenha a imagem do estoque
+      // (será desenhada via <img> no fallback, Canvas só para logo overlay)
+      return;
+    }
+
+    if (baseImage) {
+      // ========================================
+      // MODO IA: imagem gerada pela IA
+      // ========================================
+
+      // Calcula dimensões mantendo proporção
+      const imgRatio = baseImage.width / baseImage.height;
+      const canvasRatio = w / h;
+      let drawW: number, drawH: number, drawX: number, drawY: number;
+
+      if (imgRatio > canvasRatio) {
+        drawW = w * 0.85;
+        drawH = drawW / imgRatio;
+        drawX = (w - drawW) / 2;
+        drawY = (h - drawH) / 2;
+      } else {
+        drawH = h * 0.85;
+        drawW = drawH * imgRatio;
+        drawX = (w - drawW) / 2;
+        drawY = (h - drawH) / 2;
+      }
+
+      // Desenha a imagem base
+      ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
+
+      // Aplica tint de cor sutil (para ajustar a cor da sacola)
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = productColor;
+      ctx.globalAlpha = 0.3;
+      ctx.fillRect(drawX, drawY, drawW, drawH);
+      ctx.restore();
+
+      // Clareia um pouco para manter visibilidade
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.15;
+      ctx.fillRect(drawX, drawY, drawW, drawH);
+      ctx.restore();
+
+      // Composição do logo
+      if (logoImage) {
+        const logoMaxW = drawW * 0.45;
+        const logoMaxH = drawH * 0.3;
+        const logoRatio = logoImage.width / logoImage.height;
+
+        let logoW: number, logoH: number;
+        if (logoRatio > logoMaxW / logoMaxH) {
+          logoW = logoMaxW;
+          logoH = logoW / logoRatio;
+        } else {
+          logoH = logoMaxH;
+          logoW = logoH * logoRatio;
+        }
+
+        const logoX = drawX + (drawW - logoW) / 2;
+        const logoY = drawY + drawH * 0.35;
+
+        // Sombra da logo
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 3;
+        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.restore();
+      }
+
+    } else {
+      // ========================================
+      // MODO FALLBACK: Canvas puro (sem IA)
+      // ========================================
+      drawFallbackBag(ctx, w, h, productColor, logoImage);
+    }
+
+    // Notifica parent
+    if (onPreviewGenerated) {
+      try {
+        onPreviewGenerated(canvas.toDataURL('image/png'));
+      } catch { /* ignore */ }
+    }
+  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated]);
+
+  // Re-renderiza quando dependências mudam
+  useEffect(() => {
+    renderCanvas();
+  }, [renderCanvas]);
+
+  // ==========================================
+  // Renderização
+  // ==========================================
+
+  // Modo compacto (carrinho)
   if (compact) {
     return (
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
         <div
           className="relative w-full aspect-square flex items-center justify-center overflow-hidden"
-          style={{ backgroundColor: hasRealImage ? '#f8fafc' : '#e2e8f0' }}
+          style={{ backgroundColor: '#e2e8f0' }}
         >
           {hasRealImage ? (
-            <img
-              src={productImageUrl}
-              alt={productName}
-              className="w-full h-full object-cover"
-              onError={() => setImgError(true)}
-            />
+            <>
+              <img
+                src={productImageUrl}
+                alt={productName}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
+              {logoDataUrl ? (
+                <img
+                  src={logoDataUrl}
+                  alt="Logo"
+                  className="absolute inset-0 m-auto h-12 w-12 object-contain drop-shadow-md"
+                  style={{ maxWidth: '35%', maxHeight: '35%' }}
+                />
+              ) : null}
+            </>
           ) : (
-            <RealisticBag color={productColor} logoUrl={logoDataUrl} compact />
-          )}
-          {logoDataUrl && hasRealImage ? (
-            <img
-              src={logoDataUrl}
-              alt="Logo"
-              className="absolute inset-0 m-auto h-12 w-12 object-contain drop-shadow-md"
-              style={{ maxWidth: '35%', maxHeight: '35%' }}
+            <canvas
+              ref={canvasRef}
+              width={compact ? 200 : 400}
+              height={compact ? 200 : 500}
+              className="w-full h-full object-contain"
             />
+          )}
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-2">
+                <svg className="h-6 w-6 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span className="text-[10px] text-slate-600">Gerando…</span>
+              </div>
+            </div>
           ) : null}
         </div>
       </div>
     );
   }
 
+  // Modo completo (card de catálogo)
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`}>
-      {/* Área visual do produto */}
+      {/* Área visual */}
       <div
         className="relative w-full overflow-hidden"
-        style={{
-          backgroundColor: hasRealImage ? '#f8fafc' : '#e2e8f0',
-          aspectRatio: '4/5',
-        }}
+        style={{ backgroundColor: '#e2e8f0', aspectRatio: '4/5' }}
       >
         {hasRealImage ? (
           <>
@@ -127,22 +368,76 @@ export default function ProductPreview({
               className="w-full h-full object-cover"
               onError={() => setImgError(true)}
             />
-            {/* Overlay de cor se selecionada */}
             {selectedColorHex ? (
               <div
                 className="absolute inset-0 mix-blend-multiply"
                 style={{ backgroundColor: selectedColorHex, opacity: 0.4 }}
               />
             ) : null}
+            {logoDataUrl ? (
+              <img
+                src={logoDataUrl}
+                alt="Logo"
+                className="absolute object-contain drop-shadow-lg"
+                style={{
+                  top: '40%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  maxWidth: '40%',
+                  maxHeight: '30%',
+                }}
+              />
+            ) : null}
           </>
         ) : (
-          /* Sacola realista gerada com CSS */
-          <div className="w-full h-full flex items-center justify-center relative">
-            <RealisticBag color={productColor} logoUrl={logoDataUrl} />
-          </div>
+          <>
+            <canvas
+              ref={canvasRef}
+              width={400}
+              height={500}
+              className="w-full h-full object-contain"
+            />
+
+            {/* Loading overlay */}
+            {loading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-3">
+                  <svg className="h-8 w-8 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="text-xs text-slate-600">Gerando imagem com IA…</span>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Error banner */}
+            {error ? (
+              <div className="absolute bottom-2 left-2 right-2">
+                <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">
+                  {error}
+                </p>
+              </div>
+            ) : null}
+
+            {/* Badge: fonte da imagem */}
+            {baseImage ? (
+              <div className="absolute top-2 left-2">
+                <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">
+                  ✨ Gerado por IA
+                </span>
+              </div>
+            ) : !loading && !error ? (
+              <div className="absolute top-2 left-2">
+                <span className="text-[9px] bg-slate-100/90 text-slate-500 rounded-full px-2 py-0.5 font-medium">
+                  🎨 Ilustrativo
+                </span>
+              </div>
+            ) : null}
+          </>
         )}
 
-        {/* Badge de cor selecionada */}
+        {/* Badge de cor */}
         {selectedColorHex ? (
           <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
             <span
@@ -154,34 +449,21 @@ export default function ProductPreview({
         ) : null}
       </div>
 
-      {/* Detalhes do produto */}
+      {/* Detalhes */}
       <div className="p-4 space-y-1.5">
         <h4 className="font-semibold text-slate-900 text-sm leading-tight">{productName}</h4>
-
         {selectedMaterialName ? (
-          <p className="text-xs text-slate-500">
-            Material: <span className="text-slate-800 font-medium">{selectedMaterialName}</span>
-          </p>
+          <p className="text-xs text-slate-500">Material: <span className="text-slate-800 font-medium">{selectedMaterialName}</span></p>
         ) : null}
-
         {selectedColorName ? (
-          <p className="text-xs text-slate-500">
-            Cor: <span className="text-slate-800 font-medium">{selectedColorName}</span>
-          </p>
+          <p className="text-xs text-slate-500">Cor: <span className="text-slate-800 font-medium">{selectedColorName}</span></p>
         ) : null}
-
         {quantity && quantity > 0 ? (
-          <p className="text-xs text-slate-500">
-            Qtd: <span className="text-slate-800 font-medium">{quantity}</span>
-          </p>
+          <p className="text-xs text-slate-500">Qtd: <span className="text-slate-800 font-medium">{quantity}</span></p>
         ) : null}
-
         {unitPrice && unitPrice > 0 ? (
-          <p className="text-lg font-bold text-slate-900 mt-2">
-            R$ {unitPrice.toFixed(2)}
-          </p>
+          <p className="text-lg font-bold text-slate-900 mt-2">R$ {unitPrice.toFixed(2)}</p>
         ) : null}
-
         {logoDataUrl ? (
           <div className="flex items-center gap-1 mt-2">
             <span className="text-emerald-500 text-xs">✓</span>
@@ -190,10 +472,9 @@ export default function ProductPreview({
         ) : (
           <p className="text-[10px] text-slate-400 mt-1">Envie uma logo para personalizar</p>
         )}
-
-        {!hasRealImage ? (
+        {!hasRealImage && !baseImage && !loading ? (
           <p className="text-[10px] text-amber-500 mt-1">
-            📐 Visual ilustrativo — adicione imagem no estoque para foto real
+            📐 Configure HUGGINGFACE_API_TOKEN para imagens geradas por IA
           </p>
         ) : null}
       </div>
@@ -202,267 +483,162 @@ export default function ProductPreview({
 }
 
 // ==========================================
-// COMPONENTE: Sacola Realista CSS
+// FALLBACK: Sacola desenhada no Canvas
 // ==========================================
 
-interface RealisticBagProps {
-  color: string;
-  logoUrl: string | null;
-  compact?: boolean;
+function drawFallbackBag(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  color: string,
+  logoImage: HTMLImageElement | null,
+) {
+  const bagW = w * 0.5;
+  const bagH = bagW * 1.4;
+  const bagX = (w - bagW) / 2;
+  const bagY = h * 0.2;
+
+  // Sombra no chão
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  ctx.beginPath();
+  ctx.ellipse(w / 2, bagY + bagH + 10, bagW * 0.4, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Corpo da sacola
+  const gradient = ctx.createLinearGradient(bagX, bagY, bagX + bagW, bagY + bagH);
+  gradient.addColorStop(0, lighten(color, 25));
+  gradient.addColorStop(0.3, lighten(color, 10));
+  gradient.addColorStop(0.5, color);
+  gradient.addColorStop(0.7, darken(color, 10));
+  gradient.addColorStop(1, darken(color, 30));
+
+  ctx.save();
+  ctx.fillStyle = gradient;
+  roundRect(ctx, bagX, bagY, bagW, bagH, 6);
+  ctx.fill();
+
+  // Textura de tecido
+  ctx.globalAlpha = 0.04;
+  for (let i = 0; i < bagH; i += 3) {
+    ctx.beginPath();
+    ctx.moveTo(bagX, bagY + i);
+    ctx.lineTo(bagX + bagW, bagY + i);
+    ctx.strokeStyle = i % 6 < 3 ? '#000' : '#fff';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Brilho lateral
+  const shine = ctx.createLinearGradient(bagX, bagY, bagX + bagW * 0.4, bagY);
+  shine.addColorStop(0, 'rgba(255,255,255,0.12)');
+  shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine;
+  ctx.fill();
+
+  // Borda superior (dobra)
+  ctx.fillStyle = darken(color, 15);
+  ctx.globalAlpha = 0.4;
+  ctx.fillRect(bagX, bagY, bagW, 12);
+  ctx.globalAlpha = 1;
+
+  // Costura
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(bagX + 8, bagY + 12);
+  ctx.lineTo(bagX + bagW - 8, bagY + 12);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.restore();
+
+  // Alças
+  drawHandle(ctx, bagX + bagW * 0.28, bagY, color);
+  drawHandle(ctx, bagX + bagW * 0.72, bagY, color);
+
+  // Logo ou placeholder
+  if (logoImage) {
+    const maxLogoW = bagW * 0.6;
+    const maxLogoH = bagH * 0.3;
+    const ratio = logoImage.width / logoImage.height;
+    let lw: number, lh: number;
+    if (ratio > maxLogoW / maxLogoH) {
+      lw = maxLogoW;
+      lh = lw / ratio;
+    } else {
+      lh = maxLogoH;
+      lw = lh * ratio;
+    }
+    const lx = bagX + (bagW - lw) / 2;
+    const ly = bagY + bagH * 0.38;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.drawImage(logoImage, lx, ly, lw, lh);
+    ctx.restore();
+  } else {
+    // Texto "Logo Aqui"
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = `bold ${bagW * 0.09}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 3;
+    ctx.fillText('Logo Aqui', bagX + bagW / 2, bagY + bagH * 0.45);
+    ctx.restore();
+  }
 }
 
-function RealisticBag({ color, logoUrl, compact = false }: RealisticBagProps) {
-  const light = lighten(color, 20);
-  const lighter = lighten(color, 35);
-  const dark = darken(color, 25);
-  const darker = darken(color, 40);
-  const mid = darken(color, 10);
+function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, color: string) {
+  const hw = 4;
+  const hh = 45;
 
-  // Tamanhos proporcionais
-  const bagW = compact ? 120 : 200;
-  const bagH = compact ? 150 : 260;
-  const foldH = compact ? 10 : 18;
-  const handleW = compact ? 3 : 5;
-  const handleH = compact ? 30 : 50;
-  const handleGap = compact ? 28 : 48;
+  ctx.save();
+  const grad = ctx.createLinearGradient(cx - hw, top, cx + hw, top);
+  grad.addColorStop(0, darken(color, 35));
+  grad.addColorStop(0.3, darken(color, 15));
+  grad.addColorStop(0.5, darken(color, 5));
+  grad.addColorStop(0.7, darken(color, 15));
+  grad.addColorStop(1, darken(color, 35));
 
-  return (
-    <div
-      className="relative"
-      style={{
-        width: bagW,
-        height: bagH + handleH + 8,
-        filter: 'drop-shadow(6px 10px 24px rgba(0,0,0,0.25))',
-      }}
-    >
-      {/* Alças — atrás da sacola */}
-      <div
-        className="absolute flex justify-center"
-        style={{
-          top: 0,
-          left: 0,
-          right: 0,
-          height: handleH + 10,
-          zIndex: 0,
-        }}
-      >
-        {/* Alça esquerda */}
-        <div
-          style={{
-            position: 'absolute',
-            left: bagW * 0.25 - handleW / 2,
-            width: handleW,
-            height: handleH,
-            borderRadius: handleW,
-            background: `linear-gradient(90deg, ${darker} 0%, ${dark} 30%, ${mid} 50%, ${dark} 70%, ${darker} 100%)`,
-            transform: 'rotate(-6deg)',
-            transformOrigin: 'bottom center',
-            boxShadow: `inset 0 0 2px rgba(255,255,255,0.15), 1px 2px 4px rgba(0,0,0,0.2)`,
-          }}
-        />
-        {/* Alça direita */}
-        <div
-          style={{
-            position: 'absolute',
-            left: bagW * 0.75 - handleW / 2,
-            width: handleW,
-            height: handleH,
-            borderRadius: handleW,
-            background: `linear-gradient(90deg, ${darker} 0%, ${dark} 30%, ${mid} 50%, ${dark} 70%, ${darker} 100%)`,
-            transform: 'rotate(6deg)',
-            transformOrigin: 'bottom center',
-            boxShadow: `inset 0 0 2px rgba(255,255,255,0.15), 1px 2px 4px rgba(0,0,0,0.2)`,
-          }}
-        />
-      </div>
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(cx - hw, top);
+  ctx.quadraticCurveTo(cx - hw - 2, top - hh, cx - hw, top - hh);
+  ctx.lineTo(cx + hw, top - hh);
+  ctx.quadraticCurveTo(cx + hw + 2, top - hh, cx + hw, top);
+  ctx.closePath();
+  ctx.fill();
 
-      {/* Corpo da sacola */}
-      <div
-        className="absolute overflow-hidden"
-        style={{
-          top: handleH,
-          left: 0,
-          width: bagW,
-          height: bagH,
-          borderRadius: `${compact ? 4 : 6}px ${compact ? 4 : 6}px ${compact ? 8 : 14}px ${compact ? 8 : 14}px`,
-          zIndex: 1,
-        }}
-      >
-        {/* Fundo gradiente principal */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(
-              170deg,
-              ${lighter} 0%,
-              ${light} 15%,
-              ${color} 35%,
-              ${mid} 65%,
-              ${dark} 90%,
-              ${darker} 100%
-            )`,
-          }}
-        />
-
-        {/* Textura de tecido (linhas horizontais finas) */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              0deg,
-              transparent,
-              transparent 2px,
-              rgba(255,255,255,0.03) 2px,
-              rgba(255,255,255,0.03) 3px
-            )`,
-          }}
-        />
-
-        {/* Textura de tecido (linhas verticais finas) */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              90deg,
-              transparent,
-              transparent 3px,
-              rgba(0,0,0,0.02) 3px,
-              rgba(0,0,0,0.02) 4px
-            )`,
-          }}
-        />
-
-        {/* Dobras verticais simuladas */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              linear-gradient(90deg,
-                transparent 0%,
-                rgba(0,0,0,0.04) 18%,
-                transparent 22%,
-                rgba(255,255,255,0.03) 30%,
-                transparent 35%,
-                rgba(0,0,0,0.03) 48%,
-                transparent 52%,
-                rgba(255,255,255,0.02) 60%,
-                transparent 65%,
-                rgba(0,0,0,0.04) 78%,
-                transparent 82%,
-                rgba(255,255,255,0.03) 90%,
-                transparent 100%
-              )
-            `,
-          }}
-        />
-
-        {/* Brilho lateral esquerdo */}
-        <div
-          className="absolute top-0 left-0"
-          style={{
-            width: '40%',
-            height: '100%',
-            background: `linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, transparent 100%)`,
-          }}
-        />
-
-        {/* Sombra lateral direita */}
-        <div
-          className="absolute top-0 right-0"
-          style={{
-            width: '25%',
-            height: '100%',
-            background: `linear-gradient(270deg, rgba(0,0,0,0.12) 0%, transparent 100%)`,
-          }}
-        />
-
-        {/* Dobra superior (borda da boca) */}
-        <div
-          className="absolute top-0 left-0 right-0"
-          style={{
-            height: foldH,
-            background: `linear-gradient(180deg, ${dark} 0%, ${mid} 40%, transparent 100%)`,
-            opacity: 0.5,
-          }}
-        />
-
-        {/* Linha de costura na dobra */}
-        <div
-          className="absolute left-0 right-0"
-          style={{
-            top: foldH - 2,
-            height: 1,
-            backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 4px, transparent 4px, transparent 8px)`,
-          }}
-        />
-
-        {/* Sombra interna na base */}
-        <div
-          className="absolute bottom-0 left-0 right-0"
-          style={{
-            height: '20%',
-            background: `linear-gradient(0deg, rgba(0,0,0,0.15) 0%, transparent 100%)`,
-          }}
-        />
-
-        {/* Sombra de fundo (chão) */}
-        <div
-          className="absolute -bottom-3 left-1/2 -translate-x-1/2"
-          style={{
-            width: bagW * 0.8,
-            height: 12,
-            background: 'radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, transparent 70%)',
-            borderRadius: '50%',
-          }}
-        />
-
-        {/* Logo ou texto placeholder */}
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt="Logo"
-            className="absolute object-contain"
-            style={{
-              top: '40%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              maxWidth: '55%',
-              maxHeight: '35%',
-              filter: 'drop-shadow(1px 2px 3px rgba(0,0,0,0.2))',
-            }}
-          />
-        ) : (
-          <div
-            className="absolute flex items-center justify-center"
-            style={{
-              top: '40%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              maxWidth: '70%',
-            }}
-          >
-            <span
-              className="font-bold tracking-wider text-center select-none"
-              style={{
-                fontSize: compact ? 11 : 16,
-                color: 'rgba(255,255,255,0.7)',
-                textShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Logo Aqui
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  ctx.shadowColor = 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = -1;
+  ctx.fill();
+  ctx.restore();
 }
 
-// ==========================================
-// UTILITÁRIOS DE COR
-// ==========================================
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
 function lighten(hex: string, pct: number): string {
   const c = hexToRgb(hex);
