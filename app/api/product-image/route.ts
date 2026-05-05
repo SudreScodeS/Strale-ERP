@@ -13,24 +13,16 @@ function getCacheKey(color: string, style: string): string {
   return `${color}-${style}`;
 }
 
-/**
- * Gera prompt descritivo para a sacola baseado na cor
- */
 function buildPrompt(colorName: string, style: string): string {
   const base = 'professional product photography of a clean empty tote bag';
-
   const stylePrompts: Record<string, string> = {
     sacola: `${base}, flat woven fabric shopping bag, rectangular shape, sturdy handles, clean front face, no text no logos no writing, solid ${colorName} color, studio lighting, white background, centered, high quality, commercial product photo, 4k`,
     camiseta: `professional product photography of a plain t-shirt, no text no logos no print, solid ${colorName} color, folded neatly, studio lighting, white background, centered, high quality, commercial product photo, 4k`,
     caneca: `professional product photography of a plain ceramic mug, no text no logos no print, solid ${colorName} color, studio lighting, white background, centered, high quality, commercial product photo, 4k`,
   };
-
   return stylePrompts[style] || stylePrompts.sacola;
 }
 
-/**
- * Converte hex para nome de cor em inglês para o prompt
- */
 function hexToColorName(hex: string): string {
   const colorNames: Record<string, string> = {
     '#dc2626': 'red', '#ef4444': 'bright red',
@@ -49,24 +41,12 @@ function hexToColorName(hex: string): string {
     '#06b6d4': 'cyan', '#22d3ee': 'bright cyan',
     '#d946ef': 'magenta',
   };
-
-  // Busca exata
   if (colorNames[hex]) return colorNames[hex];
-
-  // Busca por proximidade
   const rgb = hexToRgb(hex);
   if (!rgb) return 'blue';
-
-  // Mapeamento por HSL
   const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
   const h = hsl[0], s = hsl[1], l = hsl[2];
-
-  if (s < 10) {
-    if (l < 20) return 'black';
-    if (l > 80) return 'white';
-    return 'gray';
-  }
-
+  if (s < 10) { if (l < 20) return 'black'; if (l > 80) return 'white'; return 'gray'; }
   if (h < 15) return l > 60 ? 'light red' : 'red';
   if (h < 45) return l > 60 ? 'light orange' : 'orange';
   if (h < 70) return l > 60 ? 'light yellow' : 'yellow';
@@ -84,11 +64,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { color = '#2563eb', style = 'sacola' } = body;
 
+    console.log(`[product-image] Request: color=${color}, style=${style}`);
+
     const cacheKey = getCacheKey(color, style);
 
     // Verifica cache
     const cached = imageCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      console.log(`[product-image] Cache hit for ${cacheKey}`);
       return new NextResponse(cached.buffer, {
         headers: {
           'Content-Type': 'image/webp',
@@ -99,11 +82,14 @@ export async function POST(request: Request) {
     }
 
     const hfToken = process.env.HUGGINGFACE_API_TOKEN;
+    console.log(`[product-image] Token exists: ${Boolean(hfToken)}, length: ${hfToken?.length || 0}`);
+
     if (!hfToken) {
+      console.log('[product-image] NO TOKEN — returning fallback=true');
       return NextResponse.json(
         {
           error: 'HUGGINGFACE_API_TOKEN não configurado.',
-          hint: 'Obtenha um token gratuito em https://huggingface.co/settings/tokens e adicione ao .env.local',
+          hint: 'Adicione HUGGINGFACE_API_TOKEN ao .env.local na raiz do projeto',
           fallback: true,
         },
         { status: 503 },
@@ -112,8 +98,9 @@ export async function POST(request: Request) {
 
     const colorName = hexToColorName(color);
     const prompt = buildPrompt(colorName, style);
+    console.log(`[product-image] Prompt: ${prompt.substring(0, 80)}...`);
+    console.log(`[product-image] Calling HF API...`);
 
-    // FLUX.1-schnell — rápido (~1-2s), gratuito, qualidade decente
     const response = await fetch(
       'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
       {
@@ -127,16 +114,18 @@ export async function POST(request: Request) {
           parameters: {
             width: 512,
             height: 640,
-            num_inference_steps: 4, // schnell = 4 steps
+            num_inference_steps: 4,
           },
         }),
       },
     );
 
+    console.log(`[product-image] HF response: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
       const errText = await response.text();
+      console.log(`[product-image] HF error: ${errText}`);
 
-      // Modelo carregando — retry após delay
       if (response.status === 503) {
         return NextResponse.json(
           { error: 'Modelo carregando, tente novamente em alguns segundos.', retry: true },
@@ -152,6 +141,7 @@ export async function POST(request: Request) {
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    console.log(`[product-image] Image generated: ${buffer.length} bytes`);
 
     // Salva no cache
     imageCache.set(cacheKey, { buffer, timestamp: Date.now() });
@@ -165,6 +155,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno na geração de imagem.';
+    console.error(`[product-image] ERROR: ${message}`);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
