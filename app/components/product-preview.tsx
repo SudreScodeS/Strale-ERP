@@ -1,19 +1,11 @@
 // app/components/product-preview.tsx
-// Prévia do produto com geração de imagem por IA
-// Usa foto real do inventário como referência quando disponível (img2img)
-// Aplica logo via compositor profissional
+// Prévia do produto com IA generativa + Canvas para composição em tempo real
+// Fluxo: IA gera imagem base do produto → Canvas compõe cor + logo em tempo real
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
-import {
-  autoCompositeLogo,
-  compositeLogo,
-  getPrintArea,
-  getProductCompositorOptions,
-  type CompositorOptions,
-} from '../lib/logo-compositor';
 
 export interface PreviewConfig {
   productImageUrl: string;
@@ -33,6 +25,7 @@ interface ProductPreviewProps {
   compact?: boolean;
 }
 
+// Cores padrão
 const DEFAULT_PRODUCT_COLORS: Record<string, string> = {
   sacola: '#2563eb',
   camiseta: '#f8fafc',
@@ -48,23 +41,13 @@ function getDefaultColor(productName: string): string {
   return DEFAULT_PRODUCT_COLORS.default;
 }
 
+// Estilo do produto baseado no nome
 function getProductStyle(productName: string): string {
   const lower = productName.toLowerCase();
   if (lower.includes('camiseta') || lower.includes('camisa')) return 'camiseta';
   if (lower.includes('caneca') || lower.includes('mug')) return 'caneca';
   return 'sacola';
 }
-
-function getProductType(productName: string): 'sacola' | 'camiseta' | 'caneca' | 'default' {
-  const lower = productName.toLowerCase();
-  if (lower.includes('camiseta') || lower.includes('camisa')) return 'camiseta';
-  if (lower.includes('caneca') || lower.includes('mug')) return 'caneca';
-  if (lower.includes('sacola') || lower.includes('bag') || lower.includes('tote')) return 'sacola';
-  return 'default';
-}
-
-// Cache global de imagens geradas (sobrevive re-renders)
-const globalImageCache = new Map<string, HTMLImageElement>();
 
 export default function ProductPreview({
   config,
@@ -77,9 +60,7 @@ export default function ProductPreview({
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [imageSource, setImageSource] = useState<'ai' | 'img2img' | 'fallback' | 'ai-with-logo' | 'composited'>('ai');
-  const [logoIntegrated, setLogoIntegrated] = useState(false);
-  const [showStock, setShowStock] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const {
     productImageUrl,
@@ -93,19 +74,22 @@ export default function ProductPreview({
   } = config;
 
   const productColor = selectedColorHex || getDefaultColor(productName);
+  const hasRealImage = Boolean(productImageUrl && !imgError);
   const productStyle = getProductStyle(productName);
-  const productType = getProductType(productName);
-  const logoShortHash = logoDataUrl ? logoDataUrl.substring(logoDataUrl.length - 20) : 'nologo';
-  const generationKey = `${productColor}-${productStyle}-${productImageUrl || 'noimg'}-${logoShortHash}`;
-  const hasStockImage = Boolean(productImageUrl);
+
+  // Cache key para a imagem gerada
+  const generationKey = `${productColor}-${productStyle}`;
 
   // ==========================================
-  // 1. Gerar imagem via IA (com foto real como referência quando disponível)
+  // 1. Gerar/carregar imagem base do produto via IA
   // ==========================================
+  const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+
   useEffect(() => {
-    if (showStock) return;
+    if (hasRealImage) return; // Não gera se tem imagem real
 
-    const cached = globalImageCache.get(generationKey);
+    // Verifica cache local (no browser)
+    const cached = imageCacheRef.current.get(generationKey);
     if (cached) {
       setBaseImage(cached);
       return;
@@ -118,49 +102,37 @@ export default function ProductPreview({
       setError('');
 
       try {
-        const body: Record<string, string> = {
-          color: productColor,
-          style: productStyle,
-        };
-        if (productImageUrl) {
-          body.imageUrl = productImageUrl;
-        }
-        if (logoDataUrl) {
-          body.logoDataUrl = logoDataUrl;
-        }
-
         const response = await fetch('/api/product-image', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...getAuthHeaders(),
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            color: productColor,
+            style: productStyle,
+          }),
         });
 
         if (cancelled) return;
 
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
+          if (data.fallback) {
+            // Sem token — usa fallback Canvas
+            setBaseImage(null);
+            setError('IA não configurada — usando visual ilustrativo');
+            setLoading(false);
+            return;
+          }
           if (data.retry) {
-            setTimeout(() => { if (!cancelled) void generateImage(); }, 3000);
+            // Modelo carregando — retry em 3s
+            setTimeout(() => {
+              if (!cancelled) void generateImage();
+            }, 3000);
             return;
           }
           throw new Error(data.error || 'Erro ao gerar imagem');
-        }
-
-        const src = response.headers.get('X-Image-Source');
-        if (!cancelled) {
-          if (src === 'ai-with-logo') {
-            setImageSource('ai-with-logo');
-            setLogoIntegrated(true);
-          } else if (src === 'composited') {
-            setImageSource('composited');
-            setLogoIntegrated(true);
-          } else {
-            setImageSource(src === 'img2img' ? 'img2img' : 'ai');
-            setLogoIntegrated(false);
-          }
         }
 
         const blob = await response.blob();
@@ -168,14 +140,20 @@ export default function ProductPreview({
 
         const img = new Image();
         img.onload = () => {
-          if (cancelled) { URL.revokeObjectURL(url); return; }
-          globalImageCache.set(generationKey, img);
+          if (cancelled) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          imageCacheRef.current.set(generationKey, img);
           setBaseImage(img);
           setLoading(false);
         };
         img.onerror = () => {
           URL.revokeObjectURL(url);
-          if (!cancelled) { setError('Erro ao carregar imagem'); setLoading(false); }
+          if (!cancelled) {
+            setError('Erro ao carregar imagem gerada');
+            setLoading(false);
+          }
         };
         img.src = url;
       } catch (err) {
@@ -187,11 +165,12 @@ export default function ProductPreview({
     }
 
     void generateImage();
+
     return () => { cancelled = true; };
-  }, [generationKey, showStock, productColor, productStyle, productImageUrl]);
+  }, [generationKey, hasRealImage, productColor, productStyle]);
 
   // ==========================================
-  // 2. Carregar logo (garante re-render quando carregar)
+  // 2. Carregar logo como Image
   // ==========================================
   useEffect(() => {
     if (!logoDataUrl) {
@@ -199,135 +178,171 @@ export default function ProductPreview({
       return;
     }
 
-    let cancelled = false;
     const img = new Image();
-    img.onload = () => {
-      if (!cancelled) setLogoImage(img);
-    };
-    img.onerror = () => {
-      if (!cancelled) setLogoImage(null);
-    };
+    img.onload = () => setLogoImage(img);
+    img.onerror = () => setLogoImage(null);
     img.src = logoDataUrl;
-    return () => { cancelled = true; };
   }, [logoDataUrl]);
 
   // ==========================================
-  // 3. Renderizar Canvas com composição
-  //
-  // ⚠️ CORREÇÃO CRÍTICA: NÃO incluir `loading` nas dependências!
-  // `loading` muda para false ANTES do logoImage carregar,
-  // causando renderização sem logo (stale closure).
-  //
-  // Dependências corretas: apenas os dados visuais que afetam o canvas.
-  // O guard `if (!baseImage) return` previne renderização prematura.
+  // 3. Renderizar no Canvas (composição em tempo real)
   // ==========================================
-  useEffect(() => {
+  const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const w = canvas.width;
     const h = canvas.height;
+
+    // Limpa
     ctx.clearRect(0, 0, w, h);
 
-    // Transparent background — herda o fundo do container (dark mode safe)
+    // Fundo transparente — herda o fundo do container
     // NÃO preencher com cor sólida para evitar bordas brancas/acinzentadas
 
+    if (hasRealImage) {
+      // Modo imagem real: desenha a imagem do estoque
+      return;
+    }
+
     if (baseImage) {
-      // Calculate product draw area — fill canvas as much as possible
+      // ========================================
+      // MODO IA: imagem gerada pela IA
+      // ========================================
+
+      // Calcula dimensões mantendo proporção, preenchendo o canvas
       const imgRatio = baseImage.width / baseImage.height;
       const canvasRatio = w / h;
       let drawW: number, drawH: number, drawX: number, drawY: number;
 
-      // Preencher o canvas o máximo possível (sem margens brancas)
       if (imgRatio > canvasRatio) {
-        // Imagem mais larga que canvas → ajustar pela largura
         drawW = w;
         drawH = w / imgRatio;
         drawX = 0;
         drawY = (h - drawH) / 2;
       } else {
-        // Imagem mais alta que canvas → ajustar pela altura
         drawH = h;
         drawW = h * imgRatio;
         drawX = (w - drawW) / 2;
         drawY = 0;
       }
 
-      if (logoImage && !logoIntegrated) {
-        // === COMPOSIÇÃO CLIENT-SIDE: produto + logo ===
-        // Usado APENAS quando a API NÃO integrou a logo (fallback)
+      // Desenha a imagem base
+      ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
 
-        // 1. Desenha produto num canvas temporário (no tamanho de draw)
-        const productCanvas = document.createElement('canvas');
-        productCanvas.width = Math.ceil(drawW);
-        productCanvas.height = Math.ceil(drawH);
-        const pCtx = productCanvas.getContext('2d')!;
-        pCtx.drawImage(baseImage, 0, 0, drawW, drawH);
+      // Aplica tint de cor sutil (para ajustar a cor do produto)
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = productColor;
+      ctx.globalAlpha = 0.3;
+      ctx.fillRect(drawX, drawY, drawW, drawH);
+      ctx.restore();
 
-        // 2. Obtém opções otimizadas para o tipo de produto
-        const compositorOpts = getProductCompositorOptions(productType, productColor);
+      // Clareia um pouco para manter visibilidade
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.15;
+      ctx.fillRect(drawX, drawY, drawW, drawH);
+      ctx.restore();
 
-        // 3. Composita logo sobre o produto com efeitos realistas
-        const composited = autoCompositeLogo(
-          productCanvas,
-          logoImage,
-          productType,
-          compositorOpts,
-        );
+      // Composição do logo
+      if (logoImage) {
+        const logoMaxW = drawW * 0.45;
+        const logoMaxH = drawH * 0.3;
+        const logoRatio = logoImage.width / logoImage.height;
 
-        // 4. Desenha resultado no canvas principal
-        ctx.drawImage(composited, drawX, drawY, drawW, drawH);
-      } else {
-        // Sem logo — desenha produto direto
-        ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
+        let logoW: number, logoH: number;
+        if (logoRatio > logoMaxW / logoMaxH) {
+          logoW = logoMaxW;
+          logoH = logoW / logoRatio;
+        } else {
+          logoH = logoMaxH;
+          logoW = logoH * logoRatio;
+        }
+
+        const logoX = drawX + (drawW - logoW) / 2;
+        const logoY = drawY + drawH * 0.35;
+
+        // Sombra da logo para profundidade
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 3;
+        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.restore();
       }
-    } else if (!loading) {
-      // Fallback: desenha sacola no Canvas quando não tem imagem de IA
-      drawFallbackBag(ctx, w, h, productColor, logoImage, productType);
+
+    } else {
+      // ========================================
+      // MODO FALLBACK: Canvas puro (sem IA)
+      // ========================================
+      drawFallbackBag(ctx, w, h, productColor, logoImage);
     }
 
+    // Notifica parent
     if (onPreviewGenerated) {
-      try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* */ }
+      try {
+        onPreviewGenerated(canvas.toDataURL('image/png'));
+      } catch { /* ignore */ }
     }
-  }, [baseImage, logoImage, logoIntegrated, productColor, productType, loading, onPreviewGenerated]);
+  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated]);
+
+  // Re-renderiza quando dependências mudam
+  useEffect(() => {
+    renderCanvas();
+  }, [renderCanvas]);
 
   // ==========================================
   // Renderização
   // ==========================================
 
-  const toggleButton = hasStockImage ? (
-    <button
-      type="button"
-      onClick={() => setShowStock(!showStock)}
-      className="absolute bottom-2 right-2 z-10 text-[9px] bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-slate-200 hover:bg-white transition"
-    >
-      {showStock ? '✨ Ver IA' : '📦 Ver estoque'}
-    </button>
-  ) : null;
-
-  const sourceLabel = imageSource === 'ai-with-logo' ? '🖨️ Logo integrada pela IA'
-    : imageSource === 'composited' ? '🎨 Logo aplicada'
-    : imageSource === 'img2img' ? '🎨 Baseado na foto'
-    : '✨ Gerado por IA';
-
-  // Modo compacto
+  // Modo compacto (carrinho)
   if (compact) {
     return (
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
-        <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
-          {showStock && hasStockImage ? (
-            <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" />
+        <div
+          className="relative w-full aspect-square flex items-center justify-center overflow-hidden"
+          style={{ backgroundColor: 'transparent' }}
+        >
+          {hasRealImage ? (
+            <>
+              <img
+                src={productImageUrl}
+                alt={productName}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
+              {logoDataUrl ? (
+                <img
+                  src={logoDataUrl}
+                  alt="Logo"
+                  className="absolute inset-0 m-auto h-12 w-12 object-contain drop-shadow-md"
+                  style={{ maxWidth: '35%', maxHeight: '35%' }}
+                />
+              ) : null}
+            </>
           ) : (
-            <canvas ref={canvasRef} width={200} height={200} className="w-full h-full object-contain" />
+            <canvas
+              ref={canvasRef}
+              width={compact ? 200 : 400}
+              height={compact ? 200 : 500}
+              className="w-full h-full object-contain"
+            />
           )}
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-              <svg className="h-5 w-5 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <div className="flex flex-col items-center gap-2">
+                <svg className="h-6 w-6 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span className="text-[10px] text-slate-600">Gerando…</span>
+              </div>
             </div>
           ) : null}
         </div>
@@ -335,16 +350,53 @@ export default function ProductPreview({
     );
   }
 
-  // Modo completo
+  // Modo completo (card de catálogo)
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`}>
-      <div className="relative w-full overflow-hidden" style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}>
-        {showStock && hasStockImage ? (
-          <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" />
+      {/* Área visual */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}
+      >
+        {hasRealImage ? (
+          <>
+            <img
+              src={productImageUrl}
+              alt={productName}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
+            {selectedColorHex ? (
+              <div
+                className="absolute inset-0 mix-blend-multiply"
+                style={{ backgroundColor: selectedColorHex, opacity: 0.4 }}
+              />
+            ) : null}
+            {logoDataUrl ? (
+              <img
+                src={logoDataUrl}
+                alt="Logo"
+                className="absolute object-contain drop-shadow-lg"
+                style={{
+                  top: '40%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  maxWidth: '40%',
+                  maxHeight: '30%',
+                }}
+              />
+            ) : null}
+          </>
         ) : (
           <>
-            <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
+            <canvas
+              ref={canvasRef}
+              width={768}
+              height={960}
+              className="w-full h-full object-contain"
+            />
 
+            {/* Loading overlay */}
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-3">
@@ -352,32 +404,44 @@ export default function ProductPreview({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <span className="text-xs text-slate-700 font-medium">
-                    {productImageUrl ? 'Gerando baseado na foto do produto…' : 'Gerando imagem com IA…'}
-                  </span>
+                  <span className="text-xs text-slate-600">Gerando imagem com IA…</span>
                 </div>
               </div>
             ) : null}
 
+            {/* Error banner */}
             {error ? (
               <div className="absolute bottom-2 left-2 right-2">
-                <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">{error}</p>
+                <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">
+                  {error}
+                </p>
               </div>
             ) : null}
 
-            {baseImage && !loading ? (
+            {/* Badge: fonte da imagem */}
+            {baseImage ? (
               <div className="absolute top-2 left-2">
-                <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">{sourceLabel}</span>
+                <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">
+                  ✨ Gerado por IA
+                </span>
+              </div>
+            ) : !loading && !error ? (
+              <div className="absolute top-2 left-2">
+                <span className="text-[9px] bg-slate-100/90 text-slate-500 rounded-full px-2 py-0.5 font-medium">
+                  🎨 Ilustrativo
+                </span>
               </div>
             ) : null}
           </>
         )}
 
-        {toggleButton}
-
+        {/* Badge de cor */}
         {selectedColorHex ? (
           <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
-            <span className="h-3 w-3 rounded-full border border-slate-300" style={{ backgroundColor: selectedColorHex }} />
+            <span
+              className="h-3 w-3 rounded-full border border-slate-300"
+              style={{ backgroundColor: selectedColorHex }}
+            />
             <span className="text-[10px] font-medium text-slate-700">{selectedColorName || 'Cor'}</span>
           </div>
         ) : null}
@@ -386,10 +450,18 @@ export default function ProductPreview({
       {/* Detalhes */}
       <div className="p-4 space-y-1.5">
         <h4 className="font-semibold text-slate-900 text-sm leading-tight">{productName}</h4>
-        {selectedMaterialName ? <p className="text-xs text-slate-500">Material: <span className="text-slate-800 font-medium">{selectedMaterialName}</span></p> : null}
-        {selectedColorName ? <p className="text-xs text-slate-500">Cor: <span className="text-slate-800 font-medium">{selectedColorName}</span></p> : null}
-        {quantity && quantity > 0 ? <p className="text-xs text-slate-500">Qtd: <span className="text-slate-800 font-medium">{quantity}</span></p> : null}
-        {unitPrice && unitPrice > 0 ? <p className="text-lg font-bold text-slate-900 mt-2">R$ {unitPrice.toFixed(2)}</p> : null}
+        {selectedMaterialName ? (
+          <p className="text-xs text-slate-500">Material: <span className="text-slate-800 font-medium">{selectedMaterialName}</span></p>
+        ) : null}
+        {selectedColorName ? (
+          <p className="text-xs text-slate-500">Cor: <span className="text-slate-800 font-medium">{selectedColorName}</span></p>
+        ) : null}
+        {quantity && quantity > 0 ? (
+          <p className="text-xs text-slate-500">Qtd: <span className="text-slate-800 font-medium">{quantity}</span></p>
+        ) : null}
+        {unitPrice && unitPrice > 0 ? (
+          <p className="text-lg font-bold text-slate-900 mt-2">R$ {unitPrice.toFixed(2)}</p>
+        ) : null}
         {logoDataUrl ? (
           <div className="flex items-center gap-1 mt-2">
             <span className="text-emerald-500 text-xs">✓</span>
@@ -398,13 +470,18 @@ export default function ProductPreview({
         ) : (
           <p className="text-[10px] text-slate-400 mt-1">Envie uma logo para personalizar</p>
         )}
+        {!hasRealImage && !baseImage && !loading ? (
+          <p className="text-[10px] text-amber-500 mt-1">
+            📐 Configure HUGGINGFACE_API_TOKEN para imagens geradas por IA
+          </p>
+        ) : null}
       </div>
     </div>
   );
 }
 
 // ==========================================
-// FALLBACK: Sacola Canvas (quando não tem imagem de IA)
+// FALLBACK: Sacola desenhada no Canvas
 // ==========================================
 
 function drawFallbackBag(
@@ -413,12 +490,13 @@ function drawFallbackBag(
   h: number,
   color: string,
   logoImage: HTMLImageElement | null,
-  productType: string,
 ) {
-  const bagW = w * 0.5, bagH = bagW * 1.4;
-  const bagX = (w - bagW) / 2, bagY = h * 0.2;
+  const bagW = w * 0.5;
+  const bagH = bagW * 1.4;
+  const bagX = (w - bagW) / 2;
+  const bagY = h * 0.2;
 
-  // Shadow
+  // Sombra no chão
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.1)';
   ctx.beginPath();
@@ -426,7 +504,7 @@ function drawFallbackBag(
   ctx.fill();
   ctx.restore();
 
-  // Bag body gradient
+  // Corpo da sacola
   const gradient = ctx.createLinearGradient(bagX, bagY, bagX + bagW, bagY + bagH);
   gradient.addColorStop(0, lighten(color, 25));
   gradient.addColorStop(0.3, lighten(color, 10));
@@ -439,7 +517,7 @@ function drawFallbackBag(
   roundRect(ctx, bagX, bagY, bagW, bagH, 6);
   ctx.fill();
 
-  // Fabric texture lines
+  // Textura de tecido
   ctx.globalAlpha = 0.04;
   for (let i = 0; i < bagH; i += 3) {
     ctx.beginPath();
@@ -451,20 +529,20 @@ function drawFallbackBag(
   }
   ctx.globalAlpha = 1;
 
-  // Shine
+  // Brilho lateral
   const shine = ctx.createLinearGradient(bagX, bagY, bagX + bagW * 0.4, bagY);
   shine.addColorStop(0, 'rgba(255,255,255,0.12)');
   shine.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = shine;
   ctx.fill();
 
-  // Top fold line
+  // Borda superior (dobra)
   ctx.fillStyle = darken(color, 15);
   ctx.globalAlpha = 0.4;
   ctx.fillRect(bagX, bagY, bagW, 12);
   ctx.globalAlpha = 1;
 
-  // Dashed line
+  // Costura
   ctx.setLineDash([4, 4]);
   ctx.strokeStyle = 'rgba(255,255,255,0.15)';
   ctx.lineWidth = 1;
@@ -473,45 +551,38 @@ function drawFallbackBag(
   ctx.lineTo(bagX + bagW - 8, bagY + 12);
   ctx.stroke();
   ctx.setLineDash([]);
+
   ctx.restore();
 
-  // Handles
+  // Alças
   drawHandle(ctx, bagX + bagW * 0.28, bagY, color);
   drawHandle(ctx, bagX + bagW * 0.72, bagY, color);
 
-  // Logo compositing via professional compositor
+  // Logo ou placeholder
   if (logoImage) {
-    // Create a temporary canvas with the bag drawing
-    const bagCanvas = document.createElement('canvas');
-    bagCanvas.width = w;
-    bagCanvas.height = h;
-    const bagCtx = bagCanvas.getContext('2d')!;
-    bagCtx.drawImage(ctx.canvas, 0, 0);
+    const maxLogoW = bagW * 0.6;
+    const maxLogoH = bagH * 0.3;
+    const ratio = logoImage.width / logoImage.height;
+    let lw: number, lh: number;
+    if (ratio > maxLogoW / maxLogoH) {
+      lw = maxLogoW;
+      lh = lw / ratio;
+    } else {
+      lh = maxLogoH;
+      lw = lh * ratio;
+    }
+    const lx = bagX + (bagW - lw) / 2;
+    const ly = bagY + bagH * 0.38;
 
-    // Define print area on the bag (centered, prominent)
-    const printArea = {
-      x: bagX + bagW * 0.1,
-      y: bagY + bagH * 0.2,
-      width: bagW * 0.8,
-      height: bagH * 0.5,
-    };
-
-    // Use professional compositor
-    const composited = compositeLogo(bagCanvas, logoImage, printArea, {
-      blendMode: 'multiply',
-      opacity: 0.97,
-      featherRadius: 2,
-      fabricTexture: true,
-      textureIntensity: 0.03,
-      shadowBlur: 3,
-      shadowOpacity: 0.08,
-      bgThreshold: 200,
-      matchLighting: false, // Disabled — canvas bag has its own gradients that bleed into logo
-      lightingIntensity: 0,
-    });
-    ctx.drawImage(composited, 0, 0);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.drawImage(logoImage, lx, ly, lw, lh);
+    ctx.restore();
   } else {
-    // Placeholder text
+    // Texto "Logo Aqui"
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = `bold ${bagW * 0.09}px sans-serif`;
@@ -525,7 +596,9 @@ function drawFallbackBag(
 }
 
 function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, color: string) {
-  const hw = 4, hh = 45;
+  const hw = 4;
+  const hh = 45;
+
   ctx.save();
   const grad = ctx.createLinearGradient(cx - hw, top, cx + hw, top);
   grad.addColorStop(0, darken(color, 35));
@@ -533,6 +606,7 @@ function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, colo
   grad.addColorStop(0.5, darken(color, 5));
   grad.addColorStop(0.7, darken(color, 15));
   grad.addColorStop(1, darken(color, 35));
+
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.moveTo(cx - hw, top);
@@ -540,6 +614,12 @@ function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, colo
   ctx.lineTo(cx + hw, top - hh);
   ctx.quadraticCurveTo(cx + hw + 2, top - hh, cx + hw, top);
   ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowColor = 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = -1;
   ctx.fill();
   ctx.restore();
 }
@@ -561,7 +641,11 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 function lighten(hex: string, pct: number): string {
   const c = hexToRgb(hex);
   if (!c) return hex;
-  return rgbToHex(c.r + (255 - c.r) * pct / 100, c.g + (255 - c.g) * pct / 100, c.b + (255 - c.b) * pct / 100);
+  return rgbToHex(
+    c.r + (255 - c.r) * pct / 100,
+    c.g + (255 - c.g) * pct / 100,
+    c.b + (255 - c.b) * pct / 100,
+  );
 }
 
 function darken(hex: string, pct: number): string {
