@@ -1,6 +1,6 @@
 // app/components/product-preview.tsx
 // Prévia do produto: HTML + CSS puro (sem Canvas, sem SVG, sem dependências)
-// Mostra: imagem do produto OU placeholder colorido + logo + detalhes
+// Gera sacola realista com textura de tecido, sombras, dobras e alças proporcionais
 
 'use client';
 
@@ -28,10 +28,10 @@ interface ProductPreviewProps {
  * Cores padrão para produtos sem cor selecionada.
  */
 const DEFAULT_PRODUCT_COLORS: Record<string, string> = {
-  sacola: '#1e293b',
+  sacola: '#1e40af',
   camiseta: '#f8fafc',
   caneca: '#f8fafc',
-  default: '#475569',
+  default: '#1e40af',
 };
 
 function getDefaultColor(productName: string): string {
@@ -44,9 +44,8 @@ function getDefaultColor(productName: string): string {
 
 /**
  * Componente de prévia do produto.
- * 100% HTML/CSS — sem Canvas, sem SVG complexo.
- * Se o produto tem imagem → mostra a imagem
- * Se não tem → mostra placeholder colorido com a logo
+ * Gera uma sacola realista com CSS puro — textura de tecido, sombras,
+ * dobras verticais, alças proporcionais e logo centralizada na face frontal.
  */
 export default function ProductPreview({
   config,
@@ -73,7 +72,7 @@ export default function ProductPreview({
   // Se tem imagem real do produto
   const hasRealImage = Boolean(productImageUrl && !imgError);
 
-  // Notifica parent sobre a prévia (usando representação textual)
+  // Notifica parent sobre a prévia
   useMemo(() => {
     if (onPreviewGenerated) {
       onPreviewGenerated(`preview:${productName}:${productColor}:${logoDataUrl ? 'logo' : 'no-logo'}`);
@@ -85,7 +84,7 @@ export default function ProductPreview({
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
         <div
           className="relative w-full aspect-square flex items-center justify-center overflow-hidden"
-          style={{ backgroundColor: hasRealImage ? '#f8fafc' : productColor }}
+          style={{ backgroundColor: hasRealImage ? '#f8fafc' : '#e2e8f0' }}
         >
           {hasRealImage ? (
             <img
@@ -95,12 +94,9 @@ export default function ProductPreview({
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="text-center p-4">
-              <div className="text-4xl mb-1">👜</div>
-              <p className="text-xs text-white/80 font-medium">{productName}</p>
-            </div>
+            <RealisticBag color={productColor} logoUrl={logoDataUrl} compact />
           )}
-          {logoDataUrl ? (
+          {logoDataUrl && hasRealImage ? (
             <img
               src={logoDataUrl}
               alt="Logo"
@@ -119,7 +115,7 @@ export default function ProductPreview({
       <div
         className="relative w-full overflow-hidden"
         style={{
-          backgroundColor: hasRealImage ? '#f8fafc' : productColor,
+          backgroundColor: hasRealImage ? '#f8fafc' : '#e2e8f0',
           aspectRatio: '4/5',
         }}
       >
@@ -140,64 +136,9 @@ export default function ProductPreview({
             ) : null}
           </>
         ) : (
-          /* Placeholder: sacola estilizada com CSS */
-          <div className="w-full h-full flex flex-col items-center justify-center relative">
-            {/* Forma da sacola */}
-            <div className="relative">
-              {/* Corpo da sacola */}
-              <div
-                className="w-40 h-52 rounded-b-lg rounded-t-sm relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, ${lighten(productColor, 15)} 0%, ${productColor} 50%, ${darken(productColor, 20)} 100%)`,
-                  boxShadow: '4px 8px 20px rgba(0,0,0,0.15)',
-                }}
-              >
-                {/* Dobra superior */}
-                <div
-                  className="absolute top-0 left-0 right-0 h-3"
-                  style={{ backgroundColor: darken(productColor, 10), opacity: 0.3 }}
-                />
-                {/* Brilho */}
-                <div
-                  className="absolute top-0 left-0 w-1/3 h-full"
-                  style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 0%, transparent 100%)' }}
-                />
-                {/* Textura */}
-                <div
-                  className="absolute inset-0 opacity-5"
-                  style={{
-                    backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 3px)`,
-                  }}
-                />
-              </div>
-              {/* Alças */}
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-10">
-                <div
-                  className="w-2 h-10 rounded-full"
-                  style={{
-                    background: `linear-gradient(180deg, ${darken(productColor, 10)} 0%, ${darken(productColor, 25)} 100%)`,
-                    transform: 'rotate(-8deg)',
-                  }}
-                />
-                <div
-                  className="w-2 h-10 rounded-full"
-                  style={{
-                    background: `linear-gradient(180deg, ${darken(productColor, 10)} 0%, ${darken(productColor, 25)} 100%)`,
-                    transform: 'rotate(8deg)',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Logo sobre a sacola */}
-            {logoDataUrl ? (
-              <img
-                src={logoDataUrl}
-                alt="Logo"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-lg"
-                style={{ maxWidth: '30%', maxHeight: '25%' }}
-              />
-            ) : null}
+          /* Sacola realista gerada com CSS */
+          <div className="w-full h-full flex items-center justify-center relative">
+            <RealisticBag color={productColor} logoUrl={logoDataUrl} />
           </div>
         )}
 
@@ -259,6 +200,269 @@ export default function ProductPreview({
     </div>
   );
 }
+
+// ==========================================
+// COMPONENTE: Sacola Realista CSS
+// ==========================================
+
+interface RealisticBagProps {
+  color: string;
+  logoUrl: string | null;
+  compact?: boolean;
+}
+
+function RealisticBag({ color, logoUrl, compact = false }: RealisticBagProps) {
+  const light = lighten(color, 20);
+  const lighter = lighten(color, 35);
+  const dark = darken(color, 25);
+  const darker = darken(color, 40);
+  const mid = darken(color, 10);
+
+  // Tamanhos proporcionais
+  const bagW = compact ? 120 : 200;
+  const bagH = compact ? 150 : 260;
+  const foldH = compact ? 10 : 18;
+  const handleW = compact ? 3 : 5;
+  const handleH = compact ? 30 : 50;
+  const handleGap = compact ? 28 : 48;
+
+  return (
+    <div
+      className="relative"
+      style={{
+        width: bagW,
+        height: bagH + handleH + 8,
+        filter: 'drop-shadow(6px 10px 24px rgba(0,0,0,0.25))',
+      }}
+    >
+      {/* Alças — atrás da sacola */}
+      <div
+        className="absolute flex justify-center"
+        style={{
+          top: 0,
+          left: 0,
+          right: 0,
+          height: handleH + 10,
+          zIndex: 0,
+        }}
+      >
+        {/* Alça esquerda */}
+        <div
+          style={{
+            position: 'absolute',
+            left: bagW * 0.25 - handleW / 2,
+            width: handleW,
+            height: handleH,
+            borderRadius: handleW,
+            background: `linear-gradient(90deg, ${darker} 0%, ${dark} 30%, ${mid} 50%, ${dark} 70%, ${darker} 100%)`,
+            transform: 'rotate(-6deg)',
+            transformOrigin: 'bottom center',
+            boxShadow: `inset 0 0 2px rgba(255,255,255,0.15), 1px 2px 4px rgba(0,0,0,0.2)`,
+          }}
+        />
+        {/* Alça direita */}
+        <div
+          style={{
+            position: 'absolute',
+            left: bagW * 0.75 - handleW / 2,
+            width: handleW,
+            height: handleH,
+            borderRadius: handleW,
+            background: `linear-gradient(90deg, ${darker} 0%, ${dark} 30%, ${mid} 50%, ${dark} 70%, ${darker} 100%)`,
+            transform: 'rotate(6deg)',
+            transformOrigin: 'bottom center',
+            boxShadow: `inset 0 0 2px rgba(255,255,255,0.15), 1px 2px 4px rgba(0,0,0,0.2)`,
+          }}
+        />
+      </div>
+
+      {/* Corpo da sacola */}
+      <div
+        className="absolute overflow-hidden"
+        style={{
+          top: handleH,
+          left: 0,
+          width: bagW,
+          height: bagH,
+          borderRadius: `${compact ? 4 : 6}px ${compact ? 4 : 6}px ${compact ? 8 : 14}px ${compact ? 8 : 14}px`,
+          zIndex: 1,
+        }}
+      >
+        {/* Fundo gradiente principal */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(
+              170deg,
+              ${lighter} 0%,
+              ${light} 15%,
+              ${color} 35%,
+              ${mid} 65%,
+              ${dark} 90%,
+              ${darker} 100%
+            )`,
+          }}
+        />
+
+        {/* Textura de tecido (linhas horizontais finas) */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 2px,
+              rgba(255,255,255,0.03) 2px,
+              rgba(255,255,255,0.03) 3px
+            )`,
+          }}
+        />
+
+        {/* Textura de tecido (linhas verticais finas) */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              90deg,
+              transparent,
+              transparent 3px,
+              rgba(0,0,0,0.02) 3px,
+              rgba(0,0,0,0.02) 4px
+            )`,
+          }}
+        />
+
+        {/* Dobras verticais simuladas */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(90deg,
+                transparent 0%,
+                rgba(0,0,0,0.04) 18%,
+                transparent 22%,
+                rgba(255,255,255,0.03) 30%,
+                transparent 35%,
+                rgba(0,0,0,0.03) 48%,
+                transparent 52%,
+                rgba(255,255,255,0.02) 60%,
+                transparent 65%,
+                rgba(0,0,0,0.04) 78%,
+                transparent 82%,
+                rgba(255,255,255,0.03) 90%,
+                transparent 100%
+              )
+            `,
+          }}
+        />
+
+        {/* Brilho lateral esquerdo */}
+        <div
+          className="absolute top-0 left-0"
+          style={{
+            width: '40%',
+            height: '100%',
+            background: `linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, transparent 100%)`,
+          }}
+        />
+
+        {/* Sombra lateral direita */}
+        <div
+          className="absolute top-0 right-0"
+          style={{
+            width: '25%',
+            height: '100%',
+            background: `linear-gradient(270deg, rgba(0,0,0,0.12) 0%, transparent 100%)`,
+          }}
+        />
+
+        {/* Dobra superior (borda da boca) */}
+        <div
+          className="absolute top-0 left-0 right-0"
+          style={{
+            height: foldH,
+            background: `linear-gradient(180deg, ${dark} 0%, ${mid} 40%, transparent 100%)`,
+            opacity: 0.5,
+          }}
+        />
+
+        {/* Linha de costura na dobra */}
+        <div
+          className="absolute left-0 right-0"
+          style={{
+            top: foldH - 2,
+            height: 1,
+            backgroundImage: `repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 4px, transparent 4px, transparent 8px)`,
+          }}
+        />
+
+        {/* Sombra interna na base */}
+        <div
+          className="absolute bottom-0 left-0 right-0"
+          style={{
+            height: '20%',
+            background: `linear-gradient(0deg, rgba(0,0,0,0.15) 0%, transparent 100%)`,
+          }}
+        />
+
+        {/* Sombra de fundo (chão) */}
+        <div
+          className="absolute -bottom-3 left-1/2 -translate-x-1/2"
+          style={{
+            width: bagW * 0.8,
+            height: 12,
+            background: 'radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, transparent 70%)',
+            borderRadius: '50%',
+          }}
+        />
+
+        {/* Logo ou texto placeholder */}
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt="Logo"
+            className="absolute object-contain"
+            style={{
+              top: '40%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              maxWidth: '55%',
+              maxHeight: '35%',
+              filter: 'drop-shadow(1px 2px 3px rgba(0,0,0,0.2))',
+            }}
+          />
+        ) : (
+          <div
+            className="absolute flex items-center justify-center"
+            style={{
+              top: '40%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              maxWidth: '70%',
+            }}
+          >
+            <span
+              className="font-bold tracking-wider text-center select-none"
+              style={{
+                fontSize: compact ? 11 : 16,
+                color: 'rgba(255,255,255,0.7)',
+                textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Logo Aqui
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// UTILITÁRIOS DE COR
+// ==========================================
 
 function lighten(hex: string, pct: number): string {
   const c = hexToRgb(hex);
