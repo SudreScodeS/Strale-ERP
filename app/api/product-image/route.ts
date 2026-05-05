@@ -103,11 +103,11 @@ function buildImg2ImgPrompt(colorName: string, style: string): string {
  * Usada como referência consistente para TODAS as cores.
  */
 function buildNeutralBasePrompt(style: string): string {
-  const base = 'professional product photography, studio lighting, white seamless background, centered, commercial e-commerce photo, 4k, sharp focus, Canon EOS R5, 100mm macro lens';
+  const base = 'professional product photography, studio lighting, white seamless background, centered, commercial e-commerce photo, 4k, ultra sharp focus, Canon EOS R5, 100mm macro lens, high detail, realistic material texture';
   const stylePrompts: Record<string, string> = {
-    sacola: `single clean empty tote bag, flat woven fabric shopping bag, rectangular shape, sturdy rope handles, clean front face, no text no logos no writing, solid light gray color, ${base}`,
-    camiseta: `single plain t-shirt on invisible mannequin, cotton jersey fabric, natural drape, no text no logos no print, solid light gray color, ${base}`,
-    caneca: `single plain ceramic mug, smooth glossy finish, cylindrical shape, no text no logos no print, solid light gray color, ${base}`,
+    sacola: `a single tote bag made of woven cotton canvas fabric, rectangular shape, flat bottom, two sturdy rope handles attached at the top, clean front panel, solid medium gray color, visible fabric weave texture, natural fabric drape, ${base}`,
+    camiseta: `a single crew-neck t-shirt made of cotton jersey fabric, short sleeves, displayed on invisible mannequin showing natural drape, solid medium gray color, visible knit texture, neat collar, ${base}`,
+    caneca: `a single ceramic coffee mug with C-shaped handle, cylindrical body, smooth glossy glaze finish, solid medium gray color, subtle highlight reflection on surface, ${base}`,
   };
   return stylePrompts[style] || stylePrompts.sacola;
 }
@@ -172,22 +172,80 @@ async function getOrCreateNeutralBase(
 }
 
 /**
- * Muda a cor de uma imagem de produto via img2img.
- * Usa strength moderado (0.50) para:
- * - Preservar a FORMA original (mesmo produto, mesma sacola)
- * - Permitir mudança completa de cor
- * - Manter textura, sombras e iluminação
+ * Recolora uma imagem de produto usando sharp (método primário).
+ *
+ * Algoritmo:
+ * 1. Dessatura a imagem original (remove cor, mantém luminância)
+ * 2. Cria camada de cor sólida
+ * 3. Multiplica cor × luminância → produto com a nova cor
+ *    (áreas claras ficam claras, escuras ficam escuras)
+ * 4. Preserva textura e sombras da imagem original
+ *
+ * Vantagens:
+ * - 100% confiável (sem dependência de API externa)
+ * - Preserva EXATAMENTE a forma do produto
+ * - Mantém textura, sombras e iluminação
+ * - Rápido (processamento local com sharp)
  */
-async function recolorImageViaImg2Img(
-  hfToken: string,
+async function recolorWithSharp(
   baseBuffer: Buffer,
+  hexColor: string,
+): Promise<Buffer> {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) return baseBuffer;
+
+  const baseMeta = await sharp(baseBuffer).metadata();
+  const w = baseMeta.width || 512;
+  const h = baseMeta.height || 640;
+
+  // 1. Extrair luminância da imagem original (tons de cinza)
+  //    Isso preserva toda a informação de sombra/highlight/textura
+  const grayscale = await sharp(baseBuffer)
+    .greyscale()
+    .toBuffer();
+
+  // 2. Criar camada de cor sólida (a cor desejada)
+  const colorLayer = await sharp({
+    create: {
+      width: w,
+      height: h,
+      channels: 3,
+      background: { r: rgb.r, g: rgb.g, b: rgb.b },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  // 3. Multiplicar: cor × luminância
+  //    - Áreas claras da luminância (produto) → cor visível
+  //    - Áreas escuras (sombras) → cor mais escura
+  //    - Fundo branco (se houver) → cor pura
+  const recolored = await sharp(colorLayer)
+    .composite([{
+      input: grayscale,
+      blend: 'multiply',
+    }])
+    .png()
+    .toBuffer();
+
+  return recolored;
+}
+
+/**
+ * Recolora via img2img (método secundário, para refinamento).
+ * Usa strength alto (0.65) pois a base já está recolorida por sharp.
+ * O img2img apenas suaviza e adiciona realismo à textura.
+ */
+async function recolorViaImg2Img(
+  hfToken: string,
+  precoloredBuffer: Buffer,
   colorName: string,
   style: string,
 ): Promise<Buffer | null> {
-  const base64 = baseBuffer.toString('base64');
+  const base64 = precoloredBuffer.toString('base64');
   const prompt = buildColorChangePrompt(colorName, style);
 
-  console.log(`[product-image] Recoloring to ${colorName} via img2img (strength=0.50)...`);
+  console.log(`[product-image] Refining recolor via img2img (strength=0.40)...`);
 
   const response = await fetch(
     'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-refiner-1.0',
@@ -201,9 +259,9 @@ async function recolorImageViaImg2Img(
         inputs: prompt,
         parameters: {
           image: `data:image/png;base64,${base64}`,
-          strength: 0.50,
-          guidance_scale: 8.0,
-          num_inference_steps: 30,
+          strength: 0.40,
+          guidance_scale: 7.5,
+          num_inference_steps: 25,
         },
       }),
     },
@@ -211,7 +269,7 @@ async function recolorImageViaImg2Img(
 
   if (!response.ok) {
     const errText = await response.text();
-    console.log(`[product-image] Recolor failed (${response.status}): ${errText.substring(0, 200)}`);
+    console.log(`[product-image] img2img refinement failed (${response.status}): ${errText.substring(0, 200)}`);
     return null;
   }
 
@@ -483,6 +541,7 @@ async function compositeLogoOnImage(
 async function generateBaseImage(
   hfToken: string,
   colorName: string,
+  hexColor: string,
   style: string,
   imageUrl?: string,
 ): Promise<{ buffer: Buffer; source: string } | null> {
@@ -541,16 +600,19 @@ async function generateBaseImage(
     const neutralBase = await getOrCreateNeutralBase(hfToken, style);
 
     if (neutralBase) {
-      // 2b. Muda cor via img2img a partir da base neutra
-      const recolored = await recolorImageViaImg2Img(hfToken, neutralBase, colorName, style);
+      // 2b. Recolorir com sharp usando a cor HEX (confiável, preserva forma)
+      const recolored = await recolorWithSharp(neutralBase, hexColor);
 
-      if (recolored) {
-        return { buffer: recolored, source: 'recolor' };
+      // 2c. Refinar com img2img (opcional, melhora textura)
+      const refined = await recolorViaImg2Img(hfToken, recolored, colorName, style);
+
+      if (refined) {
+        return { buffer: refined, source: 'recolor' };
       }
 
-      // Se recolor falhar, usa a base neutra como fallback
-      console.log(`[product-image] Recolor failed, using neutral base as fallback`);
-      return { buffer: neutralBase, source: 'neutral-base' };
+      // Se img2img falhar, usar sharp direto (melhor que nada)
+      console.log(`[product-image] img2img refinement failed, using sharp recolor`);
+      return { buffer: recolored, source: 'recolor-sharp' };
     }
 
     // Se geração de base neutra falhar, fallback para geração direta
@@ -692,7 +754,7 @@ export async function POST(request: Request) {
     // =============================================
     // PASSO 1: Gerar imagem base do produto
     // =============================================
-    const baseResult = await generateBaseImage(hfToken, colorName, style, imageUrl);
+    const baseResult = await generateBaseImage(hfToken, colorName, color, style, imageUrl);
 
     if (!baseResult) {
       return NextResponse.json(
