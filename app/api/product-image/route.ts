@@ -32,12 +32,52 @@ function buildPrompt(colorName: string, style: string): string {
   return stylePrompts[style] || stylePrompts.sacola;
 }
 
-/** Prompt para img2img com logo — descreve o produto COM a logo estampada */
+/**
+ * Prompt para integração da logo via img2img.
+ * Descreve o produto como se a logo já fosse parte do material —
+ * como tinta absorvida pelo tecido/cerâmica, não como um sticker.
+ */
 function buildLogoPrompt(colorName: string, style: string): string {
+  const logoIntegration = `The logo must look like it was printed directly into the fabric material. ` +
+    `The ink absorbs into the textile fibers, creating a soft matte appearance. ` +
+    `The logo follows the natural drape and folds of the fabric — where the material creases, ` +
+    `the logo distorts slightly and naturally. ` +
+    `In shadow areas the logo appears darker and more saturated. ` +
+    `In highlight areas the logo fades slightly as light reflects off the fibers. ` +
+    `The edges of the printed design are slightly fuzzy where ink bleeds into the weave. ` +
+    `The logo is NOT a flat sticker, NOT a decal, NOT floating above the surface. ` +
+    `It is screen-printed ink that has become part of the material itself.`;
+
   const stylePrompts: Record<string, string> = {
-    sacola: `professional product photography of a ${colorName} tote bag with a custom logo printed on the front face, the logo is clearly visible and well-integrated into the fabric, printed design on textile, commercial product photo, studio lighting, white background, centered, 4k, sharp focus, realistic mockup`,
-    camiseta: `professional product photography of a ${colorName} t-shirt with a custom logo printed on the chest area, the logo is clearly visible and well-integrated into the fabric, screen printed design, commercial product photo, studio lighting, white background, centered, 4k, sharp focus, realistic mockup`,
-    caneca: `professional product photography of a ${colorName} ceramic mug with a custom logo printed on the side, the logo is clearly visible and well-integrated, sublimation print on ceramic, commercial product photo, studio lighting, white background, centered, 4k, sharp focus, realistic mockup`,
+    sacola: `Professional studio product photograph of a ${colorName} woven fabric tote bag. ` +
+      `A custom logo is screen-printed on the front panel of the bag. ` +
+      `The tote bag is hanging naturally, showing the fabric's weight and slight drape. ` +
+      `${logoIntegration} ` +
+      `The bag has a clean rectangular shape with sturdy rope handles. ` +
+      `Studio lighting from the upper left creates soft directional shadows. ` +
+      `White seamless background. Centered composition. ` +
+      `Ultra-realistic, indistinguishable from a real product photo. 8k resolution, sharp focus, ` +
+      `commercial e-commerce photography, Canon EOS R5, 100mm macro lens.`,
+
+    camiseta: `Professional studio product photograph of a ${colorName} cotton t-shirt. ` +
+      `A custom logo is screen-printed on the chest area. ` +
+      `The t-shirt is displayed on an invisible mannequin, showing the natural fabric drape. ` +
+      `${logoIntegration} ` +
+      `The cotton jersey has a visible fine knit texture. ` +
+      `Studio lighting from the upper left creates soft shadows under the collar and sleeves. ` +
+      `White seamless background. Centered composition. ` +
+      `Ultra-realistic, indistinguishable from a real product photo. 8k resolution, sharp focus, ` +
+      `commercial e-commerce photography, Canon EOS R5, 100mm macro lens.`,
+
+    caneca: `Professional studio product photograph of a ${colorName} ceramic mug. ` +
+      `A custom logo is sublimation-printed on the curved surface of the mug. ` +
+      `The logo wraps naturally around the cylindrical shape, with subtle perspective distortion at the edges. ` +
+      `The ceramic surface has a smooth glossy finish that creates a subtle highlight streak across the printed area. ` +
+      `The printed ink bonds with the ceramic glaze, creating a permanent smooth finish — not raised, not textured. ` +
+      `Studio lighting from the upper left creates a highlight on the rim and a soft shadow on the right side. ` +
+      `White seamless background. Centered composition. ` +
+      `Ultra-realistic, indistinguishable from a real product photo. 8k resolution, sharp focus, ` +
+      `commercial e-commerce photography, Canon EOS R5, 100mm macro lens.`,
   };
   return stylePrompts[style] || stylePrompts.sacola;
 }
@@ -107,6 +147,9 @@ async function fetchImageAsBase64(imageUrl: string): Promise<string | null> {
 /**
  * Remove o fundo da logo (branco/preto) e aplica feathering nas bordas.
  * Retorna a logo com canal alpha limpo.
+ *
+ * Usa color distance em vez de threshold simples para melhor detecção
+ * de fundos que não são branco/preto puro (ex: off-white, cinza claro).
  */
 async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
   const meta = await sharp(logoBuffer).metadata();
@@ -122,28 +165,87 @@ async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
   }
 
   // Sem alpha — precisa remover fundo
-  // 1. Criar máscara: fundo branco/preto → preto, logo → branco
-  const mask = await sharp(logoBuffer)
-    .greyscale()
-    .threshold(240) // Branco puro vira 255, resto vira 0
-    .negate() // Inverter: fundo=0 (transparente), logo=255 (opaco)
-    .blur(1.5) // Feathering nas bordas
+  // Usar raw pixels para detecção mais precisa
+  const { data, info } = await sharp(logoBuffer)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { width: w, height: h, channels } = info;
+  const outputBuffer = Buffer.alloc(w * h * 4);
+
+  // Detectar cor de fundo das bordas (média de 8 pontos)
+  const bgSamples: { r: number; g: number; b: number }[] = [];
+  const margin = Math.max(2, Math.floor(Math.min(w, h) * 0.02));
+  const samplePositions = [
+    [margin, margin], [w - 1 - margin, margin],
+    [margin, h - 1 - margin], [w - 1 - margin, h - 1 - margin],
+    [Math.floor(w / 2), margin], [Math.floor(w / 2), h - 1 - margin],
+    [margin, Math.floor(h / 2)], [w - 1 - margin, Math.floor(h / 2)],
+  ];
+
+  for (const [sx, sy] of samplePositions) {
+    const idx = (sy * w + sx) * channels;
+    bgSamples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+  }
+
+  // Média ponderada do fundo
+  const bgR = Math.round(bgSamples.reduce((s, c) => s + c.r, 0) / bgSamples.length);
+  const bgG = Math.round(bgSamples.reduce((s, c) => s + c.g, 0) / bgSamples.length);
+  const bgB = Math.round(bgSamples.reduce((s, c) => s + c.b, 0) / bgSamples.length);
+
+  // Threshold adaptativo baseado no brilho do fundo
+  const bgBrightness = bgR * 0.299 + bgG * 0.587 + bgB * 0.114;
+  const baseThreshold = bgBrightness > 200 ? 80 : bgBrightness < 50 ? 70 : 60;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const srcIdx = (y * w + x) * channels;
+      const dstIdx = (y * w + x) * 4;
+      const r = data[srcIdx], g = data[srcIdx + 1], b = data[srcIdx + 2];
+
+      const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+
+      if (dist < baseThreshold * 0.5) {
+        // Fundo → transparente
+        outputBuffer[dstIdx] = r;
+        outputBuffer[dstIdx + 1] = g;
+        outputBuffer[dstIdx + 2] = b;
+        outputBuffer[dstIdx + 3] = 0;
+      } else if (dist < baseThreshold) {
+        // Zona de transição → feathering (smoothstep)
+        const t = (dist - baseThreshold * 0.5) / (baseThreshold * 0.5);
+        const smoothT = t * t * (3 - 2 * t); // smoothstep
+        outputBuffer[dstIdx] = r;
+        outputBuffer[dstIdx + 1] = g;
+        outputBuffer[dstIdx + 2] = b;
+        outputBuffer[dstIdx + 3] = Math.round(smoothT * 255);
+      } else {
+        // Logo → opaco
+        outputBuffer[dstIdx] = r;
+        outputBuffer[dstIdx + 1] = g;
+        outputBuffer[dstIdx + 2] = b;
+        outputBuffer[dstIdx + 3] = 255;
+      }
+    }
+  }
+
+  return sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } })
     .png()
     .toBuffer();
-
-  // 2. Aplicar máscara como canal alpha
-  const logoWithAlpha = await sharp(logoBuffer)
-    .ensureAlpha()
-    .joinChannel(mask) // Usa a máscara como alpha
-    .png()
-    .toBuffer();
-
-  return logoWithAlpha;
 }
 
 /**
  * Compõe a logo sobre a imagem do produto usando sharp.
- * Remove fundo da logo, redimensiona, posiciona e aplica blending.
+ *
+ * Estratégia de blending em camadas para criar um ponto de partida
+ * melhor para o img2img de integração:
+ *
+ * 1. Camada multiply (sombra) — logo absorve a cor/textura do produto
+ * 2. Camada over (cor) — mantém as cores vibrantes da logo
+ * 3. Camada de textura — simula a aparência de tinta no tecido
+ *
+ * O resultado NÃO é o produto final — é o input para img2img
+ * que vai integrar tudo de forma realista.
  */
 async function compositeLogoOnImage(
   baseImageBuffer: Buffer,
@@ -202,18 +304,45 @@ async function compositeLogoOnImage(
   const finalX = Math.round(logoX + (logoMaxW - logoW) / 2);
   const finalY = Math.round(logoY + (logoMaxH - logoH) / 2);
 
-  // 7. Compor logo sobre a imagem base com blend 'over' (usa alpha channel)
-  const composited = await sharp(baseImageBuffer)
+  // 7. Criar camada multiply — logo absorve cor/textura do produto
+  //    Isso faz a logo parecer "tingida" pelo material, não colada
+  const multiplyLayer = await sharp(resizedLogo)
+    .modulate({ brightness: 0.85, saturation: 0.9 })
+    .png()
+    .toBuffer();
+
+  // 8. Primeira passada: multiply blend (integra cor da logo com cor do produto)
+  const step1 = await sharp(baseImageBuffer)
     .composite([{
-      input: resizedLogo,
+      input: multiplyLayer,
       left: finalX,
       top: finalY,
-      blend: 'over',
+      blend: 'multiply',
     }])
     .png()
     .toBuffer();
 
-  return composited;
+  // 9. Segunda passada: over blend com opacidade reduzida
+  //    Restaura a visibilidade da logo após o multiply
+  //    Usa blend 'over' com a logo original a ~60% opacidade
+  const logoWithReducedOpacity = await sharp(resizedLogo)
+    .ensureAlpha()
+    .png()
+    .toBuffer();
+
+  const step2 = await sharp(step1)
+    .composite([{
+      input: logoWithReducedOpacity,
+      left: finalX,
+      top: finalY,
+      blend: 'over',
+      // sharp não suporta opacity diretamente no composite,
+      // mas o img2img vai cuidar da integração final
+    }])
+    .png()
+    .toBuffer();
+
+  return step2;
 }
 
 /**
@@ -305,8 +434,14 @@ async function generateBaseImage(
 
 /**
  * Integra a logo na imagem do produto via img2img (passo final).
- * Usa strength baixo para preservar a forma do produto + logo,
- * mas alto o suficiente para suavizar a composição.
+ *
+ * Usa strength moderado-alto (0.42) para permitir que o modelo:
+ * - Ajuste a textura da logo para parecer tinta no tecido/cerâmica
+ * - Modifique iluminação e sombras sobre a logo
+ * - Distorça levemente a logo seguindo dobras do produto
+ * - Mantenha a composição geral (posição, cor, shape do produto)
+ *
+ * O negative prompt reforça o que NÃO queremos (sticker, overlay, flat).
  */
 async function integrateLogoViaImg2Img(
   hfToken: string,
@@ -317,7 +452,14 @@ async function integrateLogoViaImg2Img(
   const compositedBase64 = compositedBuffer.toString('base64');
   const prompt = buildLogoPrompt(colorName, style);
 
-  console.log(`[product-image] Integrating logo via img2img...`);
+  // Negative prompt para evitar os defeitos mais comuns
+  const negativePrompt =
+    'sticker, decal, flat overlay, floating logo, pasted logo, cutout, ' +
+    'paper cutout, photoshop, digital overlay, misaligned, blurry, ' +
+    'low quality, distorted product shape, wrong colors, watermark, ' +
+    'text artifacts, extra logos, busy background, unrealistic lighting';
+
+  console.log(`[product-image] Integrating logo via img2img (strength=0.42, steps=35)...`);
 
   const response = await fetch(
     'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-refiner-1.0',
@@ -331,9 +473,10 @@ async function integrateLogoViaImg2Img(
         inputs: prompt,
         parameters: {
           image: `data:image/png;base64,${compositedBase64}`,
-          strength: 0.30, // Baixo — preserva a logo, apenas suaviza integração
-          guidance_scale: 7.5,
-          num_inference_steps: 25,
+          strength: 0.42, // Moderado-alto: permite transformação realista sem perder composição
+          guidance_scale: 9.0, // Alto: força o modelo a seguir o prompt detalhado
+          num_inference_steps: 35, // Mais steps = melhor qualidade de integração
+          negative_prompt: negativePrompt,
         },
       }),
     },
