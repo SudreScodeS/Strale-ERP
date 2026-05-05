@@ -1,24 +1,39 @@
 // app/api/product-image/route.ts
-// Gera imagem de produto (sacola) usando IA — Hugging Face Inference API (gratuito)
-// A imagem gerada é usada como base; logo e cor são compostos em tempo real no client
+// Gera imagem de produto usando IA — com suporte a img2img (foto real como referência)
+// Quando imageUrl é fornecida, usa img2img para gerar variação com cor diferente
+// Sem imageUrl, gera do zero via text-to-image
 
 import { NextResponse } from 'next/server';
 import { requireRole } from '../../lib/auth';
 
-// Cache em memória (por cor) — sobrevive durante a vida do server
+// Cache em memória (por cor+produto) — sobrevive durante a vida do server
 const imageCache = new Map<string, { buffer: Buffer; timestamp: number }>();
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora
 
-function getCacheKey(color: string, style: string): string {
-  return `${color}-${style}`;
+function getCacheKey(color: string, style: string, imageUrl?: string): string {
+  // Se tem imageUrl, usa hash parcial dela + cor + estilo
+  if (imageUrl) {
+    const imgHash = imageUrl.split('/').pop()?.substring(0, 20) || 'noimg';
+    return `img2img-${color}-${style}-${imgHash}`;
+  }
+  return `txt2img-${color}-${style}`;
 }
 
 function buildPrompt(colorName: string, style: string): string {
-  const base = 'professional product photography of a clean empty tote bag';
   const stylePrompts: Record<string, string> = {
-    sacola: `${base}, flat woven fabric shopping bag, rectangular shape, sturdy handles, clean front face, no text no logos no writing, solid ${colorName} color, studio lighting, white background, centered, high quality, commercial product photo, 4k`,
-    camiseta: `professional product photography of a plain t-shirt, no text no logos no print, solid ${colorName} color, folded neatly, studio lighting, white background, centered, high quality, commercial product photo, 4k`,
-    caneca: `professional product photography of a plain ceramic mug, no text no logos no print, solid ${colorName} color, studio lighting, white background, centered, high quality, commercial product photo, 4k`,
+    sacola: `professional product photography of a single clean empty tote bag, flat woven fabric shopping bag, rectangular shape, sturdy handles, clean front face, no text no logos no writing, solid ${colorName} color, studio lighting, white background, centered, high quality, commercial product photo, 4k, sharp focus, professional lighting`,
+    camiseta: `professional product photography of a single plain t-shirt, no text no logos no print, solid ${colorName} color, neatly folded, studio lighting, white background, centered, high quality, commercial product photo, 4k, sharp focus`,
+    caneca: `professional product photography of a single plain ceramic mug, no text no logos no print, solid ${colorName} color, studio lighting, white background, centered, high quality, commercial product photo, 4k, sharp focus`,
+  };
+  return stylePrompts[style] || stylePrompts.sacola;
+}
+
+function buildImg2ImgPrompt(colorName: string, style: string): string {
+  // Prompt mais descritivo para img2img — foca em mudar cor mantendo o produto
+  const stylePrompts: Record<string, string> = {
+    sacola: `a ${colorName} colored tote bag, same exact bag shape and material, ${colorName} solid color fabric, no text no logos, product photography, white background, studio lighting, 4k, high quality`,
+    camiseta: `a ${colorName} colored t-shirt, same exact shirt shape and fabric, ${colorName} solid color, no text no logos, product photography, white background, studio lighting, 4k`,
+    caneca: `a ${colorName} colored ceramic mug, same exact mug shape, ${colorName} solid color, no text no logos, product photography, white background, studio lighting, 4k`,
   };
   return stylePrompts[style] || stylePrompts.sacola;
 }
@@ -57,16 +72,35 @@ function hexToColorName(hex: string): string {
   return l > 60 ? 'light pink' : 'pink';
 }
 
+/**
+ * Busca a imagem do produto e converte para base64
+ */
+async function fetchImageAsBase64(imageUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(imageUrl, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) return null;
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    return `data:${contentType};base64,${base64}`;
+  } catch (err) {
+    console.error('[product-image] Error fetching product image:', err);
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     requireRole(request, ['admin', 'seller']);
 
     const body = await request.json();
-    const { color = '#2563eb', style = 'sacola' } = body;
+    const { color = '#2563eb', style = 'sacola', imageUrl } = body;
 
-    console.log(`[product-image] Request: color=${color}, style=${style}`);
+    console.log(`[product-image] Request: color=${color}, style=${style}, imageUrl=${imageUrl ? 'yes' : 'no'}`);
 
-    const cacheKey = getCacheKey(color, style);
+    const cacheKey = getCacheKey(color, style, imageUrl);
 
     // Verifica cache
     const cached = imageCache.get(cacheKey);
@@ -97,34 +131,87 @@ export async function POST(request: Request) {
     }
 
     const colorName = hexToColorName(color);
-    const prompt = buildPrompt(colorName, style);
-    console.log(`[product-image] Prompt: ${prompt.substring(0, 80)}...`);
-    console.log(`[product-image] Calling HF API...`);
+    let response: Response;
+    let imageSource = 'generated';
 
-    const response = await fetch(
-      'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${hfToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            width: 512,
-            height: 640,
-            num_inference_steps: 4,
+    // Se tem imageUrl, tenta img2img com a foto real como referência
+    if (imageUrl) {
+      console.log(`[product-image] Trying img2img with product photo...`);
+      const imgBase64 = await fetchImageAsBase64(imageUrl);
+
+      if (imgBase64) {
+        const img2ImgPrompt = buildImg2ImgPrompt(colorName, style);
+        console.log(`[product-image] img2img prompt: ${img2ImgPrompt.substring(0, 80)}...`);
+
+        // Tenta img2img com stabilityai/stable-diffusion
+        response = await fetch(
+          'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-refiner-1.0',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${hfToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputs: img2ImgPrompt,
+              parameters: {
+                image: imgBase64,
+                strength: 0.45, // Moderado — mantém a forma do produto, muda a cor
+                guidance_scale: 7.5,
+                num_inference_steps: 25,
+              },
+            }),
           },
-        }),
-      },
-    );
+        );
 
-    console.log(`[product-image] HF response: ${response.status} ${response.statusText}`);
+        console.log(`[product-image] img2img response: ${response.status} ${response.statusText}`);
+
+        // Se img2img não funcionou (modelo não suporta ou erro), cai para text-to-image
+        if (!response.ok) {
+          const errText = await response.text();
+          console.log(`[product-image] img2img failed (${response.status}): ${errText.substring(0, 200)}`);
+          console.log(`[product-image] Falling back to text-to-image...`);
+          response = null as unknown as Response; // Marca para usar text-to-image
+        } else {
+          imageSource = 'img2img';
+        }
+      } else {
+        console.log(`[product-image] Failed to fetch product image, using text-to-image`);
+        response = null as unknown as Response;
+      }
+    }
+
+    // Fallback: text-to-image com FLUX
+    if (!response || !imageUrl) {
+      const prompt = buildPrompt(colorName, style);
+      console.log(`[product-image] Text-to-image prompt: ${prompt.substring(0, 80)}...`);
+
+      response = await fetch(
+        'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${hfToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: prompt,
+            parameters: {
+              width: 512,
+              height: 640,
+              num_inference_steps: 4,
+            },
+          }),
+        },
+      );
+      imageSource = 'generated';
+    }
+
+    console.log(`[product-image] Final response: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errText = await response.text();
-      console.log(`[product-image] HF error: ${errText}`);
+      console.log(`[product-image] Error: ${errText}`);
 
       if (response.status === 503) {
         return NextResponse.json(
@@ -141,7 +228,7 @@ export async function POST(request: Request) {
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    console.log(`[product-image] Image generated: ${buffer.length} bytes`);
+    console.log(`[product-image] Image generated: ${buffer.length} bytes, source: ${imageSource}`);
 
     // Salva no cache
     imageCache.set(cacheKey, { buffer, timestamp: Date.now() });
@@ -150,7 +237,7 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'image/webp',
         'Cache-Control': 'public, max-age=3600',
-        'X-Image-Source': 'generated',
+        'X-Image-Source': imageSource,
       },
     });
   } catch (error) {

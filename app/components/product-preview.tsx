@@ -1,6 +1,7 @@
 // app/components/product-preview.tsx
-// Prévia do produto com composição profissional de logo
-// Usa logo-compositor para: remoção de fundo, blend modes, textura de tecido, sombras
+// Prévia do produto com geração de imagem por IA
+// Usa foto real do inventário como referência quando disponível (img2img)
+// Aplica logo via compositor profissional
 
 'use client';
 
@@ -64,8 +65,6 @@ function getOptimalBlendMode(
   if (!rgb) return 'multiply';
   const brightness = rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114;
 
-  // Light products → multiply (darkens logo into fabric)
-  // Dark products → soft-light (preserves logo visibility)
   if (brightness > 180) return 'multiply';
   if (brightness > 100) return 'soft-light';
   return 'overlay';
@@ -91,19 +90,17 @@ function getCompositorOptions(
     bgThreshold: 235,
   };
 
-  // Adjust per product type
   if (productType === 'camiseta') {
-    base.textureIntensity = 0.08; // More fabric texture on t-shirts
+    base.textureIntensity = 0.08;
     base.featherRadius = 2;
   } else if (productType === 'caneca') {
-    base.fabricTexture = false; // No fabric on mugs
+    base.fabricTexture = false;
     base.textureIntensity = 0;
     base.shadowBlur = 5;
     base.shadowOpacity = 0.2;
     base.featherRadius = 1;
   }
 
-  // Dark products need lighter shadow and different opacity
   if (brightness < 80) {
     base.shadowOpacity = 0.08;
     base.opacity = 0.88;
@@ -126,6 +123,7 @@ export default function ProductPreview({
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [imageSource, setImageSource] = useState<'ai' | 'img2img' | 'fallback'>('ai');
   const [showStock, setShowStock] = useState(false);
 
   const {
@@ -142,11 +140,11 @@ export default function ProductPreview({
   const productColor = selectedColorHex || getDefaultColor(productName);
   const productStyle = getProductStyle(productName);
   const productType = getProductType(productName);
-  const generationKey = `${productColor}-${productStyle}`;
+  const generationKey = `${productColor}-${productStyle}-${productImageUrl || 'noimg'}`;
   const hasStockImage = Boolean(productImageUrl);
 
   // ==========================================
-  // 1. SEMPRE gerar imagem via IA
+  // 1. Gerar imagem via IA (com foto real como referência quando disponível)
   // ==========================================
   useEffect(() => {
     if (showStock) return;
@@ -164,13 +162,23 @@ export default function ProductPreview({
       setError('');
 
       try {
+        // Envia imageUrl para API usar como referência (img2img)
+        const body: Record<string, string> = {
+          color: productColor,
+          style: productStyle,
+        };
+        // Só envia imageUrl se o usuário selecionou um produto com foto
+        if (productImageUrl) {
+          body.imageUrl = productImageUrl;
+        }
+
         const response = await fetch('/api/product-image', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...getAuthHeaders(),
           },
-          body: JSON.stringify({ color: productColor, style: productStyle }),
+          body: JSON.stringify(body),
         });
 
         if (cancelled) return;
@@ -182,6 +190,12 @@ export default function ProductPreview({
             return;
           }
           throw new Error(data.error || 'Erro ao gerar imagem');
+        }
+
+        // Detecta se veio de img2img ou text-to-image
+        const src = response.headers.get('X-Image-Source');
+        if (!cancelled) {
+          setImageSource(src === 'img2img' ? 'img2img' : 'ai');
         }
 
         const blob = await response.blob();
@@ -209,7 +223,7 @@ export default function ProductPreview({
 
     void generateImage();
     return () => { cancelled = true; };
-  }, [generationKey, showStock, productColor, productStyle]);
+  }, [generationKey, showStock, productColor, productStyle, productImageUrl]);
 
   // ==========================================
   // 2. Carregar logo
@@ -223,7 +237,7 @@ export default function ProductPreview({
   }, [logoDataUrl]);
 
   // ==========================================
-  // 3. Renderizar Canvas com composição profissional
+  // 3. Renderizar Canvas com composição
   // ==========================================
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -258,26 +272,15 @@ export default function ProductPreview({
       }
 
       if (logoImage) {
-        // === PROFESSIONAL COMPOSITING ===
-        // 1. Draw product to a temp canvas at the draw size
+        // === COMPOSIÇÃO: produto + logo ===
+        // 1. Desenha produto num canvas temporário
         const productCanvas = document.createElement('canvas');
         productCanvas.width = Math.ceil(drawW);
         productCanvas.height = Math.ceil(drawH);
         const pCtx = productCanvas.getContext('2d')!;
         pCtx.drawImage(baseImage, 0, 0, drawW, drawH);
 
-        // 2. Scale print area to match the draw dimensions
-        const fullPrintArea = getPrintArea(baseImage.width, baseImage.height, productType);
-        const scaleX = drawW / baseImage.width;
-        const scaleY = drawH / baseImage.height;
-        const scaledPrintArea = {
-          x: Math.round(fullPrintArea.x * scaleX),
-          y: Math.round(fullPrintArea.y * scaleY),
-          width: Math.round(fullPrintArea.width * scaleX),
-          height: Math.round(fullPrintArea.height * scaleY),
-        };
-
-        // 3. Composite logo onto product
+        // 2. Composita logo sobre o produto
         const compositorOpts = getCompositorOptions(productColor, productType);
         const composited = autoCompositeLogo(
           productCanvas,
@@ -286,26 +289,10 @@ export default function ProductPreview({
           compositorOpts,
         );
 
-        // 4. Draw composited result to main canvas
+        // 3. Desenha resultado no canvas principal
         ctx.drawImage(composited, drawX, drawY, drawW, drawH);
-
-        // 5. Draw print area guide (very subtle, for dev)
-        if (false) { // Set to true for debugging
-          ctx.save();
-          ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 4]);
-          ctx.strokeRect(
-            drawX + scaledPrintArea.x,
-            drawY + scaledPrintArea.y,
-            scaledPrintArea.width,
-            scaledPrintArea.height,
-          );
-          ctx.setLineDash([]);
-          ctx.restore();
-        }
       } else {
-        // No logo — just draw the product
+        // Sem logo — desenha produto direto
         ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
       }
     } else if (!loading) {
@@ -333,6 +320,8 @@ export default function ProductPreview({
       {showStock ? '✨ Ver IA' : '📦 Ver estoque'}
     </button>
   ) : null;
+
+  const sourceLabel = imageSource === 'img2img' ? '🎨 Baseado na foto' : '✨ Gerado por IA';
 
   // Modo compacto
   if (compact) {
@@ -374,7 +363,9 @@ export default function ProductPreview({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <span className="text-xs text-slate-700 font-medium">Gerando imagem com IA…</span>
+                  <span className="text-xs text-slate-700 font-medium">
+                    {productImageUrl ? 'Gerando baseado na foto do produto…' : 'Gerando imagem com IA…'}
+                  </span>
                 </div>
               </div>
             ) : null}
@@ -387,7 +378,7 @@ export default function ProductPreview({
 
             {baseImage && !loading ? (
               <div className="absolute top-2 left-2">
-                <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">✨ Gerado por IA</span>
+                <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">{sourceLabel}</span>
               </div>
             ) : null}
           </>
@@ -424,7 +415,7 @@ export default function ProductPreview({
 }
 
 // ==========================================
-// FALLBACK: Sacola Canvas (unchanged logic, improved logo rendering)
+// FALLBACK: Sacola Canvas
 // ==========================================
 
 function drawFallbackBag(ctx: CanvasRenderingContext2D, w: number, h: number, color: string, logoImage: HTMLImageElement | null) {
@@ -486,7 +477,6 @@ function drawFallbackBag(ctx: CanvasRenderingContext2D, w: number, h: number, co
   drawHandle(ctx, bagX + bagW * 0.72, bagY, color);
 
   if (logoImage) {
-    // Use compositor for fallback too
     const printArea = {
       x: bagX + bagW * 0.15,
       y: bagY + bagH * 0.25,
@@ -535,7 +525,6 @@ function compositeLogoFallback(
   const imageData = lCtx.getImageData(0, 0, logoImage.width, logoImage.height);
   const data = imageData.data;
 
-  // Detect bg from corners
   const cornerIdx = 0;
   const bgR = data[cornerIdx], bgG = data[cornerIdx + 1], bgB = data[cornerIdx + 2];
 
@@ -551,7 +540,6 @@ function compositeLogoFallback(
   }
   lCtx.putImageData(imageData, 0, 0);
 
-  // Scale logo to fit print area
   const maxW = printArea.width * 0.65;
   const maxH = printArea.height * 0.65;
   const ratio = logoImage.width / logoImage.height;
@@ -561,12 +549,10 @@ function compositeLogoFallback(
   const lx = printArea.x + (printArea.width - lw) / 2;
   const ly = printArea.y + (printArea.height - lh) / 2;
 
-  // Determine blend mode based on product color brightness
   const rgb = hexToRgb(productColor);
   const brightness = rgb ? rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114 : 200;
   const blendMode: GlobalCompositeOperation = brightness > 150 ? 'multiply' : 'soft-light';
 
-  // Shadow
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.12)';
   ctx.shadowBlur = 3;
@@ -576,7 +562,6 @@ function compositeLogoFallback(
   ctx.drawImage(logoCanvas, lx + 1, ly + 2, lw, lh);
   ctx.restore();
 
-  // Logo with blend mode
   ctx.save();
   ctx.globalAlpha = 0.92;
   ctx.globalCompositeOperation = blendMode;
