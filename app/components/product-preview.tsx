@@ -77,7 +77,8 @@ export default function ProductPreview({
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [imageSource, setImageSource] = useState<'ai' | 'img2img' | 'fallback'>('ai');
+  const [imageSource, setImageSource] = useState<'ai' | 'img2img' | 'fallback' | 'ai-with-logo' | 'composited'>('ai');
+  const [logoIntegrated, setLogoIntegrated] = useState(false);
   const [showStock, setShowStock] = useState(false);
 
   const {
@@ -94,7 +95,8 @@ export default function ProductPreview({
   const productColor = selectedColorHex || getDefaultColor(productName);
   const productStyle = getProductStyle(productName);
   const productType = getProductType(productName);
-  const generationKey = `${productColor}-${productStyle}-${productImageUrl || 'noimg'}`;
+  const logoShortHash = logoDataUrl ? logoDataUrl.substring(logoDataUrl.length - 20) : 'nologo';
+  const generationKey = `${productColor}-${productStyle}-${productImageUrl || 'noimg'}-${logoShortHash}`;
   const hasStockImage = Boolean(productImageUrl);
 
   // ==========================================
@@ -123,6 +125,9 @@ export default function ProductPreview({
         if (productImageUrl) {
           body.imageUrl = productImageUrl;
         }
+        if (logoDataUrl) {
+          body.logoDataUrl = logoDataUrl;
+        }
 
         const response = await fetch('/api/product-image', {
           method: 'POST',
@@ -146,7 +151,16 @@ export default function ProductPreview({
 
         const src = response.headers.get('X-Image-Source');
         if (!cancelled) {
-          setImageSource(src === 'img2img' ? 'img2img' : 'ai');
+          if (src === 'ai-with-logo') {
+            setImageSource('ai-with-logo');
+            setLogoIntegrated(true);
+          } else if (src === 'composited') {
+            setImageSource('composited');
+            setLogoIntegrated(true);
+          } else {
+            setImageSource(src === 'img2img' ? 'img2img' : 'ai');
+            setLogoIntegrated(false);
+          }
         }
 
         const blob = await response.blob();
@@ -239,8 +253,9 @@ export default function ProductPreview({
         drawY = (h - drawH) / 2;
       }
 
-      if (logoImage) {
-        // === COMPOSIÇÃO PROFISSIONAL: produto + logo ===
+      if (logoImage && !logoIntegrated) {
+        // === COMPOSIÇÃO CLIENT-SIDE: produto + logo ===
+        // Usado APENAS quando a API NÃO integrou a logo (fallback)
 
         // 1. Desenha produto num canvas temporário (no tamanho de draw)
         const productCanvas = document.createElement('canvas');
@@ -274,7 +289,7 @@ export default function ProductPreview({
     if (onPreviewGenerated) {
       try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* */ }
     }
-  }, [baseImage, logoImage, productColor, productType, loading, onPreviewGenerated]);
+  }, [baseImage, logoImage, logoIntegrated, productColor, productType, loading, onPreviewGenerated]);
 
   // ==========================================
   // Renderização
@@ -290,7 +305,10 @@ export default function ProductPreview({
     </button>
   ) : null;
 
-  const sourceLabel = imageSource === 'img2img' ? '🎨 Baseado na foto' : '✨ Gerado por IA';
+  const sourceLabel = imageSource === 'ai-with-logo' ? '🖨️ Logo integrada pela IA'
+    : imageSource === 'composited' ? '🎨 Logo aplicada'
+    : imageSource === 'img2img' ? '🎨 Baseado na foto'
+    : '✨ Gerado por IA';
 
   // Modo compacto
   if (compact) {
