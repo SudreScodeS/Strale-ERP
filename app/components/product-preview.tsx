@@ -231,26 +231,28 @@ export default function ProductPreview({
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // Background
-    ctx.fillStyle = '#e2e8f0';
-    ctx.fillRect(0, 0, w, h);
+    // Transparent background — herda o fundo do container (dark mode safe)
+    // NÃO preencher com cor sólida para evitar bordas brancas/acinzentadas
 
     if (baseImage) {
-      // Calculate product draw area (centered, 90% of canvas)
+      // Calculate product draw area — fill canvas as much as possible
       const imgRatio = baseImage.width / baseImage.height;
       const canvasRatio = w / h;
       let drawW: number, drawH: number, drawX: number, drawY: number;
 
+      // Preencher o canvas o máximo possível (sem margens brancas)
       if (imgRatio > canvasRatio) {
-        drawW = w * 0.9;
-        drawH = drawW / imgRatio;
-        drawX = (w - drawW) / 2;
+        // Imagem mais larga que canvas → ajustar pela largura
+        drawW = w;
+        drawH = w / imgRatio;
+        drawX = 0;
         drawY = (h - drawH) / 2;
       } else {
-        drawH = h * 0.9;
-        drawW = drawH * imgRatio;
+        // Imagem mais alta que canvas → ajustar pela altura
+        drawH = h;
+        drawW = h * imgRatio;
         drawX = (w - drawW) / 2;
-        drawY = (h - drawH) / 2;
+        drawY = 0;
       }
 
       if (logoImage && !logoIntegrated) {
@@ -314,7 +316,7 @@ export default function ProductPreview({
   if (compact) {
     return (
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
-        <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#e2e8f0' }}>
+        <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
           {showStock && hasStockImage ? (
             <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" />
           ) : (
@@ -336,7 +338,7 @@ export default function ProductPreview({
   // Modo completo
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`}>
-      <div className="relative w-full overflow-hidden" style={{ backgroundColor: '#e2e8f0', aspectRatio: '4/5' }}>
+      <div className="relative w-full overflow-hidden" style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}>
         {showStock && hasStockImage ? (
           <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" />
         ) : (

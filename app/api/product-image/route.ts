@@ -10,6 +10,13 @@ import sharp from 'sharp';
 const imageCache = new Map<string, { buffer: Buffer; timestamp: number }>();
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora
 
+/**
+ * Cache de imagens base neutras por tipo de produto.
+ * Garante que todas as cores do mesmo tipo (sacola, camiseta, caneca)
+ * usem a MESMA forma/produto — apenas a cor muda via img2img.
+ */
+const neutralBaseCache = new Map<string, Buffer>();
+
 function getCacheKey(color: string, style: string, imageUrl?: string, logoHash?: string): string {
   const parts = [];
   if (imageUrl) {
@@ -89,6 +96,126 @@ function buildImg2ImgPrompt(colorName: string, style: string): string {
     caneca: `a ${colorName} colored ceramic mug, same exact mug shape, ${colorName} solid color, no text no logos, product photography, white background, studio lighting, 4k`,
   };
   return stylePrompts[style] || stylePrompts.sacola;
+}
+
+/**
+ * Prompt para gerar a imagem base neutra (light gray).
+ * Usada como referência consistente para TODAS as cores.
+ */
+function buildNeutralBasePrompt(style: string): string {
+  const base = 'professional product photography, studio lighting, white seamless background, centered, commercial e-commerce photo, 4k, sharp focus, Canon EOS R5, 100mm macro lens';
+  const stylePrompts: Record<string, string> = {
+    sacola: `single clean empty tote bag, flat woven fabric shopping bag, rectangular shape, sturdy rope handles, clean front face, no text no logos no writing, solid light gray color, ${base}`,
+    camiseta: `single plain t-shirt on invisible mannequin, cotton jersey fabric, natural drape, no text no logos no print, solid light gray color, ${base}`,
+    caneca: `single plain ceramic mug, smooth glossy finish, cylindrical shape, no text no logos no print, solid light gray color, ${base}`,
+  };
+  return stylePrompts[style] || stylePrompts.sacola;
+}
+
+/**
+ * Prompt para mudar APENAS a cor do produto via img2img.
+ * Descreve o produto com a cor desejada, preservando forma e material.
+ */
+function buildColorChangePrompt(colorName: string, style: string): string {
+  const stylePrompts: Record<string, string> = {
+    sacola: `a ${colorName} colored woven fabric tote bag, same rectangular shape, sturdy rope handles, solid ${colorName} fabric, product photography, white background, studio lighting, 4k, commercial photo`,
+    camiseta: `a ${colorName} colored cotton t-shirt, same shirt shape and fabric, solid ${colorName} color, product photography, white background, studio lighting, 4k, commercial photo`,
+    caneca: `a ${colorName} colored ceramic mug, same cylindrical mug shape, solid ${colorName} color, product photography, white background, studio lighting, 4k, commercial photo`,
+  };
+  return stylePrompts[style] || stylePrompts.sacola;
+}
+
+/**
+ * Gera ou recupera a imagem base neutra (light gray) para um tipo de produto.
+ * Esta imagem é usada como referência CONSISTENTE — todas as cores
+ * partem da mesma forma, mudando apenas a cor via img2img.
+ */
+async function getOrCreateNeutralBase(
+  hfToken: string,
+  style: string,
+): Promise<Buffer | null> {
+  const cacheKey = `neutral-base-${style}`;
+  const cached = neutralBaseCache.get(cacheKey);
+  if (cached) return cached;
+
+  const prompt = buildNeutralBasePrompt(style);
+  console.log(`[product-image] Generating neutral base for ${style}...`);
+
+  const response = await fetch(
+    'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${hfToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          width: 512,
+          height: 640,
+          num_inference_steps: 6,
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    console.error(`[product-image] Neutral base generation failed: ${response.status}`);
+    return null;
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  neutralBaseCache.set(cacheKey, buffer);
+  console.log(`[product-image] Neutral base cached for ${style}: ${buffer.length} bytes`);
+  return buffer;
+}
+
+/**
+ * Muda a cor de uma imagem de produto via img2img.
+ * Usa strength moderado (0.50) para:
+ * - Preservar a FORMA original (mesmo produto, mesma sacola)
+ * - Permitir mudança completa de cor
+ * - Manter textura, sombras e iluminação
+ */
+async function recolorImageViaImg2Img(
+  hfToken: string,
+  baseBuffer: Buffer,
+  colorName: string,
+  style: string,
+): Promise<Buffer | null> {
+  const base64 = baseBuffer.toString('base64');
+  const prompt = buildColorChangePrompt(colorName, style);
+
+  console.log(`[product-image] Recoloring to ${colorName} via img2img (strength=0.50)...`);
+
+  const response = await fetch(
+    'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-refiner-1.0',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${hfToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          image: `data:image/png;base64,${base64}`,
+          strength: 0.50,
+          guidance_scale: 8.0,
+          num_inference_steps: 30,
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.log(`[product-image] Recolor failed (${response.status}): ${errText.substring(0, 200)}`);
+    return null;
+  }
+
+  return Buffer.from(await response.arrayBuffer());
 }
 
 function hexToColorName(hex: string): string {
@@ -346,7 +473,12 @@ async function compositeLogoOnImage(
 }
 
 /**
- * Gera a imagem base do produto via FLUX
+ * Gera a imagem base do produto.
+ *
+ * Estratégia:
+ * 1. Se tem imageUrl → usa img2img com foto real como referência (método original)
+ * 2. Se NÃO tem imageUrl → gera base neutra (light gray) UMA VEZ,
+ *    depois muda cor via img2img. Garante MESMO produto para todas as cores.
  */
 async function generateBaseImage(
   hfToken: string,
@@ -357,7 +489,9 @@ async function generateBaseImage(
   let response: Response | null = null;
   let imageSource = 'generated';
 
-  // Se tem imageUrl, tenta img2img com a foto real como referência
+  // =============================================
+  // MÉTODO 1: Foto real como referência (img2img)
+  // =============================================
   if (imageUrl) {
     console.log(`[product-image] Trying img2img with product photo...`);
     const imgBase64 = await fetchImageAsBase64(imageUrl);
@@ -398,10 +532,30 @@ async function generateBaseImage(
     }
   }
 
-  // Fallback: text-to-image com FLUX
+  // =============================================
+  // MÉTODO 2: Base neutra + recolor (sem foto)
+  // Garante CONSISTÊNCIA: mesmo produto, cor diferente
+  // =============================================
   if (!response) {
+    // 2a. Gera/recupera base neutra (light gray) — cacheada por tipo
+    const neutralBase = await getOrCreateNeutralBase(hfToken, style);
+
+    if (neutralBase) {
+      // 2b. Muda cor via img2img a partir da base neutra
+      const recolored = await recolorImageViaImg2Img(hfToken, neutralBase, colorName, style);
+
+      if (recolored) {
+        return { buffer: recolored, source: 'recolor' };
+      }
+
+      // Se recolor falhar, usa a base neutra como fallback
+      console.log(`[product-image] Recolor failed, using neutral base as fallback`);
+      return { buffer: neutralBase, source: 'neutral-base' };
+    }
+
+    // Se geração de base neutra falhar, fallback para geração direta
     const prompt = buildPrompt(colorName, style);
-    console.log(`[product-image] Text-to-image prompt: ${prompt.substring(0, 80)}...`);
+    console.log(`[product-image] Fallback text-to-image: ${prompt.substring(0, 80)}...`);
 
     response = await fetch(
       'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
@@ -416,7 +570,7 @@ async function generateBaseImage(
           parameters: {
             width: 512,
             height: 640,
-            num_inference_steps: 4,
+            num_inference_steps: 6,
           },
         }),
       },
