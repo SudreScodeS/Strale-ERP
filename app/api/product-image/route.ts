@@ -105,8 +105,45 @@ async function fetchImageAsBase64(imageUrl: string): Promise<string | null> {
 }
 
 /**
+ * Remove o fundo da logo (branco/preto) e aplica feathering nas bordas.
+ * Retorna a logo com canal alpha limpo.
+ */
+async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
+  const meta = await sharp(logoBuffer).metadata();
+  const hasAlpha = meta.channels === 4;
+
+  // Se já tem alpha (PNG com transparência), verificar se o fundo é transparente
+  if (hasAlpha) {
+    // Já tem alpha — apenas garantir que está em RGBA
+    return sharp(logoBuffer)
+      .ensureAlpha()
+      .png()
+      .toBuffer();
+  }
+
+  // Sem alpha — precisa remover fundo
+  // 1. Criar máscara: fundo branco/preto → preto, logo → branco
+  const mask = await sharp(logoBuffer)
+    .greyscale()
+    .threshold(240) // Branco puro vira 255, resto vira 0
+    .negate() // Inverter: fundo=0 (transparente), logo=255 (opaco)
+    .blur(1.5) // Feathering nas bordas
+    .png()
+    .toBuffer();
+
+  // 2. Aplicar máscara como canal alpha
+  const logoWithAlpha = await sharp(logoBuffer)
+    .ensureAlpha()
+    .joinChannel(mask) // Usa a máscara como alpha
+    .png()
+    .toBuffer();
+
+  return logoWithAlpha;
+}
+
+/**
  * Compõe a logo sobre a imagem do produto usando sharp.
- * Posiciona a logo na área frontal do produto com blending adequado.
+ * Remove fundo da logo, redimensiona, posiciona e aplica blending.
  */
 async function compositeLogoOnImage(
   baseImageBuffer: Buffer,
@@ -117,12 +154,15 @@ async function compositeLogoOnImage(
   const logoBase64 = logoDataUrl.replace(/^data:image\/\w+;base64,/, '');
   const logoBuffer = Buffer.from(logoBase64, 'base64');
 
-  // Obter dimensões da imagem base
+  // 1. Remover fundo da logo
+  const cleanLogo = await removeLogoBackground(logoBuffer);
+
+  // 2. Obter dimensões da imagem base
   const baseMeta = await sharp(baseImageBuffer).metadata();
   const baseW = baseMeta.width || 512;
   const baseH = baseMeta.height || 640;
 
-  // Calcular área de impressão baseada no tipo de produto
+  // 3. Calcular área de impressão baseada no tipo de produto
   let logoMaxW: number, logoMaxH: number, logoX: number, logoY: number;
 
   if (style === 'camiseta') {
@@ -143,8 +183,8 @@ async function compositeLogoOnImage(
     logoY = Math.round(baseH * 0.22);
   }
 
-  // Redimensionar logo para caber na área de impressão
-  const resizedLogo = await sharp(logoBuffer)
+  // 4. Redimensionar logo para caber na área de impressão
+  const resizedLogo = await sharp(cleanLogo)
     .resize(logoMaxW, logoMaxH, {
       fit: 'inside',
       withoutEnlargement: true,
@@ -153,17 +193,16 @@ async function compositeLogoOnImage(
     .png()
     .toBuffer();
 
-  // Obter metadados da logo redimensionada
+  // 5. Obter metadados da logo redimensionada
   const logoMeta = await sharp(resizedLogo).metadata();
   const logoW = logoMeta.width || logoMaxW;
   const logoH = logoMeta.height || logoMaxH;
 
-  // Centralizar logo na área de impressão
+  // 6. Centralizar logo na área de impressão
   const finalX = Math.round(logoX + (logoMaxW - logoW) / 2);
   const finalY = Math.round(logoY + (logoMaxH - logoH) / 2);
 
-  // Compor logo sobre a imagem base
-  // Usar blend: 'over' com some transparency para simular impressão
+  // 7. Compor logo sobre a imagem base com blend 'over' (usa alpha channel)
   const composited = await sharp(baseImageBuffer)
     .composite([{
       input: resizedLogo,
