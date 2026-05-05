@@ -156,7 +156,7 @@ export async function POST(request: Request) {
               inputs: img2ImgPrompt,
               parameters: {
                 image: imgBase64,
-                strength: 0.45, // Moderado — mantém a forma do produto, muda a cor
+                strength: 0.35, // Baixo — preserva a forma/textura do produto, muda só a cor
                 guidance_scale: 7.5,
                 num_inference_steps: 25,
               },

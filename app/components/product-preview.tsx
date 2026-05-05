@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
 import { autoCompositeLogo, getPrintArea, type CompositorOptions } from '../lib/logo-compositor';
 
@@ -239,7 +239,9 @@ export default function ProductPreview({
   // ==========================================
   // 3. Renderizar Canvas com composição
   // ==========================================
-  const renderCanvas = useCallback(() => {
+  // Usa useEffect direto (sem useCallback) para evitar stale closure
+  // Quando logoImage carrega de forma assíncrona, este effect re-executa corretamente
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -304,8 +306,6 @@ export default function ProductPreview({
       try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* */ }
     }
   }, [baseImage, logoImage, productColor, productType, loading, onPreviewGenerated]);
-
-  useEffect(() => { renderCanvas(); }, [renderCanvas]);
 
   // ==========================================
   // Renderização
