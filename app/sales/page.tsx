@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { calculateLogoCost, calculateSalePrice, globalConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { Order } from '../../types';
-import ProductPreview, { generateProductPreview } from '../components/product-preview';
+import ProductPreview from '../components/product-preview';
+import type { PreviewConfig } from '../components/product-preview';
 
 interface VariableOption {
   id: string;
@@ -43,7 +44,7 @@ interface CartItem {
   selectedVariablesLabel: string;
   unitCost: number;
   unitPrice: number;
-  previewDataUrl: string; // Prévia visual gerada
+  previewConfig: PreviewConfig; // Config para renderizar prévia no carrinho
 }
 
 export default function SalesPage() {
@@ -74,8 +75,6 @@ export default function SalesPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
-  const [currentPreviewUrl, setCurrentPreviewUrl] = useState<string>('');
-  const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentUser = getCurrentUser();
 
   async function safeJson(response: Response) {
@@ -292,25 +291,6 @@ export default function SalesPage() {
     unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost) : 0,
   }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, quantity, currentItemUnitCost]);
 
-  // Regenera preview com debounce quando config muda
-  useEffect(() => {
-    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
-    previewDebounceRef.current = setTimeout(async () => {
-      if (!previewConfig.productImageUrl && !previewConfig.logoDataUrl) {
-        setCurrentPreviewUrl('');
-        return;
-      }
-      try {
-        const url = await generateProductPreview(previewConfig);
-        setCurrentPreviewUrl(url);
-      } catch (err) {
-        console.warn('[Preview] Falha ao gerar:', err);
-        setCurrentPreviewUrl('');
-      }
-    }, 300);
-    return () => { if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current); };
-  }, [previewConfig]);
-
   function handleAddItemToCart() {
     if (!selectedProduct) return;
 
@@ -339,7 +319,7 @@ export default function SalesPage() {
       })
       .join(', ');
 
-    // Captura a prévia atual para o item do carrinho
+    // Salva a config da prévia para renderizar no carrinho
     setCartItems((previous) => [
       ...previous,
       {
@@ -350,7 +330,7 @@ export default function SalesPage() {
         selectedVariablesLabel,
         unitCost: currentItemUnitCost,
         unitPrice: calculateSalePrice(currentItemUnitCost),
-        previewDataUrl: currentPreviewUrl || '', // Salva a prévia gerada
+        previewConfig: { ...previewConfig },
       },
     ]);
     setSelectedVariables({});
@@ -401,7 +381,6 @@ export default function SalesPage() {
       setQuantity(1);
       setOrderName('');
       setCartItems([]);
-      setCurrentPreviewUrl('');
       setOrders((prev) => (result.order ? [result.order, ...prev] : prev));
       setOrderStatusUpdates((prev) => ({ ...prev, [result.order.id]: result.order.status }));
       await loadInventory();
@@ -787,17 +766,9 @@ export default function SalesPage() {
                 {cartItems.map((item, index) => (
                   <div key={`${item.productId}-${index}`} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-3">
                     {/* Prévia visual do item */}
-                    {item.previewDataUrl ? (
-                      <img
-                        src={item.previewDataUrl}
-                        alt={`Prévia: ${item.productName}`}
-                        className="h-24 w-24 rounded-xl border border-slate-200 object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-24 w-24 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs text-slate-400">Sem prévia</span>
-                      </div>
-                    )}
+                    <div className="h-24 w-24 flex-shrink-0">
+                      <ProductPreview config={item.previewConfig} compact className="h-24 w-24" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-900">{item.productName}</p>
                       <p className="text-sm text-slate-600">Qtd: {item.quantity}</p>
@@ -850,7 +821,6 @@ export default function SalesPage() {
               <p className="mb-3 text-sm font-semibold text-slate-700">🖼️ Prévia do produto</p>
               <ProductPreview
                 config={previewConfig}
-                onPreviewGenerated={setCurrentPreviewUrl}
                 className="w-full"
               />
               {!selectedColorHex && logoAnalysisResult?.productColor ? (
