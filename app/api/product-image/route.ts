@@ -172,20 +172,16 @@ async function getOrCreateNeutralBase(
 }
 
 /**
- * Recolora uma imagem de produto usando sharp (método primário).
+ * Recolora APENAS o produto (não o fundo) usando sharp.
  *
- * Algoritmo:
- * 1. Dessatura a imagem original (remove cor, mantém luminância)
- * 2. Cria camada de cor sólida
- * 3. Multiplica cor × luminância → produto com a nova cor
- *    (áreas claras ficam claras, escuras ficam escuras)
- * 4. Preserva textura e sombras da imagem original
+ * Processo:
+ * 1. Cria máscara do produto (pixels não-brancos = produto)
+ * 2. Extrai luminância da imagem original
+ * 3. Cria camada de cor sólida
+ * 4. Multiplica cor × luminância → produto colorido
+ * 5. Aplica máscara: só o produto recebe cor, fundo fica branco
  *
- * Vantagens:
- * - 100% confiável (sem dependência de API externa)
- * - Preserva EXATAMENTE a forma do produto
- * - Mantém textura, sombras e iluminação
- * - Rápido (processamento local com sharp)
+ * Resultado: produto com a cor desejada + fundo branco limpo
  */
 async function recolorWithSharp(
   baseBuffer: Buffer,
@@ -198,13 +194,38 @@ async function recolorWithSharp(
   const w = baseMeta.width || 512;
   const h = baseMeta.height || 640;
 
-  // 1. Extrair luminância da imagem original (tons de cinza)
-  //    Isso preserva toda a informação de sombra/highlight/textura
+  // 1. Criar máscara do produto: detectar pixels não-brancos
+  //    Fundo branco → preto (0), Produto → branco (255)
+  const { data: rawData, info } = await sharp(baseBuffer)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const maskBuffer = Buffer.alloc(w * h);
+  const threshold = 230; // Pixels acima disso são considerados "fundo"
+
+  for (let i = 0; i < w * h; i++) {
+    const idx = i * info.channels;
+    const r = rawData[idx], g = rawData[idx + 1], b = rawData[idx + 2];
+    // Se todos os canais estão altos → fundo branco
+    if (r > threshold && g > threshold && b > threshold) {
+      maskBuffer[i] = 0; // Fundo
+    } else {
+      maskBuffer[i] = 255; // Produto
+    }
+  }
+
+  // Suavizar bordas da máscara (feathering)
+  const maskPng = await sharp(maskBuffer, { raw: { width: w, height: h, channels: 1 } })
+    .blur(2) // Feathering para bordas suaves
+    .png()
+    .toBuffer();
+
+  // 2. Extrair luminância (tons de cinza) da imagem original
   const grayscale = await sharp(baseBuffer)
     .greyscale()
     .toBuffer();
 
-  // 2. Criar camada de cor sólida (a cor desejada)
+  // 3. Criar camada de cor sólida
   const colorLayer = await sharp({
     create: {
       width: w,
@@ -216,11 +237,9 @@ async function recolorWithSharp(
     .png()
     .toBuffer();
 
-  // 3. Multiplicar: cor × luminância
-  //    - Áreas claras da luminância (produto) → cor visível
-  //    - Áreas escuras (sombras) → cor mais escura
-  //    - Fundo branco (se houver) → cor pura
-  const recolored = await sharp(colorLayer)
+  // 4. Multiplicar: cor × luminância → produto com a nova cor
+  //    (sombras da imagem original escurecem a cor)
+  const coloredProduct = await sharp(colorLayer)
     .composite([{
       input: grayscale,
       blend: 'multiply',
@@ -228,7 +247,35 @@ async function recolorWithSharp(
     .png()
     .toBuffer();
 
-  return recolored;
+  // 5. Criar fundo branco
+  const whiteBg = await sharp({
+    create: {
+      width: w,
+      height: h,
+      channels: 3,
+      background: { r: 255, g: 255, b: 255 },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  // 6. Compor: fundo branco + produto colorido (usando máscara)
+  //    A máscara garante que APENAS o produto seja colorido
+  const final = await sharp(whiteBg)
+    .composite([{
+      input: await sharp(coloredProduct)
+        .composite([{
+          input: await sharp(maskPng).ensureAlpha().png().toBuffer(),
+          blend: 'dest-in', // Usa máscara como alpha
+        }])
+        .png()
+        .toBuffer(),
+      blend: 'over',
+    }])
+    .png()
+    .toBuffer();
+
+  return final;
 }
 
 /**
@@ -422,34 +469,32 @@ async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
 /**
  * Compõe a logo sobre a imagem do produto usando sharp.
  *
- * Estratégia de blending em camadas para criar um ponto de partida
- * melhor para o img2img de integração:
+ * Abordagem simplificada e eficaz:
+ * 1. Remove fundo da logo (alpha channel)
+ * 2. Redimensiona e posiciona na área de impressão
+ * 3. Compõe com blend 'over' (usa alpha natural da logo)
+ * 4. O img2img de integração cuida do realismo final
  *
- * 1. Camada multiply (sombra) — logo absorve a cor/textura do produto
- * 2. Camada over (cor) — mantém as cores vibrantes da logo
- * 3. Camada de textura — simula a aparência de tinta no tecido
- *
- * O resultado NÃO é o produto final — é o input para img2img
- * que vai integrar tudo de forma realista.
+ * NÃO fazemos multiply/agressivo aqui — isso é trabalho do img2img.
+ * O sharp só precisa posicionar a logo corretamente.
  */
 async function compositeLogoOnImage(
   baseImageBuffer: Buffer,
   logoDataUrl: string,
   style: string,
 ): Promise<Buffer> {
-  // Extrair base64 da data URL
   const logoBase64 = logoDataUrl.replace(/^data:image\/\w+;base64,/, '');
   const logoBuffer = Buffer.from(logoBase64, 'base64');
 
   // 1. Remover fundo da logo
   const cleanLogo = await removeLogoBackground(logoBuffer);
 
-  // 2. Obter dimensões da imagem base
+  // 2. Dimensões da imagem base
   const baseMeta = await sharp(baseImageBuffer).metadata();
   const baseW = baseMeta.width || 512;
   const baseH = baseMeta.height || 640;
 
-  // 3. Calcular área de impressão baseada no tipo de produto
+  // 3. Área de impressão por tipo de produto
   let logoMaxW: number, logoMaxH: number, logoX: number, logoY: number;
 
   if (style === 'camiseta') {
@@ -463,80 +508,51 @@ async function compositeLogoOnImage(
     logoX = Math.round((baseW - logoMaxW) / 2);
     logoY = Math.round(baseH * 0.25);
   } else {
-    // sacola
     logoMaxW = Math.round(baseW * 0.5);
     logoMaxH = Math.round(baseH * 0.4);
     logoX = Math.round((baseW - logoMaxW) / 2);
     logoY = Math.round(baseH * 0.22);
   }
 
-  // 4. Redimensionar logo para caber na área de impressão
+  // 4. Redimensionar logo
   const resizedLogo = await sharp(cleanLogo)
-    .resize(logoMaxW, logoMaxH, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
+    .resize(logoMaxW, logoMaxH, { fit: 'inside', withoutEnlargement: true })
     .ensureAlpha()
     .png()
     .toBuffer();
 
-  // 5. Obter metadados da logo redimensionada
   const logoMeta = await sharp(resizedLogo).metadata();
   const logoW = logoMeta.width || logoMaxW;
   const logoH = logoMeta.height || logoMaxH;
 
-  // 6. Centralizar logo na área de impressão
+  // 5. Centralizar
   const finalX = Math.round(logoX + (logoMaxW - logoW) / 2);
   const finalY = Math.round(logoY + (logoMaxH - logoH) / 2);
 
-  // 7. Criar camada multiply — logo absorve cor/textura do produto
-  //    Isso faz a logo parecer "tingida" pelo material, não colada
-  const multiplyLayer = await sharp(resizedLogo)
-    .modulate({ brightness: 0.85, saturation: 0.9 })
-    .png()
-    .toBuffer();
-
-  // 8. Primeira passada: multiply blend (integra cor da logo com cor do produto)
-  const step1 = await sharp(baseImageBuffer)
+  // 6. Compor: logo sobre produto (blend over — usa alpha channel)
+  //    A logo fica posicionada corretamente, o img2img de integração
+  //    vai fazer parecer impressa no material
+  const composited = await sharp(baseImageBuffer)
     .composite([{
-      input: multiplyLayer,
-      left: finalX,
-      top: finalY,
-      blend: 'multiply',
-    }])
-    .png()
-    .toBuffer();
-
-  // 9. Segunda passada: over blend com opacidade reduzida
-  //    Restaura a visibilidade da logo após o multiply
-  //    Usa blend 'over' com a logo original a ~60% opacidade
-  const logoWithReducedOpacity = await sharp(resizedLogo)
-    .ensureAlpha()
-    .png()
-    .toBuffer();
-
-  const step2 = await sharp(step1)
-    .composite([{
-      input: logoWithReducedOpacity,
+      input: resizedLogo,
       left: finalX,
       top: finalY,
       blend: 'over',
-      // sharp não suporta opacity diretamente no composite,
-      // mas o img2img vai cuidar da integração final
     }])
     .png()
     .toBuffer();
 
-  return step2;
+  return composited;
 }
 
 /**
  * Gera a imagem base do produto.
  *
  * Estratégia:
- * 1. Se tem imageUrl → usa img2img com foto real como referência (método original)
+ * 1. Se tem imageUrl → usa a FOTO REAL como base (preserva forma/textura)
+ *    e recolor com sharp se a cor for diferente
  * 2. Se NÃO tem imageUrl → gera base neutra (light gray) UMA VEZ,
- *    depois muda cor via img2img. Garante MESMO produto para todas as cores.
+ *    depois recolor com sharp. Garante MESMO produto para todas as cores.
  */
 async function generateBaseImage(
   hfToken: string,
@@ -545,107 +561,75 @@ async function generateBaseImage(
   style: string,
   imageUrl?: string,
 ): Promise<{ buffer: Buffer; source: string } | null> {
-  let response: Response | null = null;
-  let imageSource = 'generated';
 
   // =============================================
-  // MÉTODO 1: Foto real como referência (img2img)
+  // MÉTODO 1: Foto real como referência
+  // Usa a foto original DO PRODUTO como base
   // =============================================
   if (imageUrl) {
-    console.log(`[product-image] Trying img2img with product photo...`);
+    console.log(`[product-image] Using stock photo as base...`);
     const imgBase64 = await fetchImageAsBase64(imageUrl);
 
     if (imgBase64) {
-      const img2ImgPrompt = buildImg2ImgPrompt(colorName, style);
-      console.log(`[product-image] img2img prompt: ${img2ImgPrompt.substring(0, 80)}...`);
+      // Extrair buffer da data URL
+      const base64Data = imgBase64.replace(/^data:image\/\w+;base64,/, '');
+      const stockBuffer = Buffer.from(base64Data, 'base64');
 
-      response = await fetch(
-        'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-refiner-1.0',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${hfToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            inputs: img2ImgPrompt,
-            parameters: {
-              image: imgBase64,
-              strength: 0.35,
-              guidance_scale: 7.5,
-              num_inference_steps: 25,
-            },
-          }),
-        },
-      );
+      // Recolorir com sharp (preserva EXATAMENTE a forma do produto real)
+      const recolored = await recolorWithSharp(stockBuffer, hexColor);
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.log(`[product-image] img2img failed (${response.status}): ${errText.substring(0, 200)}`);
-        response = null;
-      } else {
-        imageSource = 'img2img';
+      // Refinar com img2img (baixa strength — só melhora textura, não muda forma)
+      const refined = await recolorViaImg2Img(hfToken, recolored, colorName, style);
+
+      if (refined) {
+        return { buffer: refined, source: 'stock-recolored' };
       }
-    } else {
-      response = null;
+
+      return { buffer: recolored, source: 'stock-recolored-sharp' };
     }
   }
 
   // =============================================
   // MÉTODO 2: Base neutra + recolor (sem foto)
-  // Garante CONSISTÊNCIA: mesmo produto, cor diferente
   // =============================================
-  if (!response) {
-    // 2a. Gera/recupera base neutra (light gray) — cacheada por tipo
-    const neutralBase = await getOrCreateNeutralBase(hfToken, style);
+  const neutralBase = await getOrCreateNeutralBase(hfToken, style);
 
-    if (neutralBase) {
-      // 2b. Recolorir com sharp usando a cor HEX (confiável, preserva forma)
-      const recolored = await recolorWithSharp(neutralBase, hexColor);
+  if (neutralBase) {
+    const recolored = await recolorWithSharp(neutralBase, hexColor);
+    const refined = await recolorViaImg2Img(hfToken, recolored, colorName, style);
 
-      // 2c. Refinar com img2img (opcional, melhora textura)
-      const refined = await recolorViaImg2Img(hfToken, recolored, colorName, style);
-
-      if (refined) {
-        return { buffer: refined, source: 'recolor' };
-      }
-
-      // Se img2img falhar, usar sharp direto (melhor que nada)
-      console.log(`[product-image] img2img refinement failed, using sharp recolor`);
-      return { buffer: recolored, source: 'recolor-sharp' };
+    if (refined) {
+      return { buffer: refined, source: 'recolor' };
     }
 
-    // Se geração de base neutra falhar, fallback para geração direta
-    const prompt = buildPrompt(colorName, style);
-    console.log(`[product-image] Fallback text-to-image: ${prompt.substring(0, 80)}...`);
+    return { buffer: recolored, source: 'recolor-sharp' };
+  }
 
-    response = await fetch(
-      'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${hfToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            width: 512,
-            height: 640,
-            num_inference_steps: 6,
-          },
-        }),
+  // Fallback: geração direta
+  const prompt = buildPrompt(colorName, style);
+  console.log(`[product-image] Fallback text-to-image...`);
+
+  const response = await fetch(
+    'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${hfToken}`,
+        'Content-Type': 'application/json',
       },
-    );
-    imageSource = 'generated';
-  }
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          width: 512,
+          height: 640,
+          num_inference_steps: 6,
+        },
+      }),
+    },
+  );
 
-  if (!response.ok) {
-    return null;
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  return { buffer: Buffer.from(arrayBuffer), source: imageSource };
+  if (!response.ok) return null;
+  return { buffer: Buffer.from(await response.arrayBuffer()), source: 'generated' };
 }
 
 /**
