@@ -5,10 +5,11 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
 import {
   autoCompositeLogo,
+  compositeLogo,
   getPrintArea,
   getProductCompositorOptions,
   type CompositorOptions,
@@ -220,58 +221,60 @@ export default function ProductPreview({
     ctx.fillStyle = '#e2e8f0';
     ctx.fillRect(0, 0, w, h);
 
-    // Guard: don't render until base image is ready
-    if (!baseImage) return;
+    if (baseImage) {
+      // Calculate product draw area (centered, 90% of canvas)
+      const imgRatio = baseImage.width / baseImage.height;
+      const canvasRatio = w / h;
+      let drawW: number, drawH: number, drawX: number, drawY: number;
 
-    // Calculate product draw area (centered, 90% of canvas)
-    const imgRatio = baseImage.width / baseImage.height;
-    const canvasRatio = w / h;
-    let drawW: number, drawH: number, drawX: number, drawY: number;
+      if (imgRatio > canvasRatio) {
+        drawW = w * 0.9;
+        drawH = drawW / imgRatio;
+        drawX = (w - drawW) / 2;
+        drawY = (h - drawH) / 2;
+      } else {
+        drawH = h * 0.9;
+        drawW = drawH * imgRatio;
+        drawX = (w - drawW) / 2;
+        drawY = (h - drawH) / 2;
+      }
 
-    if (imgRatio > canvasRatio) {
-      drawW = w * 0.9;
-      drawH = drawW / imgRatio;
-      drawX = (w - drawW) / 2;
-      drawY = (h - drawH) / 2;
-    } else {
-      drawH = h * 0.9;
-      drawW = drawH * imgRatio;
-      drawX = (w - drawW) / 2;
-      drawY = (h - drawH) / 2;
-    }
+      if (logoImage) {
+        // === COMPOSIÇÃO PROFISSIONAL: produto + logo ===
 
-    if (logoImage) {
-      // === COMPOSIÇÃO PROFISSIONAL: produto + logo ===
+        // 1. Desenha produto num canvas temporário (no tamanho de draw)
+        const productCanvas = document.createElement('canvas');
+        productCanvas.width = Math.ceil(drawW);
+        productCanvas.height = Math.ceil(drawH);
+        const pCtx = productCanvas.getContext('2d')!;
+        pCtx.drawImage(baseImage, 0, 0, drawW, drawH);
 
-      // 1. Desenha produto num canvas temporário (no tamanho de draw)
-      const productCanvas = document.createElement('canvas');
-      productCanvas.width = Math.ceil(drawW);
-      productCanvas.height = Math.ceil(drawH);
-      const pCtx = productCanvas.getContext('2d')!;
-      pCtx.drawImage(baseImage, 0, 0, drawW, drawH);
+        // 2. Obtém opções otimizadas para o tipo de produto
+        const compositorOpts = getProductCompositorOptions(productType, productColor);
 
-      // 2. Obtém opções otimizadas para o tipo de produto
-      const compositorOpts = getProductCompositorOptions(productType, productColor);
+        // 3. Composita logo sobre o produto com efeitos realistas
+        const composited = autoCompositeLogo(
+          productCanvas,
+          logoImage,
+          productType,
+          compositorOpts,
+        );
 
-      // 3. Composita logo sobre o produto com efeitos realistas
-      const composited = autoCompositeLogo(
-        productCanvas,
-        logoImage,
-        productType,
-        compositorOpts,
-      );
-
-      // 4. Desenha resultado no canvas principal
-      ctx.drawImage(composited, drawX, drawY, drawW, drawH);
-    } else {
-      // Sem logo — desenha produto direto
-      ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
+        // 4. Desenha resultado no canvas principal
+        ctx.drawImage(composited, drawX, drawY, drawW, drawH);
+      } else {
+        // Sem logo — desenha produto direto
+        ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
+      }
+    } else if (!loading) {
+      // Fallback: desenha sacola no Canvas quando não tem imagem de IA
+      drawFallbackBag(ctx, w, h, productColor, logoImage, productType);
     }
 
     if (onPreviewGenerated) {
       try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* */ }
     }
-  }, [baseImage, logoImage, productColor, productType, onPreviewGenerated]);
+  }, [baseImage, logoImage, productColor, productType, loading, onPreviewGenerated]);
 
   // ==========================================
   // Renderização
@@ -320,7 +323,7 @@ export default function ProductPreview({
           <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" />
         ) : (
           <>
-            <canvas ref={canvasRef} width={512} height={640} className="w-full h-full object-contain" />
+            <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
 
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
@@ -378,4 +381,180 @@ export default function ProductPreview({
       </div>
     </div>
   );
+}
+
+// ==========================================
+// FALLBACK: Sacola Canvas (quando não tem imagem de IA)
+// ==========================================
+
+function drawFallbackBag(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  color: string,
+  logoImage: HTMLImageElement | null,
+  productType: string,
+) {
+  const bagW = w * 0.5, bagH = bagW * 1.4;
+  const bagX = (w - bagW) / 2, bagY = h * 0.2;
+
+  // Shadow
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  ctx.beginPath();
+  ctx.ellipse(w / 2, bagY + bagH + 10, bagW * 0.4, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Bag body gradient
+  const gradient = ctx.createLinearGradient(bagX, bagY, bagX + bagW, bagY + bagH);
+  gradient.addColorStop(0, lighten(color, 25));
+  gradient.addColorStop(0.3, lighten(color, 10));
+  gradient.addColorStop(0.5, color);
+  gradient.addColorStop(0.7, darken(color, 10));
+  gradient.addColorStop(1, darken(color, 30));
+
+  ctx.save();
+  ctx.fillStyle = gradient;
+  roundRect(ctx, bagX, bagY, bagW, bagH, 6);
+  ctx.fill();
+
+  // Fabric texture lines
+  ctx.globalAlpha = 0.04;
+  for (let i = 0; i < bagH; i += 3) {
+    ctx.beginPath();
+    ctx.moveTo(bagX, bagY + i);
+    ctx.lineTo(bagX + bagW, bagY + i);
+    ctx.strokeStyle = i % 6 < 3 ? '#000' : '#fff';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Shine
+  const shine = ctx.createLinearGradient(bagX, bagY, bagX + bagW * 0.4, bagY);
+  shine.addColorStop(0, 'rgba(255,255,255,0.12)');
+  shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine;
+  ctx.fill();
+
+  // Top fold line
+  ctx.fillStyle = darken(color, 15);
+  ctx.globalAlpha = 0.4;
+  ctx.fillRect(bagX, bagY, bagW, 12);
+  ctx.globalAlpha = 1;
+
+  // Dashed line
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(bagX + 8, bagY + 12);
+  ctx.lineTo(bagX + bagW - 8, bagY + 12);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Handles
+  drawHandle(ctx, bagX + bagW * 0.28, bagY, color);
+  drawHandle(ctx, bagX + bagW * 0.72, bagY, color);
+
+  // Logo compositing via professional compositor
+  if (logoImage) {
+    // Create a temporary canvas with the bag drawing
+    const bagCanvas = document.createElement('canvas');
+    bagCanvas.width = w;
+    bagCanvas.height = h;
+    const bagCtx = bagCanvas.getContext('2d')!;
+    bagCtx.drawImage(ctx.canvas, 0, 0);
+
+    // Define print area on the bag (centered, prominent)
+    const printArea = {
+      x: bagX + bagW * 0.1,
+      y: bagY + bagH * 0.2,
+      width: bagW * 0.8,
+      height: bagH * 0.5,
+    };
+
+    // Use professional compositor
+    const composited = compositeLogo(bagCanvas, logoImage, printArea, {
+      blendMode: 'multiply',
+      opacity: 0.92,
+      featherRadius: 2,
+      fabricTexture: true,
+      textureIntensity: 0.07,
+      shadowBlur: 4,
+      shadowOpacity: 0.15,
+      bgThreshold: 235,
+      matchLighting: true,
+      lightingIntensity: 0.12,
+    });
+    ctx.drawImage(composited, 0, 0);
+  } else {
+    // Placeholder text
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = `bold ${bagW * 0.09}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 3;
+    ctx.fillText('Logo Aqui', bagX + bagW / 2, bagY + bagH * 0.45);
+    ctx.restore();
+  }
+}
+
+function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, color: string) {
+  const hw = 4, hh = 45;
+  ctx.save();
+  const grad = ctx.createLinearGradient(cx - hw, top, cx + hw, top);
+  grad.addColorStop(0, darken(color, 35));
+  grad.addColorStop(0.3, darken(color, 15));
+  grad.addColorStop(0.5, darken(color, 5));
+  grad.addColorStop(0.7, darken(color, 15));
+  grad.addColorStop(1, darken(color, 35));
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(cx - hw, top);
+  ctx.quadraticCurveTo(cx - hw - 2, top - hh, cx - hw, top - hh);
+  ctx.lineTo(cx + hw, top - hh);
+  ctx.quadraticCurveTo(cx + hw + 2, top - hh, cx + hw, top);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function lighten(hex: string, pct: number): string {
+  const c = hexToRgb(hex);
+  if (!c) return hex;
+  return rgbToHex(c.r + (255 - c.r) * pct / 100, c.g + (255 - c.g) * pct / 100, c.b + (255 - c.b) * pct / 100);
+}
+
+function darken(hex: string, pct: number): string {
+  const c = hexToRgb(hex);
+  if (!c) return hex;
+  return rgbToHex(c.r * (1 - pct / 100), c.g * (1 - pct / 100), c.b * (1 - pct / 100));
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = hex.replace('#', '').match(/^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map(c => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0')).join('');
 }

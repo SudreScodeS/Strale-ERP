@@ -68,6 +68,57 @@ function seededRandom(seed: number): () => number {
 // ==========================================
 
 /**
+ * Auto-crop canvas to its non-transparent content bounds.
+ * Removes transparent padding around the logo so sizing calculations use actual content.
+ */
+function cropToContent(source: HTMLCanvasElement): HTMLCanvasElement {
+  const ctx = source.getContext('2d')!;
+  const w = source.width;
+  const h = source.height;
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  let hasContent = false;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const alpha = data[(y * w + x) * 4 + 3];
+      if (alpha > 10) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        hasContent = true;
+      }
+    }
+  }
+
+  if (!hasContent) return source; // Fully transparent, return as-is
+
+  // Add small margin (2px) to avoid clipping anti-aliased edges
+  const margin = 2;
+  minX = Math.max(0, minX - margin);
+  minY = Math.max(0, minY - margin);
+  maxX = Math.min(w - 1, maxX + margin);
+  maxY = Math.min(h - 1, maxY + margin);
+
+  const cropW = maxX - minX + 1;
+  const cropH = maxY - minY + 1;
+
+  // If crop doesn't change anything, return original
+  if (cropW === w && cropH === h) return source;
+
+  const cropped = document.createElement('canvas');
+  cropped.width = cropW;
+  cropped.height = cropH;
+  const cCtx = cropped.getContext('2d')!;
+  cCtx.drawImage(source, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+
+  return cropped;
+}
+
+/**
  * Remove background from a logo image.
  * Uses multi-sampling for robust background detection.
  * Returns a new canvas with transparent background.
@@ -430,12 +481,16 @@ export function compositeLogo(
     featherEdges(processedLogo, opts.featherRadius);
   }
 
-  // 3. Calculate logo dimensions within print area (max 65% of area with padding)
-  const padding = Math.min(printArea.width, printArea.height) * 0.08;
+  // 2b. Auto-crop to content bounds (removes transparent padding around logo)
+  processedLogo = cropToContent(processedLogo);
+
+  // 3. Calculate logo dimensions within print area
+  // Use 85% of available area — logo should be prominent and visible
+  const padding = Math.min(printArea.width, printArea.height) * 0.05;
   const availW = printArea.width - padding * 2;
   const availH = printArea.height - padding * 2;
-  const maxLogoW = availW * 0.75;
-  const maxLogoH = availH * 0.75;
+  const maxLogoW = availW * 0.85;
+  const maxLogoH = availH * 0.85;
   const logoRatio = processedLogo.width / processedLogo.height;
   let logoW: number, logoH: number;
 
@@ -564,10 +619,10 @@ export function getPrintArea(
   productType: 'sacola' | 'camiseta' | 'caneca' | 'default' = 'default',
 ): { x: number; y: number; width: number; height: number } {
   const areas: Record<string, { xPct: number; yPct: number; wPct: number; hPct: number }> = {
-    sacola: { xPct: 0.18, yPct: 0.22, wPct: 0.64, hPct: 0.48 },
-    camiseta: { xPct: 0.25, yPct: 0.18, wPct: 0.5, hPct: 0.38 },
-    caneca: { xPct: 0.22, yPct: 0.2, wPct: 0.56, hPct: 0.55 },
-    default: { xPct: 0.18, yPct: 0.22, wPct: 0.64, hPct: 0.48 },
+    sacola: { xPct: 0.12, yPct: 0.18, wPct: 0.76, hPct: 0.55 },
+    camiseta: { xPct: 0.2, yPct: 0.15, wPct: 0.6, hPct: 0.42 },
+    caneca: { xPct: 0.18, yPct: 0.15, wPct: 0.64, hPct: 0.6 },
+    default: { xPct: 0.12, yPct: 0.18, wPct: 0.76, hPct: 0.55 },
   };
 
   const area = areas[productType] || areas.default;
