@@ -114,10 +114,15 @@ function buildDetailedPrompt(
  */
 function buildIntegrationPrompt(colorName: string, style: string): string {
   const base = `Professional studio product photograph of a ${colorName} colored ${style}. ` +
-    `A custom logo is printed directly on the front surface. ` +
-    `The printed ink has absorbed into the material creating a seamless integration. ` +
-    `The logo follows the natural surface texture and lighting of the product. ` +
-    `Ultra-realistic, indistinguishable from a real product photo. 8k, sharp focus, commercial photography.`;
+    `A custom logo is screen-printed directly on the front surface of the product. ` +
+    `The logo ink has been absorbed into the material fibers, creating a seamless, ` +
+    `natural integration. The logo follows the natural surface texture, folds, and lighting ` +
+    `of the product material. The printed area has a soft matte appearance with slightly ` +
+    `fuzzy edges where the ink meets the material. ` +
+    `There is NO visible border, NO rectangular frame, NO background behind the logo. ` +
+    `The logo looks like it was printed during manufacturing, not applied afterward. ` +
+    `Ultra-realistic, indistinguishable from a real product photo. 8k, sharp focus, ` +
+    `commercial e-commerce photography, Canon EOS R5, 100mm macro lens.`;
 
   return base;
 }
@@ -160,8 +165,15 @@ function hexToColorName(hex: string): string {
 }
 
 /**
- * Remove o fundo da logo (branco/preto/retangular) e aplica feathering.
- * Detecta automaticamente a cor de fundo das bordas.
+ * Remove o fundo da logo de forma robusta.
+ * Lida com fundos gradiente (ex: #101828 → #3B4B5C), retangulares, claros e escuros.
+ *
+ * Estratégia:
+ * 1. Amostra TODOS os pixels das bordas (não apenas 8 pontos)
+ * 2. Detecta se o fundo é claro ou escuro pela luminância média
+ * 3. Para fundos escuros: usa luminância + distância de cor
+ * 4. Para fundos claros: usa distância de cor tradicional
+ * 5. Aplica feathering suave nas bordas de transição
  */
 async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
   const meta = await sharp(logoBuffer).metadata();
@@ -180,60 +192,156 @@ async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
   const { width: w, height: h, channels } = info;
   const outputBuffer = Buffer.alloc(w * h * 4);
 
-  // Detectar cor de fundo das bordas (média de 8 pontos)
-  const bgSamples: { r: number; g: number; b: number }[] = [];
-  const margin = Math.max(2, Math.floor(Math.min(w, h) * 0.02));
-  const samplePositions = [
-    [margin, margin], [w - 1 - margin, margin],
-    [margin, h - 1 - margin], [w - 1 - margin, h - 1 - margin],
-    [Math.floor(w / 2), margin], [Math.floor(w / 2), h - 1 - margin],
-    [margin, Math.floor(h / 2)], [w - 1 - margin, Math.floor(h / 2)],
-  ];
+  // =============================================
+  // 1. Amostrar TODOS os pixels das bordas
+  //    (muito mais robusto que 8 pontos)
+  // =============================================
+  const edgePixels: { r: number; g: number; b: number }[] = [];
+  const borderWidth = Math.max(3, Math.floor(Math.min(w, h) * 0.05)); // 5% da menor dimensão
 
-  for (const [sx, sy] of samplePositions) {
-    const idx = (sy * w + sx) * channels;
-    bgSamples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      // Só pixels das bordas (top, bottom, left, right)
+      const isTop = y < borderWidth;
+      const isBottom = y >= h - borderWidth;
+      const isLeft = x < borderWidth;
+      const isRight = x >= w - borderWidth;
+
+      if (isTop || isBottom || isLeft || isRight) {
+        const idx = (y * w + x) * channels;
+        edgePixels.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+      }
+    }
   }
 
-  const bgR = Math.round(bgSamples.reduce((s, c) => s + c.r, 0) / bgSamples.length);
-  const bgG = Math.round(bgSamples.reduce((s, c) => s + c.g, 0) / bgSamples.length);
-  const bgB = Math.round(bgSamples.reduce((s, c) => s + c.b, 0) / bgSamples.length);
+  // =============================================
+  // 2. Analisar luminância das bordas
+  //    Detectar se fundo é escuro (gradiente) ou claro
+  // =============================================
+  const edgeBrightnesses = edgePixels.map(p => p.r * 0.299 + p.g * 0.587 + p.b * 0.114);
+  const avgBrightness = edgeBrightnesses.reduce((s, b) => s + b, 0) / edgeBrightnesses.length;
 
-  const bgBrightness = bgR * 0.299 + bgG * 0.587 + bgB * 0.114;
-  const baseThreshold = bgBrightness > 200 ? 80 : bgBrightness < 50 ? 70 : 60;
+  // Calcular variância para saber se o fundo é uniforme
+  const brightnessVariance = edgeBrightnesses.reduce((s, b) => s + (b - avgBrightness) ** 2, 0) / edgeBrightnesses.length;
+  const brightnessStdDev = Math.sqrt(brightnessVariance);
+
+  console.log(`[removeLogoBackground] Edge analysis: avgBrightness=${avgBrightness.toFixed(1)}, stdDev=${brightnessStdDev.toFixed(1)}, pixels=${edgePixels.length}`);
+
+  // Determinar threshold baseado na luminância do fundo
+  let brightnessThreshold: number;
+  let colorThreshold: number;
+
+  if (avgBrightness < 80) {
+    // Fundo ESCURO (gradiente dark como #101828 → #3B4B5C)
+    // Usar luminância como principal critério
+    brightnessThreshold = avgBrightness + 40; // Tudo mais escuro que isso é fundo
+    colorThreshold = 100; // Distância de cor ampla para gradientes
+  } else if (avgBrightness < 160) {
+    // Fundo CINZA/MÉDIO
+    brightnessThreshold = avgBrightness;
+    colorThreshold = 70;
+  } else {
+    // Fundo CLARO (branco, off-white)
+    brightnessThreshold = avgBrightness - 30;
+    colorThreshold = 80;
+  }
+
+  // =============================================
+  // 3. Detectar a cor predominante das bordas
+  //    (para gradientes, usar a média)
+  // =============================================
+  const bgR = Math.round(edgePixels.reduce((s, p) => s + p.r, 0) / edgePixels.length);
+  const bgG = Math.round(edgePixels.reduce((s, p) => s + p.g, 0) / edgePixels.length);
+  const bgB = Math.round(edgePixels.reduce((s, p) => s + p.b, 0) / edgePixels.length);
+
+  console.log(`[removeLogoBackground] Background: rgb(${bgR},${bgG},${bgB}) brightness=${avgBrightness.toFixed(0)} threshold=${brightnessThreshold.toFixed(0)}`);
+
+  // =============================================
+  // 4. Remover fundo pixel a pixel
+  //    Combina luminância + distância de cor
+  // =============================================
+  const isDarkBg = avgBrightness < 80;
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const srcIdx = (y * w + x) * channels;
       const dstIdx = (y * w + x) * 4;
       const r = data[srcIdx], g = data[srcIdx + 1], b = data[srcIdx + 2];
-      const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
 
-      if (dist < baseThreshold * 0.5) {
-        outputBuffer[dstIdx] = r;
-        outputBuffer[dstIdx + 1] = g;
-        outputBuffer[dstIdx + 2] = b;
-        outputBuffer[dstIdx + 3] = 0; // Fundo → transparente
-      } else if (dist < baseThreshold) {
-        const t = (dist - baseThreshold * 0.5) / (baseThreshold * 0.5);
-        const smoothT = t * t * (3 - 2 * t); // smoothstep
-        outputBuffer[dstIdx] = r;
-        outputBuffer[dstIdx + 1] = g;
-        outputBuffer[dstIdx + 2] = b;
-        outputBuffer[dstIdx + 3] = Math.round(smoothT * 255);
+      const pixelBrightness = r * 0.299 + g * 0.587 + b * 0.114;
+      const colorDist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+
+      let isBackground: boolean;
+      let alpha: number;
+
+      if (isDarkBg) {
+        // Fundo escuro: usar luminância como critério principal
+        // Pixels escuros E próximos da cor do fundo = fundo
+        const brightnessMatch = pixelBrightness < brightnessThreshold;
+        const colorMatch = colorDist < colorThreshold;
+
+        if (brightnessMatch && colorMatch) {
+          isBackground = true;
+          alpha = 0;
+        } else if (brightnessMatch || (pixelBrightness < brightnessThreshold + 20 && colorDist < colorThreshold * 0.7)) {
+          // Zona de transição
+          const t = Math.min(
+            (pixelBrightness - (brightnessThreshold - 20)) / 40,
+            (colorDist - colorThreshold * 0.3) / (colorThreshold * 0.7),
+          );
+          const smoothT = Math.max(0, Math.min(1, t));
+          const smooth = smoothT * smoothT * (3 - 2 * smoothT);
+          isBackground = false;
+          alpha = Math.round(smooth * 255);
+        } else {
+          isBackground = false;
+          alpha = 255;
+        }
       } else {
-        outputBuffer[dstIdx] = r;
-        outputBuffer[dstIdx + 1] = g;
-        outputBuffer[dstIdx + 2] = b;
-        outputBuffer[dstIdx + 3] = 255; // Logo → opaco
+        // Fundo claro: usar distância de cor tradicional
+        if (colorDist < colorThreshold * 0.4) {
+          isBackground = true;
+          alpha = 0;
+        } else if (colorDist < colorThreshold) {
+          const t = (colorDist - colorThreshold * 0.4) / (colorThreshold * 0.6);
+          const smooth = t * t * (3 - 2 * t);
+          isBackground = false;
+          alpha = Math.round(smooth * 255);
+        } else {
+          isBackground = false;
+          alpha = 255;
+        }
       }
+
+      outputBuffer[dstIdx] = r;
+      outputBuffer[dstIdx + 1] = g;
+      outputBuffer[dstIdx + 2] = b;
+      outputBuffer[dstIdx + 3] = alpha;
     }
   }
 
-  return sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } })
-    .blur(2) // Feathering nas bordas
+  // =============================================
+  // 5. Crop para o conteúdo (remove bordas transparentes)
+  //    e aplicar feathering suave
+  // =============================================
+  const result = await sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } })
+    .ensureAlpha()
     .png()
     .toBuffer();
+
+  // Auto-crop para conteúdo visível
+  const cropped = await sharp(result)
+    .trim({ threshold: 10 })
+    .png()
+    .toBuffer();
+
+  // Feathering nas bordas (blur suave no alpha)
+  const feathered = await sharp(cropped)
+    .blur(1.5)
+    .png()
+    .toBuffer();
+
+  return feathered;
 }
 
 /**
@@ -324,9 +432,11 @@ async function integrateLogoViaImg2Img(
     'paper cutout, photoshop, digital overlay, misaligned, blurry, ' +
     'low quality, distorted product shape, wrong colors, watermark, ' +
     'text artifacts, extra logos, busy background, unrealistic lighting, ' +
-    'rectangular border, logo background, logo box';
+    'rectangular border, logo background, logo box, dark rectangle, ' +
+    'logo frame, logo container, visible border around logo, ' +
+    'logo not integrated, logo pasted on surface';
 
-  console.log(`[product-image] Integrating logo via img2img (strength=0.35, steps=30)...`);
+  console.log(`[product-image] Integrating logo via img2img (strength=0.40, steps=35)...`);
 
   const response = await fetch(
     'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-refiner-1.0',
@@ -340,9 +450,9 @@ async function integrateLogoViaImg2Img(
         inputs: prompt,
         parameters: {
           image: `data:image/png;base64,${compositedBase64}`,
-          strength: 0.35, // Baixo: preserva o produto, só integra a logo
-          guidance_scale: 7.5,
-          num_inference_steps: 30,
+          strength: 0.40, // Moderado: permite transformação realista da logo
+          guidance_scale: 8.0,
+          num_inference_steps: 35,
           negative_prompt: negativePrompt,
         },
       }),
