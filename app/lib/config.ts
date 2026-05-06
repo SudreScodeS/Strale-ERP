@@ -12,7 +12,7 @@ const DEFAULTS: GlobalConfig = {
   profitMargin: 20,
   logoPricePerColor: 10,
   minStockAlert: 5,
-  systemName: 'Shtar',
+  systemName: 'Strale ERP',
   companyName: 'North Bag',
 };
 

@@ -1,4 +1,4 @@
-# Shtar ERP — Documentação de Problemas e Soluções
+# Strale ERP — Documentação de Problemas e Soluções
 
 > Resumo completo dos problemas encontrados e soluções aplicadas durante a restauração e melhoria do sistema de geração de imagem de produto.
 
@@ -23,9 +23,9 @@
 
 ## 1. Contexto Inicial
 
-O projeto **Shtar ERP** é um sistema de gestão que inclui geração de imagens de produto via IA (sacolas, camisetas, canecas). O usuário reportou que após diversas alterações recentes, o sistema de geração de imagem estava inconsistente — gerando imagens com problemas de logo, cor e renderização.
+O projeto **Strale ERP** é um sistema de gestão que inclui geração de imagens de produto via IA (sacolas, camisetas, canecas). O usuário reportou que após diversas alterações recentes, o sistema de geração de imagem estava inconsistente — gerando imagens com problemas de logo, cor e renderização.
 
-**Repositório**: https://github.com/SudreScodeS/Shtar-ERP
+**Repositório**: https://github.com/SudreScodeS/Strale-ERP
 
 ### Commits analisados (do mais antigo para o mais recente):
 ```
@@ -67,7 +67,7 @@ O pipeline tinha **6 pontos de falha** diferentes:
 6. Cache complexo com muitas variáveis
 
 ### Solução
-Restauramos para a abordagem Shtars do commit `738dc65`:
+Restauramos para a abordagem Strales do commit `738dc65`:
 - API gera imagem via text-to-image (FLUX.1-schnell)
 - Frontend compõe cor e logo via Canvas
 
@@ -251,7 +251,7 @@ O img2img com strength 0.40 **modificava a logo** junto com o produto. O modelo 
 
 | Hash | Data | Descrição |
 |------|------|-----------|
-| `2058263` | 2026-05-06 | Restauração do estado funcional (base Shtars) |
+| `2058263` | 2026-05-06 | Restauração do estado funcional (base Strales) |
 | `d425f4c` | 2026-05-06 | Adicionado grupo de cores (azul, amarelo, preto, vermelho) |
 | `949a46f` | 2026-05-06 | Prompt detalhado com variáveis + logo via img2img |
 | `7babdca` | 2026-05-06 | Remoção robusta de fundo da logo (gradiente) |

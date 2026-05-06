@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Shtar',
+  title: 'Strale ERP',
   description: 'ERP modular para gestao empresarial.',
   icons: {
     icon: '/LogoE.svg',
