@@ -82,19 +82,90 @@ function deltaE(c1: LabColor, c2: LabColor): number {
 }
 
 // ==========================================
-// Background detection
+// Background detection — adaptive edge sampling
 // ==========================================
 
-function isBackgroundPixel(r: number, g: number, b: number, a: number): boolean {
+/**
+ * Detect background color by sampling edge pixels.
+ * Works with ANY background color (white, blue, black, etc.)
+ */
+function detectBackgroundColor(
+  data: Buffer,
+  channels: number,
+  width: number,
+  height: number,
+): { r: number; g: number; b: number; lab: LabColor } {
+  // Sample pixels from all 4 edges (3px deep)
+  const edgeDepth = Math.max(2, Math.floor(Math.min(width, height) * 0.03));
+  const samples: { r: number; g: number; b: number }[] = [];
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Only sample edge pixels
+      const isEdge = y < edgeDepth || y >= height - edgeDepth ||
+                     x < edgeDepth || x >= width - edgeDepth;
+      if (!isEdge) continue;
+
+      const idx = (y * width + x) * channels;
+      samples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+    }
+  }
+
+  if (samples.length === 0) {
+    return { r: 255, g: 255, b: 255, lab: rgbToLab(255, 255, 255) };
+  }
+
+  // Cluster edge samples to find dominant color
+  // Simple approach: bin by quantized color, pick most frequent
+  const binMap = new Map<string, { r: number; g: number; b: number; count: number }>();
+  const BIN_BITS = 3; // 8 levels per channel
+  const BIN_SIZE = 256 >> BIN_BITS;
+
+  for (const s of samples) {
+    const qr = (s.r >> BIN_BITS) * BIN_SIZE + (BIN_SIZE >> 1);
+    const qg = (s.g >> BIN_BITS) * BIN_SIZE + (BIN_SIZE >> 1);
+    const qb = (s.b >> BIN_BITS) * BIN_SIZE + (BIN_SIZE >> 1);
+    const key = `${qr},${qg},${qb}`;
+
+    const existing = binMap.get(key);
+    if (existing) {
+      existing.count++;
+      existing.r = Math.round((existing.r * (existing.count - 1) + s.r) / existing.count);
+      existing.g = Math.round((existing.g * (existing.count - 1) + s.g) / existing.count);
+      existing.b = Math.round((existing.b * (existing.count - 1) + s.b) / existing.count);
+    } else {
+      binMap.set(key, { r: s.r, g: s.g, b: s.b, count: 1 });
+    }
+  }
+
+  // Find the most frequent edge color
+  let bestBin = { r: 255, g: 255, b: 255, count: 0 };
+  for (const bin of binMap.values()) {
+    if (bin.count > bestBin.count) bestBin = bin;
+  }
+
+  return {
+    r: bestBin.r,
+    g: bestBin.g,
+    b: bestBin.b,
+    lab: rgbToLab(bestBin.r, bestBin.g, bestBin.b),
+  };
+}
+
+function isBackgroundPixel(
+  r: number, g: number, b: number, a: number,
+  bgColor: { r: number; g: number; b: number; lab: LabColor },
+): boolean {
+  // Transparent
   if (a < 15) return true;
-  if (r > 245 && g > 245 && b > 245) return true;
 
-  const brightness = r * 0.299 + g * 0.587 + b * 0.114;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const saturation = max > 0 ? (max - min) / max : 0;
+  // Distance from detected background color (in LAB for perceptual accuracy)
+  const pixelLab = rgbToLab(r, g, b);
+  const dist = deltaE(pixelLab, bgColor.lab);
 
-  if (brightness > 235 && saturation < 0.1) return true;
+  // Within threshold = background
+  if (dist < 20) return true;
+
   return false;
 }
 
@@ -358,7 +429,10 @@ export async function analyzeLogoColors(imageBuffer: Buffer): Promise<AnalysisRe
 
   const { width, height, channels } = info;
 
-  // STAGE 1: Extract foreground pixels
+  // STAGE 1: Detect background color from edges, then extract foreground
+  const bgColor = detectBackgroundColor(data, channels, width, height);
+  console.log(`[color-analyzer] Background detected: rgb(${bgColor.r},${bgColor.g},${bgColor.b})`);
+
   const foregroundPixels: Pixel[] = [];
   let bgCount = 0;
 
@@ -368,7 +442,7 @@ export async function analyzeLogoColors(imageBuffer: Buffer): Promise<AnalysisRe
       const r = data[idx], g = data[idx + 1], b = data[idx + 2];
       const a = channels === 4 ? data[idx + 3] : 255;
 
-      if (isBackgroundPixel(r, g, b, a)) { bgCount++; continue; }
+      if (isBackgroundPixel(r, g, b, a, bgColor)) { bgCount++; continue; }
       foregroundPixels.push(makePixel(r, g, b));
     }
   }
