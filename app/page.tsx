@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MetricCard, PageHeader } from './components/ui';
 import { ProtectedPage } from './components/protected';
-import { getAuthHeaders } from './lib/authClient';
+import { getAuthHeaders, getCurrentUser } from './lib/authClient';
 import { useLayout, type SectionConfig } from './components/layout-context';
 import { DraggableSection, LayoutToolbar } from './components/draggable-section';
 
@@ -27,6 +27,160 @@ interface DashboardSummary {
   recentOrders: DashboardOrder[];
 }
 
+// ==========================================
+// AVAILABLE METRIC CARDS
+// ==========================================
+
+interface MetricOption {
+  id: string;
+  title: string;
+  icon: string;
+  getValue: (s: DashboardSummary) => string;
+  getNote: (s: DashboardSummary) => string;
+}
+
+const AVAILABLE_METRICS: MetricOption[] = [
+  {
+    id: 'products',
+    title: 'Produtos',
+    icon: '📦',
+    getValue: (s) => String(s.productsCount),
+    getNote: (s) => `${s.variablesCount} variacoes`,
+  },
+  {
+    id: 'orders',
+    title: 'Pedidos',
+    icon: '🛒',
+    getValue: (s) => String(s.ordersCount),
+    getNote: () => 'total finalizados',
+  },
+  {
+    id: 'revenue',
+    title: 'Receita',
+    icon: '💰',
+    getValue: (s) => `R$ ${s.totalSales.toFixed(2)}`,
+    getNote: () => 'vendas acumuladas',
+  },
+  {
+    id: 'profit',
+    title: 'Lucro',
+    icon: '📈',
+    getValue: (s) => `R$ ${s.profit.toFixed(2)}`,
+    getNote: () => 'receita menos despesas',
+  },
+  {
+    id: 'lowStock',
+    title: 'Estoque Baixo',
+    icon: '⚠️',
+    getValue: (s) => String(s.lowStockCount + s.watchStockCount),
+    getNote: (s) => {
+      const parts: string[] = [];
+      if (s.lowStockCount > 0) parts.push(`${s.lowStockCount} criticos`);
+      if (s.watchStockCount > 0) parts.push(`${s.watchStockCount} atencao`);
+      return parts.join(' · ') || 'tudo ok';
+    },
+  },
+];
+
+const DEFAULT_METRIC_IDS = ['products', 'orders', 'revenue', 'profit'];
+
+function getMetricsStorageKey(): string {
+  if (typeof window === 'undefined') return 'strale-dashboard-metrics-default';
+  const user = getCurrentUser();
+  return `strale-dashboard-metrics-${user?.id || 'default'}`;
+}
+
+function loadSelectedMetrics(): string[] {
+  if (typeof window === 'undefined') return DEFAULT_METRIC_IDS;
+  try {
+    const raw = localStorage.getItem(getMetricsStorageKey());
+    return raw ? JSON.parse(raw) : DEFAULT_METRIC_IDS;
+  } catch {
+    return DEFAULT_METRIC_IDS;
+  }
+}
+
+function saveSelectedMetrics(ids: string[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(getMetricsStorageKey(), JSON.stringify(ids));
+  } catch {
+    // storage full
+  }
+}
+
+// ==========================================
+// METRIC PICKER (edit mode)
+// ==========================================
+
+function MetricPicker({
+  selectedIds,
+  onChange,
+}: {
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  function toggle(id: string) {
+    if (selectedIds.includes(id)) {
+      if (selectedIds.length <= 1) return; // at least 1
+      onChange(selectedIds.filter((i) => i !== id));
+    } else {
+      if (selectedIds.length >= 5) return; // max 5
+      onChange([...selectedIds, id]);
+    }
+  }
+
+  return (
+    <div
+      className="mb-5 rounded-2xl p-4"
+      style={{ background: 'var(--surface-soft)', border: '1px dashed var(--border)' }}
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+          Métricas visíveis (clique para adicionar/remover)
+        </p>
+        <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+          {selectedIds.length}/5 selecionadas
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {AVAILABLE_METRICS.map((metric) => {
+          const isSelected = selectedIds.includes(metric.id);
+          return (
+            <button
+              key={metric.id}
+              type="button"
+              onClick={() => toggle(metric.id)}
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                isSelected
+                  ? 'ring-2 ring-blue-400 shadow-sm'
+                  : 'opacity-50 hover:opacity-80'
+              }`}
+              style={{
+                background: isSelected ? 'var(--card-bg)' : 'var(--surface-muted)',
+                border: `1px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border)'}`,
+                color: 'var(--text-primary)',
+              }}
+            >
+              <span className="text-sm">{metric.icon}</span>
+              {metric.title}
+              {isSelected && (
+                <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// PAGE
+// ==========================================
+
 const PAGE_PATH = '/';
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -37,8 +191,19 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
 
 export default function Home() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const { getPageLayout } = useLayout();
+  const [selectedMetricIds, setSelectedMetricIds] = useState<string[]>(DEFAULT_METRIC_IDS);
+  const { getPageLayout, isEditing } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
+
+  // Load selected metrics from localStorage
+  useEffect(() => {
+    setSelectedMetricIds(loadSelectedMetrics());
+  }, []);
+
+  // Save when changed
+  useEffect(() => {
+    saveSelectedMetrics(selectedMetricIds);
+  }, [selectedMetricIds]);
 
   useEffect(() => {
     fetch('/api/dashboard', { headers: getAuthHeaders() })
@@ -63,16 +228,22 @@ export default function Home() {
     ? { label: 'Observar', color: 'var(--warning)' }
     : { label: 'Normal', color: 'var(--success)' };
 
+  const activeMetrics = AVAILABLE_METRICS.filter((m) => selectedMetricIds.includes(m.id));
+
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
         <PageHeader title="Dashboard" description="Visao geral do negocio." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
+        {isEditing && (
+          <MetricPicker selectedIds={selectedMetricIds} onChange={setSelectedMetricIds} />
+        )}
+
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {sections.map((section, index) => (
             <DraggableSection
-              key={section.id}
+              key={`${section.id}-${section.order}`}
               pagePath={PAGE_PATH}
               section={section}
               index={index}
@@ -81,10 +252,14 @@ export default function Home() {
             >
               {section.id === 'metrics' && (
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  <MetricCard title="Produtos" value={String(summary.productsCount)} note={`${summary.variablesCount} variacoes`} />
-                  <MetricCard title="Pedidos" value={String(summary.ordersCount)} note="total finalizados" />
-                  <MetricCard title="Receita" value={`R$ ${summary.totalSales.toFixed(2)}`} note="vendas acumuladas" />
-                  <MetricCard title="Lucro" value={`R$ ${summary.profit.toFixed(2)}`} note="receita menos despesas" />
+                  {activeMetrics.map((metric) => (
+                    <MetricCard
+                      key={metric.id}
+                      title={metric.title}
+                      value={metric.getValue(summary)}
+                      note={metric.getNote(summary)}
+                    />
+                  ))}
                 </div>
               )}
 
