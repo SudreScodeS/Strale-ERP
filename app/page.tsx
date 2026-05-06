@@ -80,6 +80,53 @@ const AVAILABLE_METRICS: MetricOption[] = [
       return parts.join(' · ') || 'tudo ok';
     },
   },
+  {
+    id: 'avgTicket',
+    title: 'Ticket Médio',
+    icon: '🧾',
+    getValue: (s) => s.ordersCount > 0 ? `R$ ${(s.totalSales / s.ordersCount).toFixed(2)}` : 'R$ 0,00',
+    getNote: () => 'por pedido',
+  },
+  {
+    id: 'margin',
+    title: 'Margem',
+    icon: '📊',
+    getValue: (s) => s.totalSales > 0 ? `${((s.profit / s.totalSales) * 100).toFixed(1)}%` : '0%',
+    getNote: () => 'lucro / receita',
+  },
+  {
+    id: 'items',
+    title: 'Itens',
+    icon: '🏷️',
+    getValue: (s) => String(s.variablesCount),
+    getNote: (s) => `${s.productsCount} produtos base`,
+  },
+  {
+    id: 'stockHealth',
+    title: 'Saúde Estoque',
+    icon: '✅',
+    getValue: (s) => {
+      const total = s.lowStockCount + s.watchStockCount;
+      if (total === 0) return '100%';
+      const healthy = Math.max(0, 100 - total * 5);
+      return `${healthy}%`;
+    },
+    getNote: (s) => {
+      const total = s.lowStockCount + s.watchStockCount;
+      return total === 0 ? 'sem alertas' : `${total} itens em alerta`;
+    },
+  },
+  {
+    id: 'ordersToday',
+    title: 'Pedidos Hoje',
+    icon: '📅',
+    getValue: (s) => {
+      const today = new Date().toDateString();
+      const count = s.recentOrders.filter((o) => new Date(o.createdAt).toDateString() === today).length;
+      return String(count);
+    },
+    getNote: () => 'registrados hoje',
+  },
 ];
 
 const DEFAULT_METRIC_IDS = ['products', 'orders', 'revenue', 'profit'];
@@ -125,7 +172,7 @@ function MetricPicker({
       if (selectedIds.length <= 1) return; // at least 1
       onChange(selectedIds.filter((i) => i !== id));
     } else {
-      if (selectedIds.length >= 5) return; // max 5
+      if (selectedIds.length >= 10) return; // max 10
       onChange([...selectedIds, id]);
     }
   }
@@ -140,7 +187,7 @@ function MetricPicker({
           Métricas visíveis (clique para adicionar/remover)
         </p>
         <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
-          {selectedIds.length}/5 selecionadas
+          {selectedIds.length}/10 selecionadas
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -230,6 +277,17 @@ export default function Home() {
 
   const activeMetrics = AVAILABLE_METRICS.filter((m) => selectedMetricIds.includes(m.id));
 
+  // Dynamic grid: cards distribute evenly across rows
+  // 1→1col, 2→2col, 3→3col, 4→2col+2col, 5→3col+2col, 6→3col+3col
+  const count = activeMetrics.length;
+  const gridColsClass =
+    count <= 1 ? 'grid-cols-1' :
+    count === 2 ? 'grid-cols-2' :
+    count === 3 ? 'grid-cols-3' :
+    count === 4 ? 'grid-cols-2' :
+    count === 5 ? 'grid-cols-3' :
+    'grid-cols-3';
+
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
@@ -251,7 +309,7 @@ export default function Home() {
               className={section.colSpan === 2 ? 'sm:col-span-2 lg:col-span-4' : ''}
             >
               {section.id === 'metrics' && (
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div className={`grid gap-5 ${gridColsClass}`}>
                   {activeMetrics.map((metric) => (
                     <MetricCard
                       key={metric.id}
