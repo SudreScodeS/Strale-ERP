@@ -5,6 +5,8 @@ import type { FormEvent } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { useLayout, type SectionConfig } from '../components/layout-context';
+import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
@@ -64,6 +66,14 @@ export default function InventoryPage() {
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupWatchAlert, setEditGroupWatchAlert] = useState(DEFAULT_WATCH_STOCK_ALERT);
   const [editGroupCriticalAlert, setEditGroupCriticalAlert] = useState(DEFAULT_CRITICAL_STOCK_ALERT);
+
+  const PAGE_PATH = '/inventory';
+  const DEFAULT_SECTIONS: SectionConfig[] = [
+    { id: 'inventory-list', visible: true, order: 0, colSpan: 2 },
+    { id: 'add-forms', visible: true, order: 1, colSpan: 1 },
+  ];
+  const { getPageLayout } = useLayout();
+  const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function safeJson(response: Response) {
     try {
@@ -302,12 +312,14 @@ export default function InventoryPage() {
     <ProtectedPage allowedRoles={['admin']}>
       <div>
         <PageHeader title="Estoque" description="Gestão de estoque com grupos e variáveis configuráveis dinamicamente. Aqui você pode adicionar produtos, grupos e variáveis." />
+        <LayoutToolbar pagePath={PAGE_PATH} />
 
         {message ? (
           <div className="mb-6 rounded-3xl border border-slate-200 bg-emerald-50 p-4 text-slate-800">{message}</div>
         ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="xl:col-span-1">
           <div className="space-y-8">
             {inventory.map((product) => (
               <div key={product.id} className="rounded-3xl bg-white p-6 shadow-sm">
@@ -406,7 +418,9 @@ export default function InventoryPage() {
               </div>
             ))}
           </div>
+          </DraggableSection>
 
+          <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length} className="xl:col-span-1">
           <div className="space-y-6">
             <div className="rounded-3xl bg-white p-6 shadow-sm">
               <div className="flex flex-wrap gap-2">
@@ -580,6 +594,7 @@ export default function InventoryPage() {
               ) : null}
             </div>
           </div>
+          </DraggableSection>
         </section>
         {editingVariable ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">

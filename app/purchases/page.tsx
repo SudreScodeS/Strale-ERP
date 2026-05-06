@@ -5,6 +5,8 @@ import type { FormEvent } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { useLayout, type SectionConfig } from '../components/layout-context';
+import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
 interface SupplierItem {
   id: string;
@@ -54,6 +56,16 @@ export default function PurchasesPage() {
   const [editQuantity, setEditQuantity] = useState(1);
   const [editUnitCost, setEditUnitCost] = useState(0);
   const [editDate, setEditDate] = useState('');
+
+  const PAGE_PATH = '/purchases';
+  const DEFAULT_SECTIONS: SectionConfig[] = [
+    { id: 'suppliers', visible: true, order: 0, colSpan: 1 },
+    { id: 'purchase-form', visible: true, order: 1, colSpan: 1 },
+    { id: 'purchase-history', visible: true, order: 2, colSpan: 2 },
+    { id: 'purchase-records', visible: true, order: 3, colSpan: 2 },
+  ];
+  const { getPageLayout } = useLayout();
+  const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function safeJson(response: Response) {
     try {
@@ -188,8 +200,10 @@ export default function PurchasesPage() {
     <ProtectedPage allowedRoles={['admin']}>
       <div>
         <PageHeader title="Pedidos de Compra" description="Gerencie solicitações de compra para fornecedores e atualize o estoque crítico." />
+        <LayoutToolbar pagePath={PAGE_PATH} />
 
         <section className="grid gap-6 lg:grid-cols-2">
+          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
           <div className="rounded-3xl bg-white p-6 shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">Estoque crítico</h3>
             <div className="mt-4 space-y-4">
@@ -206,7 +220,9 @@ export default function PurchasesPage() {
               )}
             </div>
           </div>
+          </DraggableSection>
 
+          <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
           <div className="rounded-3xl bg-white p-6 shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
             <form className="mt-4 grid gap-3 rounded-3xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
@@ -239,9 +255,11 @@ export default function PurchasesPage() {
               )}
             </div>
           </div>
+          </DraggableSection>
         </section>
         {message ? <p className="mt-4 text-sm text-slate-700">{message}</p> : null}
 
+        <DraggableSection pagePath={PAGE_PATH} section={sections[2]} index={2} totalSections={sections.length}>
         <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold text-slate-900">Registrar compra</h3>
           <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreatePurchase}>
@@ -310,7 +328,9 @@ export default function PurchasesPage() {
             </div>
           </form>
         </section>
+        </DraggableSection>
 
+        <DraggableSection pagePath={PAGE_PATH} section={sections[3]} index={3} totalSections={sections.length}>
         <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <h3 className="text-xl font-semibold text-slate-900">Compras registradas</h3>
@@ -379,6 +399,7 @@ export default function PurchasesPage() {
             )}
           </div>
         </section>
+        </DraggableSection>
         {editingPurchase ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">

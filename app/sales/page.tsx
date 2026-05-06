@@ -5,6 +5,8 @@ import { calculateLogoCost, calculateSalePrice, globalConfig } from '../../confi
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
+import { useLayout, type SectionConfig } from '../components/layout-context';
+import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import { Order } from '../../types';
 import ProductPreview from '../components/product-preview';
 import type { PreviewConfig } from '../components/product-preview';
@@ -77,6 +79,7 @@ export default function SalesPage() {
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
   const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null);
   const currentUser = getCurrentUser();
+  const { getPageLayout } = useLayout();
 
   async function safeJson(response: Response) {
     try {
@@ -433,10 +436,18 @@ export default function SalesPage() {
     }
   }
 
+  const PAGE_PATH = '/sales';
+  const DEFAULT_SECTIONS: SectionConfig[] = [
+    { id: 'search-section', visible: true, order: 0, colSpan: 2 },
+    { id: 'create-section', visible: true, order: 1, colSpan: 2 },
+  ];
+  const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
+
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
       <div>
         <PageHeader title="Pedidos" description="Fluxo de venda com seleção de produto, variáveis, cálculo automático de preço e prévia visual real do produto." />
+        <LayoutToolbar pagePath={PAGE_PATH} />
         <div className="mb-6 flex flex-wrap gap-2">
           <button
             type="button"
@@ -455,6 +466,7 @@ export default function SalesPage() {
         </div>
 
         {activeSection === 'search' ? (
+        <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
         <section className="mb-8 rounded-3xl bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
@@ -575,9 +587,11 @@ export default function SalesPage() {
             </div>
           )}
         </section>
+        </DraggableSection>
         ) : null}
 
         {activeSection === 'create' ? (
+        <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
         <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl bg-white p-8 shadow-sm">
           <div className="grid gap-5 md:grid-cols-2">
             <label className="space-y-2 text-slate-700 md:col-span-2">
@@ -851,7 +865,9 @@ export default function SalesPage() {
           </button>
           {statusMessage ? <p className="text-sm text-slate-600">{statusMessage}</p> : null}
         </form>
+        </DraggableSection>
         ) : null}
+
       {/* ========================================== */}
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}

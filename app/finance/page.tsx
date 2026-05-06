@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { PageHeader, MetricCard } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { useLayout, type SectionConfig } from '../components/layout-context';
+import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
 interface FinancialRecord {
   id: string;
@@ -19,6 +21,14 @@ export default function FinancePage() {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [profit, setProfit] = useState(0);
   const [error, setError] = useState('');
+
+  const PAGE_PATH = '/finance';
+  const DEFAULT_SECTIONS: SectionConfig[] = [
+    { id: 'finance-metrics', visible: true, order: 0, colSpan: 2 },
+    { id: 'finance-table', visible: true, order: 1, colSpan: 2 },
+  ];
+  const { getPageLayout } = useLayout();
+  const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function loadFinance() {
     const response = await fetch('/api/finance', { cache: 'no-store', headers: getAuthHeaders() });
@@ -49,6 +59,7 @@ export default function FinancePage() {
     <ProtectedPage allowedRoles={['admin']}>
       <div>
         <PageHeader title="Financeiro" description="Vendas, despesas e lucro." />
+        <LayoutToolbar pagePath={PAGE_PATH} />
 
         <div className="mb-5 flex items-center gap-3">
           <button
@@ -63,11 +74,16 @@ export default function FinancePage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <MetricCard title="Receita" value={`R$ ${totalSales.toFixed(2)}`} />
-          <MetricCard title="Despesas" value={`R$ ${totalExpenses.toFixed(2)}`} />
-          <MetricCard title="Lucro" value={`R$ ${profit.toFixed(2)}`} />
+          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="sm:col-span-3">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <MetricCard title="Receita" value={`R$ ${totalSales.toFixed(2)}`} />
+              <MetricCard title="Despesas" value={`R$ ${totalExpenses.toFixed(2)}`} />
+              <MetricCard title="Lucro" value={`R$ ${profit.toFixed(2)}`} />
+            </div>
+          </DraggableSection>
         </div>
 
+        <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
         <section
           className="mt-6 rounded-xl p-5"
           style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
@@ -105,6 +121,7 @@ export default function FinancePage() {
             )}
           </div>
         </section>
+        </DraggableSection>
       </div>
     </ProtectedPage>
   );
