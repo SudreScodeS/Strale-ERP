@@ -1,20 +1,34 @@
 // app/api/product-image/route.ts
-// Gera imagem de produto com forma consistente + cor via sharp + logo posicionada
+// Hybrid image generation pipeline (Local + AI)
 //
-// FLUXO:
-// 1. Gera base neutra (cinza) UMA VEZ por estilo → cache
-// 2. Recolor APENAS o produto (não o fundo) via sharp
-// 3. Remove fundo da logo + compõe na posição correta
-// 4. img2img suave para integrar a logo (opcional, fallback seguro)
+// PIPELINE:
+// 1. Base Image (cached neutral product — generated once per style)
+// 2. Recolor (HSL hue replacement — preserves shadows, texture, illumination)
+// 3. Logo Composition (sharp advanced — shadow, feather, texture)
+// 4. Optional AI Refinement (img2img light — strength 0.2-0.35)
+//
+// CORREÇÕES:
+// - Cor NÃO é mais aplicada como filtro (substituiu overlay por HSL)
+// - IA NÃO gera do zero — apenas refina
+// - Logo integra naturalmente (não colada)
 
 import { NextResponse } from 'next/server';
 import { requireRole } from '../../lib/auth';
 import sharp from 'sharp';
+import { generateImage, refineImageWithAI } from '../../lib/huggingface-client';
+import {
+  compositeLogo,
+  getPrintArea,
+  getProductCompositorOptions,
+} from '../../lib/logo-compositor';
 
+// ==========================================
 // Cache
+// ==========================================
+
 const imageCache = new Map<string, { buffer: Buffer; timestamp: number }>();
-const CACHE_TTL_MS = 1000 * 60 * 60;
 const neutralBaseCache = new Map<string, Buffer>();
+const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour
 
 function getCacheKey(color: string, style: string, variables: string[], logoHash?: string): string {
   const parts = [color, style, ...variables];
@@ -23,7 +37,7 @@ function getCacheKey(color: string, style: string, variables: string[], logoHash
 }
 
 // ==========================================
-// PROMPTS
+// Prompt construction for neutral base
 // ==========================================
 
 function buildNeutralBasePrompt(style: string, variables: string[]): string {
@@ -64,7 +78,7 @@ function buildNeutralBasePrompt(style: string, variables: string[]): string {
 }
 
 // ==========================================
-// UTILITÁRIOS DE COR
+// Color utilities (HSL-based recoloring)
 // ==========================================
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
@@ -86,46 +100,34 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
   return [h * 360, s * 100, l * 100];
 }
 
-function hexToColorName(hex: string): string {
-  const colorNames: Record<string, string> = {
-    '#dc2626': 'red', '#ef4444': 'bright red',
-    '#2563eb': 'royal blue', '#3b82f6': 'blue', '#1e40af': 'dark blue', '#1e3a8a': 'navy blue',
-    '#16a34a': 'green', '#22c55e': 'bright green', '#15803d': 'forest green',
-    '#eab308': 'yellow', '#f59e0b': 'amber',
-    '#1e293b': 'black', '#0f172a': 'dark black',
-    '#f8fafc': 'white', '#ffffff': 'pure white',
-    '#ec4899': 'pink', '#f472b6': 'light pink',
-    '#9333ea': 'purple', '#a855f7': 'bright purple',
-    '#ea580c': 'orange', '#f97316': 'bright orange',
-    '#64748b': 'gray', '#94a3b8': 'light gray',
-    '#92400e': 'brown', '#b45309': 'warm brown',
-    '#ca8a04': 'gold', '#d4a574': 'beige',
-    '#7f1d1d': 'dark red wine',
-    '#06b6d4': 'cyan', '#22d3ee': 'bright cyan',
-    '#d946ef': 'magenta',
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  h /= 360; s /= 100; l /= 100;
+  if (s === 0) {
+    const v = Math.round(l * 255);
+    return [v, v, v];
+  }
+  const hue2rgb = (p: number, q: number, t: number): number => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
   };
-  if (colorNames[hex]) return colorNames[hex];
-  const rgb = hexToRgb(hex);
-  if (!rgb) return 'blue';
-  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-  const h = hsl[0], s = hsl[1], l = hsl[2];
-  if (s < 10) { if (l < 20) return 'black'; if (l > 80) return 'white'; return 'gray'; }
-  if (h < 15) return l > 60 ? 'light red' : 'red';
-  if (h < 45) return l > 60 ? 'light orange' : 'orange';
-  if (h < 70) return l > 60 ? 'light yellow' : 'yellow';
-  if (h < 160) return l > 60 ? 'light green' : 'green';
-  if (h < 200) return l > 60 ? 'light cyan' : 'cyan';
-  if (h < 260) return l > 60 ? 'light blue' : 'blue';
-  if (h < 300) return l > 60 ? 'light purple' : 'purple';
-  return l > 60 ? 'light pink' : 'pink';
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [
+    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+    Math.round(hue2rgb(p, q, h) * 255),
+    Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
+  ];
 }
 
 // ==========================================
-// PASSO 1: Gerar base neutra (UMA VEZ)
+// STEP 1: Generate neutral base (ONCE, cached)
 // ==========================================
 
 async function getOrCreateNeutralBase(
-  hfToken: string,
   style: string,
   variables: string[],
 ): Promise<Buffer | null> {
@@ -139,251 +141,144 @@ async function getOrCreateNeutralBase(
   const prompt = buildNeutralBasePrompt(style, variables);
   console.log(`[product-image] Generating neutral base for ${style}...`);
 
-  const response = await fetch(
-    'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${hfToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: { width: 512, height: 640, num_inference_steps: 6 },
-      }),
-    },
-  );
+  const buffer = await generateImage(prompt, {
+    width: 512,
+    height: 640,
+    steps: 6,
+  });
 
-  if (!response.ok) {
-    console.error(`[product-image] Neutral base failed: ${response.status}`);
-    return null;
+  if (buffer) {
+    neutralBaseCache.set(cacheKey, buffer);
+    console.log(`[product-image] Neutral base cached: ${buffer.length} bytes`);
   }
 
-  const buffer = Buffer.from(new Uint8Array(await response.arrayBuffer()));
-  neutralBaseCache.set(cacheKey, buffer);
-  console.log(`[product-image] Neutral base cached: ${buffer.length} bytes`);
   return buffer;
 }
 
 // ==========================================
-// PASSO 2: Recolorir APENAS o produto via sharp
-//   NÃO mexe no fundo (branco)
+// STEP 2: Professional HSL Recolor
+//   - Preserves shadows, texture, illumination
+//   - Replaces ONLY the hue
+//   - NÃO usa overlay/tint/filtro
 // ==========================================
 
 async function recolorProduct(
   baseBuffer: Buffer,
   hexColor: string,
 ): Promise<Buffer> {
-  const rgb = hexToRgb(hexColor);
-  if (!rgb) return baseBuffer;
+  const targetRgb = hexToRgb(hexColor);
+  if (!targetRgb) return baseBuffer;
 
-  const baseMeta = await sharp(baseBuffer).metadata();
-  const w = baseMeta.width || 512;
-  const h = baseMeta.height || 640;
+  const [targetH, targetS] = rgbToHsl(targetRgb.r, targetRgb.g, targetRgb.b);
 
-  // 1. Extrair pixels raw
+  // Extract raw pixel data
   const { data: rawData, info } = await sharp(baseBuffer)
+    .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  // 2. Criar máscara do produto: pixels não-brancos = produto
-  const maskBuffer = Buffer.alloc(w * h);
-  const threshold = 230;
+  const { width: w, height: h, channels } = info;
+  const outputBuffer = Buffer.alloc(w * h * 4);
+
+  // Background detection threshold (white background)
+  const BG_THRESHOLD = 230;
 
   for (let i = 0; i < w * h; i++) {
-    const idx = i * info.channels;
-    const r = rawData[idx], g = rawData[idx + 1], b = rawData[idx + 2];
-    if (r > threshold && g > threshold && b > threshold) {
-      maskBuffer[i] = 0; // Fundo
-    } else {
-      maskBuffer[i] = 255; // Produto
+    const idx = i * channels;
+    const r = rawData[idx];
+    const g = rawData[idx + 1];
+    const b = rawData[idx + 2];
+
+    // Check if this is background (white/near-white)
+    if (r > BG_THRESHOLD && g > BG_THRESHOLD && b > BG_THRESHOLD) {
+      // Keep white background unchanged
+      const dstIdx = i * 4;
+      outputBuffer[dstIdx] = 255;
+      outputBuffer[dstIdx + 1] = 255;
+      outputBuffer[dstIdx + 2] = 255;
+      outputBuffer[dstIdx + 3] = 255;
+      continue;
     }
+
+    // Convert pixel to HSL
+    const [, , l] = rgbToHsl(r, g, b);
+
+    // Recolor: keep original luminance (preserves shadows/highlights),
+    // apply target hue and saturation
+    const [newR, newG, newB] = hslToRgb(targetH, targetS, l);
+
+    const dstIdx = i * 4;
+    outputBuffer[dstIdx] = newR;
+    outputBuffer[dstIdx + 1] = newG;
+    outputBuffer[dstIdx + 2] = newB;
+    outputBuffer[dstIdx + 3] = 255;
   }
 
-  // Suavizar bordas da máscara
-  const maskPng = await sharp(maskBuffer, { raw: { width: w, height: h, channels: 1 } })
-    .blur(2)
+  // Build final image
+  const result = await sharp(outputBuffer, {
+    raw: { width: w, height: h, channels: 4 },
+  })
     .png()
     .toBuffer();
 
-  // 3. Extrair luminância (tons de cinza) da imagem original
-  const grayscale = await sharp(baseBuffer).greyscale().toBuffer();
+  // Smooth the transition between product and background edges
+  // Apply a slight blur at the mask boundary
+  const blurred = await sharp(result).blur(0.5).png().toBuffer();
 
-  // 4. Criar camada de cor sólida
-  const colorLayer = await sharp({
-    create: { width: w, height: h, channels: 3, background: { r: rgb.r, g: rgb.g, b: rgb.b } },
-  }).png().toBuffer();
-
-  // 5. Multiplicar: cor × luminância → produto com a nova cor
-  const coloredProduct = await sharp(colorLayer)
-    .composite([{ input: grayscale, blend: 'multiply' }])
-    .png()
-    .toBuffer();
-
-  // 6. Fundo branco
+  // Re-composite: blurred edges on white background
   const whiteBg = await sharp({
     create: { width: w, height: h, channels: 3, background: { r: 255, g: 255, b: 255 } },
-  }).png().toBuffer();
+  })
+    .png()
+    .toBuffer();
 
-  // 7. Compor: fundo branco + produto colorido (usando máscara)
-  const final = await sharp(whiteBg)
+  // Create mask from non-white pixels
+  const maskBuffer = Buffer.alloc(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const idx = i * channels;
+    const r = rawData[idx], g = rawData[idx + 1], b = rawData[idx + 2];
+    maskBuffer[i] = (r > BG_THRESHOLD && g > BG_THRESHOLD && b > BG_THRESHOLD) ? 0 : 255;
+  }
+
+  const maskPng = await sharp(maskBuffer, { raw: { width: w, height: h, channels: 1 } })
+    .blur(1.5) // Soft edge transition
+    .png()
+    .toBuffer();
+
+  // Final composite: white bg + recolored product with soft mask
+  const masked = await sharp(blurred)
     .composite([{
-      input: await sharp(coloredProduct)
-        .composite([{ input: await sharp(maskPng).ensureAlpha().png().toBuffer(), blend: 'dest-in' }])
-        .png()
-        .toBuffer(),
-      blend: 'over',
+      input: await sharp(maskPng).ensureAlpha().png().toBuffer(),
+      blend: 'dest-in',
     }])
     .png()
     .toBuffer();
 
-  return final;
+  return sharp(whiteBg)
+    .composite([{ input: masked, blend: 'over' }])
+    .png()
+    .toBuffer();
 }
 
 // ==========================================
-// PASSO 3: Remover fundo da logo
+// STEP 4: AI Refinement (optional, light)
 // ==========================================
 
-async function removeLogoBackground(logoBuffer: Buffer): Promise<Buffer> {
-  const meta = await sharp(logoBuffer).metadata();
-  if (meta.channels === 4) {
-    return sharp(logoBuffer).ensureAlpha().png().toBuffer();
-  }
+async function refineWithAI(imageBuffer: Buffer, style: string): Promise<Buffer> {
+  const refinementPrompts: Record<string, string> = {
+    sacola: 'professional product photography of a tote bag, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture',
+    camiseta: 'professional product photography of a t-shirt, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture',
+    caneca: 'professional product photography of a ceramic mug, studio lighting, white background, commercial e-commerce photo, sharp focus, glossy glaze finish',
+  };
 
-  const { data, info } = await sharp(logoBuffer).raw().toBuffer({ resolveWithObject: true });
-  const { width: w, height: h, channels } = info;
-  const outputBuffer = Buffer.alloc(w * h * 4);
+  const prompt = refinementPrompts[style] || refinementPrompts.sacola;
 
-  // Amostrar pixels das bordas
-  const edgePixels: { r: number; g: number; b: number }[] = [];
-  const borderWidth = Math.max(3, Math.floor(Math.min(w, h) * 0.05));
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (y < borderWidth || y >= h - borderWidth || x < borderWidth || x >= w - borderWidth) {
-        const idx = (y * w + x) * channels;
-        edgePixels.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
-      }
-    }
-  }
-
-  const avgBrightness = edgePixels.reduce((s, p) => s + (p.r * 0.299 + p.g * 0.587 + p.b * 0.114), 0) / edgePixels.length;
-  const bgR = Math.round(edgePixels.reduce((s, p) => s + p.r, 0) / edgePixels.length);
-  const bgG = Math.round(edgePixels.reduce((s, p) => s + p.g, 0) / edgePixels.length);
-  const bgB = Math.round(edgePixels.reduce((s, p) => s + p.b, 0) / edgePixels.length);
-
-  const isDarkBg = avgBrightness < 80;
-  const brightnessThreshold = isDarkBg ? avgBrightness + 40 : avgBrightness - 30;
-  const colorThreshold = isDarkBg ? 100 : 80;
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const srcIdx = (y * w + x) * channels;
-      const dstIdx = (y * w + x) * 4;
-      const r = data[srcIdx], g = data[srcIdx + 1], b = data[srcIdx + 2];
-      const pixelBrightness = r * 0.299 + g * 0.587 + b * 0.114;
-      const colorDist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-
-      let alpha: number;
-      if (isDarkBg) {
-        if (pixelBrightness < brightnessThreshold && colorDist < colorThreshold) {
-          alpha = 0;
-        } else if (pixelBrightness < brightnessThreshold + 20 && colorDist < colorThreshold * 0.7) {
-          const t = Math.min((pixelBrightness - (brightnessThreshold - 20)) / 40, (colorDist - colorThreshold * 0.3) / (colorThreshold * 0.7));
-          const smooth = Math.max(0, Math.min(1, t));
-          alpha = Math.round((smooth * smooth * (3 - 2 * smooth)) * 255);
-        } else {
-          alpha = 255;
-        }
-      } else {
-        if (colorDist < colorThreshold * 0.4) {
-          alpha = 0;
-        } else if (colorDist < colorThreshold) {
-          const t = (colorDist - colorThreshold * 0.4) / (colorThreshold * 0.6);
-          alpha = Math.round((t * t * (3 - 2 * t)) * 255);
-        } else {
-          alpha = 255;
-        }
-      }
-
-      outputBuffer[dstIdx] = r;
-      outputBuffer[dstIdx + 1] = g;
-      outputBuffer[dstIdx + 2] = b;
-      outputBuffer[dstIdx + 3] = alpha;
-    }
-  }
-
-  const result = await sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } }).ensureAlpha().png().toBuffer();
-  const cropped = await sharp(result).trim({ threshold: 10 }).png().toBuffer();
-  return sharp(cropped).blur(1.5).png().toBuffer();
-}
-
-// ==========================================
-// PASSO 4: Compor logo na posição CORRETA
-// ==========================================
-
-async function compositeLogoOnImage(
-  baseBuffer: Buffer,
-  logoDataUrl: string,
-  style: string,
-): Promise<Buffer> {
-  const logoBase64 = logoDataUrl.replace(/^data:image\/\w+;base64,/, '');
-  const logoBuffer = Buffer.from(logoBase64, 'base64');
-
-  const cleanLogo = await removeLogoBackground(logoBuffer);
-
-  const baseMeta = await sharp(baseBuffer).metadata();
-  const baseW = baseMeta.width || 512;
-  const baseH = baseMeta.height || 640;
-
-  // =============================================
-  // POSIÇÃO DA LOGO — calculada sobre a área útil do produto
-  // NÃO usar % fixa da imagem toda — usar % da área do produto
-  // =============================================
-
-  let logoMaxW: number, logoMaxH: number, logoX: number, logoY: number;
-
-  if (style === 'camiseta') {
-    // Camiseta: logo no peito (centro, um pouco acima do meio)
-    logoMaxW = Math.round(baseW * 0.30);
-    logoMaxH = Math.round(baseH * 0.20);
-    logoX = Math.round((baseW - logoMaxW) / 2);
-    logoY = Math.round(baseH * 0.30); // 30% do topo
-  } else if (style === 'caneca') {
-    // Caneca: logo no centro da face frontal
-    logoMaxW = Math.round(baseW * 0.35);
-    logoMaxH = Math.round(baseH * 0.35);
-    logoX = Math.round((baseW - logoMaxW) / 2);
-    logoY = Math.round(baseH * 0.30);
-  } else {
-    // Sacola: logo CENTRALIZADA no corpo da sacola
-    // O corpo da sacola fica entre ~25% e ~85% da altura
-    // Logo fica no centro desse intervalo: ~45% do topo
-    logoMaxW = Math.round(baseW * 0.40);
-    logoMaxH = Math.round(baseH * 0.30);
-    logoX = Math.round((baseW - logoMaxW) / 2);
-    logoY = Math.round(baseH * 0.38); // 38% do topo = centro do corpo da sacola
-  }
-
-  const resizedLogo = await sharp(cleanLogo)
-    .resize(logoMaxW, logoMaxH, { fit: 'inside', withoutEnlargement: true })
-    .ensureAlpha()
-    .png()
-    .toBuffer();
-
-  const logoMeta = await sharp(resizedLogo).metadata();
-  const logoW = logoMeta.width || logoMaxW;
-  const logoH = logoMeta.height || logoMaxH;
-
-  const finalX = Math.round(logoX + (logoMaxW - logoW) / 2);
-  const finalY = Math.round(logoY + (logoMaxH - logoH) / 2);
-
-  console.log(`[product-image] Logo position: ${finalX},${finalY} size: ${logoW}x${logoH} (base: ${baseW}x${baseH})`);
-
-  return sharp(baseBuffer)
-    .composite([{ input: resizedLogo, left: finalX, top: finalY, blend: 'over' }])
-    .png()
-    .toBuffer();
+  return refineImageWithAI(imageBuffer, prompt, {
+    strength: 0.25, // Light refinement — keeps structure, color, logo
+    steps: 4,
+    width: 512,
+    height: 640,
+  });
 }
 
 // ==========================================
@@ -408,59 +303,171 @@ export async function POST(request: Request) {
     const logoHash = hasLogo ? logoDataUrl.substring(logoDataUrl.length - 30) : undefined;
     const cacheKey = getCacheKey(color, style, variables, logoHash);
 
-    // Cache
+    // Check cache
     const cached = imageCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       console.log(`[product-image] Cache hit`);
       return new NextResponse(new Uint8Array(cached.buffer), {
-        headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=3600', 'X-Image-Source': 'cache' },
+        headers: {
+          'Content-Type': 'image/webp',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Image-Source': 'cache',
+        },
       });
     }
 
-    const hfToken = process.env.HUGGINGFACE_API_TOKEN;
-    if (!hfToken) {
-      return NextResponse.json({ error: 'HUGGINGFACE_API_TOKEN não configurado.', fallback: true }, { status: 503 });
-    }
-
     // =============================================
-    // PASSO 1: Gerar base neutra (cached)
+    // STEP 1: Get or generate neutral base (cached)
     // =============================================
-    const neutralBase = await getOrCreateNeutralBase(hfToken, style, variables);
+    const neutralBase = await getOrCreateNeutralBase(style, variables);
     if (!neutralBase) {
-      return NextResponse.json({ error: 'Erro ao gerar imagem base do produto.' }, { status: 502 });
+      // Fallback: create a simple neutral shape locally
+      console.log('[product-image] AI unavailable, creating local fallback base');
+      const fallbackBase = await createLocalFallbackBase(style);
+      if (!fallbackBase) {
+        return NextResponse.json(
+          { error: 'Erro ao gerar imagem base do produto.' },
+          { status: 502 },
+        );
+      }
+      // Use fallback for remaining pipeline
+      const recolored = await recolorProduct(fallbackBase, color);
+      imageCache.set(cacheKey, { buffer: recolored, timestamp: Date.now() });
+      return new NextResponse(new Uint8Array(recolored), {
+        headers: {
+          'Content-Type': 'image/webp',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Image-Source': 'fallback-local',
+        },
+      });
     }
 
     // =============================================
-    // PASSO 2: Recolorir APENAS o produto via sharp
-    //   Fundo branco permanece intacto
+    // STEP 2: Recolor via HSL (preserves texture)
     // =============================================
-    console.log(`[product-image] Recoloring product to ${color}...`);
+    console.log(`[product-image] Recoloring to ${color} via HSL...`);
     let finalBuffer = await recolorProduct(neutralBase, color);
-    let imageSource = 'recolor-sharp';
+    let imageSource = 'recolor-hsl';
 
     // =============================================
-    // PASSO 3+4: Se tem logo, remover fundo + compor
+    // STEP 3: Logo composition (sharp advanced)
     // =============================================
     if (hasLogo && logoDataUrl) {
       try {
         console.log(`[product-image] Compositing logo...`);
-        finalBuffer = await compositeLogoOnImage(finalBuffer, logoDataUrl, style);
+        const logoBase64 = logoDataUrl.replace(/^data:image\/\w+;base64,/, '');
+        const logoBuffer = Buffer.from(logoBase64, 'base64');
+
+        const baseMeta = await sharp(finalBuffer).metadata();
+        const baseW = baseMeta.width || 512;
+        const baseH = baseMeta.height || 640;
+
+        const printArea = getPrintArea(baseW, baseH, style as any);
+        const compositorOpts = getProductCompositorOptions(style as any, color);
+
+        finalBuffer = await compositeLogo(finalBuffer, logoBuffer, printArea, compositorOpts);
         imageSource = 'composited';
       } catch (err) {
-        console.error(`[product-image] Logo error:`, err);
+        console.error(`[product-image] Logo composition error:`, err);
+        // Continue without logo — don't fail the whole request
       }
     }
 
-    console.log(`[product-image] Final: ${finalBuffer.length} bytes, source: ${imageSource}`);
+    // =============================================
+    // STEP 4: Optional AI refinement (light img2img)
+    // =============================================
+    const enableRefinement = process.env.HUGGINGFACE_API_KEY || process.env.HUGGINGFACE_API_TOKEN;
+    if (enableRefinement) {
+      try {
+        console.log(`[product-image] AI refinement (strength=0.25)...`);
+        const refined = await refineWithAI(finalBuffer, style);
+        if (refined && refined.length > 100) {
+          finalBuffer = refined;
+          imageSource = hasLogo ? 'ai-refined-with-logo' : 'ai-refined';
+        }
+      } catch (err) {
+        console.error(`[product-image] AI refinement failed (using local result):`, err);
+        // Fallback: use the sharp-processed image (already high quality)
+      }
+    }
 
-    imageCache.set(cacheKey, { buffer: finalBuffer, timestamp: Date.now() });
+    // =============================================
+    // Convert to WebP for delivery
+    // =============================================
+    const webpBuffer = await sharp(finalBuffer)
+      .webp({ quality: 90 })
+      .toBuffer();
 
-    return new NextResponse(new Uint8Array(finalBuffer), {
-      headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=3600', 'X-Image-Source': imageSource },
+    console.log(`[product-image] Final: ${webpBuffer.length} bytes, source: ${imageSource}`);
+
+    // Cache the result
+    imageCache.set(cacheKey, { buffer: webpBuffer, timestamp: Date.now() });
+
+    return new NextResponse(new Uint8Array(webpBuffer), {
+      headers: {
+        'Content-Type': 'image/webp',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Image-Source': imageSource,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno na geração de imagem.';
     console.error(`[product-image] ERROR: ${message}`);
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+// ==========================================
+// Local fallback base (when AI unavailable)
+// ==========================================
+
+async function createLocalFallbackBase(style: string): Promise<Buffer | null> {
+  const sizes: Record<string, { w: number; h: number }> = {
+    sacola: { w: 512, h: 640 },
+    camiseta: { w: 512, h: 640 },
+    caneca: { w: 512, h: 512 },
+  };
+
+  const { w, h } = sizes[style] || sizes.sacola;
+
+  // Create a neutral gray shape on white background
+  const svgShapes: Record<string, string> = {
+    sacola: `
+      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${w}" height="${h}" fill="white"/>
+        <g transform="translate(${w * 0.15}, ${h * 0.15})">
+          <rect x="0" y="0" width="${w * 0.7}" height="${h * 0.65}" rx="4"
+                fill="#b0b0b0" stroke="#999" stroke-width="1"/>
+          <path d="M${w * 0.25},${h * 0.15} Q${w * 0.25},${h * 0.02} ${w * 0.35},${h * 0.02}"
+                fill="none" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+          <path d="M${w * 0.45},${h * 0.15} Q${w * 0.45},${h * 0.02} ${w * 0.35},${h * 0.02}"
+                fill="none" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </svg>`,
+    camiseta: `
+      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${w}" height="${h}" fill="white"/>
+        <g transform="translate(${w * 0.2}, ${h * 0.1})">
+          <path d="M${w * 0.15},0 L0,${h * 0.15} L${w * 0.1},${h * 0.2} L${w * 0.15},${h * 0.15}
+                   L${w * 0.15},${h * 0.75} L${w * 0.45},${h * 0.75} L${w * 0.45},${h * 0.15}
+                   L${w * 0.5},${h * 0.2} L${w * 0.6},${h * 0.15} L${w * 0.45},0 Z"
+                fill="#b0b0b0" stroke="#999" stroke-width="1"/>
+          <ellipse cx="${w * 0.3}" cy="0" rx="${w * 0.08}" ry="${h * 0.03}"
+                   fill="white" stroke="#999" stroke-width="1"/>
+        </g>
+      </svg>`,
+    caneca: `
+      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${w}" height="${h}" fill="white"/>
+        <g transform="translate(${w * 0.15}, ${h * 0.1})">
+          <rect x="0" y="0" width="${w * 0.5}" height="${h * 0.75}" rx="4"
+                fill="#b0b0b0" stroke="#999" stroke-width="1"/>
+          <ellipse cx="${w * 0.6}" cy="${h * 0.3}" rx="${w * 0.12}" ry="${h * 0.15}"
+                   fill="none" stroke="#888" stroke-width="4"/>
+        </g>
+      </svg>`,
+  };
+
+  const svg = svgShapes[style] || svgShapes.sacola;
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }
