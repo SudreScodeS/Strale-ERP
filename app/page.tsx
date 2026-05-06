@@ -299,25 +299,44 @@ export default function Home() {
             >
               {section.id === 'metrics' && (() => {
                 const count = activeMetrics.length;
-                // Pick column count for balanced rows:
-                // 1→1, 2→2, 3→3, 4→4, 5→3, 6→3, 7→4, 8→4, 9→3, 10→4
-                const cols = count <= 4 ? count : (count === 5 || count === 6 || count === 9) ? 3 : 4;
+                // Row layout by count:
+                // 1→[1], 2→[2], 3→[3], 4→[4],
+                // 5→[3,2], 6→[3,3], 7→[4,3], 8→[4,4], 9→[3,3,3], 10→[4,3,3]
+                const rowLayouts: Record<number, number[]> = {
+                  1: [1], 2: [2], 3: [3], 4: [4],
+                  5: [3, 2], 6: [3, 3], 7: [4, 3],
+                  8: [4, 4], 9: [3, 3, 3], 10: [4, 3, 3],
+                };
+                const rows = rowLayouts[count] || [Math.min(count, 4)];
                 const gapPx = 20;
-                const totalGap = (cols - 1) * gapPx;
+                let idx = 0;
                 return (
-                  <div className="flex flex-wrap justify-center" style={{ gap: `${gapPx}px` }}>
-                    {activeMetrics.map((metric) => (
-                      <div
-                        key={metric.id}
-                        style={{ width: `calc((100% - ${totalGap}px) / ${cols})` }}
-                      >
-                        <MetricCard
-                          title={metric.title}
-                          value={metric.getValue(summary)}
-                          note={metric.getNote(summary)}
-                        />
-                      </div>
-                    ))}
+                  <div className="flex flex-col items-center" style={{ gap: `${gapPx}px` }}>
+                    {rows.map((cols, rowIdx) => {
+                      const rowMetrics = activeMetrics.slice(idx, idx + cols);
+                      idx += cols;
+                      const totalGap = (cols - 1) * gapPx;
+                      return (
+                        <div
+                          key={rowIdx}
+                          className="flex justify-center"
+                          style={{ gap: `${gapPx}px`, width: '100%' }}
+                        >
+                          {rowMetrics.map((metric) => (
+                            <div
+                              key={metric.id}
+                              style={{ width: `calc((100% - ${totalGap}px) / ${cols})`, maxWidth: `calc((100% - ${totalGap}px) / ${cols})` }}
+                            >
+                              <MetricCard
+                                title={metric.title}
+                                value={metric.getValue(summary)}
+                                note={metric.getNote(summary)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })()}
