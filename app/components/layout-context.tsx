@@ -121,18 +121,19 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   );
 
   const reorderSections = useCallback((pagePath: string, fromIndex: number, toIndex: number) => {
-    setLayouts((prev) => {
-      // Use saved sections if they exist, otherwise use current sections from getPageLayout
-      const saved = prev[pagePath]?.sections;
-      const base = (saved && saved.length > 0)
-        ? [...saved]
-        : [...(currentSectionsRef.current[pagePath] || [])];
-      if (base.length === 0) return prev;
-      const [moved] = base.splice(fromIndex, 1);
-      base.splice(toIndex, 0, moved);
-      const reordered = base.map((s, i) => ({ ...s, order: i }));
-      return { ...prev, [pagePath]: { sections: reordered } };
-    });
+    // Always use current displayed sections from ref (matches what user sees)
+    const current = currentSectionsRef.current[pagePath];
+    if (!current || current.length === 0) return;
+
+    const reordered = [...current];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    const withNewOrder = reordered.map((s, i) => ({ ...s, order: i }));
+
+    setLayouts((prev) => ({
+      ...prev,
+      [pagePath]: { sections: withNewOrder },
+    }));
   }, []);
 
   const resetPageLayout = useCallback((pagePath: string) => {

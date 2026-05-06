@@ -60,20 +60,6 @@ export default function FinancePage() {
       <div>
         <PageHeader title="Financeiro" description="Vendas, despesas e lucro." />
         <LayoutToolbar pagePath={PAGE_PATH} />
-
-        <div className="mb-5 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => void loadFinance()}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-          >
-            Atualizar
-          </button>
-          {error && <p className="text-xs" style={{ color: 'var(--danger)' }}>{error}</p>}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3">
           <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="sm:col-span-3">
             <div className="grid gap-4 sm:grid-cols-3">
               <MetricCard title="Receita" value={`R$ ${totalSales.toFixed(2)}`} />
