@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { getCurrentUser } from '../lib/authClient';
 
 // ==========================================
@@ -69,6 +69,7 @@ function saveLayouts(layouts: UserLayouts) {
 export function LayoutProvider({ children }: { children: ReactNode }) {
   const [isEditing, setIsEditing] = useState(false);
   const [layouts, setLayouts] = useState<UserLayouts>({});
+  const currentSectionsRef = useRef<Record<string, SectionConfig[]>>({});
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -85,17 +86,22 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   const getPageLayout = useCallback(
     (pagePath: string, defaultSections: SectionConfig[]): SectionConfig[] => {
       const saved = layouts[pagePath];
-      if (!saved) return defaultSections;
-
-      // Merge saved with defaults (new sections get added, removed ones get dropped)
-      const savedMap = new Map(saved.sections.map((s) => [s.id, s]));
-      const merged = defaultSections.map((def) => {
-        const s = savedMap.get(def.id);
-        return s ? { ...def, visible: s.visible, order: s.order, colSpan: s.colSpan } : def;
-      });
-
-      // Sort by order
-      return merged.sort((a, b) => a.order - b.order);
+      let result: SectionConfig[];
+      if (!saved) {
+        result = defaultSections;
+      } else {
+        // Merge saved with defaults (new sections get added, removed ones get dropped)
+        const savedMap = new Map(saved.sections.map((s) => [s.id, s]));
+        const merged = defaultSections.map((def) => {
+          const s = savedMap.get(def.id);
+          return s ? { ...def, visible: s.visible, order: s.order, colSpan: s.colSpan } : def;
+        });
+        // Sort by order
+        result = merged.sort((a, b) => a.order - b.order);
+      }
+      // Store current sections for reorderSections to use
+      currentSectionsRef.current[pagePath] = result;
+      return result;
     },
     [layouts],
   );
@@ -116,10 +122,15 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
 
   const reorderSections = useCallback((pagePath: string, fromIndex: number, toIndex: number) => {
     setLayouts((prev) => {
-      const current = [...(prev[pagePath]?.sections || [])];
-      const [moved] = current.splice(fromIndex, 1);
-      current.splice(toIndex, 0, moved);
-      const reordered = current.map((s, i) => ({ ...s, order: i }));
+      // Use saved sections if they exist, otherwise use current sections from getPageLayout
+      const saved = prev[pagePath]?.sections;
+      const base = (saved && saved.length > 0)
+        ? [...saved]
+        : [...(currentSectionsRef.current[pagePath] || [])];
+      if (base.length === 0) return prev;
+      const [moved] = base.splice(fromIndex, 1);
+      base.splice(toIndex, 0, moved);
+      const reordered = base.map((s, i) => ({ ...s, order: i }));
       return { ...prev, [pagePath]: { sections: reordered } };
     });
   }, []);
