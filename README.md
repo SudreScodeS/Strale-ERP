@@ -1,8 +1,8 @@
-# Simple ERP - Sistema de Gestão Empresarial Completo
+# Shtar ERP - Sistema de Gestão Empresarial Completo
 
 ## 🎯 Visão Geral
 
-O **Simple ERP** é um sistema completo de gestão empresarial desenvolvido em **Next.js 16** com **TypeScript** e **Tailwind CSS**. Especializado em empresas que trabalham com produtos customizáveis (como sacolas personalizadas, televisões, etc.), oferece módulos integrados de estoque, vendas, finanças, previsão de demanda, detecção de fraude e assistente inteligente — **tudo 100% local, sem dependência de APIs externas de IA**.
+O **Shtar ERP** é um sistema completo de gestão empresarial desenvolvido em **Next.js 16** com **TypeScript** e **Tailwind CSS**. Especializado em empresas que trabalham com produtos customizáveis (como sacolas personalizadas, televisões, etc.), oferece módulos integrados de estoque, vendas, finanças, previsão de demanda, detecção de fraude e assistente inteligente — **tudo 100% local, sem dependência de APIs externas de IA**.
 
 ## 🧠 Módulos Inteligentes (100% Locais)
 
@@ -33,7 +33,7 @@ O **Simple ERP** é um sistema completo de gestão empresarial desenvolvido em *
 - Detecção de cores dominantes via **sharp** (processamento local de imagem)
 - Quantização por bucketing para identificar cores significativas
 - Nomeação automática das cores em português
-- Classificação de complexidade (simple/moderate/complex)
+- Classificação de complexidade (Shtar/moderate/complex)
 - Google Cloud Vision é **opcional** — funciona sem nenhuma configuração externa
 
 ## 🏗️ Arquitetura Técnica
@@ -48,7 +48,7 @@ O **Simple ERP** é um sistema completo de gestão empresarial desenvolvido em *
 
 ### Estrutura de Diretórios
 ```
-📁 Simple-ERP/
+📁 Shtar-ERP/
 ├── 📁 app/
 │   ├── 📁 api/
 │   │   ├── 📁 assistant/       # Assistente inteligente
@@ -171,7 +171,7 @@ export const globalConfig = {
   profitMargin: 20,          // Margem de lucro em %
   logoPricePerColor: 10,     // R$ por cor detectada na logo
   minStockAlert: 5,          // Alerta quando estoque ≤ 5
-  systemName: 'Simple ERP',  // Nome do sistema
+  systemName: 'Shtar ERP',  // Nome do sistema
   companyName: 'North Bag',  // Nome da empresa
 };
 ```
@@ -179,8 +179,8 @@ export const globalConfig = {
 ## 🛠️ Instalação
 
 ```bash
-git clone https://github.com/SudreScodeS/Simple-ERP.git
-cd Simple-ERP
+git clone https://github.com/SudreScodeS/Shtar-ERP.git
+cd Shtar-ERP
 npm install
 npm run dev
 ```
