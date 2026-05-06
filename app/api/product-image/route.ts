@@ -20,6 +20,7 @@ import {
   compositeLogo,
   getPrintArea,
   getProductCompositorOptions,
+  analyzeReferenceStyle,
 } from '../../lib/logo-compositor';
 
 // ==========================================
@@ -294,11 +295,13 @@ export async function POST(request: Request) {
       color = '#2563eb',
       style = 'sacola',
       logoDataUrl,
+      referenceImageUrl,   // Optional: reference image showing desired logo application
       variables = [],
     } = body;
 
     const hasLogo = Boolean(logoDataUrl);
-    console.log(`[product-image] color=${color}, style=${style}, vars=[${variables.join(', ')}], logo=${hasLogo}`);
+    const hasReference = Boolean(referenceImageUrl);
+    console.log(`[product-image] color=${color}, style=${style}, vars=[${variables.join(', ')}], logo=${hasLogo}, ref=${hasReference}`);
 
     const logoHash = hasLogo ? logoDataUrl.substring(logoDataUrl.length - 30) : undefined;
     const cacheKey = getCacheKey(color, style, variables, logoHash);
@@ -363,10 +366,27 @@ export async function POST(request: Request) {
         const baseH = baseMeta.height || 640;
 
         const printArea = getPrintArea(baseW, baseH, style as any);
-        const compositorOpts = getProductCompositorOptions(style as any, color);
+
+        // ADVANCED MODE: if reference image provided, analyze it for style
+        let compositorOpts;
+        if (hasReference && referenceImageUrl) {
+          try {
+            console.log(`[product-image] Analyzing reference image for style...`);
+            const refBase64 = referenceImageUrl.replace(/^data:image\/\w+;base64,/, '');
+            const refBuffer = Buffer.from(refBase64, 'base64');
+            compositorOpts = await analyzeReferenceStyle(refBuffer, style as any);
+            compositorOpts.curvature = style === 'caneca' ? 0.5 : 0;
+            imageSource = 'composited-ref';
+          } catch (refErr) {
+            console.error(`[product-image] Reference analysis failed, using defaults:`, refErr);
+            compositorOpts = getProductCompositorOptions(style as any, color);
+          }
+        } else {
+          compositorOpts = getProductCompositorOptions(style as any, color);
+        }
 
         finalBuffer = await compositeLogo(finalBuffer, logoBuffer, printArea, compositorOpts);
-        imageSource = 'composited';
+        imageSource = hasReference ? 'composited-ref' : 'composited';
       } catch (err) {
         console.error(`[product-image] Logo composition error:`, err);
         // Continue without logo — don't fail the whole request

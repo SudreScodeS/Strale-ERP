@@ -1,6 +1,7 @@
 // app/components/product-preview.tsx
-// Prévia do produto com IA generativa + Canvas para composição em tempo real
-// Fluxo: IA gera imagem base do produto → Canvas compõe cor + logo em tempo real
+// Product preview with realistic logo compositing
+// Pipeline: AI-generated base → HSL recolor → Canvas compositing with print realism
+// Client-side: shadow, blend modes, lighting match, edge feathering
 
 'use client';
 
@@ -11,10 +12,11 @@ export interface PreviewConfig {
   productImageUrl: string;
   productName: string;
   logoDataUrl: string | null;
+  referenceImageUrl?: string | null; // Optional: reference showing desired logo application
   selectedColorHex?: string;
   selectedColorName?: string;
   selectedMaterialName?: string;
-  selectedVariables?: string[]; // Todos os nomes das variáveis selecionadas (cor, tamanho, material, etc.)
+  selectedVariables?: string[];
   quantity?: number;
   unitPrice?: number;
 }
@@ -26,7 +28,10 @@ interface ProductPreviewProps {
   compact?: boolean;
 }
 
-// Cores padrão
+// ==========================================
+// Default colors by product type
+// ==========================================
+
 const DEFAULT_PRODUCT_COLORS: Record<string, string> = {
   sacola: '#2563eb',
   camiseta: '#f8fafc',
@@ -42,13 +47,52 @@ function getDefaultColor(productName: string): string {
   return DEFAULT_PRODUCT_COLORS.default;
 }
 
-// Estilo do produto baseado no nome
 function getProductStyle(productName: string): string {
   const lower = productName.toLowerCase();
   if (lower.includes('camiseta') || lower.includes('camisa')) return 'camiseta';
   if (lower.includes('caneca') || lower.includes('mug')) return 'caneca';
   return 'sacola';
 }
+
+// ==========================================
+// Print area positioning (matches server-side)
+// ==========================================
+
+function getPrintArea(
+  canvasW: number,
+  canvasH: number,
+  style: string,
+): { x: number; y: number; width: number; height: number } {
+  const areas: Record<string, { xPct: number; yPct: number; wPct: number; hPct: number }> = {
+    sacola:   { xPct: 0.12, yPct: 0.20, wPct: 0.76, hPct: 0.50 },
+    camiseta: { xPct: 0.22, yPct: 0.18, wPct: 0.56, hPct: 0.38 },
+    caneca:   { xPct: 0.18, yPct: 0.15, wPct: 0.64, hPct: 0.60 },
+  };
+  const area = areas[style] || areas.sacola;
+  return {
+    x: Math.round(canvasW * area.xPct),
+    y: Math.round(canvasH * area.yPct),
+    width: Math.round(canvasW * area.wPct),
+    height: Math.round(canvasH * area.hPct),
+  };
+}
+
+// ==========================================
+// Dynamic blend mode based on product brightness
+// ==========================================
+
+function getBlendMode(hexColor: string): GlobalCompositeOperation {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) return 'multiply';
+  const brightness = rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114;
+  if (brightness < 80) return 'overlay';     // Dark product
+  if (brightness > 200) return 'multiply';   // Light product
+  return 'soft-light';                        // Mid-tone
+}
+
+// ==========================================
+// Component
+// ==========================================
 
 export default function ProductPreview({
   config,
@@ -62,12 +106,13 @@ export default function ProductPreview({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imgError, setImgError] = useState(false);
-  const [imageSource, setImageSource] = useState<'ai' | 'ai-with-logo' | 'composited' | 'generated'>('ai');
+  const [imageSource, setImageSource] = useState<string>('ai');
 
   const {
     productImageUrl,
     productName,
     logoDataUrl,
+    referenceImageUrl,
     selectedColorHex,
     selectedColorName,
     selectedMaterialName,
@@ -80,20 +125,20 @@ export default function ProductPreview({
   const hasRealImage = Boolean(productImageUrl && !imgError);
   const productStyle = getProductStyle(productName);
 
-  // Cache key para a imagem gerada (inclui variáveis e logo)
+  // Cache key
   const logoShortHash = logoDataUrl ? logoDataUrl.substring(logoDataUrl.length - 20) : 'nologo';
+  const refShortHash = referenceImageUrl ? referenceImageUrl.substring(referenceImageUrl.length - 10) : 'noref';
   const variablesKey = selectedVariables.join(',');
-  const generationKey = `${productColor}-${productStyle}-${variablesKey}-${logoShortHash}`;
+  const generationKey = `${productColor}-${productStyle}-${variablesKey}-${logoShortHash}-${refShortHash}`;
 
   // ==========================================
-  // 1. Gerar/carregar imagem base do produto via IA
+  // 1. Fetch generated image from API
   // ==========================================
   const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   useEffect(() => {
-    if (hasRealImage) return; // Não gera se tem imagem real
+    if (hasRealImage) return;
 
-    // Verifica cache local (no browser)
     const cached = imageCacheRef.current.get(generationKey);
     if (cached) {
       setBaseImage(cached);
@@ -112,9 +157,8 @@ export default function ProductPreview({
           style: productStyle,
           variables: selectedVariables,
         };
-        if (logoDataUrl) {
-          body.logoDataUrl = logoDataUrl;
-        }
+        if (logoDataUrl) body.logoDataUrl = logoDataUrl;
+        if (referenceImageUrl) body.referenceImageUrl = referenceImageUrl;
 
         const response = await fetch('/api/product-image', {
           method: 'POST',
@@ -130,17 +174,13 @@ export default function ProductPreview({
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
           if (data.fallback) {
-            // Sem token — usa fallback Canvas
             setBaseImage(null);
             setError('IA não configurada — usando visual ilustrativo');
             setLoading(false);
             return;
           }
           if (data.retry) {
-            // Modelo carregando — retry em 3s
-            setTimeout(() => {
-              if (!cancelled) void generateImage();
-            }, 3000);
+            setTimeout(() => { if (!cancelled) void generateImage(); }, 3000);
             return;
           }
           throw new Error(data.error || 'Erro ao gerar imagem');
@@ -149,36 +189,19 @@ export default function ProductPreview({
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
 
-        // Extrair fonte da imagem do header
         const src = response.headers.get('X-Image-Source');
-        if (!cancelled) {
-          if (src === 'ai-with-logo') {
-            setImageSource('ai-with-logo');
-          } else if (src === 'composited') {
-            setImageSource('composited');
-          } else if (src === 'generated') {
-            setImageSource('generated');
-          } else {
-            setImageSource('ai');
-          }
-        }
+        if (!cancelled) setImageSource(src || 'ai');
 
         const img = new Image();
         img.onload = () => {
-          if (cancelled) {
-            URL.revokeObjectURL(url);
-            return;
-          }
+          if (cancelled) { URL.revokeObjectURL(url); return; }
           imageCacheRef.current.set(generationKey, img);
           setBaseImage(img);
           setLoading(false);
         };
         img.onerror = () => {
           URL.revokeObjectURL(url);
-          if (!cancelled) {
-            setError('Erro ao carregar imagem gerada');
-            setLoading(false);
-          }
+          if (!cancelled) { setError('Erro ao carregar imagem'); setLoading(false); }
         };
         img.src = url;
       } catch (err) {
@@ -190,19 +213,14 @@ export default function ProductPreview({
     }
 
     void generateImage();
-
     return () => { cancelled = true; };
-  }, [generationKey, hasRealImage, productColor, productStyle, selectedVariables, logoDataUrl]);
+  }, [generationKey, hasRealImage, productColor, productStyle, selectedVariables, logoDataUrl, referenceImageUrl]);
 
   // ==========================================
-  // 2. Carregar logo como Image
+  // 2. Load logo as Image
   // ==========================================
   useEffect(() => {
-    if (!logoDataUrl) {
-      setLogoImage(null);
-      return;
-    }
-
+    if (!logoDataUrl) { setLogoImage(null); return; }
     const img = new Image();
     img.onload = () => setLogoImage(img);
     img.onerror = () => setLogoImage(null);
@@ -210,160 +228,147 @@ export default function ProductPreview({
   }, [logoDataUrl]);
 
   // ==========================================
-  // 3. Renderizar no Canvas (composição em tempo real)
+  // 3. Canvas rendering with realistic compositing
   // ==========================================
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const w = canvas.width;
     const h = canvas.height;
-
-    // Limpa
     ctx.clearRect(0, 0, w, h);
 
-    // Fundo transparente — herda o fundo do container
-    // NÃO preencher com cor sólida para evitar bordas brancas/acinzentadas
-
-    if (hasRealImage) {
-      // Modo imagem real: desenha a imagem do estoque
-      return;
-    }
+    if (hasRealImage) return;
 
     if (baseImage) {
       // ========================================
-      // MODO IA: imagem gerada pela IA
+      // MODE: AI-generated image
       // ========================================
-
-      // Calcula dimensões mantendo proporção, preenchendo o canvas
       const imgRatio = baseImage.width / baseImage.height;
       const canvasRatio = w / h;
       let drawW: number, drawH: number, drawX: number, drawY: number;
 
       if (imgRatio > canvasRatio) {
-        drawW = w;
-        drawH = w / imgRatio;
-        drawX = 0;
-        drawY = (h - drawH) / 2;
+        drawW = w; drawH = w / imgRatio; drawX = 0; drawY = (h - drawH) / 2;
       } else {
-        drawH = h;
-        drawW = h * imgRatio;
-        drawX = (w - drawW) / 2;
-        drawY = 0;
+        drawH = h; drawW = h * imgRatio; drawX = (w - drawW) / 2; drawY = 0;
       }
 
-      // Desenha a imagem base
       ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
 
-      // Se a API já integrou a logo (img2img), NÃO aplicar overlays extras
-      // A imagem já tem a cor correta e a logo integrada pela IA
-      if (imageSource === 'ai-with-logo' || imageSource === 'composited') {
-        // Imagem já processada — desenhar direto sem overlays
-      } else {
-        // Imagem gerada apenas com prompt — aplicar tint de cor sutil
+      // If server already composited everything, don't add overlays
+      if (imageSource === 'composited' || imageSource === 'composited-ref' ||
+          imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo') {
+        // Image already processed — render as-is
+      } else if (logoImage) {
+        // ========================================
+        // Client-side logo compositing (fallback)
+        // ========================================
+        const area = getPrintArea(drawW, drawH, productStyle);
+        const logoAreaX = drawX + area.x;
+        const logoAreaY = drawY + area.y;
+
+        // Scale: 75% of print area
+        const maxLogoW = area.width * 0.75;
+        const maxLogoH = area.height * 0.75;
+        const logoRatio = logoImage.width / logoImage.height;
+        let logoW: number, logoH: number;
+
+        if (logoRatio > maxLogoW / maxLogoH) {
+          logoW = maxLogoW; logoH = logoW / logoRatio;
+        } else {
+          logoH = maxLogoH; logoW = logoH * logoRatio;
+        }
+
+        // Position: centered horizontally, 40% from top of print area
+        const logoX = logoAreaX + (area.width - logoW) / 2;
+        const logoY = logoAreaY + area.height * 0.40 - logoH / 2;
+
+        // Dynamic blend mode
+        const blendMode = getBlendMode(productColor);
+
+        // 1. Directional shadow (bottom-right)
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowBlur = Math.max(6, logoW * 0.02);
+        ctx.shadowOffsetX = Math.max(2, logoW * 0.008);
+        ctx.shadowOffsetY = Math.max(3, logoH * 0.012);
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.restore();
+
+        // 2. Logo with dynamic blend mode for print realism
+        ctx.save();
+        ctx.globalCompositeOperation = blendMode;
+        ctx.globalAlpha = 0.94;
+        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.restore();
+
+        // 3. Surface lighting overlay (subtle luminance from product)
+        ctx.save();
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.globalAlpha = 0.08;
+        // Re-draw product region as luminance guide
+        ctx.drawImage(baseImage, drawX + area.x, drawY + area.y, area.width, area.height,
+                      logoX, logoY, logoW, logoH);
+        ctx.restore();
+
+        // 4. Edge darkening (ink absorption at logo boundary)
         ctx.save();
         ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = productColor;
-        ctx.globalAlpha = 0.3;
-        ctx.fillRect(drawX, drawY, drawW, drawH);
+        ctx.globalAlpha = 0.04;
+        // Slightly smaller version to create edge effect
+        const shrink = Math.max(1, logoW * 0.005);
+        ctx.drawImage(logoImage, logoX + shrink, logoY + shrink, logoW - shrink * 2, logoH - shrink * 2);
         ctx.restore();
 
-        // Clareia um pouco para manter visibilidade
+        // 5. Subtle highlight sheen (print gloss)
+        const sheenGrad = ctx.createLinearGradient(logoX, logoY, logoX + logoW, logoY + logoH);
+        sheenGrad.addColorStop(0, 'rgba(255,255,255,0.06)');
+        sheenGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
+        sheenGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
+        sheenGrad.addColorStop(1, 'rgba(0,0,0,0.03)');
         ctx.save();
-        ctx.globalCompositeOperation = 'screen';
-        ctx.fillStyle = '#ffffff';
-        ctx.globalAlpha = 0.15;
-        ctx.fillRect(drawX, drawY, drawW, drawH);
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = sheenGrad;
+        ctx.fillRect(logoX, logoY, logoW, logoH);
         ctx.restore();
-
-        // Composição do logo no Canvas (fallback quando API não integrou)
-        if (logoImage) {
-          const logoMaxW = drawW * 0.45;
-          const logoMaxH = drawH * 0.3;
-          const logoRatio = logoImage.width / logoImage.height;
-
-          let logoW: number, logoH: number;
-          if (logoRatio > logoMaxW / logoMaxH) {
-            logoW = logoMaxW;
-            logoH = logoW / logoRatio;
-          } else {
-            logoH = logoMaxH;
-            logoW = logoH * logoRatio;
-          }
-
-          const logoX = drawX + (drawW - logoW) / 2;
-          const logoY = drawY + drawH * 0.35;
-
-          // Sombra da logo para profundidade
-          ctx.save();
-          ctx.shadowColor = 'rgba(0,0,0,0.3)';
-          ctx.shadowBlur = 8;
-          ctx.shadowOffsetX = 2;
-          ctx.shadowOffsetY = 3;
-          ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
-          ctx.restore();
-        }
       }
-
     } else {
       // ========================================
-      // MODO FALLBACK: Canvas puro (sem IA)
+      // MODE: Fallback canvas illustration
       // ========================================
       drawFallbackBag(ctx, w, h, productColor, logoImage);
     }
 
-    // Notifica parent
+    // Notify parent
     if (onPreviewGenerated) {
-      try {
-        onPreviewGenerated(canvas.toDataURL('image/png'));
-      } catch { /* ignore */ }
+      try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* ignore */ }
     }
-  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated, imageSource]);
+  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated, imageSource, productStyle]);
 
-  // Re-renderiza quando dependências mudam
-  useEffect(() => {
-    renderCanvas();
-  }, [renderCanvas]);
+  useEffect(() => { renderCanvas(); }, [renderCanvas]);
 
   // ==========================================
-  // Renderização
+  // Render
   // ==========================================
 
-  // Modo compacto (carrinho)
   if (compact) {
     return (
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
-        <div
-          className="relative w-full aspect-square flex items-center justify-center overflow-hidden"
-          style={{ backgroundColor: 'transparent' }}
-        >
+        <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
           {hasRealImage ? (
             <>
-              <img
-                src={productImageUrl}
-                alt={productName}
-                className="w-full h-full object-cover"
-                onError={() => setImgError(true)}
-              />
+              <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
               {logoDataUrl ? (
-                <img
-                  src={logoDataUrl}
-                  alt="Logo"
-                  className="absolute inset-0 m-auto h-12 w-12 object-contain drop-shadow-md"
-                  style={{ maxWidth: '35%', maxHeight: '35%' }}
-                />
+                <img src={logoDataUrl} alt="Logo" className="absolute inset-0 m-auto h-12 w-12 object-contain drop-shadow-md" style={{ maxWidth: '35%', maxHeight: '35%' }} />
               ) : null}
             </>
           ) : (
-            <canvas
-              ref={canvasRef}
-              width={compact ? 200 : 400}
-              height={compact ? 200 : 500}
-              className="w-full h-full object-contain"
-            />
+            <canvas ref={canvasRef} width={compact ? 200 : 400} height={compact ? 200 : 500} className="w-full h-full object-contain" />
           )}
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
@@ -381,53 +386,24 @@ export default function ProductPreview({
     );
   }
 
-  // Modo completo (card de catálogo)
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`}>
-      {/* Área visual */}
-      <div
-        className="relative w-full overflow-hidden"
-        style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}
-      >
+      <div className="relative w-full overflow-hidden" style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}>
         {hasRealImage ? (
           <>
-            <img
-              src={productImageUrl}
-              alt={productName}
-              className="w-full h-full object-cover"
-              onError={() => setImgError(true)}
-            />
+            <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
             {selectedColorHex ? (
-              <div
-                className="absolute inset-0 mix-blend-multiply"
-                style={{ backgroundColor: selectedColorHex, opacity: 0.4 }}
-              />
+              <div className="absolute inset-0 mix-blend-multiply" style={{ backgroundColor: selectedColorHex, opacity: 0.4 }} />
             ) : null}
             {logoDataUrl ? (
-              <img
-                src={logoDataUrl}
-                alt="Logo"
-                className="absolute object-contain drop-shadow-lg"
-                style={{
-                  top: '40%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  maxWidth: '40%',
-                  maxHeight: '30%',
-                }}
-              />
+              <img src={logoDataUrl} alt="Logo" className="absolute object-contain drop-shadow-lg"
+                style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: '40%', maxHeight: '30%' }} />
             ) : null}
           </>
         ) : (
           <>
-            <canvas
-              ref={canvasRef}
-              width={768}
-              height={960}
-              className="w-full h-full object-contain"
-            />
+            <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
 
-            {/* Loading overlay */}
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-3">
@@ -440,16 +416,12 @@ export default function ProductPreview({
               </div>
             ) : null}
 
-            {/* Error banner */}
             {error ? (
               <div className="absolute bottom-2 left-2 right-2">
-                <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">
-                  {error}
-                </p>
+                <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">{error}</p>
               </div>
             ) : null}
 
-            {/* Badge: fonte da imagem */}
             {baseImage ? (
               <div className="absolute top-2 left-2">
                 <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">
@@ -466,19 +438,14 @@ export default function ProductPreview({
           </>
         )}
 
-        {/* Badge de cor */}
         {selectedColorHex ? (
           <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
-            <span
-              className="h-3 w-3 rounded-full border border-slate-300"
-              style={{ backgroundColor: selectedColorHex }}
-            />
+            <span className="h-3 w-3 rounded-full border border-slate-300" style={{ backgroundColor: selectedColorHex }} />
             <span className="text-[10px] font-medium text-slate-700">{selectedColorName || 'Cor'}</span>
           </div>
         ) : null}
       </div>
 
-      {/* Detalhes */}
       <div className="p-4 space-y-1.5">
         <h4 className="font-semibold text-slate-900 text-sm leading-tight">{productName}</h4>
         {selectedMaterialName ? (
@@ -512,7 +479,7 @@ export default function ProductPreview({
 }
 
 // ==========================================
-// FALLBACK: Sacola desenhada no Canvas
+// Fallback: Canvas-drawn bag illustration
 // ==========================================
 
 function drawFallbackBag(
@@ -527,7 +494,7 @@ function drawFallbackBag(
   const bagX = (w - bagW) / 2;
   const bagY = h * 0.2;
 
-  // Sombra no chão
+  // Ground shadow
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.1)';
   ctx.beginPath();
@@ -535,7 +502,7 @@ function drawFallbackBag(
   ctx.fill();
   ctx.restore();
 
-  // Corpo da sacola
+  // Bag body gradient
   const gradient = ctx.createLinearGradient(bagX, bagY, bagX + bagW, bagY + bagH);
   gradient.addColorStop(0, lighten(color, 25));
   gradient.addColorStop(0.3, lighten(color, 10));
@@ -548,7 +515,7 @@ function drawFallbackBag(
   roundRect(ctx, bagX, bagY, bagW, bagH, 6);
   ctx.fill();
 
-  // Textura de tecido
+  // Fabric texture
   ctx.globalAlpha = 0.04;
   for (let i = 0; i < bagH; i += 3) {
     ctx.beginPath();
@@ -560,20 +527,20 @@ function drawFallbackBag(
   }
   ctx.globalAlpha = 1;
 
-  // Brilho lateral
+  // Side shine
   const shine = ctx.createLinearGradient(bagX, bagY, bagX + bagW * 0.4, bagY);
   shine.addColorStop(0, 'rgba(255,255,255,0.12)');
   shine.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = shine;
   ctx.fill();
 
-  // Borda superior (dobra)
+  // Top fold
   ctx.fillStyle = darken(color, 15);
   ctx.globalAlpha = 0.4;
   ctx.fillRect(bagX, bagY, bagW, 12);
   ctx.globalAlpha = 1;
 
-  // Costura
+  // Stitching
   ctx.setLineDash([4, 4]);
   ctx.strokeStyle = 'rgba(255,255,255,0.15)';
   ctx.lineWidth = 1;
@@ -582,38 +549,43 @@ function drawFallbackBag(
   ctx.lineTo(bagX + bagW - 8, bagY + 12);
   ctx.stroke();
   ctx.setLineDash([]);
-
   ctx.restore();
 
-  // Alças
+  // Handles
   drawHandle(ctx, bagX + bagW * 0.28, bagY, color);
   drawHandle(ctx, bagX + bagW * 0.72, bagY, color);
 
-  // Logo ou placeholder
+  // Logo or placeholder
   if (logoImage) {
-    const maxLogoW = bagW * 0.6;
-    const maxLogoH = bagH * 0.3;
+    const area = getPrintArea(bagW, bagH, 'sacola');
+    const maxLogoW = area.width * 0.75;
+    const maxLogoH = area.height * 0.75;
     const ratio = logoImage.width / logoImage.height;
     let lw: number, lh: number;
-    if (ratio > maxLogoW / maxLogoH) {
-      lw = maxLogoW;
-      lh = lw / ratio;
-    } else {
-      lh = maxLogoH;
-      lw = lh * ratio;
-    }
-    const lx = bagX + (bagW - lw) / 2;
-    const ly = bagY + bagH * 0.38;
+    if (ratio > maxLogoW / maxLogoH) { lw = maxLogoW; lh = lw / ratio; }
+    else { lh = maxLogoH; lw = lh * ratio; }
 
+    const lx = bagX + area.x + (area.width - lw) / 2;
+    const ly = bagY + area.y + area.height * 0.40 - lh / 2;
+
+    // Shadow
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
     ctx.shadowBlur = 6;
     ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
+    ctx.shadowOffsetY = 3;
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(logoImage, lx, ly, lw, lh);
+    ctx.restore();
+
+    // Logo with blend
+    const blend = getBlendMode(color);
+    ctx.save();
+    ctx.globalCompositeOperation = blend;
+    ctx.globalAlpha = 0.94;
     ctx.drawImage(logoImage, lx, ly, lw, lh);
     ctx.restore();
   } else {
-    // Texto "Logo Aqui"
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = `bold ${bagW * 0.09}px sans-serif`;
@@ -629,7 +601,6 @@ function drawFallbackBag(
 function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, color: string) {
   const hw = 4;
   const hh = 45;
-
   ctx.save();
   const grad = ctx.createLinearGradient(cx - hw, top, cx + hw, top);
   grad.addColorStop(0, darken(color, 35));
@@ -655,6 +626,10 @@ function drawHandle(ctx: CanvasRenderingContext2D, cx: number, top: number, colo
   ctx.restore();
 }
 
+// ==========================================
+// Utilities
+// ==========================================
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -667,6 +642,11 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = hex.replace('#', '').match(/^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
 }
 
 function lighten(hex: string, pct: number): string {
@@ -683,11 +663,6 @@ function darken(hex: string, pct: number): string {
   const c = hexToRgb(hex);
   if (!c) return hex;
   return rgbToHex(c.r * (1 - pct / 100), c.g * (1 - pct / 100), c.b * (1 - pct / 100));
-}
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const m = hex.replace('#', '').match(/^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
 }
 
 function rgbToHex(r: number, g: number, b: number): string {
