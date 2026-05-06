@@ -75,6 +75,7 @@ export default function SalesPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
+  const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null);
   const currentUser = getCurrentUser();
 
   async function safeJson(response: Response) {
@@ -500,7 +501,14 @@ export default function SalesPage() {
           ) : (
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <div key={order.id} className="rounded-3xl border border-slate-200 p-5">
+                <div
+                  key={order.id}
+                  className="cursor-pointer rounded-3xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-md"
+                  onClick={() => setSelectedOrder(order)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedOrder(order); }}
+                >
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-semibold text-slate-900">{order.name || `Pedido ${order.id}`}</p>
@@ -508,7 +516,6 @@ export default function SalesPage() {
                       <p className="text-sm text-slate-500">Criado por: {order.createdByName || order.userId}</p>
                       <p className="text-sm text-slate-500">Data: {new Date(order.createdAt).toLocaleDateString()}</p>
                       <p className="text-sm text-slate-500">Total: R$ {(order.totalPrice || 0).toFixed(2)}</p>
-                      {/* Itens do pedido com detalhes */}
                       {order.items && order.items.length > 0 ? (
                         <div className="mt-2 space-y-1">
                           {order.items.map((item, idx) => (
@@ -519,7 +526,7 @@ export default function SalesPage() {
                         </div>
                       ) : null}
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">Status: {order.status}</span>
                       {currentUser?.role === 'admin' ? (
                         <>
@@ -845,6 +852,187 @@ export default function SalesPage() {
           {statusMessage ? <p className="text-sm text-slate-600">{statusMessage}</p> : null}
         </form>
         ) : null}
+      {/* ========================================== */}
+      {/* MODAL DE DETALHES DO PEDIDO */}
+      {/* ========================================== */}
+      {selectedOrder ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setSelectedOrder(null)}>
+          <div
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Detalhes do pedido</p>
+                <h3 className="mt-1 text-2xl font-bold text-slate-900">{selectedOrder.name || `Pedido ${selectedOrder.id}`}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-2xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Fechar"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Info geral */}
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">ID</p>
+                <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{selectedOrder.id}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder.createdAt).toLocaleDateString('pt-BR')}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder.createdByName || selectedOrder.userId}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status</p>
+                <span
+                  className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                    selectedOrder.status === 'completed'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : selectedOrder.status === 'cancelled'
+                      ? 'bg-rose-100 text-rose-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  {selectedOrder.status === 'completed' ? 'Concluído' : selectedOrder.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
+                </span>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Custo total</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Preço de venda</p>
+                <p className="mt-1 text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</p>
+              </div>
+            </div>
+
+            {/* Custo da logo */}
+            {selectedOrder.logoCost > 0 ? (
+              <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4">
+                <p className="text-sm font-semibold text-purple-800">
+                  🏷️ Custo da personalização: R$ {selectedOrder.logoCost.toFixed(2)}
+                </p>
+              </div>
+            ) : null}
+
+            {/* Itens do pedido */}
+            <div className="mt-6">
+              <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
+              <div className="mt-3 space-y-3">
+                {selectedOrder.items.map((item, idx) => {
+                  const product = inventory.find((p) => p.id === item.productId);
+                  const allVariables = product?.groups.flatMap((g) => g.variables) || [];
+                  const selectedVars = item.selectedVariables.map((sv) => {
+                    const v = allVariables.find((av) => av.id === sv.variableId);
+                    return {
+                      name: v?.name || sv.variableId,
+                      quantity: sv.quantity,
+                      additionalPrice: v?.additionalPrice || 0,
+                    };
+                  });
+
+                  return (
+                    <div key={idx} className="rounded-2xl border border-slate-200 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
+                          <p className="text-xs text-slate-500">ID: {item.productId}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-900">{item.quantity}x</p>
+                          <p className="text-xs text-slate-500">R$ {(item.unitPrice || 0).toFixed(2)} un.</p>
+                        </div>
+                      </div>
+
+                      {/* Variáveis selecionadas */}
+                      {selectedVars.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {selectedVars.map((v, vi) => (
+                            <span
+                              key={vi}
+                              className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
+                            >
+                              {v.name}
+                              {v.quantity > 1 ? ` ×${v.quantity}` : ''}
+                              {v.additionalPrice > 0 ? ` (+R$ ${v.additionalPrice.toFixed(2)})` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* Subtotal do item */}
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <span className="text-xs text-slate-500">Custo unitário</span>
+                        <span className="text-sm text-slate-700">R$ {(item.unitCost || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Subtotal</span>
+                        <span className="text-sm font-bold text-slate-900">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Resumo financeiro */}
+            <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Resumo financeiro</h4>
+              <div className="mt-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Custo dos itens</span>
+                  <span className="text-slate-900">R$ {((selectedOrder.totalCost || 0) - (selectedOrder.logoCost || 0)).toFixed(2)}</span>
+                </div>
+                {selectedOrder.logoCost > 0 ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Custo da logo</span>
+                    <span className="text-slate-900">R$ {selectedOrder.logoCost.toFixed(2)}</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Custo total</span>
+                  <span className="font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</span>
+                </div>
+                <div className="border-t border-slate-200 pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-bold text-slate-900">Preço de venda</span>
+                    <span className="text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-xs text-slate-500">Margem</span>
+                    <span className="text-xs font-semibold text-emerald-600">
+                      R$ {((selectedOrder.totalPrice || 0) - (selectedOrder.totalCost || 0)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão fechar */}
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       </div>
     </ProtectedPage>
   );

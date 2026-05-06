@@ -368,36 +368,134 @@ export function Sidebar({ children }: SidebarProps) {
         {sidebarContent}
       </aside>
 
-      {/* Desktop sidebar toggle (when closed) */}
-      {!isSidebarOpen ? (
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(true)}
-          className="fixed left-4 top-4 z-40 hidden h-10 w-10 items-center justify-center rounded-xl shadow-md lg:flex"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-          aria-label="Abrir menu"
-        >
-          {icons.menu}
-        </button>
-      ) : null}
-
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar (expanded or icon-only) */}
       <aside
-        className={`fixed left-0 top-0 hidden h-screen flex-col p-5 transition-all duration-300 lg:flex ${
-          isSidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full overflow-hidden p-0'
+        className={`fixed left-0 top-0 hidden h-screen flex-col transition-all duration-300 lg:flex ${
+          isSidebarOpen ? 'w-72 p-5' : 'w-[68px] items-center py-4 px-2'
         }`}
         style={{
           background: 'var(--sidebar-bg)',
-          borderRight: isSidebarOpen ? '1px solid var(--sidebar-border)' : 'none',
+          borderRight: '1px solid var(--sidebar-border)',
         }}
       >
-        {isSidebarOpen ? sidebarContent : null}
+        {isSidebarOpen ? (
+          sidebarContent
+        ) : (
+          /* Collapsed: icon-only sidebar */
+          <>
+            {/* Logo + expand button */}
+            <div className="mb-5 flex flex-col items-center gap-2">
+              <Image
+                src={theme === 'light' ? '/LogoC.svg' : '/LogoE.svg'}
+                alt="Logo"
+                width={28}
+                height={28}
+                className="h-7 w-7"
+                priority
+              />
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(true)}
+                className="rounded-lg p-1.5 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ color: 'var(--text-muted)' }}
+                aria-label="Abrir sidebar"
+                title="Abrir menu"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Navigation icons */}
+            <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto">
+              {filteredItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={item.label}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150"
+                    style={{
+                      color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
+                      background: active ? 'var(--sidebar-active)' : 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = 'var(--sidebar-hover)';
+                        e.currentTarget.style.color = 'var(--sidebar-text-strong)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--sidebar-text)';
+                      }
+                    }}
+                  >
+                    {item.icon}
+                  </Link>
+                );
+              })}
+
+              {!role ? (
+                <Link
+                  href="/login"
+                  title="Login"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
+                  style={{ color: 'var(--sidebar-text)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--sidebar-hover)';
+                    e.currentTarget.style.color = 'var(--sidebar-text-strong)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--sidebar-text)';
+                  }}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                  </svg>
+                </Link>
+              ) : null}
+            </nav>
+
+            {/* Bottom: theme toggle + user avatar */}
+            <div className="mt-auto flex flex-col items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--sidebar-border)' }}>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                title={theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+                className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors"
+                style={{ color: 'var(--sidebar-text)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--sidebar-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {theme === 'light' ? icons.moon : icons.sun}
+              </button>
+              {role ? (
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+                  style={{ background: 'var(--brand-blue)', color: '#fff' }}
+                  title={username || 'Usuário'}
+                >
+                  {(username || 'C')[0].toUpperCase()}
+                </div>
+              ) : null}
+            </div>
+          </>
+        )}
       </aside>
 
       {/* Main content */}
       <main
         className={`flex-1 transition-all duration-300 ${
-          isSidebarOpen ? 'lg:ml-72' : 'lg:ml-0'
+          isSidebarOpen ? 'lg:ml-72' : 'lg:ml-[68px]'
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
