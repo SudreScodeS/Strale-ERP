@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { useLayout, type SectionConfig } from '../components/layout-context';
+import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
 interface DemandForecast {
   variableId: string;
@@ -39,6 +41,15 @@ interface WeeklyData {
   quantities: number[];
   revenues: number[];
 }
+
+const PAGE_PATH = '/demand-forecast';
+
+const DEFAULT_SECTIONS: SectionConfig[] = [
+  { id: 'metrics', visible: true, order: 0, colSpan: 2 },
+  { id: 'chart', visible: true, order: 1, colSpan: 2 },
+  { id: 'alerts', visible: true, order: 2, colSpan: 2 },
+  { id: 'tables', visible: true, order: 3, colSpan: 2 },
+];
 
 function StatCard({ title, value, note, color }: { title: string; value: string | number; note?: string; color?: string }) {
   return (
@@ -169,6 +180,9 @@ export default function DemandForecastPage() {
   const [summary, setSummary] = useState<ForecastSummary | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
 
+  const { getPageLayout } = useLayout();
+  const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
+
   useEffect(() => {
     fetch('/api/demand-forecast', { headers: getAuthHeaders() })
       .then((r) => r.json())
@@ -198,47 +212,59 @@ export default function DemandForecastPage() {
     <ProtectedPage allowedRoles={['admin']}>
       <div>
         <PageHeader title="Previsao de Demanda" description="Analise baseada em dados reais de pedidos e estoque." />
+        <LayoutToolbar pagePath={PAGE_PATH} />
 
         <div className="mb-4 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}>
           Confiabilidade: {summary.forecastAccuracy} · Gerado em {new Date(summary.generatedAt).toLocaleString('pt-BR')}
         </div>
 
-        {/* Metricas */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Analisados" value={summary.totalVariablesAnalyzed} note="variaveis" />
-          <StatCard title="Risco alto" value={summary.criticalRisk.length} note="reposicao urgente" color={summary.criticalRisk.length > 0 ? 'red' : undefined} />
-          <StatCard title="Atencao" value={summary.watchRisk.length} note="estoque baixo" color={summary.watchRisk.length > 0 ? 'yellow' : undefined} />
-          <StatCard title="Excesso" value={summary.overstocked.length} note="acima da demanda" color={summary.overstocked.length > 0 ? 'green' : undefined} />
-        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {sections.map((section, index) => (
+            <DraggableSection
+              key={`${section.id}-${section.order}`}
+              pagePath={PAGE_PATH}
+              section={section}
+              index={index}
+              totalSections={sections.length}
+              className={section.colSpan === 2 ? 'sm:col-span-2' : ''}
+            >
+              {section.id === 'metrics' && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <StatCard title="Analisados" value={summary.totalVariablesAnalyzed} note="variaveis" />
+                  <StatCard title="Risco alto" value={summary.criticalRisk.length} note="reposicao urgente" color={summary.criticalRisk.length > 0 ? 'red' : undefined} />
+                  <StatCard title="Atencao" value={summary.watchRisk.length} note="estoque baixo" color={summary.watchRisk.length > 0 ? 'yellow' : undefined} />
+                  <StatCard title="Excesso" value={summary.overstocked.length} note="acima da demanda" color={summary.overstocked.length > 0 ? 'green' : undefined} />
+                </div>
+              )}
 
-        {/* Grafico */}
-        {weeklyData && weeklyData.quantities.length > 0 && (
-          <div className="mt-4">
-            <MiniBarChart labels={weeklyData.labels} values={weeklyData.quantities} title="Vendas semanais (quantidade)" />
-          </div>
-        )}
+              {section.id === 'chart' && weeklyData && weeklyData.quantities.length > 0 && (
+                <MiniBarChart labels={weeklyData.labels} values={weeklyData.quantities} title="Vendas semanais (quantidade)" />
+              )}
 
-        {/* Alertas */}
-        {allAlerts.length > 0 && (
-          <div className="mt-4 rounded-xl p-5" style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)' }}>
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--warning)' }}>Alertas ativos</h3>
-            <div className="mt-2 space-y-1">
-              {allAlerts.slice(0, 8).map((alert, i) => (
-                <p key={i} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <span className="font-semibold">{alert.variable}:</span> {alert.message}
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
+              {section.id === 'alerts' && allAlerts.length > 0 && (
+                <div className="rounded-xl p-5" style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)' }}>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--warning)' }}>Alertas ativos</h3>
+                  <div className="mt-2 space-y-1">
+                    {allAlerts.slice(0, 8).map((alert, i) => (
+                      <p key={i} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="font-semibold">{alert.variable}:</span> {alert.message}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Tabelas */}
-        <div className="mt-4 space-y-4">
-          <ForecastTable title="Alta demanda" forecasts={summary.highDemand} />
-          <ForecastTable title="Risco de falta — reposicao urgente" forecasts={summary.criticalRisk} />
-          <ForecastTable title="Em atencao" forecasts={summary.watchRisk} />
-          <ForecastTable title="Baixa saida" forecasts={summary.lowDemand} />
-          <ForecastTable title="Excesso de estoque" forecasts={summary.overstocked} />
+              {section.id === 'tables' && (
+                <div className="space-y-4">
+                  <ForecastTable title="Alta demanda" forecasts={summary.highDemand} />
+                  <ForecastTable title="Risco de falta — reposicao urgente" forecasts={summary.criticalRisk} />
+                  <ForecastTable title="Em atencao" forecasts={summary.watchRisk} />
+                  <ForecastTable title="Baixa saida" forecasts={summary.lowDemand} />
+                  <ForecastTable title="Excesso de estoque" forecasts={summary.overstocked} />
+                </div>
+              )}
+            </DraggableSection>
+          ))}
         </div>
       </div>
     </ProtectedPage>

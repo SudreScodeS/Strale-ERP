@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
 import { globalConfig } from '../../config/global';
+import { useLayout, type SectionConfig } from '../components/layout-context';
+import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -22,6 +24,14 @@ const SUGGESTIONS = [
   'Despesas',
   'Resumo do sistema',
   'Como usar',
+];
+
+const PAGE_PATH = '/assistant';
+
+const DEFAULT_SECTIONS: SectionConfig[] = [
+  { id: 'chat', visible: true, order: 0, colSpan: 2 },
+  { id: 'suggestions', visible: true, order: 1, colSpan: 2 },
+  { id: 'input', visible: true, order: 2, colSpan: 2 },
 ];
 
 function ChatBubble({ message }: { message: ChatMessage }) {
@@ -83,6 +93,9 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { getPageLayout } = useLayout();
+  const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -137,6 +150,7 @@ export default function AssistantPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
+      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand-blue)' }}>
@@ -162,74 +176,89 @@ export default function AssistantPage() {
         </button>
       </div>
 
-      {/* Chat area */}
-      <div
-        className="flex-1 overflow-y-auto rounded-xl p-5"
-        style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}
-      >
-        {messages.map((msg, i) => (
-          <ChatBubble key={i} message={msg} />
-        ))}
+      <LayoutToolbar pagePath={PAGE_PATH} />
 
-        {isLoading && (
-          <div className="mb-3 flex justify-start">
-            <div className="rounded-xl px-4 py-3" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '0ms' }} />
-                <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '150ms' }} />
-                <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Suggestions — always visible */}
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {SUGGESTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => handleSend(s.toLowerCase())}
-            className="rounded-full px-3 py-1.5 text-[11px] font-medium transition-all"
-            style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--brand-blue)';
-              e.currentTarget.style.color = 'var(--brand-blue)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.color = 'var(--text-muted)';
-            }}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-
-      {/* Input */}
-      <div className="mt-3 flex gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Digite sua pergunta..."
-          disabled={isLoading}
-          className="flex-1 rounded-xl px-4 py-3 text-sm transition-all disabled:opacity-50"
-          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
-        />
-        <button
-          onClick={() => handleSend()}
-          disabled={isLoading || !input.trim()}
-          className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: 'var(--brand-blue)' }}
+      {sections.map((section, index) => (
+        <DraggableSection
+          key={`${section.id}-${section.order}`}
+          pagePath={PAGE_PATH}
+          section={section}
+          index={index}
+          totalSections={sections.length}
         >
-          Enviar
-        </button>
-      </div>
+          {section.id === 'chat' && (
+            <div
+              className="flex-1 overflow-y-auto rounded-xl p-5"
+              style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', minHeight: '200px' }}
+            >
+              {messages.map((msg, i) => (
+                <ChatBubble key={i} message={msg} />
+              ))}
+
+              {isLoading && (
+                <div className="mb-3 flex justify-start">
+                  <div className="rounded-xl px-4 py-3" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '0ms' }} />
+                      <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '150ms' }} />
+                      <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+
+          {section.id === 'suggestions' && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleSend(s.toLowerCase())}
+                  className="rounded-full px-3 py-1.5 text-[11px] font-medium transition-all"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--brand-blue)';
+                    e.currentTarget.style.color = 'var(--brand-blue)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {section.id === 'input' && (
+            <div className="mt-3 flex gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Digite sua pergunta..."
+                disabled={isLoading}
+                className="flex-1 rounded-xl px-4 py-3 text-sm transition-all disabled:opacity-50"
+                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={isLoading || !input.trim()}
+                className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--brand-blue)' }}
+              >
+                Enviar
+              </button>
+            </div>
+          )}
+        </DraggableSection>
+      ))}
     </div>
   );
 }
