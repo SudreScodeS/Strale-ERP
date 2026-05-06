@@ -39,21 +39,21 @@ export interface CompositorOptions {
 
 const DEFAULT_OPTIONS: Required<CompositorOptions> = {
   blendMode: undefined as any,
-  opacity: 0.95,
-  featherRadius: 2.0,
+  opacity: 0.92,
+  featherRadius: 2.5,
   fabricTexture: true,
-  textureIntensity: 0.05,
-  shadowBlur: 5,
-  shadowOpacity: 0.18,
+  textureIntensity: 0.06,
+  shadowBlur: 6,
+  shadowOpacity: 0.15,
   shadowAngle: 135,
   shadowDistance: 3,
   bgThreshold: 240,
   curvature: 0,
   matchLighting: true,
-  lightingIntensity: 0.12,
+  lightingIntensity: 0.14,
   printIntegration: true,
-  printEdgeDarken: 0.08,
-  printHighlight: 0.04,
+  printEdgeDarken: 0.10,
+  printHighlight: 0.05,
 };
 
 // ==========================================
@@ -202,10 +202,12 @@ async function removeBackgroundAdaptive(
 ): Promise<Buffer> {
   const meta = await sharp(logoBuffer).metadata();
 
+  // If already has meaningful alpha (pre-processed PNG with transparency), use it
   if (meta.channels === 4) {
     const stats = await sharp(logoBuffer).stats();
     const alphaChannel = stats.channels[3];
-    if (alphaChannel && alphaChannel.mean < 200) {
+    if (alphaChannel && alphaChannel.mean < 128) {
+      // Already has good transparency — just clean it up
       return sharp(logoBuffer).ensureAlpha().png().toBuffer();
     }
   }
@@ -218,69 +220,102 @@ async function removeBackgroundAdaptive(
   const { width: w, height: h, channels } = info;
   const outputBuffer = Buffer.alloc(w * h * 4);
 
-  const regions = [
-    { x1: 0, y1: 0, x2: Math.floor(w * 0.08), y2: Math.floor(h * 0.08) },
-    { x1: Math.floor(w * 0.92), y1: 0, x2: w - 1, y2: Math.floor(h * 0.08) },
-    { x1: 0, y1: Math.floor(h * 0.92), x2: Math.floor(w * 0.08), y2: h - 1 },
-    { x1: Math.floor(w * 0.92), y1: Math.floor(h * 0.92), x2: w - 1, y2: h - 1 },
-    { x1: Math.floor(w * 0.45), y1: 0, x2: Math.floor(w * 0.55), y2: Math.floor(h * 0.04) },
-    { x1: Math.floor(w * 0.45), y1: Math.floor(h * 0.96), x2: Math.floor(w * 0.55), y2: h - 1 },
-    { x1: 0, y1: Math.floor(h * 0.45), x2: Math.floor(w * 0.04), y2: Math.floor(h * 0.55) },
-    { x1: Math.floor(w * 0.96), y1: Math.floor(h * 0.45), x2: w - 1, y2: Math.floor(h * 0.55) },
-  ];
+  // =============================================
+  // STEP 1: Detect background from ALL edges (10% depth)
+  // =============================================
+  const edgeDepth = Math.max(3, Math.floor(Math.min(w, h) * 0.10));
+  const edgeSamples: { r: number; g: number; b: number }[] = [];
 
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const isEdge = y < edgeDepth || y >= h - edgeDepth ||
+                     x < edgeDepth || x >= w - edgeDepth;
+      if (!isEdge) continue;
+      const idx = (y * w + x) * channels;
+      edgeSamples.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+    }
+  }
+
+  // Cluster edge samples to find dominant background color
   interface Cluster { r: number; g: number; b: number; count: number; brightness: number }
   const clusters: Cluster[] = [];
 
-  for (const region of regions) {
-    for (let y = region.y1; y <= region.y2; y++) {
-      for (let x = region.x1; x <= region.x2; x++) {
-        const idx = (y * w + x) * channels;
-        const s = { r: data[idx], g: data[idx + 1], b: data[idx + 2] };
-        const brightness = s.r * 0.299 + s.g * 0.587 + s.b * 0.114;
-
-        let merged = false;
-        for (const c of clusters) {
-          if (Math.sqrt((s.r - c.r) ** 2 + (s.g - c.g) ** 2 + (s.b - c.b) ** 2) < 40) {
-            c.r = Math.round((c.r * c.count + s.r) / (c.count + 1));
-            c.g = Math.round((c.g * c.count + s.g) / (c.count + 1));
-            c.b = Math.round((c.b * c.count + s.b) / (c.count + 1));
-            c.brightness = (c.brightness * c.count + brightness) / (c.count + 1);
-            c.count++;
-            merged = true;
-            break;
-          }
-        }
-        if (!merged) clusters.push({ r: s.r, g: s.g, b: s.b, count: 1, brightness });
+  for (const s of edgeSamples) {
+    const brightness = s.r * 0.299 + s.g * 0.587 + s.b * 0.114;
+    let merged = false;
+    for (const c of clusters) {
+      if (Math.sqrt((s.r - c.r) ** 2 + (s.g - c.g) ** 2 + (s.b - c.b) ** 2) < 50) {
+        c.r = Math.round((c.r * c.count + s.r) / (c.count + 1));
+        c.g = Math.round((c.g * c.count + s.g) / (c.count + 1));
+        c.b = Math.round((c.b * c.count + s.b) / (c.count + 1));
+        c.brightness = (c.brightness * c.count + brightness) / (c.count + 1);
+        c.count++;
+        merged = true;
+        break;
       }
     }
+    if (!merged) clusters.push({ r: s.r, g: s.g, b: s.b, count: 1, brightness });
   }
 
   clusters.sort((a, b) => b.count - a.count);
   const bg = clusters[0] || { r: 255, g: 255, b: 255, brightness: 255 };
 
-  const isDarkBg = bg.brightness < 60;
-  const isNearWhite = bg.brightness > 230;
-  let effectiveThreshold = threshold;
-  if (isNearWhite) effectiveThreshold = Math.min(threshold * 0.7, 180);
-  else if (isDarkBg) effectiveThreshold = Math.min(threshold * 1.3, 255);
+  console.log(`[logo-compositor] Background: rgb(${bg.r},${bg.g},${bg.b}) brightness=${bg.brightness.toFixed(0)}`);
 
+  // =============================================
+  // STEP 2: Adaptive threshold based on background type
+  // =============================================
+  const isDarkBg = bg.brightness < 60;
+  const isNearWhite = bg.brightness > 200;
+  const isLightBg = bg.brightness > 160;
+
+  // For light/white backgrounds: use tight threshold to catch off-white, cream, light gray
+  // For dark backgrounds: use looser threshold
+  let fadeStart: number;
+  let fadeEnd: number;
+
+  if (isNearWhite) {
+    // White/near-white bg: very aggressive removal
+    // Colors within 60 units of bg = background, fade from 60-90
+    fadeStart = 60;
+    fadeEnd = 90;
+  } else if (isLightBg) {
+    // Light gray/cream bg
+    fadeStart = 50;
+    fadeEnd = 80;
+  } else if (isDarkBg) {
+    // Dark bg: more lenient
+    fadeStart = 30;
+    fadeEnd = 60;
+  } else {
+    // Mid-tone bg
+    fadeStart = 40;
+    fadeEnd = 70;
+  }
+
+  // =============================================
+  // STEP 3: Classify pixels with smoothstep feathering
+  // =============================================
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const srcIdx = (y * w + x) * channels;
       const dstIdx = (y * w + x) * 4;
       const r = data[srcIdx], g = data[srcIdx + 1], b = data[srcIdx + 2];
+
       const colorDist = Math.sqrt((r - bg.r) ** 2 + (g - bg.g) ** 2 + (b - bg.b) ** 2);
 
       let alpha: number;
-      const fadeStart = effectiveThreshold * 0.3;
-      const fadeEnd = effectiveThreshold;
 
-      if (colorDist <= fadeStart) alpha = 0;
-      else if (colorDist < fadeEnd) {
+      if (colorDist <= fadeStart) {
+        alpha = 0; // Definitely background
+      } else if (colorDist < fadeEnd) {
+        // Smoothstep transition zone
         const t = (colorDist - fadeStart) / (fadeEnd - fadeStart);
-        alpha = Math.round(t * t * (3 - 2 * t) * 255);
-      } else alpha = 255;
+        const smooth = t * t * (3 - 2 * t);
+        alpha = Math.round(smooth * 255);
+      } else {
+        alpha = 255; // Definitely foreground
+      }
 
       outputBuffer[dstIdx] = r;
       outputBuffer[dstIdx + 1] = g;
@@ -289,7 +324,38 @@ async function removeBackgroundAdaptive(
     }
   }
 
-  return sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } })
+  // =============================================
+  // STEP 4: Clean up — remove isolated transparent pixels (noise)
+  // and fill isolated opaque pixels inside logo
+  // =============================================
+  const cleaned = Buffer.from(outputBuffer);
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = (y * w + x) * 4 + 3;
+      const alpha = outputBuffer[idx];
+
+      // Count opaque neighbors
+      let opaqueNeighbors = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          if (outputBuffer[((y + dy) * w + (x + dx)) * 4 + 3] > 128) opaqueNeighbors++;
+        }
+      }
+
+      // If pixel is transparent but surrounded by opaque → make opaque (fill holes)
+      if (alpha < 64 && opaqueNeighbors >= 6) {
+        cleaned[idx] = 200;
+      }
+      // If pixel is opaque but surrounded by transparent → make transparent (remove noise)
+      else if (alpha > 128 && opaqueNeighbors <= 1) {
+        cleaned[idx] = 0;
+      }
+    }
+  }
+
+  return sharp(cleaned, { raw: { width: w, height: h, channels: 4 } })
     .ensureAlpha().png().toBuffer();
 }
 
@@ -535,6 +601,7 @@ export async function compositeLogo(
   // STAGE 4: Build composite layers
   const layers: sharp.OverlayOptions[] = [];
 
+  // 4a. Directional shadow (depth)
   if (opts.shadowBlur > 0 && opts.shadowOpacity > 0) {
     const shadow = await createDirectionalShadow(
       processedLogo, logoW, logoH, opts.shadowAngle, opts.shadowDistance, opts.shadowBlur, opts.shadowOpacity,
@@ -543,26 +610,55 @@ export async function compositeLogo(
     layers.push({ input: shadow, left: logoX + offset.x, top: logoY + offset.y, blend: 'over' });
   }
 
+  // 4b. Logo with dynamic blend mode (multiply on light = ink on paper)
+  layers.push({ input: processedLogo, left: logoX, top: logoY, blend: blendMode as any });
+
+  // 4c. Edge darkening (ink absorption at print edges)
   if (opts.printIntegration && opts.printEdgeDarken > 0) {
     const edgeMask = await createEdgeDarkeningMask(processedLogo, logoW, logoH, opts.printEdgeDarken);
     layers.push({ input: edgeMask, left: logoX, top: logoY, blend: 'multiply' });
   }
 
+  // 4d. Surface texture bleed-through (fabric weave visible through logo)
   if (opts.fabricTexture && opts.textureIntensity > 0) {
     const texture = await createFabricTexture(logoW, logoH, opts.textureIntensity);
     layers.push({ input: texture, left: logoX, top: logoY, blend: 'overlay' });
   }
 
-  layers.push({ input: processedLogo, left: logoX, top: logoY, blend: blendMode as any });
-
+  // 4e. Surface lighting match (logo follows product contours)
   if (opts.matchLighting && opts.lightingIntensity > 0) {
     const lightMap = await createSurfaceLightingMap(productBuffer, logoW, logoH, logoX, logoY);
     layers.push({ input: lightMap, left: logoX, top: logoY, blend: 'overlay' });
   }
 
+  // 4f. Highlight sheen (subtle gloss)
   if (opts.printIntegration && opts.printHighlight > 0) {
     const sheen = await createHighlightSheen(logoW, logoH, opts.printHighlight);
     layers.push({ input: sheen, left: logoX, top: logoY, blend: 'soft-light' });
+  }
+
+  // 4g. Final opacity pass — ensures logo doesn't look "pasted"
+  // Reduce logo alpha slightly so the product surface bleeds through
+  const opacityAlpha = Math.round(opts.opacity * 255);
+  if (opacityAlpha < 255) {
+    const { data: logoData, info: logoInfo } = await sharp(processedLogo)
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    const alphaAdjusted = Buffer.from(logoData);
+    for (let i = 0; i < logoInfo.width * logoInfo.height; i++) {
+      const aIdx = i * logoInfo.channels + 3;
+      alphaAdjusted[aIdx] = Math.round(alphaAdjusted[aIdx] * opts.opacity);
+    }
+
+    processedLogo = await sharp(alphaAdjusted, {
+      raw: { width: logoInfo.width, height: logoInfo.height, channels: logoInfo.channels },
+    }).png().toBuffer();
+
+    // Update the logo layer in the layers array
+    const logoLayerIdx = layers.findIndex(l => l.blend === (blendMode as any));
+    if (logoLayerIdx >= 0) {
+      layers[logoLayerIdx] = { ...layers[logoLayerIdx], input: processedLogo };
+    }
   }
 
   // STAGE 5: Composite
@@ -633,8 +729,15 @@ export function getProductCompositorOptions(
       base.printHighlight = 0.06; base.printEdgeDarken = 0.04;
       break;
     case 'sacola':
-      base.textureIntensity = 0.06; base.featherRadius = 2.0;
-      base.shadowBlur = 5; base.shadowDistance = 3; base.curvature = 0;
+      base.textureIntensity = 0.07;
+      base.featherRadius = 2.5;
+      base.shadowBlur = 6;
+      base.shadowDistance = 3;
+      base.shadowOpacity = 0.14;
+      base.curvature = 0;
+      base.printEdgeDarken = 0.10;
+      base.printHighlight = 0.04;
+      base.lightingIntensity = 0.14;
       break;
   }
 
