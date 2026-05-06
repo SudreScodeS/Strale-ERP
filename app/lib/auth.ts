@@ -15,7 +15,7 @@ import { User } from '../../types';
 // CHAVE SECRETA PARA ASSINATURA JWT
 // CRÍTICO: Em produção, deve vir de variável de ambiente (process.env.JWT_SECRET)
 // Nunca commitar chave real no código
-const SECRET_KEY = 'CHANGE_ME_SECRET'; // Em produção, use variável de ambiente segura
+const SECRET_KEY = process.env.JWT_SECRET || 'CHANGE_ME_SECRET';
 
 // TEMPO DE EXPIRAÇÃO DOS TOKENS
 // Define quanto tempo um usuário fica logado sem precisar renovar
