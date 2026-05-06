@@ -202,204 +202,217 @@ export default function PurchasesPage() {
         <PageHeader title="Pedidos de Compra" description="Gerencie solicitações de compra para fornecedores e atualize o estoque crítico." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <h3 className="text-xl font-semibold text-slate-900">Estoque crítico</h3>
-            <div className="mt-4 space-y-4">
-              {lowStockVariables.length === 0 ? (
-                <p className="text-sm text-slate-500">Sem itens em estoque crítico no momento.</p>
-              ) : (
-                lowStockVariables.map((item) => (
-                  <div key={item.id} className="rounded-3xl border border-slate-200 p-4">
-                    <p className="font-semibold text-slate-900">{item.name}</p>
-                    <p className="text-sm text-slate-600">Estoque: {item.stock}</p>
-                    <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)}</p>
+        {message ? <p className="mb-4 text-sm text-slate-700">{message}</p> : null}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {sections.map((section, index) => (
+            <DraggableSection
+              key={`${section.id}-${section.order}`}
+              pagePath={PAGE_PATH}
+              section={section}
+              index={index}
+              totalSections={sections.length}
+              className={section.colSpan === 2 ? 'lg:col-span-2' : ''}
+            >
+              {section.id === 'suppliers' && (
+                <div className="rounded-3xl bg-white p-6 shadow-sm">
+                  <h3 className="text-xl font-semibold text-slate-900">Estoque crítico</h3>
+                  <div className="mt-4 space-y-4">
+                    {lowStockVariables.length === 0 ? (
+                      <p className="text-sm text-slate-500">Sem itens em estoque crítico no momento.</p>
+                    ) : (
+                      lowStockVariables.map((item) => (
+                        <div key={item.id} className="rounded-3xl border border-slate-200 p-4">
+                          <p className="font-semibold text-slate-900">{item.name}</p>
+                          <p className="text-sm text-slate-600">Estoque: {item.stock}</p>
+                          <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
-                ))
+                </div>
               )}
-            </div>
-          </div>
-          </DraggableSection>
 
-          <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
-            <form className="mt-4 grid gap-3 rounded-3xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
-              <input
-                value={supplierName}
-                onChange={(event) => setSupplierName(event.target.value)}
-                placeholder="Nome do fornecedor"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              />
-              <input
-                value={supplierContact}
-                onChange={(event) => setSupplierContact(event.target.value)}
-                placeholder="Contato (telefone, email...)"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              />
-              <button className="rounded-2xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700" type="submit">
-                Adicionar fornecedor
-              </button>
-            </form>
-            <div className="mt-4 space-y-4">
-              {suppliers.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhum fornecedor cadastrado ainda.</p>
-              ) : (
-                suppliers.map((supplier) => (
-                  <div key={supplier.id} className="rounded-3xl border border-slate-200 p-4">
-                    <p className="font-semibold text-slate-900">{supplier.name}</p>
-                    <p className="text-sm text-slate-600">Contato: {supplier.contact || 'Não informado'}</p>
+              {section.id === 'purchase-form' && (
+                <div className="rounded-3xl bg-white p-6 shadow-sm">
+                  <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
+                  <form className="mt-4 grid gap-3 rounded-3xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
+                    <input
+                      value={supplierName}
+                      onChange={(event) => setSupplierName(event.target.value)}
+                      placeholder="Nome do fornecedor"
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    />
+                    <input
+                      value={supplierContact}
+                      onChange={(event) => setSupplierContact(event.target.value)}
+                      placeholder="Contato (telefone, email...)"
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    />
+                    <button className="rounded-2xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700" type="submit">
+                      Adicionar fornecedor
+                    </button>
+                  </form>
+                  <div className="mt-4 space-y-4">
+                    {suppliers.length === 0 ? (
+                      <p className="text-sm text-slate-500">Nenhum fornecedor cadastrado ainda.</p>
+                    ) : (
+                      suppliers.map((supplier) => (
+                        <div key={supplier.id} className="rounded-3xl border border-slate-200 p-4">
+                          <p className="font-semibold text-slate-900">{supplier.name}</p>
+                          <p className="text-sm text-slate-600">Contato: {supplier.contact || 'Não informado'}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
-                ))
+                </div>
               )}
-            </div>
-          </div>
-          </DraggableSection>
-        </section>
-        {message ? <p className="mt-4 text-sm text-slate-700">{message}</p> : null}
 
-        <DraggableSection pagePath={PAGE_PATH} section={sections[2]} index={2} totalSections={sections.length}>
-        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-900">Registrar compra</h3>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreatePurchase}>
-            <label className="text-slate-700">
-              Fornecedor
-              <select
-                value={selectedSupplierId}
-                onChange={(event) => setSelectedSupplierId(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              >
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-slate-700">
-              Item do estoque
-              <select
-                value={selectedVariableId}
-                onChange={(event) => setSelectedVariableId(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              >
-                {variables.map((variable) => (
-                  <option key={variable.id} value={variable.id}>
-                    {variable.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-slate-700">
-              Quantidade comprada
-              <input
-                type="number"
-                min={1}
-                value={purchaseQuantity}
-                onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              />
-            </label>
-            <label className="text-slate-700">
-              Custo unitário
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={purchaseUnitCost}
-                onChange={(event) => setPurchaseUnitCost(Number(event.target.value))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              />
-            </label>
-            <label className="text-slate-700">
-              Data da compra
-              <input
-                type="date"
-                value={purchaseDate}
-                onChange={(event) => setPurchaseDate(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-              />
-            </label>
-            <div className="flex items-end">
-              <button className="rounded-2xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700" type="submit">
-                Registrar compra
-              </button>
-            </div>
-          </form>
-        </section>
-        </DraggableSection>
-
-        <DraggableSection pagePath={PAGE_PATH} section={sections[3]} index={3} totalSections={sections.length}>
-        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-end gap-3">
-            <h3 className="text-xl font-semibold text-slate-900">Compras registradas</h3>
-            <label className="text-sm text-slate-600">
-              Data inicial
-              <input
-                type="date"
-                value={fromDate}
-                aria-label="Data inicial das compras"
-                title="Data inicial das compras"
-                onChange={(event) => setFromDate(event.target.value)}
-                className="mt-1 rounded-2xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="text-sm text-slate-600">
-              Data final
-              <input
-                type="date"
-                value={toDate}
-                aria-label="Data final das compras"
-                title="Data final das compras"
-                onChange={(event) => setToDate(event.target.value)}
-                className="mt-1 rounded-2xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-          </div>
-          <div className="mt-4 space-y-3">
-            {filteredPurchases.length === 0 ? (
-              <p className="text-sm text-slate-500">Nenhuma compra no período selecionado.</p>
-            ) : (
-              filteredPurchases.map((purchase) => {
-                const supplierNameView = suppliers.find((supplier) => supplier.id === purchase.supplierId)?.name || purchase.supplierId;
-                const total = purchase.items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
-                const purchasedItemsLabel = purchase.items
-                  .map((item) => {
-                    const variable = variables.find((entry) => entry.id === item.variableId);
-                    const itemName = variable?.name || item.variableId;
-                    return `${itemName} ${item.quantity}x`;
-                  })
-                  .join(', ');
-                return (
-                  <div key={purchase.id} className="rounded-2xl border border-slate-200 p-4">
-                    <p className="font-semibold text-slate-900">{purchasedItemsLabel || 'Itens da compra'}</p>
-                    <p className="text-sm text-slate-600">Fornecedor: {supplierNameView}</p>
-                    <p className="text-sm text-slate-600">Data: {new Date(purchase.createdAt).toLocaleDateString()}</p>
-                    <p className="text-sm text-slate-600">Total: R$ {total.toFixed(2)}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleEditPurchase(purchase)}
-                        className="rounded-2xl border border-slate-200 px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+              {section.id === 'purchase-history' && (
+                <section className="rounded-3xl bg-white p-6 shadow-sm">
+                  <h3 className="text-xl font-semibold text-slate-900">Registrar compra</h3>
+                  <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreatePurchase}>
+                    <label className="text-slate-700">
+                      Fornecedor
+                      <select
+                        value={selectedSupplierId}
+                        onChange={(event) => setSelectedSupplierId(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
                       >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDeletePurchase(purchase.id)}
-                        className="rounded-2xl bg-rose-600 px-3 py-1 text-xs text-white transition hover:bg-rose-700"
+                        {suppliers.map((supplier) => (
+                          <option key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-slate-700">
+                      Item do estoque
+                      <select
+                        value={selectedVariableId}
+                        onChange={(event) => setSelectedVariableId(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
                       >
-                        Excluir
+                        {variables.map((variable) => (
+                          <option key={variable.id} value={variable.id}>
+                            {variable.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-slate-700">
+                      Quantidade comprada
+                      <input
+                        type="number"
+                        min={1}
+                        value={purchaseQuantity}
+                        onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-slate-700">
+                      Custo unitário
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={purchaseUnitCost}
+                        onChange={(event) => setPurchaseUnitCost(Number(event.target.value))}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-slate-700">
+                      Data da compra
+                      <input
+                        type="date"
+                        value={purchaseDate}
+                        onChange={(event) => setPurchaseDate(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      />
+                    </label>
+                    <div className="flex items-end">
+                      <button className="rounded-2xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700" type="submit">
+                        Registrar compra
                       </button>
                     </div>
+                  </form>
+                </section>
+              )}
+
+              {section.id === 'purchase-records' && (
+                <section className="rounded-3xl bg-white p-6 shadow-sm">
+                  <div className="flex flex-wrap items-end gap-3">
+                    <h3 className="text-xl font-semibold text-slate-900">Compras registradas</h3>
+                    <label className="text-sm text-slate-600">
+                      Data inicial
+                      <input
+                        type="date"
+                        value={fromDate}
+                        aria-label="Data inicial das compras"
+                        title="Data inicial das compras"
+                        onChange={(event) => setFromDate(event.target.value)}
+                        className="mt-1 rounded-2xl border border-slate-200 px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-sm text-slate-600">
+                      Data final
+                      <input
+                        type="date"
+                        value={toDate}
+                        aria-label="Data final das compras"
+                        title="Data final das compras"
+                        onChange={(event) => setToDate(event.target.value)}
+                        className="mt-1 rounded-2xl border border-slate-200 px-3 py-2"
+                      />
+                    </label>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </section>
-        </DraggableSection>
+                  <div className="mt-4 space-y-3">
+                    {filteredPurchases.length === 0 ? (
+                      <p className="text-sm text-slate-500">Nenhuma compra no período selecionado.</p>
+                    ) : (
+                      filteredPurchases.map((purchase) => {
+                        const supplierNameView = suppliers.find((supplier) => supplier.id === purchase.supplierId)?.name || purchase.supplierId;
+                        const total = purchase.items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
+                        const purchasedItemsLabel = purchase.items
+                          .map((item) => {
+                            const variable = variables.find((entry) => entry.id === item.variableId);
+                            const itemName = variable?.name || item.variableId;
+                            return `${itemName} ${item.quantity}x`;
+                          })
+                          .join(', ');
+                        return (
+                          <div key={purchase.id} className="rounded-2xl border border-slate-200 p-4">
+                            <p className="font-semibold text-slate-900">{purchasedItemsLabel || 'Itens da compra'}</p>
+                            <p className="text-sm text-slate-600">Fornecedor: {supplierNameView}</p>
+                            <p className="text-sm text-slate-600">Data: {new Date(purchase.createdAt).toLocaleDateString()}</p>
+                            <p className="text-sm text-slate-600">Total: R$ {total.toFixed(2)}</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void handleEditPurchase(purchase)}
+                                className="rounded-2xl border border-slate-200 px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleDeletePurchase(purchase.id)}
+                                className="rounded-2xl bg-rose-600 px-3 py-1 text-xs text-white transition hover:bg-rose-700"
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+              )}
+            </DraggableSection>
+          ))}
+        </div>
+
         {editingPurchase ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
