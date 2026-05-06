@@ -57,9 +57,9 @@ export default function SalesPage() {
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('');
   const [logoDataUrl, setLogoDataUrl] = useState<string>(''); // Data URL da logo para canvas
   const [logoAnalysisResult, setLogoAnalysisResult] = useState<{
-    colors: number;
-    colorDetails: { hex: string; rgb: { r: number; g: number; b: number }; score: number; pixelFraction: number }[];
-    productColor: string | null;      // Cor do produto detectada (ex: cor da sacola)
+    totalColors: number;
+    colors: { hex: string; rgb: { r: number; g: number; b: number }; name?: string; pixelFraction: number }[];
+    productColor: string | null;
     productColorRgb: { r: number; g: number; b: number } | null;
     complexity: string;
     description: string;
@@ -191,7 +191,7 @@ export default function SalesPage() {
   }, [logoFile]);
 
   const selectedProduct = inventory.find((product) => product.id === selectedProductId);
-  const logoColors = logoAnalysisResult?.colors ?? 0;
+  const logoColors = logoAnalysisResult?.totalColors ?? 0;
   const logoCost = calculateLogoCost(logoColors);
 
   // Encontra variáveis selecionadas com detalhes
@@ -733,9 +733,9 @@ export default function SalesPage() {
                 ) : null}
 
                 {/* Swatches de cores da logo */}
-                {logoAnalysisResult.colorDetails.length > 0 ? (
+                {logoAnalysisResult.colors.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {logoAnalysisResult.colorDetails.map((color, i) => (
+                    {logoAnalysisResult.colors.map((color, i) => (
                       <div
                         key={`${color.hex}-${i}`}
                         className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs"
