@@ -297,19 +297,27 @@ export default function Home() {
               totalSections={sections.length}
               className={section.colSpan === 2 ? 'sm:col-span-2 lg:col-span-4' : ''}
             >
-              {section.id === 'metrics' && (
-                <div className="flex flex-wrap justify-center gap-5">
-                  {activeMetrics.map((metric) => (
-                    <div key={metric.id} className="w-[calc(25%-15px)] min-w-[180px]">
+              {section.id === 'metrics' && (() => {
+                const count = activeMetrics.length;
+                // Choose columns so rows are balanced: 5→3cols(3+2), 6→3(3+3), 7→4(4+3), 8→4(4+4), 9→3(3+3+3), 10→4(4+3+3)
+                const cols = count <= 4 ? count : (count === 5 || count === 6 || count === 9) ? 3 : 4;
+                return (
+                  <div className="grid gap-5" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                    {activeMetrics.map((metric) => (
                       <MetricCard
+                        key={metric.id}
                         title={metric.title}
                         value={metric.getValue(summary)}
                         note={metric.getNote(summary)}
                       />
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                    {/* Center last row: fill remaining cells with invisible placeholders */}
+                    {Array.from({ length: (cols - (count % cols)) % cols }).map((_, i) => (
+                      <div key={`ph-${i}`} aria-hidden="true" />
+                    ))}
+                  </div>
+                );
+              })()}
 
               {section.id === 'stock-alerts' && (summary.lowStockCount > 0 || summary.watchStockCount > 0) && (
                 <div>
