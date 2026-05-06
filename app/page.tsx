@@ -297,22 +297,30 @@ export default function Home() {
               totalSections={sections.length}
               className={section.colSpan === 2 ? 'sm:col-span-2 lg:col-span-4' : ''}
             >
-              {section.id === 'metrics' && (
-                <div className="flex flex-wrap justify-center" style={{ gap: '20px' }}>
-                  {activeMetrics.map((metric) => (
-                    <div
-                      key={metric.id}
-                      style={{ width: 'calc((100% - 60px) / 4)', minWidth: '160px' }}
-                    >
-                      <MetricCard
-                        title={metric.title}
-                        value={metric.getValue(summary)}
-                        note={metric.getNote(summary)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+              {section.id === 'metrics' && (() => {
+                const count = activeMetrics.length;
+                // Pick column count for balanced rows:
+                // 1→1, 2→2, 3→3, 4→4, 5→3, 6→3, 7→4, 8→4, 9→3, 10→4
+                const cols = count <= 4 ? count : (count === 5 || count === 6 || count === 9) ? 3 : 4;
+                const gapPx = 20;
+                const totalGap = (cols - 1) * gapPx;
+                return (
+                  <div className="flex flex-wrap justify-center" style={{ gap: `${gapPx}px` }}>
+                    {activeMetrics.map((metric) => (
+                      <div
+                        key={metric.id}
+                        style={{ width: `calc((100% - ${totalGap}px) / ${cols})` }}
+                      >
+                        <MetricCard
+                          title={metric.title}
+                          value={metric.getValue(summary)}
+                          note={metric.getNote(summary)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {section.id === 'stock-alerts' && (summary.lowStockCount > 0 || summary.watchStockCount > 0) && (
                 <div>
