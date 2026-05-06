@@ -21,7 +21,7 @@ interface RefineOptions {
 
 const DEFAULT_REFINE_OPTIONS: Required<RefineOptions> = {
   strength: 0.25,
-  steps: 4,
+  steps: 6,
   width: 512,
   height: 640,
   model: DEFAULT_MODEL,
@@ -60,7 +60,7 @@ export async function refineImageWithAI(
     console.log(`[hf-client] Refining image (${imageBuffer.length} bytes, strength=${opts.strength})...`);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000); // 60s for img2img with higher strength
 
     const response = await fetch(url, {
       method: 'POST',

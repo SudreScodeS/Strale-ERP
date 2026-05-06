@@ -1,16 +1,16 @@
 // app/api/product-image/route.ts
-// Hybrid image generation pipeline (Local + AI)
+// Image generation pipeline — AI-FIRST logo integration
 //
-// PIPELINE (v2 — reordered for logo preservation):
-// 1. Base Image (cached neutral product — generated once per style)
-// 2. Recolor (HSL hue replacement — preserves shadows, texture)
-// 3. AI Refinement (img2img light — strength 0.2-0.35)
-//    ↑ Done BEFORE logo so the AI doesn't touch/distort the logo
-// 4. Logo Composition (sharp advanced — shadow, feather, texture)
-//    ↑ Done LAST so the logo stays crisp and well-positioned
+// STRATEGY:
+// 1. Generate neutral product (AI)
+// 2. Recolor via HSL
+// 3. Composite logo LOCALLY with minimal effects (just position + blend)
+// 4. AI refinement with HIGHER strength — the AI renders the logo naturally
+//    onto the product surface with proper lighting, shadows, texture
 //
-// KEY FIX: Logo is composited AFTER AI refinement, not before.
-// This prevents the AI from degrading/distorting the logo.
+// KEY INSIGHT: Don't try to make the logo look "printed" with sharp effects.
+// Instead, give the AI a rough composite and let IT make it look printed.
+// The AI understands surface physics, lighting, and material properties.
 
 import { NextResponse } from 'next/server';
 import { requireRole } from '../../lib/auth';
@@ -20,7 +20,6 @@ import {
   compositeLogo,
   getPrintArea,
   getProductCompositorOptions,
-  analyzeReferenceStyle,
   detectProductBounds,
 } from '../../lib/logo-compositor';
 
@@ -177,7 +176,6 @@ async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buf
 
   const result = await sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
 
-  // Soft edge mask for clean product boundary
   const blurred = await sharp(result).blur(0.5).png().toBuffer();
   const whiteBg = await sharp({
     create: { width: w, height: h, channels: 3, background: { r: 255, g: 255, b: 255 } },
@@ -200,21 +198,80 @@ async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buf
 }
 
 // ==========================================
-// STEP 3: AI Refinement (BEFORE logo compositing)
+// STEP 3: Lightweight logo compositing
+//   Just position + basic blend — the AI will do the rest
 // ==========================================
 
-async function refineWithAI(imageBuffer: Buffer, style: string): Promise<Buffer> {
-  const refinementPrompts: Record<string, string> = {
-    sacola: 'professional product photography of a plain blank tote bag, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture, NO TEXT NO LOGO NO DESIGN',
-    camiseta: 'professional product photography of a plain blank t-shirt, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture, NO TEXT NO LOGO NO DESIGN',
-    caneca: 'professional product photography of a plain blank ceramic mug, studio lighting, white background, commercial e-commerce photo, sharp focus, glossy glaze finish, NO TEXT NO LOGO NO DESIGN',
+async function compositeLogoLight(
+  productBuffer: Buffer,
+  logoBuffer: Buffer,
+  printArea: { x: number; y: number; width: number; height: number },
+): Promise<Buffer> {
+  // Remove logo background
+  const { compositeLogo } = await import('../../lib/logo-compositor');
+
+  // Use minimal compositor options — no shadow, no texture, no edge effects
+  // Just position the logo with basic multiply blend
+  const lightOpts = {
+    blendMode: 'multiply' as const,
+    opacity: 0.85,
+    featherRadius: 1.0,      // Minimal feather
+    fabricTexture: false,     // No texture
+    textureIntensity: 0,
+    shadowBlur: 0,           // No shadow — AI will add
+    shadowOpacity: 0,
+    shadowAngle: 135,
+    shadowDistance: 0,
+    bgThreshold: 200,        // Aggressive bg removal
+    curvature: 0,
+    matchLighting: false,    // No lighting — AI will add
+    lightingIntensity: 0,
+    printIntegration: false, // No edge effects — AI will add
+    printEdgeDarken: 0,
+    printHighlight: 0,
   };
 
-  const prompt = refinementPrompts[style] || refinementPrompts.sacola;
+  return compositeLogo(productBuffer, logoBuffer, printArea, lightOpts);
+}
+
+// ==========================================
+// STEP 4: AI refinement — the magic step
+//   The AI renders the logo naturally on the product
+// ==========================================
+
+async function refineWithAI(
+  imageBuffer: Buffer,
+  style: string,
+  hasLogo: boolean,
+): Promise<Buffer> {
+  // When logo is present, use a prompt that tells the AI to render it as printed
+  const prompts: Record<string, { withLogo: string; noLogo: string }> = {
+    sacola: {
+      withLogo: 'professional product photography of a tote bag with a logo printed on the front surface, the logo looks screen-printed with natural ink absorption into fabric, realistic fabric texture visible through the print, natural studio lighting casting soft shadows, white seamless background, commercial e-commerce photo, sharp focus, 4k quality',
+      noLogo: 'professional product photography of a plain tote bag, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture',
+    },
+    camiseta: {
+      withLogo: 'professional product photography of a t-shirt with a logo printed on the chest, the logo looks screen-printed with natural ink absorption into cotton, realistic knit texture visible through the print, natural studio lighting, white seamless background, commercial e-commerce photo, sharp focus',
+      noLogo: 'professional product photography of a plain t-shirt, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture',
+    },
+    caneca: {
+      withLogo: 'professional product photography of a ceramic mug with a logo printed on the surface, the logo looks sublimation-printed with smooth integration into the glaze, realistic glossy surface with natural reflections, studio lighting, white background, commercial e-commerce photo, sharp focus',
+      noLogo: 'professional product photography of a plain ceramic mug, studio lighting, white background, commercial e-commerce photo, sharp focus, glossy glaze finish',
+    },
+  };
+
+  const stylePrompts = prompts[style] || prompts.sacola;
+  const prompt = hasLogo ? stylePrompts.withLogo : stylePrompts.noLogo;
+
+  // Higher strength when logo is present — AI needs to re-render the logo area
+  // to make it look naturally printed (not just refine the product)
+  const strength = hasLogo ? 0.40 : 0.25;
+
+  console.log(`[product-image] AI refinement: strength=${strength}, hasLogo=${hasLogo}`);
 
   return refineImageWithAI(imageBuffer, prompt, {
-    strength: 0.25,
-    steps: 4,
+    strength,
+    steps: 6,    // More steps for better quality
     width: 512,
     height: 640,
   });
@@ -233,13 +290,11 @@ export async function POST(request: Request) {
       color = '#2563eb',
       style = 'sacola',
       logoDataUrl,
-      referenceImageUrl,
       variables = [],
     } = body;
 
     const hasLogo = Boolean(logoDataUrl);
-    const hasReference = Boolean(referenceImageUrl);
-    console.log(`[product-image] color=${color}, style=${style}, vars=[${variables.join(', ')}], logo=${hasLogo}, ref=${hasReference}`);
+    console.log(`[product-image] color=${color}, style=${style}, vars=[${variables.join(', ')}], logo=${hasLogo}`);
 
     const logoHash = hasLogo ? logoDataUrl.substring(logoDataUrl.length - 30) : undefined;
     const cacheKey = getCacheKey(color, style, variables, logoHash);
@@ -257,11 +312,9 @@ export async function POST(request: Request) {
     // =============================================
     const neutralBase = await getOrCreateNeutralBase(style, variables);
     if (!neutralBase) {
-      console.log('[product-image] AI unavailable, creating local fallback base');
+      console.log('[product-image] AI unavailable, creating local fallback');
       const fallbackBase = await createLocalFallbackBase(style);
-      if (!fallbackBase) {
-        return NextResponse.json({ error: 'Erro ao gerar imagem base do produto.' }, { status: 502 });
-      }
+      if (!fallbackBase) return NextResponse.json({ error: 'Erro ao gerar imagem base.' }, { status: 502 });
       const recolored = await recolorProduct(fallbackBase, color);
       imageCache.set(cacheKey, { buffer: recolored, timestamp: Date.now() });
       return new NextResponse(new Uint8Array(recolored), {
@@ -272,36 +325,17 @@ export async function POST(request: Request) {
     // =============================================
     // STEP 2: Recolor via HSL
     // =============================================
-    console.log(`[product-image] Recoloring to ${color} via HSL...`);
+    console.log(`[product-image] Recoloring to ${color}...`);
     let finalBuffer = await recolorProduct(neutralBase, color);
     let imageSource = 'recolor-hsl';
 
     // =============================================
-    // STEP 3: AI refinement (BEFORE logo compositing)
-    //   The AI enhances realism but must NOT touch the logo
-    // =============================================
-    const enableRefinement = process.env.HUGGINGFACE_API_KEY || process.env.HUGGINGFACE_API_TOKEN;
-    if (enableRefinement) {
-      try {
-        console.log(`[product-image] AI refinement (strength=0.25)...`);
-        const refined = await refineWithAI(finalBuffer, style);
-        if (refined && refined.length > 100) {
-          finalBuffer = refined;
-          imageSource = 'ai-refined';
-          console.log(`[product-image] AI refinement complete`);
-        }
-      } catch (err) {
-        console.error(`[product-image] AI refinement failed (using recolored):`, err);
-      }
-    }
-
-    // =============================================
-    // STEP 4: Logo composition (AFTER AI refinement)
-    //   This is the FINAL step — logo stays crisp
+    // STEP 3: Lightweight logo compositing (if logo present)
+    //   Just position + basic blend — minimal effects
     // =============================================
     if (hasLogo && logoDataUrl) {
       try {
-        console.log(`[product-image] Compositing logo (post-refinement)...`);
+        console.log(`[product-image] Compositing logo (lightweight)...`);
         const logoBase64 = logoDataUrl.replace(/^data:image\/\w+;base64,/, '');
         const logoBuffer = Buffer.from(logoBase64, 'base64');
 
@@ -309,38 +343,34 @@ export async function POST(request: Request) {
         const baseW = baseMeta.width || 512;
         const baseH = baseMeta.height || 640;
 
-        // Detect where the product actually is in the image
-        console.log(`[product-image] Detecting product bounds...`);
+        // Detect product bounds for positioning
         const productBounds = await detectProductBounds(finalBuffer);
-        console.log(`[product-image] Product bounds: ${JSON.stringify(productBounds)}`);
-
-        // Get print area based on detected product position
         const printArea = getPrintArea(baseW, baseH, style as any, productBounds);
-        console.log(`[product-image] Print area: ${JSON.stringify(printArea)}`);
 
-        let compositorOpts;
-        if (hasReference && referenceImageUrl) {
-          try {
-            console.log(`[product-image] Analyzing reference image for style...`);
-            const refBase64 = referenceImageUrl.replace(/^data:image\/\w+;base64,/, '');
-            const refBuffer = Buffer.from(refBase64, 'base64');
-            compositorOpts = await analyzeReferenceStyle(refBuffer, style as any);
-            compositorOpts.curvature = style === 'caneca' ? 0.5 : 0;
-            imageSource = 'composited-ref';
-          } catch (refErr) {
-            console.error(`[product-image] Reference analysis failed, using defaults:`, refErr);
-            compositorOpts = getProductCompositorOptions(style as any, color);
-          }
-        } else {
-          compositorOpts = getProductCompositorOptions(style as any, color);
-        }
-
-        finalBuffer = await compositeLogo(finalBuffer, logoBuffer, printArea, compositorOpts);
-        imageSource = hasReference ? 'composited-ref' : 'composited';
-        console.log(`[product-image] Logo compositing complete`);
+        finalBuffer = await compositeLogoLight(finalBuffer, logoBuffer, printArea);
+        imageSource = 'logo-composited';
+        console.log(`[product-image] Logo composited (lightweight)`);
       } catch (err) {
         console.error(`[product-image] Logo composition error:`, err);
-        // Continue without logo
+      }
+    }
+
+    // =============================================
+    // STEP 4: AI refinement — renders logo naturally
+    //   This is where the magic happens.
+    //   The AI re-renders the logo area to look printed on the product.
+    // =============================================
+    const enableRefinement = process.env.HUGGINGFACE_API_KEY || process.env.HUGGINGFACE_API_TOKEN;
+    if (enableRefinement) {
+      try {
+        const refined = await refineWithAI(finalBuffer, style, hasLogo);
+        if (refined && refined.length > 100) {
+          finalBuffer = refined;
+          imageSource = hasLogo ? 'ai-refined-with-logo' : 'ai-refined';
+          console.log(`[product-image] AI refinement complete`);
+        }
+      } catch (err) {
+        console.error(`[product-image] AI refinement failed:`, err);
       }
     }
 
@@ -363,7 +393,7 @@ export async function POST(request: Request) {
 }
 
 // ==========================================
-// Local fallback base
+// Local fallback
 // ==========================================
 
 async function createLocalFallbackBase(style: string): Promise<Buffer | null> {
@@ -375,31 +405,9 @@ async function createLocalFallbackBase(style: string): Promise<Buffer | null> {
   const { w, h } = sizes[style] || sizes.sacola;
 
   const svgShapes: Record<string, string> = {
-    sacola: `
-      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="${w}" height="${h}" fill="white"/>
-        <g transform="translate(${w * 0.15}, ${h * 0.15})">
-          <rect x="0" y="0" width="${w * 0.7}" height="${h * 0.65}" rx="4" fill="#b0b0b0" stroke="#999" stroke-width="1"/>
-          <path d="M${w * 0.25},${h * 0.15} Q${w * 0.25},${h * 0.02} ${w * 0.35},${h * 0.02}" fill="none" stroke="#888" stroke-width="3" stroke-linecap="round"/>
-          <path d="M${w * 0.45},${h * 0.15} Q${w * 0.45},${h * 0.02} ${w * 0.35},${h * 0.02}" fill="none" stroke="#888" stroke-width="3" stroke-linecap="round"/>
-        </g>
-      </svg>`,
-    camiseta: `
-      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="${w}" height="${h}" fill="white"/>
-        <g transform="translate(${w * 0.2}, ${h * 0.1})">
-          <path d="M${w * 0.15},0 L0,${h * 0.15} L${w * 0.1},${h * 0.2} L${w * 0.15},${h * 0.15} L${w * 0.15},${h * 0.75} L${w * 0.45},${h * 0.75} L${w * 0.45},${h * 0.15} L${w * 0.5},${h * 0.2} L${w * 0.6},${h * 0.15} L${w * 0.45},0 Z" fill="#b0b0b0" stroke="#999" stroke-width="1"/>
-          <ellipse cx="${w * 0.3}" cy="0" rx="${w * 0.08}" ry="${h * 0.03}" fill="white" stroke="#999" stroke-width="1"/>
-        </g>
-      </svg>`,
-    caneca: `
-      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="${w}" height="${h}" fill="white"/>
-        <g transform="translate(${w * 0.15}, ${h * 0.1})">
-          <rect x="0" y="0" width="${w * 0.5}" height="${h * 0.75}" rx="4" fill="#b0b0b0" stroke="#999" stroke-width="1"/>
-          <ellipse cx="${w * 0.6}" cy="${h * 0.3}" rx="${w * 0.12}" ry="${h * 0.15}" fill="none" stroke="#888" stroke-width="4"/>
-        </g>
-      </svg>`,
+    sacola: `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" fill="white"/><g transform="translate(${w*0.15},${h*0.15})"><rect x="0" y="0" width="${w*0.7}" height="${h*0.65}" rx="4" fill="#b0b0b0" stroke="#999" stroke-width="1"/><path d="M${w*0.25},${h*0.15} Q${w*0.25},${h*0.02} ${w*0.35},${h*0.02}" fill="none" stroke="#888" stroke-width="3" stroke-linecap="round"/><path d="M${w*0.45},${h*0.15} Q${w*0.45},${h*0.02} ${w*0.35},${h*0.02}" fill="none" stroke="#888" stroke-width="3" stroke-linecap="round"/></g></svg>`,
+    camiseta: `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" fill="white"/><g transform="translate(${w*0.2},${h*0.1})"><path d="M${w*0.15},0 L0,${h*0.15} L${w*0.1},${h*0.2} L${w*0.15},${h*0.15} L${w*0.15},${h*0.75} L${w*0.45},${h*0.75} L${w*0.45},${h*0.15} L${w*0.5},${h*0.2} L${w*0.6},${h*0.15} L${w*0.45},0 Z" fill="#b0b0b0" stroke="#999" stroke-width="1"/><ellipse cx="${w*0.3}" cy="0" rx="${w*0.08}" ry="${h*0.03}" fill="white" stroke="#999" stroke-width="1"/></g></svg>`,
+    caneca: `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" fill="white"/><g transform="translate(${w*0.15},${h*0.1})"><rect x="0" y="0" width="${w*0.5}" height="${h*0.75}" rx="4" fill="#b0b0b0" stroke="#999" stroke-width="1"/><ellipse cx="${w*0.6}" cy="${h*0.3}" rx="${w*0.12}" ry="${h*0.15}" fill="none" stroke="#888" stroke-width="4"/></g></svg>`,
   };
 
   const svg = svgShapes[style] || svgShapes.sacola;
