@@ -473,7 +473,7 @@ function querySystemSummary(): AssistantResponse {
   const alerts = getStockAlertsByLevel();
 
   return {
-    answer: `**Resumo do Simple ERP:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
+    answer: `**Resumo do Shtar:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
     data: { products: products.length, variables: variables.length, orders: orders.length, users: users.length, finance },
     type: 'metric',
   };

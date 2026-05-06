@@ -2,7 +2,7 @@
   {
     "id": "user-admin",
     "username": "admin",
-    "email": "admin@nexsys.com",
+    "email": "admin@shtar.com",
     "password": "$2a$10$elEB.1cZwT3ZdObTWWhCmegsPFmG/E8jEW7MKUypFu5kIrvb8yRK6",
     "role": "admin",
     "createdAt": "2026-01-01T00:00:00.000Z"
