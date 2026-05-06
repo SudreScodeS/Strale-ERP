@@ -2,11 +2,12 @@
 // Accurate logo color analysis with K-means clustering in LAB color space
 //
 // PIPELINE:
-// 1. Background removal (alpha + white/near-white detection)
+// 1. Background removal (adaptive edge sampling + expanded ΔE threshold)
 // 2. K-means clustering (adaptive K: 2–8) in CIELAB space
-// 3. Noise filter: remove clusters with < 2% of foreground pixels
-// 4. Merge perceptually similar colors (ΔE < 12 in LAB)
-// 5. Return sorted distinct colors with names
+// 3. Merge perceptually similar colors (ΔE < 18 in LAB)
+// 4. Noise filter: remove clusters with < 5% of foreground pixels
+// 5. Anti-aliasing filter: reject colors that only exist near edges
+// 6. Return sorted distinct colors with names
 
 import sharp from 'sharp';
 
@@ -163,8 +164,8 @@ function isBackgroundPixel(
   const pixelLab = rgbToLab(r, g, b);
   const dist = deltaE(pixelLab, bgColor.lab);
 
-  // Within threshold = background
-  if (dist < 20) return true;
+  // Within threshold = background (expanded to 30 to capture anti-aliased transitions)
+  if (dist < 30) return true;
 
   return false;
 }
@@ -312,7 +313,7 @@ function findOptimalK(pixels: Pixel[], maxK: number = 8): number {
 // Merge similar colors (ΔE < 12)
 // ==========================================
 
-function mergeSimilarColors(colors: ColorInfo[], threshold: number = 12): ColorInfo[] {
+function mergeSimilarColors(colors: ColorInfo[], threshold: number = 18): ColorInfo[] {
   const merged: ColorInfo[] = [];
   const used = new Set<number>();
   const sorted = [...colors].sort((a, b) => b.pixelCount - a.pixelCount);
@@ -411,12 +412,13 @@ function rgbToHex(r: number, g: number, b: number): string {
  *
  * Pipeline:
  * 1. Resize for performance (200px max dimension)
- * 2. Remove background pixels (white, transparent, near-white)
+ * 2. Detect and remove background pixels (edge sampling + ΔE < 30)
  * 3. Convert foreground pixels to CIELAB
  * 4. K-means clustering (adaptive K: 2–8)
- * 5. Merge clusters with ΔE < 12
- * 6. Filter noise: remove clusters with < 2% of foreground
- * 7. Sort by prominence
+ * 5. Merge clusters with ΔE < 18
+ * 6. Filter noise: remove clusters with < 5% of foreground
+ * 7. Anti-aliasing filter: reject colors that only exist near edges
+ * 8. Sort by prominence
  */
 export async function analyzeLogoColors(imageBuffer: Buffer): Promise<AnalysisResult> {
   const SIZE = 200;
@@ -482,14 +484,63 @@ export async function analyzeLogoColors(imageBuffer: Buffer): Promise<AnalysisRe
     }))
     .filter(c => c.pixelCount > 0);
 
-  // STAGE 4: Merge perceptually similar colors (ΔE < 12)
-  colors = mergeSimilarColors(colors, 12);
+  // STAGE 4: Merge perceptually similar colors (ΔE < 18)
+  colors = mergeSimilarColors(colors, 18);
 
   const totalMerged = colors.reduce((sum, c) => sum + c.pixelCount, 0);
   colors.forEach(c => c.pixelFraction = c.pixelCount / totalMerged);
 
-  // STAGE 5: Filter noise (< 2% of foreground)
-  colors = colors.filter(c => c.pixelFraction >= 0.02);
+  // STAGE 5: Filter noise (< 5% of foreground)
+  colors = colors.filter(c => c.pixelFraction >= 0.05);
+
+  // STAGE 6: Anti-aliasing filter — reject colors that only exist near edges
+  // A real logo color should appear in central pixels, not just at borders.
+  // Colors that exist only in the border region are anti-aliasing artifacts.
+  if (colors.length > 1) {
+    const borderDepth = Math.max(3, Math.floor(Math.min(width, height) * 0.08));
+    const centerPixels: Pixel[] = [];
+
+    for (let y = borderDepth; y < height - borderDepth; y++) {
+      for (let x = borderDepth; x < width - borderDepth; x++) {
+        const idx = (y * width + x) * channels;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        const a = channels === 4 ? data[idx + 3] : 255;
+        if (isBackgroundPixel(r, g, b, a, bgColor)) continue;
+        centerPixels.push(makePixel(r, g, b));
+      }
+    }
+
+    // For each color, count how many center pixels are closest to it
+    const centerCounts = new Array(colors.length).fill(0);
+    for (const px of centerPixels) {
+      let minDist = Infinity;
+      let bestIdx = 0;
+      for (let i = 0; i < colors.length; i++) {
+        const d = deltaE(px.lab, colors[i].lab);
+        if (d < minDist) { minDist = d; bestIdx = i; }
+      }
+      if (minDist < 35) { // Within reasonable match distance
+        centerCounts[bestIdx]++;
+      }
+    }
+
+    // A color must have at least 10% of its pixels in center region to be "real"
+    const centerThreshold = 0.10;
+    const filteredColors: ColorInfo[] = [];
+    for (let i = 0; i < colors.length; i++) {
+      const centerFraction = colors[i].pixelCount > 0 ? centerCounts[i] / colors[i].pixelCount : 0;
+      if (centerFraction >= centerThreshold) {
+        filteredColors.push(colors[i]);
+      } else {
+        console.log(`[color-analyzer] Rejected "${colors[i].name}" — anti-aliasing artifact (center: ${(centerFraction * 100).toFixed(1)}%)`);
+      }
+    }
+
+    // Only apply filter if it doesn't remove ALL colors
+    if (filteredColors.length > 0) {
+      colors = filteredColors;
+    }
+  }
 
   // Re-assign names and hex after merge
   colors = colors.map(c => ({
