@@ -277,17 +277,6 @@ export default function Home() {
 
   const activeMetrics = AVAILABLE_METRICS.filter((m) => selectedMetricIds.includes(m.id));
 
-  // Dynamic grid: cards distribute evenly across rows
-  // 1→1col, 2→2col, 3→3col, 4→2col+2col, 5→3col+2col, 6→3col+3col
-  const count = activeMetrics.length;
-  const gridColsClass =
-    count <= 1 ? 'grid-cols-1' :
-    count === 2 ? 'grid-cols-2' :
-    count === 3 ? 'grid-cols-3' :
-    count === 4 ? 'grid-cols-2' :
-    count === 5 ? 'grid-cols-3' :
-    'grid-cols-3';
-
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
@@ -309,14 +298,15 @@ export default function Home() {
               className={section.colSpan === 2 ? 'sm:col-span-2 lg:col-span-4' : ''}
             >
               {section.id === 'metrics' && (
-                <div className={`grid gap-5 ${gridColsClass}`}>
+                <div className="flex flex-wrap justify-center gap-5">
                   {activeMetrics.map((metric) => (
-                    <MetricCard
-                      key={metric.id}
-                      title={metric.title}
-                      value={metric.getValue(summary)}
-                      note={metric.getNote(summary)}
-                    />
+                    <div key={metric.id} className="w-[calc(25%-15px)] min-w-[180px]">
+                      <MetricCard
+                        title={metric.title}
+                        value={metric.getValue(summary)}
+                        note={metric.getNote(summary)}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
