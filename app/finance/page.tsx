@@ -60,53 +60,59 @@ export default function FinancePage() {
       <div>
         <PageHeader title="Financeiro" description="Vendas, despesas e lucro." />
         <LayoutToolbar pagePath={PAGE_PATH} />
-          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="sm:col-span-3">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <MetricCard title="Receita" value={`R$ ${totalSales.toFixed(2)}`} />
-              <MetricCard title="Despesas" value={`R$ ${totalExpenses.toFixed(2)}`} />
-              <MetricCard title="Lucro" value={`R$ ${profit.toFixed(2)}`} />
-            </div>
-          </DraggableSection>
-        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}>
+            {error}
+          </div>
+        )}
+
+        <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="sm:col-span-3">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <MetricCard title="Receita" value={`R$ ${totalSales.toFixed(2)}`} />
+            <MetricCard title="Despesas" value={`R$ ${totalExpenses.toFixed(2)}`} />
+            <MetricCard title="Lucro" value={`R$ ${profit.toFixed(2)}`} />
+          </div>
+        </DraggableSection>
 
         <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
-        <section
-          className="mt-6 rounded-xl p-5"
-          style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-        >
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historico</h3>
-          <div className="mt-3 divide-y" style={{ borderColor: 'var(--border)' }}>
-            {records.length === 0 ? (
-              <p className="py-6 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
-                Nenhum registro.
-              </p>
-            ) : (
-              records.map((record) => (
-                <div key={record.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {record.description || typeLabel[record.type]}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                      {new Date(record.date).toLocaleDateString('pt-BR')}
-                    </p>
+          <section
+            className="mt-6 rounded-xl p-5"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historico</h3>
+            <div className="mt-3 divide-y" style={{ borderColor: 'var(--border)' }}>
+              {records.length === 0 ? (
+                <p className="py-6 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
+                  Nenhum registro.
+                </p>
+              ) : (
+                records.map((record) => (
+                  <div key={record.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {record.description || typeLabel[record.type]}
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        {new Date(record.date).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ background: 'var(--surface-muted)', color: typeColor[record.type] || 'var(--text-muted)' }}
+                      >
+                        {typeLabel[record.type] || record.type}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                        R$ {record.amount.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                      style={{ background: 'var(--surface-muted)', color: typeColor[record.type] || 'var(--text-muted)' }}
-                    >
-                      {typeLabel[record.type] || record.type}
-                    </span>
-                    <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-                      R$ {record.amount.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+                ))
+              )}
+            </div>
+          </section>
         </DraggableSection>
       </div>
     </ProtectedPage>
