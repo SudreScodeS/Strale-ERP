@@ -184,12 +184,12 @@ function parseVisionResponse(data: Record<string, unknown>): VisionAnalysisResul
 }
 
 // ============================================================
-// Análise LOCAL (sharp) — agora com separação PRODUTO vs LOGO
+// Análise LOCAL (sharp) — K-means em espaço LAB
 // ============================================================
 async function analyzeLocally(file: File): Promise<VisionAnalysisResult> {
   const buffer = await fileToBuffer(file);
 
-  // Usa a nova análise espacial que separa produto de logo
+  // Usa o novo analisador K-means em LAB
   const composition = await analyzeImageComposition(buffer);
 
   const colors: VisionColorInfo[] = composition.logoColors.map((c) => ({
@@ -199,11 +199,16 @@ async function analyzeLocally(file: File): Promise<VisionAnalysisResult> {
     pixelFraction: c.pixelFraction,
   }));
 
-  // Se não encontrou cores de logo, usa cores gerais como fallback
-  const effectiveColors = colors.length > 0 ? colors : composition.allClusters
-    .filter((c) => c.pixelFraction >= SIGNIFICANT_COLOR_THRESHOLD)
-    .slice(0, 8)
-    .map((c) => ({ hex: c.hex, rgb: c.rgb, score: c.pixelFraction, pixelFraction: c.pixelFraction }));
+  // Se não encontrou cores, tenta analyzeColorsLocally como fallback
+  const effectiveColors = colors.length > 0 ? colors : await (async () => {
+    const fallback = await analyzeColorsLocally(buffer);
+    return fallback.colors.map(c => ({
+      hex: c.hex,
+      rgb: c.rgb,
+      score: c.pixelFraction,
+      pixelFraction: c.pixelFraction,
+    }));
+  })();
 
   return {
     colors: effectiveColors,

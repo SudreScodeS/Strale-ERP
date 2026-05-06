@@ -1,178 +1,355 @@
 // app/lib/color-analyzer.ts
-// Análise INTELIGENTE de imagem: separa PRODUTO (ex: sacola) de LOGO (ex: texto/elementos)
-// Usa análise espacial — pixels grandes e uniformes = produto, pixels pequenos/dispersos = logo
-// Retorna cores do produto e cores da logo SEPARADAMENTE
+// Accurate logo color analysis with K-means clustering in LAB color space
+//
+// PIPELINE:
+// 1. Background removal (alpha + white/near-white detection)
+// 2. K-means clustering (adaptive K: 2–8) in CIELAB space
+// 3. Noise filter: remove clusters with < 2% of foreground pixels
+// 4. Merge perceptually similar colors (ΔE < 12 in LAB)
+// 5. Return sorted distinct colors with names
 
 import sharp from 'sharp';
+
+// ==========================================
+// Types
+// ==========================================
+
+export interface LabColor {
+  L: number;
+  a: number;
+  b: number;
+}
 
 export interface ColorInfo {
   hex: string;
   rgb: { r: number; g: number; b: number };
+  lab: LabColor;
   pixelFraction: number;
-}
-
-export interface SpatialColorCluster {
-  hex: string;
-  rgb: { r: number; g: number; b: number };
   pixelCount: number;
-  pixelFraction: number;
-  avgX: number; // Posição média X normalizada (0-1)
-  avgY: number; // Posição média Y normalizada (0-1)
-  spread: number; // Quão disperso está (0=concentrado, 1=muito espalhado)
+  name: string;
 }
 
-export interface ImageAnalysisResult {
-  // Cores da LOGO (elementos menores, texto, ícones)
-  logoColors: ColorInfo[];
-  logoColorCount: number;
-
-  // Cor principal do PRODUTO (sacola, camiseta, etc)
-  productColor: ColorInfo | null;
-  productColorHex: string | null;
-
-  // Todos os clusters encontrados (para debug/exibição)
-  allClusters: SpatialColorCluster[];
-
-  // Metadados
-  complexity: 'simple' | 'moderate' | 'complex';
-  description: string;
+export interface AnalysisResult {
+  totalColors: number;
+  colors: ColorInfo[];
+  backgroundRemoved: boolean;
+  method: 'kmeans-lab' | 'fallback';
 }
 
-// Configurações de análise
-const BUCKET_BITS = 4;
-const BUCKET_SIZE = 256 >> BUCKET_BITS;
-const MIN_CLUSTER_FRACTION = 0.01; // Mínimo 1% dos pixels foreground
-const LOGO_MAX_FRACTION = 0.45; // Logo não pode ter mais que 45% do foreground
-const PRODUCT_MIN_FRACTION = 0.25; // Produto precisa ter pelo menos 25% do foreground
-const BG_BRIGHTNESS_THRESHOLD = 235;
-const TRANSPARENT_ALPHA_THRESHOLD = 10;
+/** Internal pixel representation with both RGB and LAB */
+interface Pixel {
+  r: number;
+  g: number;
+  b: number;
+  lab: LabColor;
+}
 
-/**
- * Verifica se um pixel é fundo (branco, transparente, cinza claro)
- */
-function isBackgroundPixel(r: number, g: number, b: number, a?: number): boolean {
-  if (a !== undefined && a < TRANSPARENT_ALPHA_THRESHOLD) return true;
+// ==========================================
+// RGB ↔ CIELAB conversion
+// ==========================================
+
+function rgbToLinear(c: number): number {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function rgbToLab(r: number, g: number, b: number): LabColor {
+  const rl = rgbToLinear(r);
+  const gl = rgbToLinear(g);
+  const bl = rgbToLinear(b);
+
+  let x = (rl * 0.4124564 + gl * 0.3575761 + bl * 0.1804375) / 0.95047;
+  let y = (rl * 0.2126729 + gl * 0.7151522 + bl * 0.0721750) / 1.00000;
+  let z = (rl * 0.0193339 + gl * 0.1191920 + bl * 0.9503041) / 1.08883;
+
+  const f = (t: number) => t > 0.008856 ? Math.cbrt(t) : (7.787 * t) + 16 / 116;
+  x = f(x); y = f(y); z = f(z);
+
+  return {
+    L: 116 * y - 16,
+    a: 500 * (x - y),
+    b: 200 * (y - z),
+  };
+}
+
+/** CIE76 ΔE — perceptual color distance */
+function deltaE(c1: LabColor, c2: LabColor): number {
+  return Math.sqrt(
+    (c1.L - c2.L) ** 2 +
+    (c1.a - c2.a) ** 2 +
+    (c1.b - c2.b) ** 2,
+  );
+}
+
+// ==========================================
+// Background detection
+// ==========================================
+
+function isBackgroundPixel(r: number, g: number, b: number, a: number): boolean {
+  if (a < 15) return true;
+  if (r > 245 && g > 245 && b > 245) return true;
+
+  const brightness = r * 0.299 + g * 0.587 + b * 0.114;
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  const brightness = r * 0.299 + g * 0.587 + b * 0.114;
   const saturation = max > 0 ? (max - min) / max : 0;
-  if (brightness >= BG_BRIGHTNESS_THRESHOLD && saturation < 0.08) return true;
-  if (brightness >= 240) return true;
+
+  if (brightness > 235 && saturation < 0.1) return true;
   return false;
 }
 
-/**
- * Distância euclidiana entre duas cores RGB
- */
-function colorDistance(c1: { r: number; g: number; b: number }, c2: { r: number; g: number; b: number }): number {
-  return Math.sqrt((c1.r - c2.r) ** 2 + (c1.g - c2.g) ** 2 + (c1.b - c2.b) ** 2);
+// ==========================================
+// K-means in LAB space
+// ==========================================
+
+function makePixel(r: number, g: number, b: number): Pixel {
+  return { r, g, b, lab: rgbToLab(r, g, b) };
 }
 
 /**
- * Agrupa buckets de cores similares (merge clusters próximos)
+ * K-means++ initialization — picks diverse starting centers
  */
-function mergeSimilarClusters(
-  clusters: SpatialColorCluster[],
-  threshold: number = 45,
-): SpatialColorCluster[] {
-  const merged: SpatialColorCluster[] = [];
+function kmeansPlusPlusInit(pixels: Pixel[], k: number): Pixel[] {
+  const centers: Pixel[] = [];
+  const midIdx = Math.floor(pixels.length / 2);
+  centers.push(pixels[midIdx]);
+
+  for (let c = 1; c < k; c++) {
+    let maxDist = -1;
+    let bestIdx = 0;
+    for (let i = 0; i < pixels.length; i++) {
+      let minDist = Infinity;
+      for (const center of centers) {
+        const d = deltaE(pixels[i].lab, center.lab);
+        if (d < minDist) minDist = d;
+      }
+      if (minDist > maxDist) {
+        maxDist = minDist;
+        bestIdx = i;
+      }
+    }
+    centers.push(pixels[bestIdx]);
+  }
+  return centers;
+}
+
+/**
+ * K-means clustering in CIELAB space
+ */
+function kmeansCluster(
+  pixels: Pixel[],
+  k: number,
+  maxIterations: number = 20,
+): { centers: Pixel[]; assignments: number[] } {
+  if (pixels.length === 0) return { centers: [], assignments: [] };
+  if (pixels.length <= k) {
+    return { centers: pixels.slice(), assignments: pixels.map((_, i) => i) };
+  }
+
+  const centers = kmeansPlusPlusInit(pixels, k);
+  const assignments = new Array<number>(pixels.length).fill(0);
+
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let changed = false;
+
+    // Assignment step
+    for (let i = 0; i < pixels.length; i++) {
+      let minDist = Infinity;
+      let bestCluster = 0;
+      for (let c = 0; c < centers.length; c++) {
+        const d = deltaE(pixels[i].lab, centers[c].lab);
+        if (d < minDist) { minDist = d; bestCluster = c; }
+      }
+      if (assignments[i] !== bestCluster) {
+        assignments[i] = bestCluster;
+        changed = true;
+      }
+    }
+
+    if (!changed) break;
+
+    // Update step — recompute centers as mean of assigned pixels
+    const sums = Array.from({ length: k }, () => ({
+      r: 0, g: 0, b: 0, labL: 0, labA: 0, labB: 0, count: 0,
+    }));
+
+    for (let i = 0; i < pixels.length; i++) {
+      const c = assignments[i];
+      sums[c].r += pixels[i].r;
+      sums[c].g += pixels[i].g;
+      sums[c].b += pixels[i].b;
+      sums[c].labL += pixels[i].lab.L;
+      sums[c].labA += pixels[i].lab.a;
+      sums[c].labB += pixels[i].lab.b;
+      sums[c].count++;
+    }
+
+    for (let c = 0; c < k; c++) {
+      if (sums[c].count === 0) continue;
+      const n = sums[c].count;
+      centers[c] = {
+        r: Math.round(sums[c].r / n),
+        g: Math.round(sums[c].g / n),
+        b: Math.round(sums[c].b / n),
+        lab: {
+          L: sums[c].labL / n,
+          a: sums[c].labA / n,
+          b: sums[c].labB / n,
+        },
+      };
+    }
+  }
+
+  return { centers, assignments };
+}
+
+/**
+ * Find optimal K using elbow method
+ */
+function findOptimalK(pixels: Pixel[], maxK: number = 8): number {
+  if (pixels.length < 20) return Math.min(2, pixels.length);
+  if (pixels.length < 50) return Math.min(3, maxK);
+
+  const inertias: number[] = [];
+  const testRange = Math.min(maxK, Math.ceil(pixels.length / 10));
+
+  for (let k = 2; k <= testRange; k++) {
+    const { centers, assignments } = kmeansCluster(pixels, k, 15);
+    let inertia = 0;
+    for (let i = 0; i < pixels.length; i++) {
+      inertia += deltaE(pixels[i].lab, centers[assignments[i]].lab) ** 2;
+    }
+    inertias.push(inertia / pixels.length);
+  }
+
+  let bestK = 2;
+  let maxImprovement = 0;
+  for (let i = 1; i < inertias.length - 1; i++) {
+    const improvement = inertias[i - 1] - inertias[i];
+    const nextImprovement = i + 1 < inertias.length ? inertias[i] - inertias[i + 1] : 0;
+    const relativeGain = nextImprovement > 0 ? improvement / nextImprovement : improvement;
+    if (relativeGain > maxImprovement) {
+      maxImprovement = relativeGain;
+      bestK = i + 2;
+    }
+  }
+
+  return Math.min(bestK, 8);
+}
+
+// ==========================================
+// Merge similar colors (ΔE < 12)
+// ==========================================
+
+function mergeSimilarColors(colors: ColorInfo[], threshold: number = 12): ColorInfo[] {
+  const merged: ColorInfo[] = [];
   const used = new Set<number>();
+  const sorted = [...colors].sort((a, b) => b.pixelCount - a.pixelCount);
 
-  for (let i = 0; i < clusters.length; i++) {
+  for (let i = 0; i < sorted.length; i++) {
     if (used.has(i)) continue;
-
-    let current = { ...clusters[i] };
+    let current = { ...sorted[i] };
     used.add(i);
 
-    for (let j = i + 1; j < clusters.length; j++) {
+    for (let j = i + 1; j < sorted.length; j++) {
       if (used.has(j)) continue;
-      if (colorDistance(current.rgb, clusters[j].rgb) < threshold) {
-        // Merge: pondera pela contagem de pixels
-        const totalCount = current.pixelCount + clusters[j].pixelCount;
+      if (deltaE(current.lab, sorted[j].lab) < threshold) {
+        const totalCount = current.pixelCount + sorted[j].pixelCount;
+        const t = sorted[j].pixelCount / totalCount;
         current = {
           ...current,
           rgb: {
-            r: Math.round((current.rgb.r * current.pixelCount + clusters[j].rgb.r * clusters[j].pixelCount) / totalCount),
-            g: Math.round((current.rgb.g * current.pixelCount + clusters[j].rgb.g * clusters[j].pixelCount) / totalCount),
-            b: Math.round((current.rgb.b * current.pixelCount + clusters[j].rgb.b * clusters[j].pixelCount) / totalCount),
+            r: Math.round(current.rgb.r * (1 - t) + sorted[j].rgb.r * t),
+            g: Math.round(current.rgb.g * (1 - t) + sorted[j].rgb.g * t),
+            b: Math.round(current.rgb.b * (1 - t) + sorted[j].rgb.b * t),
+          },
+          lab: {
+            L: current.lab.L * (1 - t) + sorted[j].lab.L * t,
+            a: current.lab.a * (1 - t) + sorted[j].lab.a * t,
+            b: current.lab.b * (1 - t) + sorted[j].lab.b * t,
           },
           pixelCount: totalCount,
-          avgX: (current.avgX * current.pixelCount + clusters[j].avgX * clusters[j].pixelCount) / totalCount,
-          avgY: (current.avgY * current.pixelCount + clusters[j].avgY * clusters[j].pixelCount) / totalCount,
-          pixelFraction: 0, // Recalculado depois
-          spread: Math.max(current.spread, clusters[j].spread),
+          pixelFraction: 0,
         };
         used.add(j);
       }
     }
-
     merged.push(current);
   }
-
   return merged;
 }
 
-/**
- * Calcula o "spread" (dispersão espacial) de um cluster.
- * Se os pixels estão todos juntos → spread baixo (logo/texto).
- * Se estão espalhados pela imagem → spread alto (produto/fundo).
- */
-function calculateSpread(
-  data: Buffer,
-  channels: number,
-  width: number,
-  height: number,
-  targetRgb: { r: number; g: number; b: number },
-  tolerance: number = 40,
-): { spread: number; avgX: number; avgY: number; count: number } {
-  let sumX = 0, sumY = 0, count = 0;
-  const positions: { x: number; y: number }[] = [];
+// ==========================================
+// Color naming
+// ==========================================
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = (y * width + x) * channels;
-      const r = data[idx], g = data[idx + 1], b = data[idx + 2];
-      if (colorDistance({ r, g, b }, targetRgb) < tolerance) {
-        sumX += x;
-        sumY += y;
-        positions.push({ x, y });
-        count++;
-      }
-    }
+function getColorName(rgb: { r: number; g: number; b: number }): string {
+  const { r, g, b } = rgb;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+  const saturation = max > 0 ? (max - min) / max : 0;
+
+  if (brightness < 30) return 'preto';
+  if (brightness > 240 && saturation < 0.08) return 'branco';
+  if (saturation < 0.12) {
+    if (brightness < 80) return 'cinza escuro';
+    if (brightness < 160) return 'cinza';
+    return 'cinza claro';
   }
 
-  if (count === 0) return { spread: 0, avgX: 0.5, avgY: 0.5, count: 0 };
+  const hsl = rgbToHsl(r, g, b);
+  const h = hsl[0], l = hsl[2];
 
-  const avgX = sumX / count / width;
-  const avgY = sumY / count / height;
-
-  // Calcula desvio padrão normalizado
-  let sumDistSq = 0;
-  for (const pos of positions) {
-    const dx = pos.x / width - avgX;
-    const dy = pos.y / height - avgY;
-    sumDistSq += dx * dx + dy * dy;
-  }
-  const stdDev = Math.sqrt(sumDistSq / count);
-  const spread = Math.min(1, stdDev * 3); // Normaliza 0-1
-
-  return { spread, avgX, avgY, count };
+  if (h < 12 || h >= 348) return l > 60 ? 'vermelho claro' : 'vermelho';
+  if (h < 35) return l > 60 ? 'laranja claro' : 'laranja';
+  if (h < 65) return l > 60 ? 'amarelo claro' : 'amarelo';
+  if (h < 80) return 'amarelo-esverdeado';
+  if (h < 160) return l > 60 ? 'verde claro' : 'verde';
+  if (h < 190) return 'ciano';
+  if (h < 260) return l > 60 ? 'azul claro' : 'azul';
+  if (h < 290) return l > 60 ? 'roxo claro' : 'roxo';
+  if (h < 330) return l > 60 ? 'rosa claro' : 'rosa';
+  return 'magenta';
 }
 
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l * 100];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = 0;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+  else if (max === g) h = ((b - r) / d + 2) / 6;
+  else h = ((r - g) / d + 4) / 6;
+  return [h * 360, s * 100, l * 100];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map(c => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0')).join('');
+}
+
+// ==========================================
+// Main analysis function
+// ==========================================
+
 /**
- * Análise principal: separa PRODUTO de LOGO na imagem
+ * Analyze logo image and return distinct colors.
  *
- * Lógica:
- * 1. Remove fundo (branco/transparente)
- * 2. Quantiza cores em buckets
- * 3. Merge clusters similares
- * 4. Classifica:
- *    - Maior cluster uniforme = PRODUTO (ex: cor da sacola)
- *    - Clusters menores e concentrados = LOGO (ex: texto colorido)
- *    - Clusters muito espalhados podem ser produto alternativo
+ * Pipeline:
+ * 1. Resize for performance (200px max dimension)
+ * 2. Remove background pixels (white, transparent, near-white)
+ * 3. Convert foreground pixels to CIELAB
+ * 4. K-means clustering (adaptive K: 2–8)
+ * 5. Merge clusters with ΔE < 12
+ * 6. Filter noise: remove clusters with < 2% of foreground
+ * 7. Sort by prominence
  */
-export async function analyzeImageComposition(imageBuffer: Buffer): Promise<ImageAnalysisResult> {
-  const SIZE = 250;
+export async function analyzeLogoColors(imageBuffer: Buffer): Promise<AnalysisResult> {
+  const SIZE = 200;
+
   const { data, info } = await sharp(imageBuffer)
     .resize(SIZE, SIZE, { fit: 'inside' })
     .ensureAlpha()
@@ -180,171 +357,85 @@ export async function analyzeImageComposition(imageBuffer: Buffer): Promise<Imag
     .toBuffer({ resolveWithObject: true });
 
   const { width, height, channels } = info;
-  const pixelCount = width * height;
 
-  // === FASE 1: Coleta pixels de foreground ===
-  const bucketMap = new Map<string, { r: number; g: number; b: number; count: number; sumX: number; sumY: number }>();
-  let fgCount = 0;
+  // STAGE 1: Extract foreground pixels
+  const foregroundPixels: Pixel[] = [];
+  let bgCount = 0;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * channels;
-      const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = channels === 4 ? data[idx + 3] : 255;
+      const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+      const a = channels === 4 ? data[idx + 3] : 255;
 
-      if (isBackgroundPixel(r, g, b, a)) continue;
-      fgCount++;
-
-      const qr = (r >> BUCKET_BITS) * BUCKET_SIZE + (BUCKET_SIZE >> 1);
-      const qg = (g >> BUCKET_BITS) * BUCKET_SIZE + (BUCKET_SIZE >> 1);
-      const qb = (b >> BUCKET_BITS) * BUCKET_SIZE + (BUCKET_SIZE >> 1);
-      const key = `${qr},${qg},${qb}`;
-
-      const existing = bucketMap.get(key);
-      if (existing) {
-        existing.count++;
-        existing.sumX += x;
-        existing.sumY += y;
-      } else {
-        bucketMap.set(key, { r: qr, g: qg, b: qb, count: 1, sumX: x, sumY: y });
-      }
+      if (isBackgroundPixel(r, g, b, a)) { bgCount++; continue; }
+      foregroundPixels.push(makePixel(r, g, b));
     }
   }
 
-  if (fgCount === 0) {
-    return {
-      logoColors: [],
-      logoColorCount: 0,
-      productColor: null,
-      productColorHex: null,
-      allClusters: [],
-      complexity: 'simple',
-      description: 'Imagem sem conteúdo visível (fundo transparente ou em branco).',
-    };
+  const totalPixels = width * height;
+  const fgCount = foregroundPixels.length;
+
+  if (fgCount < totalPixels * 0.02) {
+    return { totalColors: 0, colors: [], backgroundRemoved: bgCount > 0, method: 'kmeans-lab' };
   }
 
-  // === FASE 2: Cria clusters iniciais ===
-  let clusters: SpatialColorCluster[] = [...bucketMap.values()].map((entry) => ({
-    hex: `#${entry.r.toString(16).padStart(2, '0')}${entry.g.toString(16).padStart(2, '0')}${entry.b.toString(16).padStart(2, '0')}`,
-    rgb: { r: entry.r, g: entry.g, b: entry.b },
-    pixelCount: entry.count,
-    pixelFraction: entry.count / fgCount,
-    avgX: entry.sumX / entry.count / width,
-    avgY: entry.sumY / entry.count / height,
-    spread: 0, // Calculado depois
+  // STAGE 2: K-means clustering
+  let samplePixels = foregroundPixels;
+  const MAX_SAMPLE = 5000;
+  if (foregroundPixels.length > MAX_SAMPLE) {
+    const step = Math.floor(foregroundPixels.length / MAX_SAMPLE);
+    samplePixels = foregroundPixels.filter((_, i) => i % step === 0);
+  }
+
+  const optimalK = findOptimalK(samplePixels, 8);
+  console.log(`[color-analyzer] K=${optimalK}, samples=${samplePixels.length}, fg=${fgCount}`);
+
+  const { centers, assignments } = kmeansCluster(samplePixels, optimalK, 25);
+
+  // STAGE 3: Build color list from cluster centers
+  const clusterCounts = new Array(centers.length).fill(0);
+  for (const a of assignments) clusterCounts[a]++;
+
+  let colors: ColorInfo[] = centers
+    .map((center, i) => ({
+      hex: rgbToHex(center.r, center.g, center.b),
+      rgb: { r: center.r, g: center.g, b: center.b },
+      lab: center.lab,
+      pixelCount: clusterCounts[i],
+      pixelFraction: clusterCounts[i] / fgCount,
+      name: getColorName({ r: center.r, g: center.g, b: center.b }),
+    }))
+    .filter(c => c.pixelCount > 0);
+
+  // STAGE 4: Merge perceptually similar colors (ΔE < 12)
+  colors = mergeSimilarColors(colors, 12);
+
+  const totalMerged = colors.reduce((sum, c) => sum + c.pixelCount, 0);
+  colors.forEach(c => c.pixelFraction = c.pixelCount / totalMerged);
+
+  // STAGE 5: Filter noise (< 2% of foreground)
+  colors = colors.filter(c => c.pixelFraction >= 0.02);
+
+  // Re-assign names and hex after merge
+  colors = colors.map(c => ({
+    ...c,
+    name: getColorName(c.rgb),
+    hex: rgbToHex(c.rgb.r, c.rgb.g, c.rgb.b),
   }));
 
-  // === FASE 3: Merge clusters com cores similares ===
-  clusters = mergeSimilarClusters(clusters, 50);
+  // Sort by prominence, cap at 8
+  colors.sort((a, b) => b.pixelCount - a.pixelCount);
+  colors = colors.slice(0, 8);
 
-  // Recalcula fractions após merge
-  const totalMerged = clusters.reduce((sum, c) => sum + c.pixelCount, 0);
-  clusters.forEach((c) => (c.pixelFraction = c.pixelCount / totalMerged));
+  console.log(`[color-analyzer] Found ${colors.length} colors: ${colors.map(c => c.name).join(', ')}`);
 
-  // === FASE 4: Calcula spread (dispersão espacial) para cada cluster ===
-  for (const cluster of clusters) {
-    const spreadResult = calculateSpread(data, channels, width, height, cluster.rgb, 50);
-    cluster.spread = spreadResult.spread;
-    if (spreadResult.count > 0) {
-      cluster.avgX = spreadResult.avgX;
-      cluster.avgY = spreadResult.avgY;
-    }
-  }
-
-  // Ordena por tamanho (maior primeiro)
-  clusters.sort((a, b) => b.pixelCount - a.pixelCount);
-
-  // === FASE 5: Classifica PRODUTO vs LOGO ===
-  // Produto = maior cluster com alta fração de pixels (cor dominante da sacola/camiseta)
-  // Logo = clusters menores e mais concentrados (texto, elementos gráficos)
-
-  let productColor: SpatialColorCluster | null = null;
-  const logoColorClusters: SpatialColorCluster[] = [];
-
-  for (const cluster of clusters) {
-    if (cluster.pixelFraction < MIN_CLUSTER_FRACTION) continue; // Muito pequeno, ignora
-
-    if (!productColor && cluster.pixelFraction >= PRODUCT_MIN_FRACTION) {
-      // Primeiro cluster grande o suficiente → é o produto
-      productColor = cluster;
-    } else if (productColor && cluster.pixelFraction >= PRODUCT_MIN_FRACTION) {
-      // Outro cluster grande → pode ser parte do produto ou segundo produto
-      // Se a cor é muito diferente e tem fração significativa, pode ser um segundo elemento
-      if (cluster.pixelFraction > 0.15 && colorDistance(cluster.rgb, productColor.rgb) > 60) {
-        logoColorClusters.push(cluster);
-      }
-      // Senão, provavelmente é variação do mesmo produto (sombra, textura)
-    } else if (cluster.pixelFraction >= MIN_CLUSTER_FRACTION && cluster.pixelFraction < LOGO_MAX_FRACTION) {
-      // Cluster médio/pequeno → provavelmente é logo
-      logoColorClusters.push(cluster);
-    }
-  }
-
-  // Se não encontrou produto, o maior cluster é o produto
-  if (!productColor && clusters.length > 0) {
-    productColor = clusters[0];
-    // Os demais são logo
-    for (let i = 1; i < clusters.length; i++) {
-      if (clusters[i].pixelFraction >= MIN_CLUSTER_FRACTION) {
-        logoColorClusters.push(clusters[i]);
-      }
-    }
-  }
-
-  // === FASE 6: Monta resultado ===
-  const logoColors: ColorInfo[] = logoColorClusters
-    .sort((a, b) => b.pixelCount - a.pixelCount)
-    .slice(0, 6)
-    .map((c) => ({
-      hex: c.hex,
-      rgb: c.rgb,
-      pixelFraction: c.pixelFraction,
-    }));
-
-  const productColorInfo: ColorInfo | null = productColor
-    ? { hex: productColor.hex, rgb: productColor.rgb, pixelFraction: productColor.pixelFraction }
-    : null;
-
-  // Se não encontrou cores de logo mas encontrou produto, tenta extrair cores
-  // que são visualmente diferentes do produto (pode ser logo sobre fundo colorido)
-  if (logoColors.length === 0 && productColor) {
-    for (const cluster of clusters) {
-      if (cluster === productColor) continue;
-      if (cluster.pixelFraction < MIN_CLUSTER_FRACTION) continue;
-      if (colorDistance(cluster.rgb, productColor.rgb) > 50) {
-        logoColors.push({ hex: cluster.hex, rgb: cluster.rgb, pixelFraction: cluster.pixelFraction });
-      }
-    }
-  }
-
-  const logoColorCount = logoColors.length;
-  let complexity: 'simple' | 'moderate' | 'complex' = 'simple';
-  if (logoColorCount >= 4) complexity = 'complex';
-  else if (logoColorCount >= 2) complexity = 'moderate';
-
-  const logoColorNames = logoColors.slice(0, 3).map((c) => getColorName(c.rgb));
-  const productName = productColor ? getColorName(productColor.rgb) : '';
-
-  const description =
-    logoColorCount > 0
-      ? `Produto: ${productName} | Logo: ${logoColorCount} ${logoColorCount === 1 ? 'cor' : 'cores'} (${logoColorNames.join(', ')})`
-      : productColor
-        ? `Produto com cor ${productName} detectada`
-        : 'Análise concluída';
-
-  return {
-    logoColors,
-    logoColorCount,
-    productColor: productColorInfo,
-    productColorHex: productColorInfo?.hex || null,
-    allClusters: clusters.slice(0, 10),
-    complexity,
-    description,
-  };
+  return { totalColors: colors.length, colors, backgroundRemoved: bgCount > 0, method: 'kmeans-lab' };
 }
 
-// ============================================================
-// COMPATIBILIDADE: Interface antiga (para API route existente)
-// ============================================================
+// ==========================================
+// Legacy compatibility wrappers
+// ==========================================
 
 export interface LocalColorInfo {
   hex: string;
@@ -357,54 +448,71 @@ export interface LocalAnalysisResult {
   significantColorCount: number;
   complexity: 'simple' | 'moderate' | 'complex';
   description: string;
+  productColorHex: string | null;
+  productColorRgb: { r: number; g: number; b: number } | null;
 }
 
-/**
- * Função legada — agora usa analyzeImageComposition internamente
- * e retorna apenas as cores da logo (não do produto)
- */
 export async function analyzeColorsLocally(imageBuffer: Buffer): Promise<LocalAnalysisResult> {
-  const result = await analyzeImageComposition(imageBuffer);
+  const result = await analyzeLogoColors(imageBuffer);
 
-  // Retorna as cores da LOGO (não do produto)
-  const colors = result.logoColors.length > 0 ? result.logoColors : result.allClusters
-    .filter((c) => c.pixelFraction >= 0.03)
-    .slice(0, 8)
-    .map((c) => ({ hex: c.hex, rgb: c.rgb, pixelFraction: c.pixelFraction }));
+  const colors: LocalColorInfo[] = result.colors.map(c => ({
+    hex: c.hex,
+    rgb: c.rgb,
+    pixelFraction: c.pixelFraction,
+  }));
+
+  let complexity: 'simple' | 'moderate' | 'complex' = 'simple';
+  if (result.totalColors >= 5) complexity = 'complex';
+  else if (result.totalColors >= 2) complexity = 'moderate';
+
+  const colorNames = result.colors.slice(0, 4).map(c => c.name);
+  const description = result.totalColors > 0
+    ? `${result.totalColors} ${result.totalColors === 1 ? 'cor' : 'cores'} detectada${result.totalColors === 1 ? '' : 's'}: ${colorNames.join(', ')}`
+    : 'Nenhuma cor significativa detectada';
 
   return {
     colors,
-    significantColorCount: result.logoColorCount || colors.length,
-    complexity: result.complexity,
-    description: result.description,
+    significantColorCount: result.totalColors,
+    complexity,
+    description,
+    productColorHex: null,
+    productColorRgb: null,
   };
 }
 
-// Mapeamento RGB → nome de cor em português
-function getColorName(rgb: { r: number; g: number; b: number }): string {
-  const { r, g, b } = rgb;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const sat = max > 0 ? (max - min) / max : 0;
+export async function analyzeImageComposition(imageBuffer: Buffer): Promise<{
+  logoColors: Array<{ hex: string; rgb: { r: number; g: number; b: number }; pixelFraction: number }>;
+  logoColorCount: number;
+  productColor: { hex: string; rgb: { r: number; g: number; b: number }; pixelFraction: number } | null;
+  productColorHex: string | null;
+  allClusters: Array<{
+    hex: string; rgb: { r: number; g: number; b: number };
+    pixelCount: number; pixelFraction: number; avgX: number; avgY: number; spread: number;
+  }>;
+  complexity: 'simple' | 'moderate' | 'complex';
+  description: string;
+}> {
+  const result = await analyzeLogoColors(imageBuffer);
 
-  if (max < 40) return 'preto';
-  if (sat < 0.1 && max > 40 && min < 220) return 'cinza';
+  let complexity: 'simple' | 'moderate' | 'complex' = 'simple';
+  if (result.totalColors >= 5) complexity = 'complex';
+  else if (result.totalColors >= 2) complexity = 'moderate';
 
-  if (r > g && r > b) {
-    if (g > b + 50) return 'laranja';
-    if (b > g) return 'rosa';
-    return 'vermelho';
-  }
-  if (g > r && g > b) {
-    if (r > b + 30) return 'amarelo-esverdeado';
-    if (b > r) return 'ciano';
-    return 'verde';
-  }
-  if (b > r && b > g) {
-    if (r > g + 30) return 'roxo';
-    if (g > r) return 'azul-esverdeado';
-    return 'azul';
-  }
-  if (r > 200 && g > 180 && b < 100) return 'amarelo';
-  return 'misto';
+  const colorNames = result.colors.slice(0, 4).map(c => c.name);
+  const description = result.totalColors > 0
+    ? `${result.totalColors} ${result.totalColors === 1 ? 'cor' : 'cores'} na logo: ${colorNames.join(', ')}`
+    : 'Nenhuma cor detectada';
+
+  return {
+    logoColors: result.colors.map(c => ({ hex: c.hex, rgb: c.rgb, pixelFraction: c.pixelFraction })),
+    logoColorCount: result.totalColors,
+    productColor: null,
+    productColorHex: null,
+    allClusters: result.colors.map(c => ({
+      hex: c.hex, rgb: c.rgb, pixelCount: c.pixelCount,
+      pixelFraction: c.pixelFraction, avgX: 0.5, avgY: 0.5, spread: 0.3,
+    })),
+    complexity,
+    description,
+  };
 }
