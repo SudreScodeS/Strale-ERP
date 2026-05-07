@@ -433,13 +433,13 @@ export default function ProductPreview({
         <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
           <canvas ref={canvasRef} width={400} height={500} className="w-full h-full object-contain" />
           {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+            <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(19, 17, 26, 0.6)' }}>
               <div className="flex flex-col items-center gap-2">
-                <svg className="h-6 w-6 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+                <svg className="h-6 w-6 animate-spin text-[var(--brand)]" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                <span className="text-[10px] text-slate-600">Gerando…</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">Gerando…</span>
               </div>
             </div>
           ) : null}
@@ -454,32 +454,32 @@ export default function ProductPreview({
         <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
 
         {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(19, 17, 26, 0.5)' }}>
             <div className="flex flex-col items-center gap-3">
-              <svg className="h-8 w-8 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+              <svg className="h-8 w-8 animate-spin text-[var(--brand)]" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span className="text-xs text-slate-600">Gerando imagem com IA…</span>
+              <span className="text-xs text-[var(--text-secondary)]">Gerando imagem com IA…</span>
             </div>
           </div>
         ) : null}
 
         {error ? (
           <div className="absolute bottom-2 left-2 right-2">
-            <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">{error}</p>
+            <p className="text-[10px] text-[var(--warning)] bg-[var(--warning-bg)] rounded-lg px-2 py-1 text-center">{error}</p>
           </div>
         ) : null}
 
         {apiImage && imageSource !== 'none' ? (
           <div className="absolute top-2 left-2">
-            <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">
+            <span className="text-[9px] bg-[var(--info-bg)] text-[var(--info)] rounded-full px-2 py-0.5 font-medium">
               ✨ Gerado por IA
             </span>
           </div>
         ) : !loading && !error && !apiImage ? (
           <div className="absolute top-2 left-2">
-            <span className="text-[9px] bg-slate-100/90 text-slate-500 rounded-full px-2 py-0.5 font-medium">
+            <span className="text-[9px] bg-[var(--surface-muted)] text-[var(--text-muted)] rounded-full px-2 py-0.5 font-medium">
               🎨 Composição local
             </span>
           </div>
@@ -488,35 +488,35 @@ export default function ProductPreview({
         {selectedColorHex ? (
           <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
             <span className="h-3 w-3 rounded-full border border-slate-300" style={{ backgroundColor: selectedColorHex }} />
-            <span className="text-[10px] font-medium text-slate-700">{selectedColorName || 'Cor'}</span>
+            <span className="text-[10px] font-medium text-[var(--text-secondary)]">{selectedColorName || 'Cor'}</span>
           </div>
         ) : null}
       </div>
 
       <div className="p-4 space-y-1.5">
-        <h4 className="font-semibold text-slate-900 text-sm leading-tight">{productName}</h4>
+        <h4 className="font-semibold text-[var(--text-primary)] text-sm leading-tight">{productName}</h4>
         {selectedMaterialName ? (
-          <p className="text-xs text-slate-500">Material: <span className="text-slate-800 font-medium">{selectedMaterialName}</span></p>
+          <p className="text-xs text-[var(--text-muted)]">Material: <span className="text-[var(--text-primary)] font-medium">{selectedMaterialName}</span></p>
         ) : null}
         {selectedColorName ? (
-          <p className="text-xs text-slate-500">Cor: <span className="text-slate-800 font-medium">{selectedColorName}</span></p>
+          <p className="text-xs text-[var(--text-muted)]">Cor: <span className="text-[var(--text-primary)] font-medium">{selectedColorName}</span></p>
         ) : null}
         {quantity && quantity > 0 ? (
-          <p className="text-xs text-slate-500">Qtd: <span className="text-slate-800 font-medium">{quantity}</span></p>
+          <p className="text-xs text-[var(--text-muted)]">Qtd: <span className="text-[var(--text-primary)] font-medium">{quantity}</span></p>
         ) : null}
         {unitPrice && unitPrice > 0 ? (
-          <p className="text-lg font-bold text-slate-900 mt-2">R$ {unitPrice.toFixed(2)}</p>
+          <p className="text-lg font-bold text-[var(--text-primary)] mt-2">R$ {unitPrice.toFixed(2)}</p>
         ) : null}
         {logoDataUrl ? (
           <div className="flex items-center gap-1 mt-2">
-            <span className="text-emerald-500 text-xs">✓</span>
-            <span className="text-[10px] text-emerald-600 font-medium">Logo aplicada</span>
+            <span className="text-[var(--success)] text-xs">✓</span>
+            <span className="text-[10px] text-[var(--success)] font-medium">Logo aplicada</span>
           </div>
         ) : (
-          <p className="text-[10px] text-slate-400 mt-1">Envie uma logo para personalizar</p>
+          <p className="text-[10px] text-[var(--text-faint)] mt-1">Envie uma logo para personalizar</p>
         )}
         {!apiImage && !loading && !error ? (
-          <p className="text-[10px] text-amber-500 mt-1">
+          <p className="text-[10px] text-[var(--warning)] mt-1">
             📐 Configure KREA_API_KEY para imagens geradas por IA
           </p>
         ) : null}

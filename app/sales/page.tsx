@@ -465,7 +465,7 @@ export default function SalesPage() {
           </button>
         </div>
 
-        {activeSection === 'search' ? (
+        {activeSection === 'search' && sections[0] ? (
         <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
         <section className="mb-8 rounded-3xl bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between gap-4">
@@ -590,7 +590,7 @@ export default function SalesPage() {
         </DraggableSection>
         ) : null}
 
-        {activeSection === 'create' ? (
+        {activeSection === 'create' && sections[1] ? (
         <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
         <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl bg-white p-8 shadow-sm">
           <div className="grid gap-5 md:grid-cols-2">
