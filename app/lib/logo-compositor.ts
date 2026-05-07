@@ -165,12 +165,12 @@ export function getPrintArea(
   // If we have detected product bounds, use them
   if (productBounds) {
     const b = productBounds;
-    // Print area: centered in product, occupying 65-80% of product area
-    const printW = Math.round(b.width * 0.75);
-    const printH = Math.round(b.height * 0.55);
+    // Print area: centered in product, occupying 55-70% of product area (per spec)
+    const printW = Math.round(b.width * 0.65);
+    const printH = Math.round(b.height * 0.45);
     const printX = b.x + Math.round((b.width - printW) / 2);
-    // Position: 30-40% from top of product
-    const printY = b.y + Math.round(b.height * 0.30);
+    // Position: 38-45% from top of product (per spec: sacola centro frontal)
+    const printY = b.y + Math.round(b.height * 0.40);
 
     return { x: printX, y: printY, width: printW, height: printH };
   }
@@ -196,20 +196,28 @@ export function getPrintArea(
 // Background Removal — Multi-Region Adaptive
 // ==========================================
 
-async function removeBackgroundAdaptive(
+export async function removeBackgroundAdaptive(
   logoBuffer: Buffer,
   threshold: number = 240,
 ): Promise<Buffer> {
   const meta = await sharp(logoBuffer).metadata();
 
-  // If already has meaningful alpha (pre-processed PNG with transparency), use it
+  // If already has meaningful alpha with VARIANCE (truly pre-processed with transparency),
+  // check if alpha actually varies — a uniform alpha (e.g., all 255) means opaque background
   if (meta.channels === 4) {
     const stats = await sharp(logoBuffer).stats();
     const alphaChannel = stats.channels[3];
+    // Mean < 128 means mostly transparent → already processed, just clean up
+    // But if mean >= 128 AND std is low, it's an opaque image that needs bg removal
     if (alphaChannel && alphaChannel.mean < 128) {
-      // Already has good transparency — just clean it up
       return sharp(logoBuffer).ensureAlpha().png().toBuffer();
     }
+    // Also check if there's actual alpha variance (some transparent, some opaque)
+    // If stdev is high (>50), there's a mix → likely already processed
+    if (alphaChannel && alphaChannel.stdev > 50 && alphaChannel.mean < 200) {
+      return sharp(logoBuffer).ensureAlpha().png().toBuffer();
+    }
+    // Otherwise: opaque or near-opaque image — proceed to full bg removal
   }
 
   const { data, info } = await sharp(logoBuffer)
@@ -359,7 +367,7 @@ async function removeBackgroundAdaptive(
     .ensureAlpha().png().toBuffer();
 }
 
-async function autoCropToContent(buffer: Buffer): Promise<Buffer> {
+export async function autoCropToContent(buffer: Buffer): Promise<Buffer> {
   try { return await sharp(buffer).trim({ threshold: 10 }).png().toBuffer(); }
   catch { return buffer; }
 }
