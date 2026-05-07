@@ -323,50 +323,89 @@ export default function ProductPreview({
         // Dynamic blend mode based on product color
         const blendMode = getBlendMode(productColor);
 
-        // 1. Directional shadow (bottom-right)
+        // ─────────────────────────────────────
+        // PERSPECTIVE DEFORMATION
+        // Simulates the logo following the product's 3D form.
+        // Draw logo onto a temporary canvas, then map it to a
+        // perspective-distorted quadrilateral.
+        // ─────────────────────────────────────
+        const offscreen = document.createElement('canvas');
+        offscreen.width = Math.ceil(logoW);
+        offscreen.height = Math.ceil(logoH);
+        const offCtx = offscreen.getContext('2d')!;
+        offCtx.drawImage(logoImage, 0, 0, logoW, logoH);
+
+        // Perspective parameters — subtle 3D effect
+        // Top is slightly narrower (viewed from above), bottom slightly wider
+        const perspectiveStrength = 0.04; // 4% perspective distortion
+        const topNarrow = logoW * perspectiveStrength;
+        const bottomWide = logoW * perspectiveStrength * 0.5;
+
+        // Source quad corners (flat rectangle)
+        const sx = [0, logoW, logoW, 0];
+        const sy = [0, 0, logoH, logoH];
+
+        // Destination quad corners (perspective distorted)
+        const dx = [logoX + topNarrow, logoX + logoW - topNarrow, logoX + logoW + bottomWide, logoX - bottomWide];
+        const dy = [logoY, logoY, logoY + logoH, logoY + logoH];
+
+        // Draw shadow first (offset, blurred)
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.22)';
-        ctx.shadowBlur = Math.max(6, logoW * 0.02);
-        ctx.shadowOffsetX = Math.max(2, logoW * 0.008);
-        ctx.shadowOffsetY = Math.max(3, logoH * 0.012);
-        ctx.globalAlpha = 0.85;
-        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.globalAlpha = 0.18;
+        ctx.filter = 'blur(4px)';
+        drawPerspectiveQuad(ctx, offscreen,
+          sx, sy,
+          dx.map((x, i) => x + (i < 2 ? 2 : 3)),
+          dy.map((y, i) => y + (i < 2 ? 2 : 4)),
+        );
+        ctx.filter = 'none';
         ctx.restore();
 
-        // 2. Logo with dynamic blend mode for print realism
+        // Draw logo with perspective + blend mode
         ctx.save();
         ctx.globalCompositeOperation = blendMode;
-        ctx.globalAlpha = 0.94;
-        ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
+        ctx.globalAlpha = 0.92;
+        drawPerspectiveQuad(ctx, offscreen, sx, sy, dx, dy);
         ctx.restore();
 
-        // 3. Surface lighting overlay (subtle luminance from product)
+        // Surface lighting overlay — product luminance through logo
         ctx.save();
         ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.08;
-        ctx.drawImage(baseImg, drawX + area.x, drawY + area.y, area.width, area.height,
-                      logoX, logoY, logoW, logoH);
+        ctx.globalAlpha = 0.10;
+        const areaCrop = document.createElement('canvas');
+        areaCrop.width = Math.ceil(area.width);
+        areaCrop.height = Math.ceil(area.height);
+        const areaCtx = areaCrop.getContext('2d')!;
+        areaCtx.drawImage(baseImg, drawX + area.x, drawY + area.y, area.width, area.height, 0, 0, area.width, area.height);
+        drawPerspectiveQuad(ctx, areaCrop, [0, area.width, area.width, 0], [0, 0, area.height, area.height], dx, dy);
         ctx.restore();
 
-        // 4. Edge darkening (ink absorption at logo boundary)
+        // Edge darkening — ink absorption at logo boundary
         ctx.save();
         ctx.globalCompositeOperation = 'multiply';
-        ctx.globalAlpha = 0.04;
-        const shrink = Math.max(1, logoW * 0.005);
-        ctx.drawImage(logoImage, logoX + shrink, logoY + shrink, logoW - shrink * 2, logoH - shrink * 2);
+        ctx.globalAlpha = 0.05;
+        const shrink = Math.max(1, logoW * 0.008);
+        drawPerspectiveQuad(ctx, offscreen, sx, sy,
+          dx.map((x, i) => i < 2 ? x + shrink : x - shrink * 0.5),
+          dy.map((y, i) => i < 2 ? y + shrink : y - shrink * 0.5),
+        );
         ctx.restore();
 
-        // 5. Subtle highlight sheen (print gloss)
-        const sheenGrad = ctx.createLinearGradient(logoX, logoY, logoX + logoW, logoY + logoH);
-        sheenGrad.addColorStop(0, 'rgba(255,255,255,0.06)');
-        sheenGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
-        sheenGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
-        sheenGrad.addColorStop(1, 'rgba(0,0,0,0.03)');
+        // Highlight sheen — directional gloss gradient
         ctx.save();
         ctx.globalCompositeOperation = 'soft-light';
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.4;
+        const sheenGrad = ctx.createLinearGradient(logoX, logoY, logoX + logoW, logoY + logoH);
+        sheenGrad.addColorStop(0, 'rgba(255,255,255,0.08)');
+        sheenGrad.addColorStop(0.35, 'rgba(255,255,255,0)');
+        sheenGrad.addColorStop(0.65, 'rgba(0,0,0,0)');
+        sheenGrad.addColorStop(1, 'rgba(0,0,0,0.04)');
         ctx.fillStyle = sheenGrad;
-        ctx.fillRect(logoX, logoY, logoW, logoH);
+        ctx.beginPath();
+        ctx.moveTo(dx[0], dy[0]);
+        for (let i = 1; i < 4; i++) ctx.lineTo(dx[i], dy[i]);
+        ctx.closePath();
+        ctx.fill();
         ctx.restore();
       }
     } else {
@@ -484,6 +523,61 @@ export default function ProductPreview({
       </div>
     </div>
   );
+}
+
+// ==========================================
+// Perspective quad drawing
+// Maps a source canvas/image to a distorted quadrilateral
+// by splitting into two triangles with affine transforms
+// ==========================================
+
+function drawPerspectiveQuad(
+  ctx: CanvasRenderingContext2D,
+  source: HTMLCanvasElement | HTMLImageElement,
+  sx: number[], sy: number[],  // Source quad corners (4 points: TL, TR, BR, BL)
+  dx: number[], dy: number[],  // Dest quad corners (4 points: TL, TR, BR, BL)
+) {
+  // Split quad into two triangles: TL-TR-BL and TR-BR-BL
+  drawTriangle(ctx, source,
+    sx[0], sy[0], sx[1], sy[1], sx[3], sy[3],
+    dx[0], dy[0], dx[1], dy[1], dx[3], dy[3],
+  );
+  drawTriangle(ctx, source,
+    sx[1], sy[1], sx[2], sy[2], sx[3], sy[3],
+    dx[1], dy[1], dx[2], dy[2], dx[3], dy[3],
+  );
+}
+
+function drawTriangle(
+  ctx: CanvasRenderingContext2D,
+  source: HTMLCanvasElement | HTMLImageElement,
+  sx0: number, sy0: number, sx1: number, sy1: number, sx2: number, sy2: number,
+  dx0: number, dy0: number, dx1: number, dy1: number, dx2: number, dy2: number,
+) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(dx0, dy0);
+  ctx.lineTo(dx1, dy1);
+  ctx.lineTo(dx2, dy2);
+  ctx.closePath();
+  ctx.clip();
+
+  // Compute affine transform from source triangle to dest triangle
+  // Source: (sx0,sy0), (sx1,sy1), (sx2,sy2)
+  // Dest:   (dx0,dy0), (dx1,dy1), (dx2,dy2)
+  const denom = (sx0 - sx2) * (sy1 - sy2) - (sx1 - sx2) * (sy0 - sy2);
+  if (Math.abs(denom) < 0.001) { ctx.restore(); return; }
+
+  const m11 = ((dx0 - dx2) * (sy1 - sy2) - (dx1 - dx2) * (sy0 - sy2)) / denom;
+  const m12 = ((dx1 - dx2) * (sx0 - sx2) - (dx0 - dx2) * (sx1 - sx2)) / denom;
+  const m21 = ((dy0 - dy2) * (sy1 - sy2) - (dy1 - dy2) * (sy0 - sy2)) / denom;
+  const m22 = ((dy1 - dy2) * (sx0 - sx2) - (dy0 - dy2) * (sx1 - sx2)) / denom;
+  const tx = dx2 - m11 * sx2 - m12 * sy2;
+  const ty = dy2 - m21 * sx2 - m22 * sy2;
+
+  ctx.setTransform(m11, m21, m12, m22, tx, ty);
+  ctx.drawImage(source, 0, 0);
+  ctx.restore();
 }
 
 // ==========================================

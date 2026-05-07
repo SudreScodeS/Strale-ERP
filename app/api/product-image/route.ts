@@ -307,27 +307,27 @@ async function compositeLogoLight(
   let cleanLogo = await removeBackgroundAdaptive(logoBuffer, 220);
   cleanLogo = await autoCropToContent(cleanLogo);
 
-  // Balanced compositor — enough effects for realism,
-  // but not so much that it looks over-processed before AI refinement.
-  // The AI refinement step (strength 0.65) will re-render the logo area,
-  // so we need a solid base composite for the AI to work with.
+  // PROMPT MESTRE compositing: prepare a realistic base for AI refinement.
+  // The goal is NOT to make it look perfect — the AI will do that.
+  // The goal is to give the AI a ROUGH but correctly positioned composite
+  // so it can re-render with proper perspective, texture, and lighting.
   const balancedOpts = {
     blendMode: 'multiply' as const,
-    opacity: 0.92,
-    featherRadius: 2.0,
-    fabricTexture: true,      // Fabric texture bleed-through
-    textureIntensity: 0.05,
-    shadowBlur: 4,
-    shadowOpacity: 0.12,
+    opacity: 0.75,              // Lower opacity — AI will reinforce
+    featherRadius: 3.0,         // More feathering for softer edges
+    fabricTexture: true,        // Fabric texture bleed-through
+    textureIntensity: 0.08,     // More texture showing through
+    shadowBlur: 6,              // Softer shadow
+    shadowOpacity: 0.15,        // Slightly stronger shadow for depth
     shadowAngle: 135,
-    shadowDistance: 2,
+    shadowDistance: 3,
     bgThreshold: 220,
     curvature: 0,
-    matchLighting: true,      // Match product surface lighting
-    lightingIntensity: 0.10,
-    printIntegration: true,   // Edge darkening + highlight sheen
-    printEdgeDarken: 0.06,
-    printHighlight: 0.03,
+    matchLighting: true,        // Match product surface lighting
+    lightingIntensity: 0.12,    // More lighting integration
+    printIntegration: true,     // Edge darkening + highlight sheen
+    printEdgeDarken: 0.08,      // Stronger edge darkening (ink absorption)
+    printHighlight: 0.04,       // Subtle highlight on print
   };
 
   return compositeLogo(productBuffer, cleanLogo, printArea, balancedOpts);
@@ -343,46 +343,36 @@ async function refineWithAI(
   style: string,
   hasLogo: boolean,
 ): Promise<Buffer> {
-  // When logo is present, the prompt MUST:
-  // 1. Describe the logo as ALREADY printed on the product (preserve it!)
-  // 2. Focus on improving realism/quality of the WHOLE image
-  // 3. NOT describe adding a new logo — the composited one must survive
-  //
-  // CRITICAL: strength 0.35-0.42 is the sweet spot for img2img with logo.
-  // Too high (0.60+) → AI re-renders everything, logo disappears.
-  // Too low (0.20) → no quality improvement, still looks like a sticker.
+  // PROMPT MESTRE: Ultra-realistic e-commerce mockup generation
+  // The AI must see the logo as ALREADY PRINTED on the product surface.
+  // Key requirements: perspective deformation, fabric texture bleed-through,
+  // ink absorption, lighting coherence, depth integration.
   const prompts: Record<string, { withLogo: string; noLogo: string }> = {
     sacola: {
-      withLogo: 'high-end product photography of a cotton tote bag, the existing graphic design is screen-printed onto the fabric with matte ink, the ink absorbs into the cotton fibers giving a soft hand-feel, the print follows the fabric drape naturally, visible fabric weave texture through the print area, professional studio lighting with soft shadows, seamless white background, ultra sharp focus, 4k detail, commercial catalog quality, realistic textile product',
-      noLogo: 'high-end product photography of a plain blank cotton tote bag, professional studio lighting, seamless white background, realistic fabric texture and drape, ultra sharp focus, 4k detail, commercial catalog quality',
+      withLogo: `Professional e-commerce product photography of a cotton tote bag. The graphic design and logo are screen-printed directly onto the fabric surface using silk-screen ink. The print follows the bag's perspective, curvature, and any fabric folds perfectly — the logo deforms naturally with the textile drape. The cotton weave texture is visible through the printed area, giving the ink a matte, absorbed appearance. Shadows from fabric folds darken the print naturally. The logo has no rectangular border, no white background, no sticker effect — it is seamlessly integrated into the material as if factory-printed. Soft directional studio lighting with natural shadows on a clean white seamless background. Ultra sharp focus, 4K detail, Canon EOS R5 commercial catalog photography. Realistic textile product, professional studio shot.`,
+      noLogo: `Professional e-commerce product photography of a plain blank cotton tote bag. Clean fabric texture with natural drape and folds. Soft directional studio lighting with natural shadows on a clean white seamless background. Ultra sharp focus, 4K detail, commercial catalog quality. Realistic textile product.`,
     },
     camiseta: {
-      withLogo: 'high-end product photography of a cotton t-shirt, the existing graphic design is screen-printed on the chest with water-based ink, the print has soft edges where ink meets fabric fibers, visible jersey knit texture through the print, the print follows the natural shirt drape, professional studio lighting with soft shadows, seamless white background, ultra sharp focus, 4k detail, commercial catalog quality',
-      noLogo: 'high-end product photography of a plain blank cotton t-shirt, professional studio lighting, seamless white background, realistic jersey texture, natural drape, ultra sharp focus, 4k detail, commercial catalog quality',
+      withLogo: `Professional e-commerce product photography of a cotton t-shirt on invisible mannequin. The graphic design and logo are screen-printed on the chest using water-based ink. The print follows the jersey knit texture and natural shirt drape — ink absorbs into the fabric fibers with soft edges. The logo deforms with the shirt's perspective and any wrinkles. Shadows from folds darken the print naturally. No rectangular border, no sticker effect — factory-printed integration. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog photography.`,
+      noLogo: `Professional e-commerce product photography of a plain blank cotton t-shirt on invisible mannequin. Natural jersey texture and drape. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog quality.`,
     },
     caneca: {
-      withLogo: 'high-end product photography of a ceramic mug, the existing graphic design is sublimation-printed fused into the glossy glaze, smooth integration with the ceramic surface, natural reflections following the cylindrical curve, professional studio lighting, seamless white background, ultra sharp focus, 4k detail, commercial catalog quality',
-      noLogo: 'high-end product photography of a plain blank ceramic mug, professional studio lighting, seamless white background, glossy glaze, natural reflections, ultra sharp focus, 4k detail, commercial catalog quality',
+      withLogo: `Professional e-commerce product photography of a ceramic coffee mug. The graphic design and logo are sublimation-printed fused into the glossy ceramic glaze. The print follows the cylindrical curvature of the mug perfectly. Natural reflections and specular highlights follow the mug's surface curve. The logo has no sticker effect — it is permanently bonded into the glaze surface. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog photography.`,
+      noLogo: `Professional e-commerce product photography of a plain blank ceramic coffee mug with glossy glaze. Natural reflections and specular highlights. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog quality.`,
     },
   };
 
   const stylePrompts = prompts[style] || prompts.sacola;
   const prompt = hasLogo ? stylePrompts.withLogo : stylePrompts.noLogo;
 
-  // NEGATIVE PROMPT — explicitly tell the AI what NOT to do
-  // This prevents the logo from being removed or replaced
-  const negativePrompt = hasLogo
-    ? 'sticker, decal, rectangular border, white box around logo, floating logo, logo removed, blank product, no design, distorted logo, blurry, low quality, watermark, text overlay'
-    : 'logo, text, design, watermark, blurry, low quality';
+  // Strength: 0.5 gives the AI enough freedom to properly integrate the logo
+  // with perspective, texture, and lighting — while preserving the base composition.
+  // 0.38 was too conservative (logo stayed flat). 0.5 lets the AI re-render
+  // the logo area with proper fabric integration.
+  const strength = hasLogo ? 0.50 : 0.25;
 
-  // Strength sweet spot for img2img WITH logo:
-  // 0.35-0.42 — preserves composited logo while improving quality
-  // At 0.38 the AI improves ~38% of pixels → enough for realism,
-  // but the composited logo structure survives intact.
-  const strength = hasLogo ? 0.38 : 0.25;
-
-  // More steps = better quality
-  const steps = hasLogo ? 20 : 8;
+  // More steps = better quality for logo integration
+  const steps = hasLogo ? 28 : 8;
 
   console.log(`[product-image] AI refinement: strength=${strength}, steps=${steps}, hasLogo=${hasLogo}`);
 
@@ -391,7 +381,6 @@ async function refineWithAI(
     steps,
     width: 512,
     height: 640,
-    negativePrompt,
   });
 }
 
