@@ -132,9 +132,9 @@ const AVAILABLE_METRICS: MetricOption[] = [
 const DEFAULT_METRIC_IDS = ['products', 'orders', 'revenue', 'profit'];
 
 function getMetricsStorageKey(): string {
-  if (typeof window === 'undefined') return 'strale-dashboard-metrics-default';
+  if (typeof window === 'undefined') return 'elitium-dashboard-metrics-default';
   const user = getCurrentUser();
-  return `strale-dashboard-metrics-${user?.id || 'default'}`;
+  return `elitium-dashboard-metrics-${user?.id || 'default'}`;
 }
 
 function loadSelectedMetrics(): string[] {
@@ -205,7 +205,7 @@ function MetricPicker({
               }`}
               style={{
                 background: isSelected ? 'var(--card-bg)' : 'var(--surface-muted)',
-                border: `1px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border)'}`,
+                border: `1px solid ${isSelected ? 'var(--brand)' : 'var(--border)'}`,
                 color: 'var(--text-primary)',
               }}
             >
@@ -263,7 +263,7 @@ export default function Home() {
     return (
       <ProtectedPage allowedRoles={['admin']}>
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand-blue)]" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand)]" />
         </div>
       </ProtectedPage>
     );
@@ -369,7 +369,7 @@ export default function Home() {
                     <a
                       href="/inventory"
                       className="ml-auto text-xs font-semibold transition-opacity hover:opacity-70"
-                      style={{ color: 'var(--brand-blue)' }}
+                      style={{ color: 'var(--brand)' }}
                     >
                       Ver estoque
                     </a>
@@ -389,7 +389,7 @@ export default function Home() {
                     <a
                       href="/sales"
                       className="text-xs font-medium transition-opacity hover:opacity-70"
-                      style={{ color: 'var(--brand-blue)' }}
+                      style={{ color: 'var(--brand)' }}
                     >
                       Ver todos
                     </a>

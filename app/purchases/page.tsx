@@ -249,7 +249,7 @@ export default function PurchasesPage() {
                       placeholder="Contato (telefone, email...)"
                       className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
                     />
-                    <button className="rounded-2xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700" type="submit">
+                    <button className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
                       Adicionar fornecedor
                     </button>
                   </form>
@@ -331,7 +331,7 @@ export default function PurchasesPage() {
                       />
                     </label>
                     <div className="flex items-end">
-                      <button className="rounded-2xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700" type="submit">
+                      <button className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
                         Registrar compra
                       </button>
                     </div>
@@ -414,7 +414,7 @@ export default function PurchasesPage() {
         </div>
 
         {editingPurchase ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar compra</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitPurchaseUpdate}>
@@ -484,7 +484,7 @@ export default function PurchasesPage() {
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-2 text-white">
+                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
                     Salvar
                   </button>
                 </div>

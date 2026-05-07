@@ -221,7 +221,7 @@ export default function AdminPage() {
                     type="submit"
                     disabled={saving}
                     className="inline-flex h-12 items-center justify-center rounded-xl px-8 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: 'var(--brand-blue)' }}
+                    style={{ background: 'var(--brand)' }}
                   >
                     {saving ? (
                       <>

@@ -35,7 +35,7 @@ interface LayoutContextValue {
 
 const LayoutContext = createContext<LayoutContextValue | null>(null);
 
-const STORAGE_KEY_PREFIX = 'strale-layout-';
+const STORAGE_KEY_PREFIX = 'elitium-layout-';
 
 function getStorageKey(): string {
   if (typeof window === 'undefined') return `${STORAGE_KEY_PREFIX}default`;

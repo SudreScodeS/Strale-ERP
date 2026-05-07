@@ -307,7 +307,7 @@ export function Sidebar({ children }: SidebarProps) {
           <div className="flex items-center gap-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold"
-              style={{ background: 'var(--brand-blue)', color: '#fff' }}
+              style={{ background: 'var(--brand)', color: '#fff' }}
             >
               {(username || 'C')[0].toUpperCase()}
             </div>
@@ -481,7 +481,7 @@ export function Sidebar({ children }: SidebarProps) {
               {role ? (
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-                  style={{ background: 'var(--brand-blue)', color: '#fff' }}
+                  style={{ background: 'var(--brand)', color: '#fff' }}
                   title={username || 'Usuário'}
                 >
                   {(username || 'C')[0].toUpperCase()}
@@ -515,7 +515,7 @@ export function PageHeader({ title, description }: { title: string; description?
     <div className="mb-8 flex flex-col gap-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand-blue)' }}>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand)' }}>
             {globalConfig.systemName}
           </p>
           <h2 className="mt-1 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
@@ -524,7 +524,7 @@ export function PageHeader({ title, description }: { title: string; description?
         </div>
         <div
           className="self-start rounded-xl px-4 py-2 text-sm font-medium"
-          style={{ background: 'var(--brand-blue-soft)', color: 'var(--brand-blue)', border: '1px solid var(--brand-blue-muted)' }}
+          style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
         >
           {globalConfig.companyName}
         </div>

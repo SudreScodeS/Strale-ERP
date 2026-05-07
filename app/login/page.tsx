@@ -69,7 +69,7 @@ export default function LoginPage() {
           </div>
           <button
             className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-all"
-            style={{ background: 'var(--brand-blue)' }}
+            style={{ background: 'var(--brand)' }}
             type="submit"
           >
             Entrar

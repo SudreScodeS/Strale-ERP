@@ -64,8 +64,8 @@ export function ProtectedPage({ children, allowedRoles, redirectTo = '/login' }:
   // Previne flash de conteúdo não autorizado
   if (!authorized) {
     return (
-      <div className="rounded-3xl bg-white p-10 text-center text-slate-700 shadow-sm">
-        Validando sessão...
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand)]" />
       </div>
     );
   }

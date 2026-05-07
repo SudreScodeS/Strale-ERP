@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Strale ERP',
-  description: 'ERP modular para gestao empresarial.',
+  title: 'Elitium',
+  description: 'Premium ERP — Gestão empresarial de nova geração.',
   icons: {
     icon: '/LogoE.svg',
     shortcut: '/LogoE.svg',

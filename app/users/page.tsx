@@ -172,7 +172,7 @@ export default function UsersPage() {
                               type="button"
                               onClick={() => handleStartEdit(user)}
                               className="rounded px-2 py-1 text-[10px] font-medium transition-colors"
-                              style={{ background: 'var(--brand-blue-soft)', color: 'var(--brand-blue)' }}
+                              style={{ background: 'var(--brand-muted)', color: 'var(--brand)' }}
                             >
                               Editar
                             </button>
@@ -246,7 +246,7 @@ export default function UsersPage() {
                     <div className="flex gap-2 pt-2">
                       <button
                         className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all"
-                        style={{ background: 'var(--brand-blue)' }}
+                        style={{ background: 'var(--brand)' }}
                         type="submit"
                       >
                         {editingUserId ? 'Salvar' : 'Criar'}

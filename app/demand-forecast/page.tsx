@@ -102,7 +102,7 @@ function MiniBarChart({ labels, values, title }: { labels: string[]; values: num
               className="w-full rounded-t transition-all"
               style={{
                 height: `${Math.max(4, (val / max) * 100)}%`,
-                background: 'var(--brand-blue)',
+                background: 'var(--brand)',
                 opacity: 0.8,
                 minHeight: '3px',
               }}
@@ -161,7 +161,7 @@ function ForecastTable({ title, forecasts }: { title: string; forecasts: DemandF
                   <td className="py-2.5 text-center"><RiskBadge level={f.riskLevel} /></td>
                   <td className="py-2.5 text-right">
                     {f.suggestedReplenishment > 0 ? (
-                      <span className="font-semibold" style={{ color: 'var(--brand-blue)' }}>+{f.suggestedReplenishment}</span>
+                      <span className="font-semibold" style={{ color: 'var(--brand)' }}>+{f.suggestedReplenishment}</span>
                     ) : (
                       <span style={{ color: 'var(--text-faint)' }}>—</span>
                     )}
@@ -198,7 +198,7 @@ export default function DemandForecastPage() {
     return (
       <ProtectedPage allowedRoles={['admin']}>
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand-blue)]" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand)]" />
         </div>
       </ProtectedPage>
     );

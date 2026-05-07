@@ -340,7 +340,7 @@ export default function InventoryPage() {
                   <button
                     type="button"
                     onClick={() => void handleUpdateProduct(product)}
-                    className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700"
+                    className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-sm text-white transition hover:bg-[var(--brand-dark)]"
                   >
                     Atualizar produto
                   </button>
@@ -424,13 +424,13 @@ export default function InventoryPage() {
           <div className="space-y-6">
             <div className="rounded-3xl bg-white p-6 shadow-sm">
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setActiveForm('product')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'product' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                <button type="button" onClick={() => setActiveForm('product')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'product' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
                   Produto
                 </button>
-                <button type="button" onClick={() => setActiveForm('group')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'group' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                <button type="button" onClick={() => setActiveForm('group')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'group' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
                   Grupo
                 </button>
-                <button type="button" onClick={() => setActiveForm('variable')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'variable' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                <button type="button" onClick={() => setActiveForm('variable')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'variable' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
                   Variável
                 </button>
               </div>
@@ -481,7 +481,7 @@ export default function InventoryPage() {
                     className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
-                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
+                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
                   Criar produto
                 </button>
               </form>
@@ -533,7 +533,7 @@ export default function InventoryPage() {
                     className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
-                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
+                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
                   Criar grupo
                 </button>
               </form>
@@ -586,7 +586,7 @@ export default function InventoryPage() {
                     className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
-                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
+                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
                   Criar variável
                 </button>
               </form>
@@ -597,7 +597,7 @@ export default function InventoryPage() {
           </DraggableSection>
         </section>
         {editingVariable ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar variável</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitVariableUpdate}>
@@ -638,7 +638,7 @@ export default function InventoryPage() {
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-2 text-white">
+                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
                     Salvar
                   </button>
                 </div>
@@ -647,7 +647,7 @@ export default function InventoryPage() {
           </div>
         ) : null}
         {editingProduct ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar produto</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitProductUpdate}>
@@ -701,7 +701,7 @@ export default function InventoryPage() {
                   <button type="button" onClick={() => setEditingProduct(null)} className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700">
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-2 text-white">
+                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
                     Salvar
                   </button>
                 </div>
@@ -710,7 +710,7 @@ export default function InventoryPage() {
           </div>
         ) : null}
         {editingGroup ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar grupo</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitGroupUpdate}>
@@ -746,7 +746,7 @@ export default function InventoryPage() {
                   <button type="button" onClick={() => setEditingGroup(null)} className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700">
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-2 text-white">
+                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
                     Salvar
                   </button>
                 </div>

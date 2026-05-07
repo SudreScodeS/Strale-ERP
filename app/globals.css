@@ -1,58 +1,100 @@
 @import "tailwindcss";
 
 /* ==========================================
-   DESIGN TOKENS — LIGHT MODE (default)
+   ELITIUM — DESIGN TOKENS
+   Premium dark metallic ERP theme
+   Silver · Purple · Dark graphite
    ========================================== */
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --brand-blue: #2563eb;
-  --brand-blue-dark: #1d4ed8;
-  --brand-blue-soft: #eff6ff;
-  --brand-blue-muted: #dbeafe;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --surface-muted: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
-  --input-bg: #f8fafc;
-  --input-border: #e2e8f0;
-  --input-focus: #2563eb;
-  --input-focus-ring: rgba(37, 99, 235, 0.15);
-  --success: #059669;
-  --success-bg: #ecfdf5;
-  --success-border: #a7f3d0;
-  --warning: #d97706;
-  --warning-bg: #fffbeb;
-  --warning-border: #fde68a;
-  --danger: #dc2626;
-  --danger-bg: #fef2f2;
-  --danger-border: #fecaca;
-  --info: #2563eb;
-  --info-bg: #eff6ff;
-  --info-border: #bfdbfe;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --radius-sm: 0.75rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
+  /* Backgrounds */
+  --background: #0c0a10;
+  --background-elevated: #110e18;
+  --foreground: #e8e4f0;
+
+  /* Brand — Metallic Purple */
+  --brand: #a78bfa;
+  --brand-dark: #7c3aed;
+  --brand-light: #c4b5fd;
+  --brand-muted: rgba(139, 92, 246, 0.12);
+  --brand-border: rgba(139, 92, 246, 0.2);
+
+  /* Surfaces */
+  --surface: #13111a;
+  --surface-soft: #18152a;
+  --surface-muted: #1e1a2e;
+  --surface-hover: #242038;
+
+  /* Borders */
+  --border: #2a2540;
+  --border-strong: #3d3658;
+  --border-subtle: #1f1b30;
+
+  /* Text — Silver metallic */
+  --text-primary: #ece8f4;
+  --text-secondary: #b0a8c4;
+  --text-muted: #7e7598;
+  --text-faint: #5a5274;
+
+  /* Inputs */
+  --input-bg: #1613224d;
+  --input-border: #2a2540;
+  --input-focus: #a78bfa;
+  --input-focus-ring: rgba(167, 139, 250, 0.18);
+
+  /* Status */
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.08);
+  --success-border: rgba(52, 211, 153, 0.2);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.08);
+  --warning-border: rgba(251, 191, 36, 0.2);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.08);
+  --danger-border: rgba(248, 113, 113, 0.2);
+  --info: #818cf8;
+  --info-bg: rgba(129, 140, 248, 0.08);
+  --info-border: rgba(129, 140, 248, 0.2);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.6), 0 4px 8px -4px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.08);
+
+  /* Radii */
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
   --radius-full: 9999px;
-  --sidebar-bg: #ffffff;
-  --sidebar-border: #e2e8f0;
-  --sidebar-hover: #eff6ff;
-  --sidebar-active: #2563eb;
+
+  /* Sidebar */
+  --sidebar-bg: #0f0d16;
+  --sidebar-border: #1f1b30;
+  --sidebar-hover: rgba(167, 139, 250, 0.06);
+  --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #475569;
-  --sidebar-text-strong: #0f172a;
-  --modal-overlay: rgba(15, 23, 42, 0.5);
-  --card-bg: #ffffff;
-  --card-border: #e2e8f0;
-  color-scheme: light;
+  --sidebar-text: #8a82a0;
+  --sidebar-text-strong: #ece8f4;
+
+  /* Modal */
+  --modal-overlay: rgba(6, 4, 10, 0.8);
+
+  /* Cards */
+  --card-bg: #13111a;
+  --card-border: #2a2540;
+
+  /* Metallic shimmer (subtle) */
+  --metallic-shimmer: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.02) 40%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0.02) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -63,54 +105,79 @@
 }
 
 /* ==========================================
-   DESIGN TOKENS — DARK MODE
+   LIGHT MODE OVERRIDE
    ========================================== */
-html[data-theme='dark'] {
-  --background: #0b0f1a;
-  --foreground: #e2e8f0;
-  --brand-blue: #3b82f6;
-  --brand-blue-dark: #60a5fa;
-  --brand-blue-soft: #172554;
-  --brand-blue-muted: #1e3a5f;
-  --surface: #111827;
-  --surface-soft: #0f172a;
-  --surface-muted: #1e293b;
-  --border: #1e293b;
-  --border-strong: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
-  --input-bg: #1e293b;
-  --input-border: #334155;
-  --input-focus: #3b82f6;
-  --input-focus-ring: rgba(59, 130, 246, 0.25);
-  --success: #34d399;
-  --success-bg: #064e3b;
-  --success-border: #065f46;
-  --warning: #fbbf24;
-  --warning-bg: #78350f;
-  --warning-border: #92400e;
-  --danger: #f87171;
-  --danger-bg: #7f1d1d;
-  --danger-border: #991b1b;
-  --info: #60a5fa;
-  --info-bg: #1e3a5f;
-  --info-border: #1e40af;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --sidebar-bg: #111827;
-  --sidebar-border: #1e293b;
-  --sidebar-hover: #1e293b;
-  --sidebar-active: #3b82f6;
+html[data-theme='light'] {
+  --background: #f5f3f8;
+  --background-elevated: #ffffff;
+  --foreground: #1a1528;
+
+  --brand: #7c3aed;
+  --brand-dark: #6d28d9;
+  --brand-light: #8b5cf6;
+  --brand-muted: rgba(124, 58, 237, 0.06);
+  --brand-border: rgba(124, 58, 237, 0.15);
+
+  --surface: #ffffff;
+  --surface-soft: #f8f6fc;
+  --surface-muted: #f0ecf6;
+  --surface-hover: #e8e2f2;
+
+  --border: #e4dfe9;
+  --border-strong: #cdc5d6;
+  --border-subtle: #ece8f0;
+
+  --text-primary: #1a1528;
+  --text-secondary: #5a5070;
+  --text-muted: #8a8298;
+  --text-faint: #a8a0b8;
+
+  --input-bg: #f8f6fc;
+  --input-border: #e4dfe9;
+  --input-focus: #7c3aed;
+  --input-focus-ring: rgba(124, 58, 237, 0.12);
+
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --info: #7c3aed;
+  --info-bg: #f5f3ff;
+  --info-border: #ddd6fe;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.06);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e4dfe9;
+  --sidebar-hover: #f5f3ff;
+  --sidebar-active: linear-gradient(135deg, #7c3aed, #8b5cf6);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #94a3b8;
-  --sidebar-text-strong: #f1f5f9;
-  --modal-overlay: rgba(0, 0, 0, 0.7);
-  --card-bg: #111827;
-  --card-border: #1e293b;
-  color-scheme: dark;
+  --sidebar-text: #6a6280;
+  --sidebar-text-strong: #1a1528;
+
+  --modal-overlay: rgba(26, 21, 40, 0.4);
+
+  --card-bg: #ffffff;
+  --card-border: #e4dfe9;
+
+  --metallic-shimmer: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 40%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.4) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+
+  color-scheme: light;
 }
 
 /* ==========================================
@@ -125,20 +192,20 @@ body {
 }
 
 /* ==========================================
-   SCROLLBAR (dark mode)
+   SCROLLBAR
    ========================================== */
-html[data-theme='dark'] ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-html[data-theme='dark'] ::-webkit-scrollbar-track {
-  background: var(--surface-soft);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-html[data-theme='dark'] ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--border-strong);
-  border-radius: 4px;
+  border-radius: 3px;
 }
-html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: var(--text-faint);
 }
 
@@ -146,13 +213,13 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
    LINKS
    ========================================== */
 a {
-  color: var(--brand-blue);
+  color: var(--brand);
   text-decoration: none;
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 a:hover {
-  color: var(--brand-blue-dark);
-  text-decoration: underline;
+  color: var(--brand-light);
+  text-decoration: none;
 }
 a:focus-visible {
   outline: 2px solid var(--input-focus);
@@ -161,7 +228,7 @@ a:focus-visible {
 }
 
 /* ==========================================
-   FOCUS STATES (global)
+   FOCUS STATES
    ========================================== */
 *:focus-visible {
   outline: 2px solid var(--input-focus);
@@ -172,52 +239,52 @@ a:focus-visible {
    BRAND COMPONENTS
    ========================================== */
 .brand-primary {
-  background: var(--brand-blue);
+  background: var(--brand);
   color: #ffffff;
   border: none;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 .brand-primary:hover {
-  background: var(--brand-blue-dark);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  background: var(--brand-dark);
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.25);
 }
 .brand-primary:active {
   transform: scale(0.97);
 }
 .brand-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
 .brand-soft {
-  background: var(--brand-blue-soft);
-  color: var(--brand-blue);
-  border: 1px solid var(--brand-blue-muted);
+  background: var(--brand-muted);
+  color: var(--brand);
+  border: 1px solid var(--brand-border);
 }
 
 /* ==========================================
-   DARK MODE — GLOBAL OVERRIDES
-   Using CSS variables eliminates the need for !important
+   GLOBAL DARK MODE OVERRIDES
    ========================================== */
 
 /* Backgrounds */
 html[data-theme='dark'] .bg-white { background-color: var(--surface); }
 html[data-theme='dark'] .bg-slate-50 { background-color: var(--surface-soft); }
 html[data-theme='dark'] .bg-slate-100 { background-color: var(--surface-muted); }
-html[data-theme='dark'] .bg-blue-50 { background-color: var(--brand-blue-soft); }
+html[data-theme='dark'] .bg-blue-50 { background-color: var(--brand-muted); }
 html[data-theme='dark'] .bg-emerald-50 { background-color: var(--success-bg); }
 html[data-theme='dark'] .bg-amber-50 { background-color: var(--warning-bg); }
 html[data-theme='dark'] .bg-red-50 { background-color: var(--danger-bg); }
 
 /* Borders */
 html[data-theme='dark'] .border-slate-200 { border-color: var(--border); }
-html[data-theme='dark'] .border-blue-200 { border-color: var(--brand-blue-muted); }
+html[data-theme='dark'] .border-blue-200 { border-color: var(--brand-border); }
 html[data-theme='dark'] .border-emerald-200 { border-color: var(--success-border); }
 html[data-theme='dark'] .border-amber-200 { border-color: var(--warning-border); }
 html[data-theme='dark'] .border-red-200 { border-color: var(--danger-border); }
+html[data-theme='dark'] .border-purple-200 { border-color: var(--brand-border); }
 
 /* Text colors */
 html[data-theme='dark'] .text-slate-900 { color: var(--text-primary); }
@@ -227,19 +294,20 @@ html[data-theme='dark'] .text-slate-600 { color: var(--text-secondary); }
 html[data-theme='dark'] .text-slate-500 { color: var(--text-muted); }
 html[data-theme='dark'] .text-slate-400 { color: var(--text-faint); }
 html[data-theme='dark'] .text-slate-300 { color: var(--text-faint); }
-html[data-theme='dark'] .text-blue-700 { color: var(--brand-blue); }
+html[data-theme='dark'] .text-blue-700 { color: var(--brand); }
 html[data-theme='dark'] .text-emerald-800 { color: var(--success); }
 html[data-theme='dark'] .text-amber-800 { color: var(--warning); }
 html[data-theme='dark'] .text-amber-900 { color: var(--warning); }
 html[data-theme='dark'] .text-red-800 { color: var(--danger); }
 html[data-theme='dark'] .text-red-900 { color: var(--danger); }
+html[data-theme='dark'] .text-purple-800 { color: var(--brand); }
 
 /* Hover states */
-html[data-theme='dark'] .hover\:bg-slate-100:hover { background-color: var(--surface-muted); }
+html[data-theme='dark'] .hover\:bg-slate-100:hover { background-color: var(--surface-hover); }
 html[data-theme='dark'] .hover\:bg-slate-50:hover { background-color: var(--surface-soft); }
 html[data-theme='dark'] .hover\:bg-blue-50:hover { background-color: var(--sidebar-hover); }
-html[data-theme='dark'] .hover\:bg-blue-700:hover { background-color: var(--brand-blue-dark); }
-html[data-theme='dark'] .hover\:bg-slate-700:hover { background-color: #334155; }
+html[data-theme='dark'] .hover\:bg-blue-700:hover { background-color: var(--brand-dark); }
+html[data-theme='dark'] .hover\:bg-slate-700:hover { background-color: var(--surface-hover); }
 html[data-theme='dark'] .hover\:bg-rose-700:hover { background-color: #b91c1c; }
 html[data-theme='dark'] .hover\:text-amber-900:hover { color: var(--warning); }
 html[data-theme='dark'] .hover\:text-red-900:hover { color: var(--danger); }
@@ -266,12 +334,12 @@ html[data-theme='dark'] textarea:focus {
 
 /* Checkbox */
 html[data-theme='dark'] input[type="checkbox"] {
-  accent-color: var(--brand-blue);
+  accent-color: var(--brand);
   background-color: var(--input-bg);
   border-color: var(--input-border);
 }
 
-/* Buttons — dark mode specific */
+/* Buttons */
 html[data-theme='dark'] button {
   color: inherit;
 }
@@ -289,10 +357,10 @@ html[data-theme='dark'] table tr:hover {
 }
 
 /* ==========================================
-   COMPONENT-SPECIFIC DARK MODE FIXES
+   COMPONENT-SPECIFIC OVERRIDES
    ========================================== */
 
-/* Status badges in dark mode */
+/* Status badges */
 html[data-theme='dark'] .bg-emerald-100 {
   background-color: var(--success-bg);
 }
@@ -312,7 +380,7 @@ html[data-theme='dark'] .text-red-800 {
   color: var(--danger);
 }
 html[data-theme='dark'] .bg-orange-100 {
-  background-color: #451a03;
+  background-color: rgba(251, 146, 60, 0.08);
 }
 html[data-theme='dark'] .text-orange-800 {
   color: #fb923c;
@@ -360,7 +428,9 @@ html[data-theme='dark'] input[type="date"] {
   color-scheme: dark;
 }
 
-/* Spinner animation */
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -368,7 +438,6 @@ html[data-theme='dark'] input[type="date"] {
   animation: spin 1s linear infinite;
 }
 
-/* Bounce animation for typing indicator */
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
@@ -377,8 +446,23 @@ html[data-theme='dark'] input[type="date"] {
   animation: bounce 1s infinite;
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(139, 92, 246, 0.12); }
+}
+
 /* ==========================================
-   TRANSITION UTILITIES
+   TRANSITIONS
    ========================================== */
 .transition-all {
   transition: all 0.2s ease;

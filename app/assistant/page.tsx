@@ -56,7 +56,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
         }`}
         style={
           isUser
-            ? { background: 'var(--brand-blue)', color: '#ffffff' }
+            ? { background: 'var(--brand)', color: '#ffffff' }
             : { background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }
         }
       >
@@ -153,7 +153,7 @@ export default function AssistantPage() {
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand-blue)' }}>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand)' }}>
             {globalConfig.systemName}
           </p>
           <h2 className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -220,8 +220,8 @@ export default function AssistantPage() {
                   className="rounded-full px-3 py-1.5 text-[11px] font-medium transition-all"
                   style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--brand-blue)';
-                    e.currentTarget.style.color = 'var(--brand-blue)';
+                    e.currentTarget.style.borderColor = 'var(--brand)';
+                    e.currentTarget.style.color = 'var(--brand)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = 'var(--border)';
@@ -251,7 +251,7 @@ export default function AssistantPage() {
                 onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
                 className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: 'var(--brand-blue)' }}
+                style={{ background: 'var(--brand)' }}
               >
                 Enviar
               </button>

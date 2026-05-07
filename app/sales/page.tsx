@@ -452,14 +452,14 @@ export default function SalesPage() {
           <button
             type="button"
             onClick={() => setActiveSection('search')}
-            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'search' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}
+            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'search' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}
           >
             Buscar pedidos
           </button>
           <button
             type="button"
             onClick={() => setActiveSection('create')}
-            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'create' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}
+            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'create' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}
           >
             Criar pedido
           </button>
@@ -860,7 +860,7 @@ export default function SalesPage() {
             </div>
           </div>
 
-          <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-slate-900 px-6 text-white transition hover:bg-slate-700" type="submit">
+          <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
             Finalizar Pedido
           </button>
           {statusMessage ? <p className="text-sm text-slate-600">{statusMessage}</p> : null}
@@ -872,7 +872,7 @@ export default function SalesPage() {
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
       {selectedOrder ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setSelectedOrder(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedOrder(null)}>
           <div
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -1040,7 +1040,7 @@ export default function SalesPage() {
               <button
                 type="button"
                 onClick={() => setSelectedOrder(null)}
-                className="rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700"
+                className="rounded-2xl bg-[var(--brand)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
               >
                 Fechar
               </button>

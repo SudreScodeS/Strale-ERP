@@ -12,7 +12,7 @@ const DEFAULTS: GlobalConfig = {
   profitMargin: 20,
   logoPricePerColor: 10,
   minStockAlert: 5,
-  systemName: 'Strale ERP',
+  systemName: 'Elitium',
   companyName: 'North Bag',
 };
 
