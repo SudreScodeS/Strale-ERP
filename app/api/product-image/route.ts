@@ -87,40 +87,6 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
 }
 
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  if (max === min) return [0, 0, l * 100];
-  const d = max - min;
-  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h = 0;
-  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-  else if (max === g) h = ((b - r) / d + 2) / 6;
-  else h = ((r - g) / d + 4) / 6;
-  return [h * 360, s * 100, l * 100];
-}
-
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  h /= 360; s /= 100; l /= 100;
-  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
-  const hue2rgb = (p: number, q: number, t: number): number => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  return [
-    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
-    Math.round(hue2rgb(p, q, h) * 255),
-    Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
-  ];
-}
-
 // ==========================================
 // STEP 1: Generate neutral base
 // ==========================================
@@ -140,58 +106,181 @@ async function getOrCreateNeutralBase(style: string, variables: string[]): Promi
 }
 
 // ==========================================
-// STEP 2: HSL Recolor
+// STEP 2: LAB-based Intelligent Recolor
+//   — Changes ONLY the product material, preserving
+//     shadows, highlights, texture, and background
 // ==========================================
+
+/**
+ * Convert RGB to CIELAB for perceptually accurate color manipulation.
+ * LAB separates luminance (L) from chrominance (a, b), allowing us
+ * to change hue/saturation while preserving the original lightness.
+ */
+function rgbToLab(r: number, g: number, b: number): [number, number, number] {
+  // sRGB → linear
+  let rl = r / 255, gl = g / 255, bl = b / 255;
+  rl = rl > 0.04045 ? Math.pow((rl + 0.055) / 1.055, 2.4) : rl / 12.92;
+  gl = gl > 0.04045 ? Math.pow((gl + 0.055) / 1.055, 2.4) : gl / 12.92;
+  bl = bl > 0.04045 ? Math.pow((bl + 0.055) / 1.055, 2.4) : bl / 12.92;
+
+  // linear RGB → XYZ (D65)
+  let x = (rl * 0.4124564 + gl * 0.3575761 + bl * 0.1804375) / 0.95047;
+  let y = (rl * 0.2126729 + gl * 0.7151522 + bl * 0.0721750) / 1.00000;
+  let z = (rl * 0.0193339 + gl * 0.1191920 + bl * 0.9503041) / 1.08883;
+
+  const f = (t: number) => t > 0.008856 ? Math.cbrt(t) : (7.787 * t) + 16 / 116;
+  x = f(x); y = f(y); z = f(z);
+
+  return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+}
+
+function labToRgb(L: number, a: number, b: number): [number, number, number] {
+  const y = (L + 16) / 116;
+  const x = a / 500 + y;
+  const z = y - b / 200;
+
+  const finv = (t: number) => {
+    const t3 = t * t * t;
+    return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
+  };
+
+  let xr = finv(x), yr = finv(y), zr = finv(z);
+  xr *= 0.95047; yr *= 1.00000; zr *= 1.08883;
+
+  let rl = xr * 3.2404542 + yr * -1.5371385 + zr * -0.4985314;
+  let gl = xr * -0.9692660 + yr * 1.8760108 + zr * 0.0415560;
+  let bl = xr * 0.0556434 + yr * -0.2040259 + zr * 1.0572252;
+
+  const gamma = (v: number) => v > 0.0031308 ? 1.055 * Math.pow(v, 1 / 2.4) - 0.055 : 12.92 * v;
+  rl = gamma(rl); gl = gamma(gl); bl = gamma(bl);
+
+  return [
+    Math.max(0, Math.min(255, Math.round(rl * 255))),
+    Math.max(0, Math.min(255, Math.round(gl * 255))),
+    Math.max(0, Math.min(255, Math.round(bl * 255))),
+  ];
+}
 
 async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buffer> {
   const targetRgb = hexToRgb(hexColor);
   if (!targetRgb) return baseBuffer;
 
-  const [targetH, targetS] = rgbToHsl(targetRgb.r, targetRgb.g, targetRgb.b);
+  // Get target color in LAB — we only use its a* and b* (chrominance)
+  const [, targetA, targetB] = rgbToLab(targetRgb.r, targetRgb.g, targetRgb.b);
 
   const { data: rawData, info } = await sharp(baseBuffer)
     .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
   const { width: w, height: h, channels } = info;
-  const outputBuffer = Buffer.alloc(w * h * 4);
-  const BG_THRESHOLD = 230;
+
+  // ───────────────────────────────────────
+  // STEP A: Adaptive background detection
+  //   Sample corners to find the actual background color,
+  //   then build a product mask with smooth feathering.
+  // ───────────────────────────────────────
+  const cornerDepth = Math.max(3, Math.floor(Math.min(w, h) * 0.05));
+  let bgR = 0, bgG = 0, bgB = 0, bgCount = 0;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const isCorner = (y < cornerDepth || y >= h - cornerDepth) &&
+                       (x < cornerDepth || x >= w - cornerDepth);
+      if (!isCorner) continue;
+      const idx = (y * w + x) * channels;
+      bgR += rawData[idx]; bgG += rawData[idx + 1]; bgB += rawData[idx + 2];
+      bgCount++;
+    }
+  }
+  bgR = Math.round(bgR / bgCount);
+  bgG = Math.round(bgG / bgCount);
+  bgB = Math.round(bgB / bgCount);
+
+  // Build product mask: 0 = background, 255 = product
+  // Use LAB ΔE for perceptual accuracy (not just RGB distance)
+  const bgLab = rgbToLab(bgR, bgG, bgB);
+  const mask = Buffer.alloc(w * h);
+  const BG_DELTA_E = 25;    // Below this = definitely background
+  const FG_DELTA_E = 50;    // Above this = definitely product
+  // Smooth feathering between BG_DELTA_E and FG_DELTA_E
 
   for (let i = 0; i < w * h; i++) {
     const idx = i * channels;
     const r = rawData[idx], g = rawData[idx + 1], b = rawData[idx + 2];
+    const pixelLab = rgbToLab(r, g, b);
 
-    if (r > BG_THRESHOLD && g > BG_THRESHOLD && b > BG_THRESHOLD) {
-      const dstIdx = i * 4;
-      outputBuffer[dstIdx] = 255; outputBuffer[dstIdx + 1] = 255;
-      outputBuffer[dstIdx + 2] = 255; outputBuffer[dstIdx + 3] = 255;
+    // CIE76 ΔE
+    const dE = Math.sqrt(
+      (pixelLab[0] - bgLab[0]) ** 2 +
+      (pixelLab[1] - bgLab[1]) ** 2 +
+      (pixelLab[2] - bgLab[2]) ** 2,
+    );
+
+    if (dE <= BG_DELTA_E) {
+      mask[i] = 0;
+    } else if (dE >= FG_DELTA_E) {
+      mask[i] = 255;
+    } else {
+      // Smoothstep for feathered edges
+      const t = (dE - BG_DELTA_E) / (FG_DELTA_E - BG_DELTA_E);
+      mask[i] = Math.round((t * t * (3 - 2 * t)) * 255);
+    }
+  }
+
+  // ───────────────────────────────────────
+  // STEP B: LAB-based recolor — product only
+  //   Preserve original L (luminance) → shadows/highlights/texture intact
+  //   Replace only a* and b* (chrominance) → color changes
+  // ───────────────────────────────────────
+  const outputBuffer = Buffer.alloc(w * h * 4);
+
+  for (let i = 0; i < w * h; i++) {
+    const srcIdx = i * channels;
+    const dstIdx = i * 4;
+    const r = rawData[srcIdx], g = rawData[srcIdx + 1], b = rawData[srcIdx + 2];
+    const productAlpha = mask[i]; // 0-255 how much this pixel is "product"
+
+    if (productAlpha < 2) {
+      // Pure background — keep white
+      outputBuffer[dstIdx] = 255;
+      outputBuffer[dstIdx + 1] = 255;
+      outputBuffer[dstIdx + 2] = 255;
+      outputBuffer[dstIdx + 3] = 255;
       continue;
     }
 
-    const [, , l] = rgbToHsl(r, g, b);
-    const [newR, newG, newB] = hslToRgb(targetH, targetS, l);
-    const dstIdx = i * 4;
-    outputBuffer[dstIdx] = newR; outputBuffer[dstIdx + 1] = newG;
-    outputBuffer[dstIdx + 2] = newB; outputBuffer[dstIdx + 3] = 255;
+    // Get original pixel's luminance in LAB
+    const [origL] = rgbToLab(r, g, b);
+
+    // Blend target chrominance with original based on mask strength
+    // At edges (low alpha), keep more of original color → smooth transition
+    const blendFactor = productAlpha / 255;
+    const blendedA = targetA * blendFactor;
+    const blendedB = targetB * blendFactor;
+
+    // Recompose: same L (preserves shadows/highlights), new a/b (new color)
+    const [newR, newG, newB] = labToRgb(origL, blendedA, blendedB);
+
+    outputBuffer[dstIdx] = newR;
+    outputBuffer[dstIdx + 1] = newG;
+    outputBuffer[dstIdx + 2] = newB;
+    outputBuffer[dstIdx + 3] = 255;
   }
 
-  const result = await sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
+  // ───────────────────────────────────────
+  // STEP C: Compose onto white background
+  // ───────────────────────────────────────
+  const recoloredPng = await sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
 
-  const blurred = await sharp(result).blur(0.5).png().toBuffer();
+  const blurred = await sharp(recoloredPng).blur(0.3).png().toBuffer();
   const whiteBg = await sharp({
     create: { width: w, height: h, channels: 3, background: { r: 255, g: 255, b: 255 } },
   }).png().toBuffer();
 
-  const maskBuffer = Buffer.alloc(w * h);
-  for (let i = 0; i < w * h; i++) {
-    const idx = i * channels;
-    maskBuffer[i] = (rawData[idx] > BG_THRESHOLD && rawData[idx + 1] > BG_THRESHOLD && rawData[idx + 2] > BG_THRESHOLD) ? 0 : 255;
-  }
-
-  const maskPng = await sharp(maskBuffer, { raw: { width: w, height: h, channels: 1 } })
-    .blur(1.5).png().toBuffer();
+  const maskPng = await sharp(mask, { raw: { width: w, height: h, channels: 1 } })
+    .blur(1.0).ensureAlpha().png().toBuffer();
 
   const masked = await sharp(blurred)
-    .composite([{ input: await sharp(maskPng).ensureAlpha().png().toBuffer(), blend: 'dest-in' }])
+    .composite([{ input: maskPng, blend: 'dest-in' }])
     .png().toBuffer();
 
   return sharp(whiteBg).composite([{ input: masked, blend: 'over' }]).png().toBuffer();
@@ -207,31 +296,40 @@ async function compositeLogoLight(
   logoBuffer: Buffer,
   printArea: { x: number; y: number; width: number; height: number },
 ): Promise<Buffer> {
-  // Remove logo background
-  const { compositeLogo } = await import('../../lib/logo-compositor');
+  // Use full logo pipeline for proper background removal + auto-crop
+  // Then apply minimal effects — the AI refinement will handle realism
+  const {
+    compositeLogo,
+    removeBackgroundAdaptive,
+    autoCropToContent,
+  } = await import('../../lib/logo-compositor');
 
-  // Use minimal compositor options — no shadow, no texture, no edge effects
-  // Just position the logo with basic multiply blend
+  // Step 1: Properly remove logo background (handles dark/light/any bg)
+  let cleanLogo = await removeBackgroundAdaptive(logoBuffer, 220);
+  cleanLogo = await autoCropToContent(cleanLogo);
+
+  // Step 2: Minimal compositor — just position + multiply blend
+  // The AI refinement step will make it look naturally printed
   const lightOpts = {
     blendMode: 'multiply' as const,
-    opacity: 0.85,
-    featherRadius: 1.0,      // Minimal feather
-    fabricTexture: false,     // No texture
+    opacity: 0.88,
+    featherRadius: 1.5,
+    fabricTexture: false,     // No texture — AI will add
     textureIntensity: 0,
-    shadowBlur: 0,           // No shadow — AI will add
-    shadowOpacity: 0,
+    shadowBlur: 2,            // Minimal shadow hint
+    shadowOpacity: 0.08,
     shadowAngle: 135,
-    shadowDistance: 0,
-    bgThreshold: 200,        // Aggressive bg removal
+    shadowDistance: 1,
+    bgThreshold: 220,
     curvature: 0,
-    matchLighting: false,    // No lighting — AI will add
+    matchLighting: false,     // No lighting — AI will add
     lightingIntensity: 0,
-    printIntegration: false, // No edge effects — AI will add
+    printIntegration: false,  // No edge effects — AI will add
     printEdgeDarken: 0,
     printHighlight: 0,
   };
 
-  return compositeLogo(productBuffer, logoBuffer, printArea, lightOpts);
+  return compositeLogo(productBuffer, cleanLogo, printArea, lightOpts);
 }
 
 // ==========================================
