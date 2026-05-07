@@ -426,32 +426,30 @@ export async function POST(request: Request) {
     // =============================================
     // STEP 1: Get or generate neutral base
     // =============================================
-    const neutralBase = await getOrCreateNeutralBase(style, variables);
+    let neutralBase = await getOrCreateNeutralBase(style, variables);
+    let usedFallback = false;
     if (!neutralBase) {
       console.log('[product-image] AI unavailable, creating local fallback');
-      const fallbackBase = await createLocalFallbackBase(style);
-      if (!fallbackBase) return NextResponse.json({ error: 'Erro ao gerar imagem base.' }, { status: 502 });
-      const recolored = await recolorProduct(fallbackBase, color);
-      imageCache.set(cacheKey, { buffer: recolored, timestamp: Date.now() });
-      return new NextResponse(new Uint8Array(recolored), {
-        headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=3600', 'X-Image-Source': 'fallback-local' },
-      });
+      neutralBase = await createLocalFallbackBase(style);
+      if (!neutralBase) return NextResponse.json({ error: 'Erro ao gerar imagem base.' }, { status: 502 });
+      usedFallback = true;
     }
 
     // =============================================
-    // STEP 2: Recolor via HSL
+    // STEP 2: Recolor via LAB
     // =============================================
     console.log(`[product-image] Recoloring to ${color}...`);
     let finalBuffer = await recolorProduct(neutralBase, color);
-    let imageSource = 'recolor-hsl';
+    let imageSource = usedFallback ? 'fallback-local' : 'recolor-lab';
 
     // =============================================
-    // STEP 3: Lightweight logo compositing (if logo present)
-    //   Just position + basic blend — minimal effects
+    // STEP 3: Logo compositing (if logo present)
+    //   Works regardless of whether AI API is available.
+    //   The logo is composited onto the recolored product.
     // =============================================
     if (hasLogo && logoDataUrl) {
       try {
-        console.log(`[product-image] Compositing logo (lightweight)...`);
+        console.log(`[product-image] Compositing logo...`);
         const logoBase64 = logoDataUrl.replace(/^data:image\/\w+;base64,/, '');
         const logoBuffer = Buffer.from(logoBase64, 'base64');
 
@@ -465,7 +463,7 @@ export async function POST(request: Request) {
 
         finalBuffer = await compositeLogoLight(finalBuffer, logoBuffer, printArea);
         imageSource = 'logo-composited';
-        console.log(`[product-image] Logo composited (lightweight)`);
+        console.log(`[product-image] Logo composited`);
       } catch (err) {
         console.error(`[product-image] Logo composition error:`, err);
       }
