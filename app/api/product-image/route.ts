@@ -342,39 +342,39 @@ async function refineWithAI(
   imageBuffer: Buffer,
   style: string,
   hasLogo: boolean,
+  color?: string,
 ): Promise<Buffer> {
-  // PROMPT MESTRE: Ultra-realistic e-commerce mockup generation
-  // The AI must see the logo as ALREADY PRINTED on the product surface.
-  // Key requirements: perspective deformation, fabric texture bleed-through,
-  // ink absorption, lighting coherence, depth integration.
-  const prompts: Record<string, { withLogo: string; noLogo: string }> = {
-    sacola: {
-      withLogo: `Professional e-commerce product photography of a cotton tote bag. The graphic design and logo are screen-printed directly onto the fabric surface using silk-screen ink. The print follows the bag's perspective, curvature, and any fabric folds perfectly — the logo deforms naturally with the textile drape. The cotton weave texture is visible through the printed area, giving the ink a matte, absorbed appearance. Shadows from fabric folds darken the print naturally. The logo has no rectangular border, no white background, no sticker effect — it is seamlessly integrated into the material as if factory-printed. Soft directional studio lighting with natural shadows on a clean white seamless background. Ultra sharp focus, 4K detail, Canon EOS R5 commercial catalog photography. Realistic textile product, professional studio shot.`,
-      noLogo: `Professional e-commerce product photography of a plain blank cotton tote bag. Clean fabric texture with natural drape and folds. Soft directional studio lighting with natural shadows on a clean white seamless background. Ultra sharp focus, 4K detail, commercial catalog quality. Realistic textile product.`,
-    },
-    camiseta: {
-      withLogo: `Professional e-commerce product photography of a cotton t-shirt on invisible mannequin. The graphic design and logo are screen-printed on the chest using water-based ink. The print follows the jersey knit texture and natural shirt drape — ink absorbs into the fabric fibers with soft edges. The logo deforms with the shirt's perspective and any wrinkles. Shadows from folds darken the print naturally. No rectangular border, no sticker effect — factory-printed integration. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog photography.`,
-      noLogo: `Professional e-commerce product photography of a plain blank cotton t-shirt on invisible mannequin. Natural jersey texture and drape. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog quality.`,
-    },
-    caneca: {
-      withLogo: `Professional e-commerce product photography of a ceramic coffee mug. The graphic design and logo are sublimation-printed fused into the glossy ceramic glaze. The print follows the cylindrical curvature of the mug perfectly. Natural reflections and specular highlights follow the mug's surface curve. The logo has no sticker effect — it is permanently bonded into the glaze surface. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog photography.`,
-      noLogo: `Professional e-commerce product photography of a plain blank ceramic coffee mug with glossy glaze. Natural reflections and specular highlights. Soft directional studio lighting, white seamless background, ultra sharp focus, 4K detail, commercial catalog quality.`,
-    },
+  // Product type mapping
+  const productNames: Record<string, string> = {
+    sacola: 'cotton tote bag',
+    camiseta: 'cotton t-shirt',
+    caneca: 'ceramic coffee mug',
+  };
+  const materialNames: Record<string, string> = {
+    sacola: 'cotton canvas',
+    camiseta: 'cotton jersey knit',
+    caneca: 'glossy ceramic glaze',
   };
 
-  const stylePrompts = prompts[style] || prompts.sacola;
-  const prompt = hasLogo ? stylePrompts.withLogo : stylePrompts.noLogo;
+  const product = productNames[style] || productNames.sacola;
+  const material = materialNames[style] || materialNames.sacola;
 
-  // Strength: 0.5 gives the AI enough freedom to properly integrate the logo
-  // with perspective, texture, and lighting — while preserving the base composition.
-  // 0.38 was too conservative (logo stayed flat). 0.5 lets the AI re-render
-  // the logo area with proper fabric integration.
+  // PROMPT MESTRE: Ultra-realistic e-commerce mockup
+  // Covers: perspective, displacement mapping, fabric texture, silk-screen print,
+  // no borders/boxes, lighting coherence, professional studio quality.
+  const withLogoPrompt = `Professional 8k e-commerce photo of a ${product}. Change the material color strictly to ${color || 'the selected color'}, maintaining all original studio lighting, deep shadows, and realistic highlights. The uploaded logo must be integrated using displacement mapping: it must follow the fabric folds, texture, and perspective perfectly. Eliminate any background boxes or black borders from the logo; it should appear as a high-quality silk-screen print absorbed into the ${material} fibers. The background of the image must remain neutral and professional. Sharp focus, cinematic studio quality, photorealistic.`;
+
+  const noLogoPrompt = `Professional 8k e-commerce photo of a plain blank ${product}. Clean ${material} texture with natural drape and folds. Soft directional studio lighting with natural shadows on a neutral professional background. Sharp focus, cinematic studio quality, photorealistic.`;
+
+  const prompt = hasLogo ? withLogoPrompt : noLogoPrompt;
+
+  // Strength 0.50: enough freedom for AI to apply displacement mapping,
+  // perspective deformation, and fabric texture integration
   const strength = hasLogo ? 0.50 : 0.25;
-
-  // More steps = better quality for logo integration
   const steps = hasLogo ? 28 : 8;
 
   console.log(`[product-image] AI refinement: strength=${strength}, steps=${steps}, hasLogo=${hasLogo}`);
+  console.log(`[product-image] Prompt: ${prompt.substring(0, 120)}...`);
 
   return refineImageWithAI(imageBuffer, prompt, {
     strength,
@@ -481,7 +481,7 @@ export async function POST(request: Request) {
     const enableRefinement = process.env.KREA_API_KEY;
     if (enableRefinement) {
       try {
-        const refined = await refineWithAI(finalBuffer, style, hasLogo);
+        const refined = await refineWithAI(finalBuffer, style, hasLogo, color);
         if (refined && refined.length > 100) {
           finalBuffer = refined;
           imageSource = hasLogo ? 'ai-refined-with-logo' : 'ai-refined';
