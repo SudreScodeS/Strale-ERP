@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier } from '../../types';
+import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier, Quote } from '../../types';
 
 // DIRETÓRIO DE ARMAZENAMENTO DOS DADOS
 // Todos os arquivos JSON ficam nesta pasta
@@ -296,6 +296,41 @@ export const supplierData = {
     const suppliers = readJsonFile<Supplier>('suppliers.json');
     suppliers.push(supplier);
     writeJsonFile('suppliers.json', suppliers);
+  },
+};
+
+// ==========================================
+// GERENCIAMENTO DE ORÇAMENTOS (QUOTES)
+// ==========================================
+
+export const quoteData = {
+  // Lista todos os orçamentos
+  getAll: () => readJsonFile<Quote>('quotes.json'),
+
+  // Busca orçamento por ID
+  getById: (id: string) => readJsonFile<Quote>('quotes.json').find(q => q.id === id),
+
+  // Cria novo orçamento
+  create: (quote: Quote) => {
+    const quotes = readJsonFile<Quote>('quotes.json');
+    quotes.push(quote);
+    writeJsonFile('quotes.json', quotes);
+  },
+
+  // Atualiza orçamento existente
+  update: (id: string, updates: Partial<Quote>) => {
+    const quotes = readJsonFile<Quote>('quotes.json');
+    const index = quotes.findIndex(q => q.id === id);
+    if (index !== -1) {
+      quotes[index] = { ...quotes[index], ...updates };
+      writeJsonFile('quotes.json', quotes);
+    }
+  },
+
+  // Remove orçamento
+  delete: (id: string) => {
+    const quotes = readJsonFile<Quote>('quotes.json').filter(q => q.id !== id);
+    writeJsonFile('quotes.json', quotes);
   },
 };
 

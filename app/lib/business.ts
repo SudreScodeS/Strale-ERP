@@ -5,8 +5,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { calculateLogoCost, calculateSalePrice, isLowStock } from '../../config/global';
-import { productData, variableData, groupData, orderData, financeData, invoiceData, purchaseOrderData } from './data';
-import { Order, OrderItem, LogoAnalysis, Invoice, Variable } from '../../types';
+import { productData, variableData, groupData, orderData, financeData, invoiceData, purchaseOrderData, quoteData } from './data';
+import { Order, OrderItem, LogoAnalysis, Invoice, Variable, Quote, QuoteItem } from '../../types';
+import { calculateItemPricing, type PricingInput } from './pricing';
 
 function getNextOrderId(): string {
   const maxOrderId = orderData
@@ -221,3 +222,163 @@ export function criarPedidoCompra(supplierId: string, items: { variableId: strin
 // 5. Controle de qualidade e rejeição de produtos
 // 6. Análise de demanda para previsão de vendas
 // 7. Relatórios avançados (vendas por período, produto mais vendido, etc.)
+
+// ==========================================
+// GERENCIAMENTO DE ORÇAMENTOS (QUOTES)
+// ==========================================
+
+// CRIA NOVO ORÇAMENTO
+// Diferença do pedido: não baixa estoque, tem validade, pode ser clonado
+// Fluxo: vendedora cria orçamento → envia ao cliente → cliente aprova → vira pedido
+export function criarOrcamento(
+  userId: string,
+  customerName: string,
+  name: string,
+  items: QuoteItem[],
+  logoColors: number,
+  validDays?: number,
+  notes?: string,
+): Quote {
+  const totalCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+  const logoCost = calculateLogoCost(logoColors);
+  const totalPrice = calculateSalePrice(totalCost + logoCost);
+
+  const validUntil = validDays
+    ? new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString()
+    : undefined;
+
+  const quote: Quote = {
+    id: uuidv4(),
+    userId,
+    customerName,
+    name,
+    items,
+    totalCost: totalCost + logoCost,
+    totalPrice,
+    logoCost,
+    status: 'draft',
+    validUntil,
+    notes,
+    createdAt: new Date(),
+  };
+
+  quoteData.create(quote);
+  return quote;
+}
+
+// CONVERTE ORÇAMENTO EM PEDIDO
+// Quando o cliente aprova o orçamento, vira um pedido real
+// Baixa estoque, registra financeiro, gera nota fiscal
+export function converterOrcamentoEmPedido(
+  quoteId: string,
+  userId: string,
+): { order: Order; invoice: Invoice } | { error: string } {
+  const quote = quoteData.getById(quoteId);
+  if (!quote) return { error: 'Orçamento não encontrado.' };
+  if (quote.status === 'converted') return { error: 'Orçamento já foi convertido.' };
+
+  // Converte QuoteItem[] para OrderItem[]
+  const orderItems: OrderItem[] = quote.items.map((qi) => ({
+    productId: qi.productId,
+    selectedVariables: qi.selectedVariables,
+    quantity: qi.quantity,
+    unitCost: qi.unitCost,
+    unitPrice: qi.unitPrice,
+  }));
+
+  // Calcula cores de logo a partir do custo
+  const logoColors = quote.logoCost > 0 ? Math.round(quote.logoCost / 10) : 0;
+
+  // Cria o pedido usando a função existente
+  const { order, invoice } = finalizarPedido(userId, quote.name, orderItems, logoColors);
+
+  // Atualiza o orçamento
+  quoteData.update(quoteId, {
+    status: 'converted',
+    convertedOrderId: order.id,
+  });
+
+  return { order, invoice };
+}
+
+// CLONA UM ORÇAMENTO
+// Útil quando o Edson faz 10-20 orçamentos para a mesma venda
+// Copia todos os itens e dados, mas gera novo ID e status 'draft'
+export function clonarOrcamento(quoteId: string, userId: string): Quote | { error: string } {
+  const original = quoteData.getById(quoteId);
+  if (!original) return { error: 'Orçamento não encontrado.' };
+
+  const clone: Quote = {
+    id: uuidv4(),
+    userId,
+    customerName: original.customerName,
+    name: `${original.name} (cópia)`,
+    items: [...original.items],
+    totalCost: original.totalCost,
+    totalPrice: original.totalPrice,
+    logoCost: original.logoCost,
+    status: 'draft',
+    validUntil: original.validUntil,
+    notes: original.notes,
+    createdAt: new Date(),
+  };
+
+  quoteData.create(clone);
+  return clone;
+}
+
+// ATUALIZA STATUS DO ORÇAMENTO
+export function atualizarStatusOrcamento(
+  quoteId: string,
+  status: Quote['status'],
+): Quote | { error: string } {
+  const quote = quoteData.getById(quoteId);
+  if (!quote) return { error: 'Orçamento não encontrado.' };
+
+  quoteData.update(quoteId, { status });
+  return { ...quote, status };
+}
+
+// LISTA ORÇAMENTOS POR USUÁRIO (para vendedoras)
+export function listarOrcamentosPorUsuario(userId: string): Quote[] {
+  return quoteData.getAll().filter(q => q.userId === userId);
+}
+
+// LISTA ORÇAMENTOS POR STATUS
+export function listarOrcamentosPorStatus(status: Quote['status']): Quote[] {
+  return quoteData.getAll().filter(q => q.status === status);
+}
+
+// ESTATÍSTICAS DE ORÇAMENTOS
+export function getOrcamentosStats(): {
+  total: number;
+  draft: number;
+  sent: number;
+  approved: number;
+  rejected: number;
+  converted: number;
+  conversionRate: number;
+  totalValue: number;
+  averageValue: number;
+} {
+  const quotes = quoteData.getAll();
+  const draft = quotes.filter(q => q.status === 'draft').length;
+  const sent = quotes.filter(q => q.status === 'sent').length;
+  const approved = quotes.filter(q => q.status === 'approved').length;
+  const rejected = quotes.filter(q => q.status === 'rejected').length;
+  const converted = quotes.filter(q => q.status === 'converted').length;
+  const totalValue = quotes.reduce((sum, q) => sum + q.totalPrice, 0);
+  const finished = approved + rejected + converted;
+
+  return {
+    total: quotes.length,
+    draft,
+    sent,
+    approved,
+    rejected,
+    converted,
+    conversionRate: finished > 0 ? (converted / finished) * 100 : 0,
+    totalValue,
+    averageValue: quotes.length > 0 ? totalValue / quotes.length : 0,
+  };
+}

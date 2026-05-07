@@ -3,8 +3,8 @@
 // Interpreta perguntas em linguagem natural e responde com dados reais do sistema
 // Arquitetura: Pattern matching + funções de consulta tipadas
 
-import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData } from './data';
-import { getFinanceSummary, getStockAlertsByLevel } from './business';
+import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData, quoteData } from './data';
+import { getFinanceSummary, getStockAlertsByLevel, getOrcamentosStats } from './business';
 import { getDemandForecastSummary } from './demand-forecast';
 import { globalConfig } from '../../config/global';
 
@@ -463,18 +463,91 @@ function queryExpenses(): AssistantResponse {
   };
 }
 
+/** Orçamentos pendentes / rascunho */
+function queryPendingQuotes(): AssistantResponse {
+  const quotes = quoteData.getAll();
+  const drafts = quotes.filter(q => q.status === 'draft');
+  const sent = quotes.filter(q => q.status === 'sent');
+
+  const lines: string[] = [];
+
+  if (drafts.length > 0) {
+    lines.push('📝 **Rascunhos:**');
+    for (const q of drafts.slice(-5)) {
+      const user = userData.getById(q.userId);
+      lines.push(`  • ${q.name} — ${q.customerName} — ${formatCurrency(q.totalPrice)} — por ${user?.username || q.userId}`);
+    }
+  }
+
+  if (sent.length > 0) {
+    if (lines.length > 0) lines.push('');
+    lines.push('📤 **Enviados (aguardando resposta):**');
+    for (const q of sent.slice(-5)) {
+      const user = userData.getById(q.userId);
+      const validUntil = q.validUntil ? ` — válido até ${new Date(q.validUntil).toLocaleDateString('pt-BR')}` : '';
+      lines.push(`  • ${q.name} — ${q.customerName} — ${formatCurrency(q.totalPrice)}${validUntil}`);
+    }
+  }
+
+  if (lines.length === 0) {
+    return { answer: 'Nenhum orçamento pendente.', type: 'text' };
+  }
+
+  return {
+    answer: `**Orçamentos pendentes:** ${drafts.length + sent.length}\n\n${lines.join('\n')}`,
+    data: { drafts: drafts.length, sent: sent.length },
+    type: 'list',
+  };
+}
+
+/** Taxa de conversão de orçamentos */
+function queryQuoteConversion(): AssistantResponse {
+  const stats = getOrcamentosStats();
+
+  return {
+    answer: `**Orçamentos — Resumo:**\n\n• Total: ${stats.total}\n• Rascunho: ${stats.draft}\n• Enviados: ${stats.sent}\n• Aprovados: ${stats.approved}\n• Rejeitados: ${stats.rejected}\n• Convertidos em pedido: ${stats.converted}\n• **Taxa de conversão: ${stats.conversionRate.toFixed(1)}%**\n• Valor total: ${formatCurrency(stats.totalValue)}\n• Ticket médio: ${formatCurrency(stats.averageValue)}`,
+    data: stats,
+    type: 'metric',
+  };
+}
+
+/** Orçamentos de hoje */
+function queryTodayQuotes(): AssistantResponse {
+  const quotes = quoteData.getAll();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayQuotes = quotes.filter(q => new Date(q.createdAt) >= todayStart);
+
+  if (todayQuotes.length === 0) {
+    return { answer: 'Nenhum orçamento criado hoje.', type: 'text' };
+  }
+
+  const lines = todayQuotes.map(q => {
+    const user = userData.getById(q.userId);
+    const sl = q.status === 'draft' ? '📝' : q.status === 'sent' ? '📤' : q.status === 'approved' ? '✅' : q.status === 'converted' ? '🔄' : '❌';
+    return `  ${sl} ${q.name} — ${q.customerName} — ${formatCurrency(q.totalPrice)} — por ${user?.username || q.userId}`;
+  });
+
+  return {
+    answer: `**Orçamentos de hoje:** ${todayQuotes.length}\n\n${lines.join('\n')}`,
+    data: { count: todayQuotes.length, quotes: todayQuotes },
+    type: 'list',
+  };
+}
+
 /** Resumo geral do sistema */
 function querySystemSummary(): AssistantResponse {
   const products = productData.getAll();
   const variables = variableData.getAll();
   const orders = orderData.getAll();
+  const quotes = quoteData.getAll();
   const users = userData.getAll();
   const finance = getFinanceSummary();
   const alerts = getStockAlertsByLevel();
 
   return {
-    answer: `**Resumo do Elitium:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
-    data: { products: products.length, variables: variables.length, orders: orders.length, users: users.length, finance },
+    answer: `**Resumo do Elitium:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n${quotes.length} orçamentos (${quotes.filter(q => q.status === 'draft' || q.status === 'sent').length} pendentes)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
+    data: { products: products.length, variables: variables.length, orders: orders.length, quotes: quotes.length, users: users.length, finance },
     type: 'metric',
   };
 }
@@ -482,7 +555,7 @@ function querySystemSummary(): AssistantResponse {
 /** Ajuda */
 function queryHelp(): AssistantResponse {
   return {
-    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "como usar"`,
+    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Orçamentos:**\n• "orcamentos pendentes"\n• "orcamento aprovado"\n• "taxa de conversao"\n• "orcamento de hoje"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "como usar"`,
     type: 'text',
   };
 }
@@ -490,7 +563,7 @@ function queryHelp(): AssistantResponse {
 /** Como usar o sistema */
 function queryHowToUse(): AssistantResponse {
   return {
-    answer: `**Como usar o ${globalConfig.systemName}:**\n\n**1. Cadastre o estoque**\nAcesse Estoque no menu. Crie um produto base, depois crie grupos (ex: Material, Tamanho) e variáveis dentro de cada grupo (ex: Nylon, TNT, Pequeno, Grande). Cada variável tem seu proprio estoque.\n\n**2. Registre pedidos**\nAcesse Pedidos > Criar pedido. Selecione o produto, escolha as variáveis e quantidades. O preco e calculado automaticamente com a margem de lucro. Voce pode adicionar varios itens ao carrinho.\n\n**3. Acompanhe o financeiro**\nToda venda gera um registro financeiro automaticamente. Acesse Financeiro para ver receita, despesas e lucro.\n\n**4. Faca compras**\nQuando o estoque estiver baixo, acesse Compras para registrar reposicao de fornecedores. O estoque e atualizado automaticamente.\n\n**5. Configuracoes**\nAdmin pode ajustar margem de lucro, preco da logo e limites de alerta em Configuracoes.`,
+    answer: `**Como usar o ${globalConfig.systemName}:**\n\n**1. Cadastre o estoque**\nAcesse Estoque no menu. Crie um produto base, depois crie grupos (ex: Material, Tamanho) e variáveis dentro de cada grupo (ex: Nylon, TNT, Pequeno, Grande). Cada variável tem seu proprio estoque.\n\n**2. Crie orçamentos**\nAcesse Orçamentos > Novo orçamento. Selecione o produto, variáveis, quantidade e configure impressão/dimensões. O preço é calculado automaticamente com tabelas por volume. Envie ao cliente e, quando aprovar, converta em pedido.\n\n**3. Registre pedidos**\nAcesse Pedidos > Criar pedido. Selecione o produto, escolha as variáveis e quantidades. O preco e calculado automaticamente com a margem de lucro. Voce pode adicionar varios itens ao carrinho.\n\n**4. Acompanhe o financeiro**\nToda venda gera um registro financeiro automaticamente. Acesse Financeiro para ver receita, despesas e lucro.\n\n**5. Faca compras**\nQuando o estoque estiver baixo, acesse Compras para registrar reposicao de fornecedores. O estoque e atualizado automaticamente.\n\n**6. Configuracoes**\nAdmin pode ajustar margem de lucro, tabelas de preço, regras de impressão e limites de alerta em Configuracoes.`,
     type: 'text',
   };
 }
@@ -607,6 +680,26 @@ function detectIntent(question: string): () => AssistantResponse {
   // Despesas
   if (containsAny(q, 'despesa', 'gasto', 'compra', 'expense')) {
     return queryExpenses;
+  }
+
+  // Orçamentos pendentes
+  if (containsAny(q, 'orcamento pendente', 'orçamento pendente', 'orcamento rascunho', 'orcamento enviado', 'orcamento esperando', 'quote pending', 'quote draft')) {
+    return queryPendingQuotes;
+  }
+
+  // Taxa de conversão de orçamentos
+  if (containsAny(q, 'taxa de conversao', 'taxa de conversão', 'conversao orcamento', 'conversão orçamento', 'orcamento convertido', 'orçamento convertido', 'quote conversion')) {
+    return queryQuoteConversion;
+  }
+
+  // Orçamentos de hoje
+  if (containsAny(q, 'orcamento hoje', 'orçamento hoje', 'orcamento de hoje', 'orçamento de hoje', 'quote today')) {
+    return queryTodayQuotes;
+  }
+
+  // Orçamentos (genérico)
+  if (containsAny(q, 'orcamento', 'orçamento', 'quote', 'cotacao', 'cotação')) {
+    return queryQuoteConversion;
   }
 
   // Fallback

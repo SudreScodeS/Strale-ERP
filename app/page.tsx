@@ -25,6 +25,9 @@ interface DashboardSummary {
   lowStockCount: number;
   watchStockCount: number;
   recentOrders: DashboardOrder[];
+  quotesPending?: number;
+  quotesConverted?: number;
+  quoteConversionRate?: number;
 }
 
 // ==========================================
@@ -126,6 +129,23 @@ const AVAILABLE_METRICS: MetricOption[] = [
       return String(count);
     },
     getNote: () => 'registrados hoje',
+  },
+  {
+    id: 'quotesPending',
+    title: 'Orçamentos Pendentes',
+    icon: '📋',
+    getValue: (s) => String((s as DashboardSummary & { quotesPending?: number }).quotesPending ?? 0),
+    getNote: () => 'rascunho + enviados',
+  },
+  {
+    id: 'quotesConverted',
+    title: 'Orçamentos Convertidos',
+    icon: '🔄',
+    getValue: (s) => String((s as DashboardSummary & { quotesConverted?: number }).quotesConverted ?? 0),
+    getNote: (s) => {
+      const rate = (s as DashboardSummary & { quoteConversionRate?: number }).quoteConversionRate;
+      return rate !== undefined ? `${rate.toFixed(1)}% conversão` : 'viraram pedido';
+    },
   },
 ];
 

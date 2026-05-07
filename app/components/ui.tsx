@@ -42,6 +42,11 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
     </svg>
   ),
+  quotes: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+  ),
   finance: (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -100,6 +105,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: icons.dashboard, roles: ['admin'], section: 'Geral' },
   { href: '/sales', label: 'Pedidos', icon: icons.sales, roles: ['admin', 'seller'], section: 'Operacoes' },
+  { href: '/quotes', label: 'Orçamentos', icon: icons.quotes, roles: ['admin', 'seller'], section: 'Operacoes' },
   { href: '/inventory', label: 'Estoque', icon: icons.inventory, roles: ['admin'], section: 'Operacoes' },
   { href: '/purchases', label: 'Compras', icon: icons.purchases, roles: ['admin'], section: 'Operacoes' },
   { href: '/finance', label: 'Financeiro', icon: icons.finance, roles: ['admin'], section: 'Financeiro' },

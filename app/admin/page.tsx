@@ -13,6 +13,8 @@ interface ConfigData {
   logoPricePerColor: number;
   systemName: string;
   companyName: string;
+  quoteValidityDays: number;
+  pricePerCm2: number;
 }
 
 const PAGE_PATH = '/admin';
@@ -29,6 +31,8 @@ export default function AdminPage() {
     logoPricePerColor: 10,
     systemName: '',
     companyName: '',
+    quoteValidityDays: 7,
+    pricePerCm2: 0.005,
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
@@ -184,6 +188,50 @@ export default function AdminPage() {
                         Custo adicional por cor detectada na logo do cliente.
                       </p>
                     </label>
+
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        Validade Padrão do Orçamento (dias)
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={config.quoteValidityDays}
+                        onChange={(e) => setConfig((prev) => ({ ...prev, quoteValidityDays: Number(e.target.value) }))}
+                        className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                        style={{
+                          background: 'var(--input-bg)',
+                          border: '1px solid var(--input-border)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        Dias até o orçamento expirar. Atual: {config.quoteValidityDays} dias
+                      </p>
+                    </label>
+
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        Preço por cm² (R$)
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.001}
+                        value={config.pricePerCm2}
+                        onChange={(e) => setConfig((prev) => ({ ...prev, pricePerCm2: Number(e.target.value) }))}
+                        className="w-full rounded-xl px-4 py-3 text-sm transition-all"
+                        style={{
+                          background: 'var(--input-bg)',
+                          border: '1px solid var(--input-border)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        Para cálculo por dimensão (sacolas, banners). 0 = desativado
+                      </p>
+                    </label>
                   </div>
                 </section>
               )}
@@ -196,7 +244,7 @@ export default function AdminPage() {
                   <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                     Preview dos Efeitos
                   </h3>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
                       <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Exemplo: Custo R$ 100</p>
                       <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -210,6 +258,20 @@ export default function AdminPage() {
                         → R$ {(3 * config.logoPricePerColor).toFixed(2)}
                       </p>
                       <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{config.logoPricePerColor} × 3 cores</p>
+                    </div>
+                    <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
+                      <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Orçamento válido por</p>
+                      <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {config.quoteValidityDays} dias
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>padrão para novos orçamentos</p>
+                    </div>
+                    <div className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
+                      <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Sacola 30×40cm</p>
+                      <p className="mt-1 text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                        + R$ {(30 * 40 * config.pricePerCm2).toFixed(2)}
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>custo por dimensão (se ativo)</p>
                     </div>
                   </div>
                 </section>

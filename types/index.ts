@@ -135,6 +135,57 @@ export interface LogoAnalysis {
   cost: number; // Custo calculado baseado nas cores
 }
 
+// Interface para orçamentos (quotes)
+// Representa uma proposta comercial antes de virar pedido
+// Diferença do Order: não baixa estoque, tem validade, pode ser clonado
+export interface Quote {
+  id: string; // ID único do orçamento
+  userId: string; // Usuário que criou
+  customerName: string; // Nome do cliente (livre, sem cadastro obrigatório)
+  name: string; // Nome/descrição do orçamento
+  items: QuoteItem[]; // Itens do orçamento
+  totalCost: number; // Custo total (sem margem)
+  totalPrice: number; // Preço final (com margem)
+  logoCost: number; // Custo da personalização
+  status: 'draft' | 'sent' | 'approved' | 'rejected' | 'converted'; // Status
+  validUntil?: string; // Data de validade (ISO string)
+  notes?: string; // Observações internas
+  convertedOrderId?: string; // ID do pedido gerado quando convertido
+  createdAt: Date; // Data de criação
+}
+
+// Interface para itens do orçamento
+export interface QuoteItem {
+  productId: string; // Produto base
+  productName: string; // Nome do produto (snapshot)
+  selectedVariables: { groupId: string; variableId: string; quantity: number }[]; // Variáveis
+  quantity: number; // Quantidade
+  unitCost: number; // Custo unitário
+  unitPrice: number; // Preço unitário com margem
+  dimensions?: { width: number; height: number }; // Dimensões opcionais (cm)
+  printType?: string; // Tipo de impressão (serigrafia, sublimação, DTF)
+  printPosition?: string; // Posição (frente, verso, ambos)
+  printSize?: 'small' | 'medium' | 'large'; // Tamanho da logo
+}
+
+// Interface para tabela de preços por faixa de quantidade
+// Permite descontos progressivos por volume
+export interface PriceTier {
+  minQty: number; // Quantidade mínima desta faixa
+  maxQty?: number; // Quantidade máxima (undefined = sem limite)
+  unitPrice: number; // Preço unitário nesta faixa
+  label?: string; // Rótulo (ex: "Atacado", "Varejo")
+}
+
+// Interface para regra de preço de impressão
+export interface PrintPricingRule {
+  printType: string; // Tipo: serigrafia, sublimacao, dtf
+  size: 'small' | 'medium' | 'large'; // Tamanho
+  position: 'front' | 'back' | 'both'; // Posição
+  baseCost: number; // Custo base
+  costPerColor?: number; // Custo adicional por cor
+}
+
 // Interface para configurações globais do sistema
 // Todas as regras de negócio configuráveis centralizadas
 export interface GlobalConfig {
@@ -143,6 +194,10 @@ export interface GlobalConfig {
   minStockAlert: number; // Estoque mínimo para alertas
   systemName: string; // Nome do sistema exibido na UI
   companyName: string; // Nome da empresa exibido na UI
+  quoteValidityDays: number; // Dias de validade padrão do orçamento
+  priceTiers: PriceTier[]; // Tabela de preços por faixa de quantidade
+  printPricingRules: PrintPricingRule[]; // Regras de preço de impressão
+  pricePerCm2?: number; // Preço por cm² para cálculo por dimensão (opcional)
 }
 
 // ==========================================

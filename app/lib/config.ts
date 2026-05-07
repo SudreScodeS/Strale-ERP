@@ -4,9 +4,38 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GlobalConfig } from '../../types';
+import { GlobalConfig, PriceTier, PrintPricingRule } from '../../types';
 
 const CONFIG_FILE = path.join(process.cwd(), 'data', 'config.json');
+
+const DEFAULT_PRICE_TIERS: PriceTier[] = [
+  { minQty: 1, maxQty: 99, unitPrice: 0, label: 'Varejo' },
+  { minQty: 100, maxQty: 499, unitPrice: 0, label: 'Atacado mínimo' },
+  { minQty: 500, maxQty: 999, unitPrice: 0, label: 'Atacado' },
+  { minQty: 1000, maxQty: 4999, unitPrice: 0, label: 'Grande volume' },
+  { minQty: 5000, unitPrice: 0, label: 'Mega atacado' },
+];
+
+const DEFAULT_PRINT_PRICING: PrintPricingRule[] = [
+  { printType: 'serigrafia', size: 'small', position: 'front', baseCost: 15, costPerColor: 8 },
+  { printType: 'serigrafia', size: 'medium', position: 'front', baseCost: 25, costPerColor: 12 },
+  { printType: 'serigrafia', size: 'large', position: 'front', baseCost: 40, costPerColor: 18 },
+  { printType: 'serigrafia', size: 'small', position: 'both', baseCost: 25, costPerColor: 14 },
+  { printType: 'serigrafia', size: 'medium', position: 'both', baseCost: 40, costPerColor: 20 },
+  { printType: 'serigrafia', size: 'large', position: 'both', baseCost: 65, costPerColor: 30 },
+  { printType: 'sublimacao', size: 'small', position: 'front', baseCost: 20, costPerColor: 0 },
+  { printType: 'sublimacao', size: 'medium', position: 'front', baseCost: 35, costPerColor: 0 },
+  { printType: 'sublimacao', size: 'large', position: 'front', baseCost: 55, costPerColor: 0 },
+  { printType: 'sublimacao', size: 'small', position: 'both', baseCost: 35, costPerColor: 0 },
+  { printType: 'sublimacao', size: 'medium', position: 'both', baseCost: 60, costPerColor: 0 },
+  { printType: 'sublimacao', size: 'large', position: 'both', baseCost: 90, costPerColor: 0 },
+  { printType: 'dtf', size: 'small', position: 'front', baseCost: 12, costPerColor: 0 },
+  { printType: 'dtf', size: 'medium', position: 'front', baseCost: 22, costPerColor: 0 },
+  { printType: 'dtf', size: 'large', position: 'front', baseCost: 35, costPerColor: 0 },
+  { printType: 'dtf', size: 'small', position: 'both', baseCost: 20, costPerColor: 0 },
+  { printType: 'dtf', size: 'medium', position: 'both', baseCost: 38, costPerColor: 0 },
+  { printType: 'dtf', size: 'large', position: 'both', baseCost: 55, costPerColor: 0 },
+];
 
 const DEFAULTS: GlobalConfig = {
   profitMargin: 20,
@@ -14,6 +43,10 @@ const DEFAULTS: GlobalConfig = {
   minStockAlert: 5,
   systemName: 'Elitium',
   companyName: 'North Bag',
+  quoteValidityDays: 7,
+  priceTiers: DEFAULT_PRICE_TIERS,
+  printPricingRules: DEFAULT_PRINT_PRICING,
+  pricePerCm2: 0.005,
 };
 
 /**
@@ -63,6 +96,18 @@ export function updateServerConfig(updates: Partial<GlobalConfig>): GlobalConfig
   }
   if (typeof updates.companyName === 'string' && updates.companyName.trim()) {
     current.companyName = updates.companyName.trim();
+  }
+  if (typeof updates.quoteValidityDays === 'number' && updates.quoteValidityDays >= 1) {
+    current.quoteValidityDays = updates.quoteValidityDays;
+  }
+  if (Array.isArray(updates.priceTiers)) {
+    current.priceTiers = updates.priceTiers;
+  }
+  if (Array.isArray(updates.printPricingRules)) {
+    current.printPricingRules = updates.printPricingRules;
+  }
+  if (typeof updates.pricePerCm2 === 'number' && updates.pricePerCm2 >= 0) {
+    current.pricePerCm2 = updates.pricePerCm2;
   }
 
   saveConfig(current);
