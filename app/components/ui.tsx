@@ -230,13 +230,13 @@ export function Sidebar({ children }: SidebarProps) {
                     style={{
                       color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
                       background: active ? 'var(--sidebar-active)' : 'transparent',
-                      boxShadow: active ? '0 2px 8px rgba(124, 58, 237, 0.25), 0 1px 0 rgba(255,255,255,0.1) inset' : 'none',
+                      boxShadow: active ? '0 2px 10px rgba(139, 92, 246, 0.35), 0 1px 0 rgba(167,139,250,0.12) inset' : 'none',
                     }}
                     onMouseEnter={(e) => {
                       if (!active) {
                         e.currentTarget.style.background = 'var(--sidebar-hover)';
                         e.currentTarget.style.color = 'var(--sidebar-text-strong)';
-                        e.currentTarget.style.boxShadow = '0 1px 0 rgba(255,255,255,0.04) inset';
+                        e.currentTarget.style.boxShadow = '0 1px 0 rgba(167,139,250,0.06) inset';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -305,7 +305,7 @@ export function Sidebar({ children }: SidebarProps) {
         {/* User card */}
         <div
           className="rounded-xl p-3"
-          style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 -1px 0 rgba(0,0,0,0.15) inset' }}
+          style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', boxShadow: '0 1px 0 rgba(167,139,250,0.06) inset, 0 -1px 0 rgba(0,0,0,0.15) inset' }}
         >
           <div className="flex items-center gap-3">
             <div
@@ -423,13 +423,13 @@ export function Sidebar({ children }: SidebarProps) {
                     style={{
                       color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
                       background: active ? 'var(--sidebar-active)' : 'transparent',
-                      boxShadow: active ? '0 2px 8px rgba(124, 58, 237, 0.25), 0 1px 0 rgba(255,255,255,0.1) inset' : 'none',
+                      boxShadow: active ? '0 2px 10px rgba(139, 92, 246, 0.35), 0 1px 0 rgba(167,139,250,0.12) inset' : 'none',
                     }}
                     onMouseEnter={(e) => {
                       if (!active) {
                         e.currentTarget.style.background = 'var(--sidebar-hover)';
                         e.currentTarget.style.color = 'var(--sidebar-text-strong)';
-                        e.currentTarget.style.boxShadow = '0 1px 0 rgba(255,255,255,0.04) inset';
+                        e.currentTarget.style.boxShadow = '0 1px 0 rgba(167,139,250,0.06) inset';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -530,7 +530,7 @@ export function PageHeader({ title, description }: { title: string; description?
         </div>
         <div
           className="self-start rounded-xl px-4 py-2 text-sm font-medium"
-          style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }}
+          style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)', boxShadow: '0 1px 0 rgba(167,139,250,0.06) inset' }}
         >
           {globalConfig.companyName}
         </div>

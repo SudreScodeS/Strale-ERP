@@ -6,43 +6,43 @@
    ========================================== */
 
 /* ────────────────────────────────────────
-   DARK MODE (default) — Brushed dark chrome
+   DARK MODE (default) — Deep purple metallic
    ──────────────────────────────────────── */
 :root {
-  /* Backgrounds — deep brushed metal */
-  --background: #101218;
-  --background-elevated: #16181f;
-  --foreground: #e0e2ea;
+  /* Backgrounds — deep purple-black */
+  --background: #0c0a12;
+  --background-elevated: #110e1a;
+  --foreground: #e8e4f0;
 
-  /* Brand — Metallic Purple accent */
+  /* Brand — Metallic Purple */
   --brand: #a78bfa;
   --brand-dark: #7c3aed;
   --brand-light: #c4b5fd;
-  --brand-muted: rgba(139, 92, 246, 0.10);
-  --brand-border: rgba(139, 92, 246, 0.18);
+  --brand-muted: rgba(139, 92, 246, 0.12);
+  --brand-border: rgba(139, 92, 246, 0.22);
 
-  /* Surfaces — chrome layers */
-  --surface: #16181f;
-  --surface-soft: #1c1e27;
-  --surface-muted: #22252f;
-  --surface-hover: #2a2d38;
+  /* Surfaces — purple-tinted dark */
+  --surface: #13111c;
+  --surface-soft: #18152a;
+  --surface-muted: #1e1a2e;
+  --surface-hover: #252040;
 
-  /* Borders — polished edge highlights */
-  --border: #2a2d38;
-  --border-strong: #3a3e4c;
-  --border-subtle: #1e2028;
+  /* Borders — purple-tinted edges */
+  --border: #2a2545;
+  --border-strong: #3d3660;
+  --border-subtle: #1f1b32;
 
-  /* Text — silver chrome */
-  --text-primary: #e8eaf0;
-  --text-secondary: #a0a5b4;
-  --text-muted: #6b7084;
-  --text-faint: #4a4f60;
+  /* Text — silver with purple tint */
+  --text-primary: #ece8f4;
+  --text-secondary: #b0a8c4;
+  --text-muted: #7e7598;
+  --text-faint: #5a5274;
 
   /* Inputs */
-  --input-bg: rgba(22, 24, 31, 0.6);
-  --input-border: #2a2d38;
+  --input-bg: rgba(22, 18, 34, 0.6);
+  --input-border: #2a2545;
   --input-focus: #a78bfa;
-  --input-focus-ring: rgba(167, 139, 250, 0.15);
+  --input-focus-ring: rgba(167, 139, 250, 0.18);
 
   /* Status */
   --success: #34d399;
@@ -58,12 +58,12 @@
   --info-bg: rgba(129, 140, 248, 0.08);
   --info-border: rgba(129, 140, 248, 0.18);
 
-  /* Shadows — chrome reflections */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --shadow-chrome: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.2) inset;
-  --shadow-glow: 0 0 24px rgba(139, 92, 246, 0.08);
+  /* Shadows — purple glow + chrome bevel */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(139, 92, 246, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.05);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.06);
+  --shadow-chrome: 0 1px 0 rgba(167, 139, 250, 0.06) inset, 0 -1px 0 rgba(0, 0, 0, 0.2) inset;
+  --shadow-glow: 0 0 24px rgba(139, 92, 246, 0.12);
 
   /* Radii */
   --radius-sm: 0.625rem;
@@ -72,39 +72,39 @@
   --radius-full: 9999px;
 
   /* Sidebar */
-  --sidebar-bg: #0e1016;
-  --sidebar-border: #1e2028;
-  --sidebar-hover: rgba(167, 139, 250, 0.05);
+  --sidebar-bg: #0e0b18;
+  --sidebar-border: #1f1b32;
+  --sidebar-hover: rgba(167, 139, 250, 0.07);
   --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #6b7084;
-  --sidebar-text-strong: #e8eaf0;
+  --sidebar-text: #8a82a0;
+  --sidebar-text-strong: #ece8f4;
 
   /* Modal */
-  --modal-overlay: rgba(8, 9, 14, 0.82);
+  --modal-overlay: rgba(6, 4, 12, 0.82);
 
   /* Cards */
-  --card-bg: #16181f;
-  --card-border: #2a2d38;
+  --card-bg: #13111c;
+  --card-border: #2a2545;
 
-  /* Chrome metallic shimmer — dark */
+  /* Metallic shimmer — purple tint */
   --metallic-shimmer: linear-gradient(
     110deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.015) 30%,
-    rgba(255, 255, 255, 0.04) 48%,
-    rgba(255, 255, 255, 0.06) 50%,
-    rgba(255, 255, 255, 0.04) 52%,
-    rgba(255, 255, 255, 0.015) 70%,
-    rgba(255, 255, 255, 0) 100%
+    rgba(167, 139, 250, 0) 0%,
+    rgba(167, 139, 250, 0.02) 30%,
+    rgba(167, 139, 250, 0.05) 48%,
+    rgba(167, 139, 250, 0.07) 50%,
+    rgba(167, 139, 250, 0.05) 52%,
+    rgba(167, 139, 250, 0.02) 70%,
+    rgba(167, 139, 250, 0) 100%
   );
 
-  /* Chrome edge highlight — top lit */
+  /* Chrome edge highlight — purple-tinted top lit */
   --chrome-edge: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(255, 255, 255, 0.02) 1px,
-    rgba(255, 255, 255, 0) 3px,
+    rgba(167, 139, 250, 0.08) 0%,
+    rgba(167, 139, 250, 0.03) 1px,
+    rgba(167, 139, 250, 0) 3px,
     rgba(0, 0, 0, 0) 100%
   );
 
@@ -303,50 +303,50 @@ a:focus-visible {
    to ALL standard Tailwind classes automatically
    ========================================== */
 
-/* ── Chrome shadow bevel — top-lit metal edge ── */
+/* ── Chrome shadow bevel — purple-tinted top-lit ── */
 html[data-theme='dark'] .shadow-sm {
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(139, 92, 246, 0.05),
+    0 1px 0 rgba(167, 139, 250, 0.08) inset;
 }
 html[data-theme='dark'] .shadow-xl {
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    0 0 0 1px rgba(139, 92, 246, 0.06),
+    0 1px 0 rgba(167, 139, 250, 0.1) inset;
 }
 html[data-theme='dark'] .shadow-2xl {
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    0 0 0 1px rgba(139, 92, 246, 0.07),
+    0 1px 0 rgba(167, 139, 250, 0.12) inset;
 }
 
-/* ── Cards & rounded sections — chrome bevel + edge glow ── */
+/* ── Cards & rounded sections — purple chrome bevel ── */
 html[data-theme='dark'] .bg-white,
 html[data-theme='dark'] .rounded-3xl,
 html[data-theme='dark'] .rounded-2xl {
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 1px 0 rgba(255, 255, 255, 0.07) inset;
+    0 0 0 1px rgba(139, 92, 246, 0.05),
+    0 1px 0 rgba(167, 139, 250, 0.08) inset;
 }
 
-/* ── Chrome border highlight — polished edge ── */
+/* ── Chrome border — purple-tinted edge ── */
 html[data-theme='dark'] .border-slate-200 {
-  border-color: rgba(58, 62, 76, 0.7);
-  border-top-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(42, 37, 69, 0.8);
+  border-top-color: rgba(167, 139, 250, 0.12);
 }
 
-/* ── Inputs — chrome inset + focus glow ── */
+/* ── Inputs — purple chrome inset + focus glow ── */
 html[data-theme='dark'] input:not([type="checkbox"]),
 html[data-theme='dark'] select,
 html[data-theme='dark'] textarea {
   background-color: var(--input-bg);
   border-color: var(--input-border);
   color: var(--text-primary);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+  box-shadow: 0 1px 0 rgba(167, 139, 250, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.15) inset;
 }
 html[data-theme='dark'] input:not([type="checkbox"])::placeholder,
 html[data-theme='dark'] textarea::placeholder {
@@ -356,23 +356,23 @@ html[data-theme='dark'] input:not([type="checkbox"]):focus,
 html[data-theme='dark'] select:focus,
 html[data-theme='dark'] textarea:focus {
   border-color: var(--input-focus);
-  border-top-color: rgba(167, 139, 250, 0.4);
+  border-top-color: rgba(167, 139, 250, 0.5);
   box-shadow:
     0 0 0 3px var(--input-focus-ring),
-    0 1px 0 rgba(167, 139, 250, 0.12) inset;
+    0 1px 0 rgba(167, 139, 250, 0.15) inset;
   outline: none;
 }
 
-/* ── Buttons — chrome surface + hover shimmer ── */
+/* ── Buttons — purple chrome surface + hover shimmer ── */
 html[data-theme='dark'] .bg-white:hover,
 html[data-theme='dark'] .bg-slate-50:hover {
   background-image: var(--metallic-shimmer);
   background-size: 200% 100%;
 }
 
-/* ── Sidebar chrome edge ── */
+/* ── Sidebar purple chrome edge ── */
 html[data-theme='dark'] aside {
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(139, 92, 246, 0.08);
   box-shadow: 1px 0 0 rgba(0, 0, 0, 0.3);
 }
 

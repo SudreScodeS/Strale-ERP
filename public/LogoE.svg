@@ -1,30 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1a1c24"/>
-      <stop offset="50%" stop-color="#16181f"/>
-      <stop offset="100%" stop-color="#101218"/>
+      <stop offset="0%" stop-color="#1a1028"/>
+      <stop offset="50%" stop-color="#13111c"/>
+      <stop offset="100%" stop-color="#0c0a12"/>
     </linearGradient>
     <linearGradient id="chrome" x1="30" y1="20" x2="90" y2="100" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#e8eaf0"/>
-      <stop offset="25%" stop-color="#c8ccd6"/>
-      <stop offset="50%" stop-color="#f0f1f5"/>
-      <stop offset="75%" stop-color="#a0a5b4"/>
-      <stop offset="100%" stop-color="#d0d3dc"/>
+      <stop offset="0%" stop-color="#e8e4f0"/>
+      <stop offset="25%" stop-color="#c4b5fd"/>
+      <stop offset="50%" stop-color="#f0ecf8"/>
+      <stop offset="75%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#d0c4f0"/>
     </linearGradient>
     <linearGradient id="accent" x1="0" y1="110" x2="120" y2="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.6"/>
-      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.7"/>
     </linearGradient>
     <linearGradient id="edge" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3a3e4c" stop-opacity="0.6"/>
-      <stop offset="50%" stop-color="#4a4f60" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#2a2d38" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#3d3660" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#4a3f70" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#2a2545" stop-opacity="0.5"/>
     </linearGradient>
   </defs>
   <rect width="120" height="120" rx="28" fill="url(#bg)"/>
   <rect x="1" y="1" width="118" height="118" rx="27" stroke="url(#edge)" stroke-width="1" fill="none"/>
   <text x="60" y="78" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="url(#chrome)" letter-spacing="-2">E</text>
-  <line x1="28" y1="92" x2="92" y2="92" stroke="url(#accent)" stroke-width="1.5" opacity="0.7"/>
+  <line x1="28" y1="92" x2="92" y2="92" stroke="url(#accent)" stroke-width="1.5" opacity="0.8"/>
 </svg>
