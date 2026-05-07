@@ -137,7 +137,9 @@ export default function ProductPreview({
   const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   useEffect(() => {
-    if (hasRealImage) return;
+    // When there's a logo, ALWAYS call the API to get a properly composited image.
+    // Only skip the API if we have a real product image AND no logo.
+    if (hasRealImage && !logoDataUrl) return;
 
     const cached = imageCacheRef.current.get(generationKey);
     if (cached) {
@@ -361,7 +363,10 @@ export default function ProductPreview({
     return (
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
         <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
-          {hasRealImage ? (
+          {baseImage ? (
+            // API-generated composited image (with logo baked in)
+            <img src={baseImage.src} alt={productName} className="w-full h-full object-contain" />
+          ) : hasRealImage ? (
             <>
               <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
               {logoDataUrl ? (
@@ -390,7 +395,10 @@ export default function ProductPreview({
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`}>
       <div className="relative w-full overflow-hidden" style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}>
-        {hasRealImage ? (
+        {baseImage ? (
+          // API-generated composited image (with logo baked in)
+          <img src={baseImage.src} alt={productName} className="w-full h-full object-contain" />
+        ) : hasRealImage ? (
           <>
             <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
             {logoDataUrl ? (
@@ -401,6 +409,11 @@ export default function ProductPreview({
         ) : (
           <>
             <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
+
+            {/* Show product image as preview while generating with logo */}
+            {hasRealImage && logoDataUrl && loading ? (
+              <img src={productImageUrl} alt={productName} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            ) : null}
 
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
