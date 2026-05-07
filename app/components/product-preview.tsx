@@ -498,7 +498,7 @@ export default function ProductPreview({
         )}
         {!hasRealImage && !baseImage && !loading ? (
           <p className="text-[10px] text-amber-500 mt-1">
-            📐 Configure HUGGINGFACE_API_TOKEN para imagens geradas por IA
+            📐 Configure KREA_API_KEY para imagens geradas por IA
           </p>
         ) : null}
       </div>

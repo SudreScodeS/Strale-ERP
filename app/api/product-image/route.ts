@@ -2,23 +2,25 @@
 // Image generation pipeline — AI-FIRST logo integration
 //
 // STRATEGY:
-// 1. Generate neutral product (AI) — plain gray, no logo
+// 1. Generate neutral product (AI via Krea/Flux) — plain gray, no logo
 // 2. Recolor via LAB color space — product material ONLY
 //    - Preserves luminance (shadows, highlights, texture)
 //    - Changes only chrominance (a*, b*) → color applied to material
 //    - Adaptive background detection with smooth feathering
 // 3. Composite logo with minimal effects (position + multiply blend)
-// 4. AI refinement — the AI renders the logo naturally
+// 4. AI refinement (Krea/Flux Kontext) — the AI renders the logo naturally
 //    onto the product surface with proper lighting, shadows, texture
 //
 // KEY INSIGHT: Don't try to make the logo look "printed" with sharp effects.
 // Instead, give the AI a rough composite and let IT make it look printed.
 // The AI understands surface physics, lighting, and material properties.
+//
+// Migrated from Hugging Face to Krea AI (async job-based API).
 
 import { NextResponse } from 'next/server';
 import { requireRole } from '../../lib/auth';
 import sharp from 'sharp';
-import { generateImage, refineImageWithAI } from '../../lib/huggingface-client';
+import { generateImage, refineImageWithAI } from '../../lib/krea-client';
 import {
   compositeLogo,
   getPrintArea,
@@ -487,7 +489,7 @@ export async function POST(request: Request) {
     //   This is where the magic happens.
     //   The AI re-renders the logo area to look printed on the product.
     // =============================================
-    const enableRefinement = process.env.HUGGINGFACE_API_KEY || process.env.HUGGINGFACE_API_TOKEN;
+    const enableRefinement = process.env.KREA_API_KEY;
     if (enableRefinement) {
       try {
         const refined = await refineWithAI(finalBuffer, style, hasLogo);
