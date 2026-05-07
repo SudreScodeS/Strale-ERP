@@ -392,9 +392,6 @@ export default function ProductPreview({
         {hasRealImage ? (
           <>
             <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
-            {selectedColorHex ? (
-              <div className="absolute inset-0 mix-blend-multiply" style={{ backgroundColor: selectedColorHex, opacity: 0.4 }} />
-            ) : null}
             {logoDataUrl ? (
               <img src={logoDataUrl} alt="Logo" className="absolute object-contain drop-shadow-lg"
                 style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: '40%', maxHeight: '30%' }} />
