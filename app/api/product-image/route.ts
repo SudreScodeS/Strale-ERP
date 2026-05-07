@@ -77,8 +77,8 @@ function buildNeutralBasePrompt(style: string, variables: string[], color?: stri
   const base = 'professional product photography, studio lighting, white seamless background, centered, commercial e-commerce photo, 4k, ultra sharp focus, Canon EOS R5, 100mm macro lens, high detail, realistic material texture, NO TEXT, NO LOGO, NO DESIGN, plain blank surface';
 
   const stylePrompts: Record<string, string> = {
-    sacola: `a single ${sizeDesc} tote bag made of ${materialDesc}, rectangular shape, flat bottom, two sturdy rope handles attached at the top, clean front panel, solid medium gray color, visible fabric weave texture, natural fabric drape, ${base}`,
-    camiseta: `a single ${sizeDesc} crew-neck t-shirt made of ${materialDesc}, short sleeves, displayed on invisible mannequin showing natural drape, solid medium gray color, visible knit texture, neat collar, ${base}`,
+    sacola: `a single ${sizeDesc} tote bag made of ${materialDesc}, rectangular shape, flat bottom, two sturdy rope handles attached at the top, clean front panel, solid DARK CHARCOAL GRAY color (RGB 100-120), visible fabric weave texture, natural fabric drape, ${base}`,
+    camiseta: `a single ${sizeDesc} crew-neck t-shirt made of ${materialDesc}, short sleeves, displayed on invisible mannequin showing natural drape, solid DARK CHARCOAL GRAY color (RGB 100-120), visible knit texture, neat collar, ${base}`,
     caneca: `a single ${sizeDesc} ceramic coffee mug with C-shaped handle, cylindrical body, smooth glossy glaze finish, solid medium gray color, subtle highlight reflection on surface, ${base}`,
   };
 
@@ -181,73 +181,25 @@ async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buf
   const { width: w, height: h, channels } = info;
 
   // ───────────────────────────────────────
-  // STEP A: Adaptive background detection
-  //   Sample corners to find the actual background color,
-  //   then build a product mask with smooth feathering.
+  // Simplified recolor: recolor ALL non-white pixels
+  //   The AI-generated product is light gray on white background.
+  //   Complex ΔE masking fails because gray ≈ white perceptually.
+  //   Simple fix: any pixel not near-white → recolor it.
+  //   Preserves luminance (L) for shadows/highlights/texture.
   // ───────────────────────────────────────
-  const cornerDepth = Math.max(3, Math.floor(Math.min(w, h) * 0.05));
-  let bgR = 0, bgG = 0, bgB = 0, bgCount = 0;
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const isCorner = (y < cornerDepth || y >= h - cornerDepth) &&
-                       (x < cornerDepth || x >= w - cornerDepth);
-      if (!isCorner) continue;
-      const idx = (y * w + x) * channels;
-      bgR += rawData[idx]; bgG += rawData[idx + 1]; bgB += rawData[idx + 2];
-      bgCount++;
-    }
-  }
-  bgR = Math.round(bgR / bgCount);
-  bgG = Math.round(bgG / bgCount);
-  bgB = Math.round(bgB / bgCount);
-
-  // Build product mask: 0 = background, 255 = product
-  // Use LAB ΔE for perceptual accuracy (not just RGB distance)
-  const bgLab = rgbToLab(bgR, bgG, bgB);
-  const mask = Buffer.alloc(w * h);
-  const BG_DELTA_E = 25;    // Below this = definitely background
-  const FG_DELTA_E = 50;    // Above this = definitely product
-  // Smooth feathering between BG_DELTA_E and FG_DELTA_E
-
-  for (let i = 0; i < w * h; i++) {
-    const idx = i * channels;
-    const r = rawData[idx], g = rawData[idx + 1], b = rawData[idx + 2];
-    const pixelLab = rgbToLab(r, g, b);
-
-    // CIE76 ΔE
-    const dE = Math.sqrt(
-      (pixelLab[0] - bgLab[0]) ** 2 +
-      (pixelLab[1] - bgLab[1]) ** 2 +
-      (pixelLab[2] - bgLab[2]) ** 2,
-    );
-
-    if (dE <= BG_DELTA_E) {
-      mask[i] = 0;
-    } else if (dE >= FG_DELTA_E) {
-      mask[i] = 255;
-    } else {
-      // Smoothstep for feathered edges
-      const t = (dE - BG_DELTA_E) / (FG_DELTA_E - BG_DELTA_E);
-      mask[i] = Math.round((t * t * (3 - 2 * t)) * 255);
-    }
-  }
-
-  // ───────────────────────────────────────
-  // STEP B: LAB-based recolor — product only
-  //   Preserve original L (luminance) → shadows/highlights/texture intact
-  //   Replace only a* and b* (chrominance) → color changes
-  // ───────────────────────────────────────
+  const WHITE_THRESHOLD = 200; // RGB value above which = "white" background
+  // NOTE: HF generates very light gray products (~220-240 RGB).
+  // Threshold must be low enough to catch the product but high enough
+  // to exclude the actual white background (255).
   const outputBuffer = Buffer.alloc(w * h * 4);
 
   for (let i = 0; i < w * h; i++) {
     const srcIdx = i * channels;
     const dstIdx = i * 4;
     const r = rawData[srcIdx], g = rawData[srcIdx + 1], b = rawData[srcIdx + 2];
-    const productAlpha = mask[i]; // 0-255 how much this pixel is "product"
 
-    if (productAlpha < 2) {
-      // Pure background — keep white
+    // Is this pixel near-white (background)?
+    if (r > WHITE_THRESHOLD && g > WHITE_THRESHOLD && b > WHITE_THRESHOLD) {
       outputBuffer[dstIdx] = 255;
       outputBuffer[dstIdx + 1] = 255;
       outputBuffer[dstIdx + 2] = 255;
@@ -255,17 +207,9 @@ async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buf
       continue;
     }
 
-    // Get original pixel's luminance AND chrominance in LAB
-    const [origL, origA, origB] = rgbToLab(r, g, b);
-
-    // Blend target chrominance with ORIGINAL pixel's chrominance (not zero/gray!)
-    // This preserves the natural color transition at edges instead of desaturating
-    const blendFactor = productAlpha / 255;
-    const blendedA = origA + (targetA - origA) * blendFactor;
-    const blendedB = origB + (targetB - origB) * blendFactor;
-
-    // Recompose: same L (preserves shadows/highlights), blended chrominance
-    const [newR, newG, newB] = labToRgb(origL, blendedA, blendedB);
+    // Product pixel — recolor: preserve L, replace chrominance
+    const [origL] = rgbToLab(r, g, b);
+    const [newR, newG, newB] = labToRgb(origL, targetA, targetB);
 
     outputBuffer[dstIdx] = newR;
     outputBuffer[dstIdx + 1] = newG;
@@ -273,24 +217,9 @@ async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buf
     outputBuffer[dstIdx + 3] = 255;
   }
 
-  // ───────────────────────────────────────
-  // STEP C: Compose onto white background
-  // ───────────────────────────────────────
-  const recoloredPng = await sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
-
-  const blurred = await sharp(recoloredPng).blur(0.3).png().toBuffer();
-  const whiteBg = await sharp({
-    create: { width: w, height: h, channels: 3, background: { r: 255, g: 255, b: 255 } },
-  }).png().toBuffer();
-
-  const maskPng = await sharp(mask, { raw: { width: w, height: h, channels: 1 } })
-    .blur(1.0).ensureAlpha().png().toBuffer();
-
-  const masked = await sharp(blurred)
-    .composite([{ input: maskPng, blend: 'dest-in' }])
+  // Compose onto white background
+  return sharp(outputBuffer, { raw: { width: w, height: h, channels: 4 } })
     .png().toBuffer();
-
-  return sharp(whiteBg).composite([{ input: masked, blend: 'over' }]).png().toBuffer();
 }
 
 // ==========================================
