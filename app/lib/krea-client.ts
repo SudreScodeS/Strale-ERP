@@ -231,10 +231,8 @@ export async function refineImageWithAI(
       width: opts.width,
       height: opts.height,
     };
-
-    if (opts.negativePrompt) {
-      body.negative_prompt = opts.negativePrompt;
-    }
+    // Note: Krea Flux Kontext does not support negative_prompt
+    // The prompt itself should describe what to avoid
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30_000);
