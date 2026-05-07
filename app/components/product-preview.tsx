@@ -260,7 +260,8 @@ export default function ProductPreview({
 
       // If server already composited everything, don't add overlays
       if (imageSource === 'composited' || imageSource === 'composited-ref' ||
-          imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo') {
+          imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo' ||
+          imageSource === 'logo-composited') {
         // Image already processed — render as-is
       } else if (logoImage) {
         // ========================================

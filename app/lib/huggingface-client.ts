@@ -17,6 +17,8 @@ interface RefineOptions {
   height?: number;
   /** Modelo alternativo */
   model?: string;
+  /** Negative prompt — what the AI should avoid generating */
+  negativePrompt?: string;
 }
 
 const DEFAULT_REFINE_OPTIONS: Required<RefineOptions> = {
@@ -25,6 +27,7 @@ const DEFAULT_REFINE_OPTIONS: Required<RefineOptions> = {
   width: 512,
   height: 640,
   model: DEFAULT_MODEL,
+  negativePrompt: '',
 };
 
 /**
@@ -78,6 +81,7 @@ export async function refineImageWithAI(
           width: opts.width,
           height: opts.height,
           guidance_scale: 7.5,
+          ...(opts.negativePrompt ? { negative_prompt: opts.negativePrompt } : {}),
         },
       }),
       signal: controller.signal,
