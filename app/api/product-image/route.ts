@@ -406,10 +406,12 @@ export async function POST(request: Request) {
       color = '#2563eb',
       style = 'sacola',
       logoDataUrl,
+      productImageBase64,  // Optional: real product photo to use as base
       variables = [],
     } = body;
 
     const hasLogo = Boolean(logoDataUrl);
+    const hasProductImage = Boolean(productImageBase64);
     console.log(`[product-image] color=${color}, style=${style}, vars=[${variables.join(', ')}], logo=${hasLogo}`);
 
     const logoHash = hasLogo ? logoDataUrl.substring(logoDataUrl.length - 30) : undefined;
@@ -424,23 +426,34 @@ export async function POST(request: Request) {
     }
 
     // =============================================
-    // STEP 1: Get or generate neutral base
+    // STEP 1: Get base image
+    //   Priority: real product photo > AI generation > SVG fallback
     // =============================================
-    let neutralBase = await getOrCreateNeutralBase(style, variables);
-    let usedFallback = false;
-    if (!neutralBase) {
-      console.log('[product-image] AI unavailable, creating local fallback');
-      neutralBase = await createLocalFallbackBase(style);
-      if (!neutralBase) return NextResponse.json({ error: 'Erro ao gerar imagem base.' }, { status: 502 });
-      usedFallback = true;
-    }
+    let finalBuffer: Buffer;
+    let imageSource: string;
 
-    // =============================================
-    // STEP 2: Recolor via LAB
-    // =============================================
-    console.log(`[product-image] Recoloring to ${color}...`);
-    let finalBuffer = await recolorProduct(neutralBase, color);
-    let imageSource = usedFallback ? 'fallback-local' : 'recolor-lab';
+    if (hasProductImage) {
+      // USE THE REAL PRODUCT PHOTO as base — no need to generate or recolor
+      console.log(`[product-image] Using provided product image as base`);
+      const imgBase64 = productImageBase64.replace(/^data:image\/\w+;base64,/, '');
+      finalBuffer = Buffer.from(imgBase64, 'base64');
+      imageSource = 'product-photo';
+    } else {
+      // Generate base: AI → fallback SVG
+      let neutralBase = await getOrCreateNeutralBase(style, variables);
+      let usedFallback = false;
+      if (!neutralBase) {
+        console.log('[product-image] AI unavailable, creating local fallback');
+        neutralBase = await createLocalFallbackBase(style);
+        if (!neutralBase) return NextResponse.json({ error: 'Erro ao gerar imagem base.' }, { status: 502 });
+        usedFallback = true;
+      }
+
+      // Recolor via LAB
+      console.log(`[product-image] Recoloring to ${color}...`);
+      finalBuffer = await recolorProduct(neutralBase, color);
+      imageSource = usedFallback ? 'fallback-local' : 'recolor-lab';
+    }
 
     // =============================================
     // STEP 3: Logo compositing (if logo present)

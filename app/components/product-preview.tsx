@@ -162,6 +162,23 @@ export default function ProductPreview({
         if (logoDataUrl) body.logoDataUrl = logoDataUrl;
         if (referenceImageUrl) body.referenceImageUrl = referenceImageUrl;
 
+        // Send real product photo as base so server can composite logo onto it
+        // instead of generating a new image from scratch
+        if (hasRealImage && productImageUrl) {
+          try {
+            const imgResp = await fetch(productImageUrl);
+            const imgBlob = await imgResp.blob();
+            const imgBase64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(imgBlob);
+            });
+            body.productImageBase64 = imgBase64;
+          } catch {
+            console.warn('[product-preview] Could not convert product image to base64');
+          }
+        }
+
         const response = await fetch('/api/product-image', {
           method: 'POST',
           headers: {
