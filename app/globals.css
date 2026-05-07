@@ -1,66 +1,69 @@
 @import "tailwindcss";
 
 /* ==========================================
-   ELITIUM — DESIGN TOKENS
-   Premium dark metallic ERP theme
-   Silver · Purple · Dark graphite
+   ELITIUM — CHROME METALLIC DESIGN SYSTEM
+   Polished silver · Brushed aluminum · Purple accent
    ========================================== */
 
+/* ────────────────────────────────────────
+   DARK MODE (default) — Brushed dark chrome
+   ──────────────────────────────────────── */
 :root {
-  /* Backgrounds */
-  --background: #0c0a10;
-  --background-elevated: #110e18;
-  --foreground: #e8e4f0;
+  /* Backgrounds — deep brushed metal */
+  --background: #101218;
+  --background-elevated: #16181f;
+  --foreground: #e0e2ea;
 
-  /* Brand — Metallic Purple */
+  /* Brand — Metallic Purple accent */
   --brand: #a78bfa;
   --brand-dark: #7c3aed;
   --brand-light: #c4b5fd;
-  --brand-muted: rgba(139, 92, 246, 0.12);
-  --brand-border: rgba(139, 92, 246, 0.2);
+  --brand-muted: rgba(139, 92, 246, 0.10);
+  --brand-border: rgba(139, 92, 246, 0.18);
 
-  /* Surfaces */
-  --surface: #13111a;
-  --surface-soft: #18152a;
-  --surface-muted: #1e1a2e;
-  --surface-hover: #242038;
+  /* Surfaces — chrome layers */
+  --surface: #16181f;
+  --surface-soft: #1c1e27;
+  --surface-muted: #22252f;
+  --surface-hover: #2a2d38;
 
-  /* Borders */
-  --border: #2a2540;
-  --border-strong: #3d3658;
-  --border-subtle: #1f1b30;
+  /* Borders — polished edge highlights */
+  --border: #2a2d38;
+  --border-strong: #3a3e4c;
+  --border-subtle: #1e2028;
 
-  /* Text — Silver metallic */
-  --text-primary: #ece8f4;
-  --text-secondary: #b0a8c4;
-  --text-muted: #7e7598;
-  --text-faint: #5a5274;
+  /* Text — silver chrome */
+  --text-primary: #e8eaf0;
+  --text-secondary: #a0a5b4;
+  --text-muted: #6b7084;
+  --text-faint: #4a4f60;
 
   /* Inputs */
-  --input-bg: #1613224d;
-  --input-border: #2a2540;
+  --input-bg: rgba(22, 24, 31, 0.6);
+  --input-border: #2a2d38;
   --input-focus: #a78bfa;
-  --input-focus-ring: rgba(167, 139, 250, 0.18);
+  --input-focus-ring: rgba(167, 139, 250, 0.15);
 
   /* Status */
   --success: #34d399;
   --success-bg: rgba(52, 211, 153, 0.08);
-  --success-border: rgba(52, 211, 153, 0.2);
+  --success-border: rgba(52, 211, 153, 0.18);
   --warning: #fbbf24;
   --warning-bg: rgba(251, 191, 36, 0.08);
-  --warning-border: rgba(251, 191, 36, 0.2);
+  --warning-border: rgba(251, 191, 36, 0.18);
   --danger: #f87171;
   --danger-bg: rgba(248, 113, 113, 0.08);
-  --danger-border: rgba(248, 113, 113, 0.2);
+  --danger-border: rgba(248, 113, 113, 0.18);
   --info: #818cf8;
   --info-bg: rgba(129, 140, 248, 0.08);
-  --info-border: rgba(129, 140, 248, 0.2);
+  --info-border: rgba(129, 140, 248, 0.18);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.6), 0 4px 8px -4px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.08);
+  /* Shadows — chrome reflections */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-chrome: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.2) inset;
+  --shadow-glow: 0 0 24px rgba(139, 92, 246, 0.08);
 
   /* Radii */
   --radius-sm: 0.625rem;
@@ -69,29 +72,40 @@
   --radius-full: 9999px;
 
   /* Sidebar */
-  --sidebar-bg: #0f0d16;
-  --sidebar-border: #1f1b30;
-  --sidebar-hover: rgba(167, 139, 250, 0.06);
+  --sidebar-bg: #0e1016;
+  --sidebar-border: #1e2028;
+  --sidebar-hover: rgba(167, 139, 250, 0.05);
   --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #8a82a0;
-  --sidebar-text-strong: #ece8f4;
+  --sidebar-text: #6b7084;
+  --sidebar-text-strong: #e8eaf0;
 
   /* Modal */
-  --modal-overlay: rgba(6, 4, 10, 0.8);
+  --modal-overlay: rgba(8, 9, 14, 0.82);
 
   /* Cards */
-  --card-bg: #13111a;
-  --card-border: #2a2540;
+  --card-bg: #16181f;
+  --card-border: #2a2d38;
 
-  /* Metallic shimmer (subtle) */
+  /* Chrome metallic shimmer — dark */
   --metallic-shimmer: linear-gradient(
-    135deg,
+    110deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.02) 40%,
-    rgba(255, 255, 255, 0.04) 50%,
-    rgba(255, 255, 255, 0.02) 60%,
+    rgba(255, 255, 255, 0.015) 30%,
+    rgba(255, 255, 255, 0.04) 48%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.04) 52%,
+    rgba(255, 255, 255, 0.015) 70%,
     rgba(255, 255, 255, 0) 100%
+  );
+
+  /* Chrome edge highlight — top lit */
+  --chrome-edge: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.02) 1px,
+    rgba(255, 255, 255, 0) 3px,
+    rgba(0, 0, 0, 0) 100%
   );
 
   color-scheme: dark;
@@ -104,13 +118,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* ==========================================
-   LIGHT MODE OVERRIDE — Silver Metallic
-   ========================================== */
+/* ────────────────────────────────────────
+   LIGHT MODE — Polished bright chrome
+   ──────────────────────────────────────── */
 html[data-theme='light'] {
-  --background: #f0f1f4;
+  /* Backgrounds — bright polished chrome */
+  --background: #ecedf2;
   --background-elevated: #ffffff;
-  --foreground: #181a20;
+  --foreground: #1a1c24;
 
   --brand: #7c3aed;
   --brand-dark: #6d28d9;
@@ -118,24 +133,25 @@ html[data-theme='light'] {
   --brand-muted: rgba(124, 58, 237, 0.05);
   --brand-border: rgba(124, 58, 237, 0.12);
 
+  /* Surfaces — silver layers */
   --surface: #ffffff;
-  --surface-soft: #f7f8fa;
-  --surface-muted: #edeef2;
-  --surface-hover: #e4e6ec;
+  --surface-soft: #f5f6f8;
+  --surface-muted: #e8eaef;
+  --surface-hover: #dfe1e8;
 
-  /* Silver metallic borders */
-  --border: #d8dae0;
-  --border-strong: #c0c3cc;
-  --border-subtle: #e8e9ee;
+  /* Borders — bright chrome edge */
+  --border: #d0d3dc;
+  --border-strong: #b4b8c4;
+  --border-subtle: #e4e6ec;
 
-  /* Silver text tones */
-  --text-primary: #181a20;
-  --text-secondary: #4a4e5a;
-  --text-muted: #7a7f8c;
-  --text-faint: #a0a5b2;
+  /* Text — dark chrome */
+  --text-primary: #1a1c24;
+  --text-secondary: #4a4e5c;
+  --text-muted: #7a7f8e;
+  --text-faint: #a0a5b4;
 
-  --input-bg: #f7f8fa;
-  --input-border: #d8dae0;
+  --input-bg: #f5f6f8;
+  --input-border: #d0d3dc;
   --input-focus: #7c3aed;
   --input-focus-ring: rgba(124, 58, 237, 0.10);
 
@@ -152,33 +168,45 @@ html[data-theme='light'] {
   --info-bg: #f5f3ff;
   --info-border: #ddd6fe;
 
-  /* Silver-tinted shadows */
-  --shadow-sm: 0 1px 3px 0 rgba(16, 18, 24, 0.06);
-  --shadow-md: 0 4px 12px -2px rgba(16, 18, 24, 0.08), 0 2px 4px -2px rgba(16, 18, 24, 0.04);
-  --shadow-lg: 0 12px 24px -4px rgba(16, 18, 24, 0.10), 0 4px 8px -4px rgba(16, 18, 24, 0.06);
+  /* Shadows — chrome reflection */
+  --shadow-sm: 0 1px 2px rgba(16, 18, 24, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 12px rgba(16, 18, 24, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  --shadow-lg: 0 12px 28px rgba(16, 18, 24, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --shadow-chrome: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 -1px 0 rgba(0, 0, 0, 0.04) inset;
   --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.05);
 
-  --sidebar-bg: #f7f8fa;
-  --sidebar-border: #d8dae0;
-  --sidebar-hover: #edeef2;
+  --sidebar-bg: #f5f6f8;
+  --sidebar-border: #d0d3dc;
+  --sidebar-hover: #e8eaef;
   --sidebar-active: linear-gradient(135deg, #7c3aed, #8b5cf6);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #5a5e6c;
-  --sidebar-text-strong: #181a20;
+  --sidebar-text: #5a5e6e;
+  --sidebar-text-strong: #1a1c24;
 
-  --modal-overlay: rgba(16, 18, 24, 0.35);
+  --modal-overlay: rgba(16, 18, 24, 0.32);
 
   --card-bg: #ffffff;
-  --card-border: #d8dae0;
+  --card-border: #d0d3dc;
 
-  /* Metallic shimmer — silver chrome reflection */
+  /* Chrome metallic shimmer — bright */
   --metallic-shimmer: linear-gradient(
-    135deg,
+    110deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.5) 35%,
-    rgba(240, 242, 248, 0.8) 50%,
-    rgba(255, 255, 255, 0.5) 65%,
+    rgba(255, 255, 255, 0.4) 30%,
+    rgba(255, 255, 255, 0.7) 48%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.7) 52%,
+    rgba(255, 255, 255, 0.4) 70%,
     rgba(255, 255, 255, 0) 100%
+  );
+
+  /* Chrome edge — top lit highlight */
+  --chrome-edge: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.4) 1px,
+    rgba(255, 255, 255, 0) 4px,
+    rgba(0, 0, 0, 0) 100%
   );
 
   color-scheme: light;
@@ -196,7 +224,7 @@ body {
 }
 
 /* ==========================================
-   SCROLLBAR
+   SCROLLBAR — chrome track
    ========================================== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -270,7 +298,7 @@ a:focus-visible {
 }
 
 /* ==========================================
-   GLOBAL DARK MODE OVERRIDES
+   DARK MODE — GLOBAL OVERRIDES
    ========================================== */
 
 /* Backgrounds */
@@ -361,61 +389,30 @@ html[data-theme='dark'] table tr:hover {
 }
 
 /* ==========================================
-   COMPONENT-SPECIFIC OVERRIDES
+   COMPONENT OVERRIDES
    ========================================== */
 
-/* Status badges */
-html[data-theme='dark'] .bg-emerald-100 {
-  background-color: var(--success-bg);
-}
-html[data-theme='dark'] .text-emerald-800 {
-  color: var(--success);
-}
-html[data-theme='dark'] .bg-amber-100 {
-  background-color: var(--warning-bg);
-}
-html[data-theme='dark'] .text-amber-800 {
-  color: var(--warning);
-}
-html[data-theme='dark'] .bg-red-100 {
-  background-color: var(--danger-bg);
-}
-html[data-theme='dark'] .text-red-800 {
-  color: var(--danger);
-}
-html[data-theme='dark'] .bg-orange-100 {
-  background-color: rgba(251, 146, 60, 0.08);
-}
-html[data-theme='dark'] .text-orange-800 {
-  color: #fb923c;
-}
-html[data-theme='dark'] .bg-blue-100 {
-  background-color: var(--info-bg);
-}
-html[data-theme='dark'] .text-blue-800 {
-  color: var(--info);
-}
+html[data-theme='dark'] .bg-emerald-100 { background-color: var(--success-bg); }
+html[data-theme='dark'] .text-emerald-800 { color: var(--success); }
+html[data-theme='dark'] .bg-amber-100 { background-color: var(--warning-bg); }
+html[data-theme='dark'] .text-amber-800 { color: var(--warning); }
+html[data-theme='dark'] .bg-red-100 { background-color: var(--danger-bg); }
+html[data-theme='dark'] .text-red-800 { color: var(--danger); }
+html[data-theme='dark'] .bg-orange-100 { background-color: rgba(251, 146, 60, 0.08); }
+html[data-theme='dark'] .text-orange-800 { color: #fb923c; }
+html[data-theme='dark'] .bg-blue-100 { background-color: var(--info-bg); }
+html[data-theme='dark'] .text-blue-800 { color: var(--info); }
 
-/* Score bar backgrounds */
-html[data-theme='dark'] .bg-slate-200 {
-  background-color: var(--surface-muted);
-}
+html[data-theme='dark'] .bg-slate-200 { background-color: var(--surface-muted); }
 
-/* Rounded badge pills */
 html[data-theme='dark'] .rounded-full.bg-slate-100 {
   background-color: var(--surface-muted);
   color: var(--text-secondary);
 }
 
-/* Cards & sections */
-html[data-theme='dark'] .shadow-sm {
-  box-shadow: var(--shadow-sm);
-}
-html[data-theme='dark'] .shadow-xl {
-  box-shadow: var(--shadow-lg);
-}
+html[data-theme='dark'] .shadow-sm { box-shadow: var(--shadow-sm); }
+html[data-theme='dark'] .shadow-xl { box-shadow: var(--shadow-lg); }
 
-/* File inputs */
 html[data-theme='dark'] input[type="file"] {
   background-color: var(--input-bg);
   border-color: var(--input-border);
@@ -427,9 +424,24 @@ html[data-theme='dark'] input[type="file"]::file-selector-button {
   border-color: var(--border);
 }
 
-/* Date inputs */
-html[data-theme='dark'] input[type="date"] {
-  color-scheme: dark;
+html[data-theme='dark'] input[type="date"] { color-scheme: dark; }
+
+/* ==========================================
+   CHROME CARD — shared metallic surface
+   ========================================== */
+.chrome-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-chrome);
+  position: relative;
+}
+.chrome-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--chrome-edge);
+  pointer-events: none;
 }
 
 /* ==========================================
@@ -438,17 +450,13 @@ html[data-theme='dark'] input[type="date"] {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
+.animate-spin { animation: spin 1s linear infinite; }
 
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
 }
-.animate-bounce {
-  animation: bounce 1s infinite;
-}
+.animate-bounce { animation: bounce 1s infinite; }
 
 @keyframes shimmer {
   0% { background-position: -200% center; }
@@ -468,51 +476,60 @@ html[data-theme='dark'] input[type="date"] {
 /* ==========================================
    TRANSITIONS
    ========================================== */
-.transition-all {
-  transition: all 0.2s ease;
-}
-.transition-colors {
-  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-}
+.transition-all { transition: all 0.2s ease; }
+.transition-colors { transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease; }
 
 /* ==========================================
-   LIGHT MODE — METALLIC SILVER EFFECTS
+   LIGHT MODE — CHROME POLISH EFFECTS
    ========================================== */
 
-/* Cards with subtle chrome border sheen */
+/* Cards — chrome bevel highlight */
 html[data-theme='light'] .shadow-sm,
-html[data-theme='light'] [style*="var(--card-bg)"] {
-  border-image: linear-gradient(
-    135deg,
-    rgba(192, 195, 204, 0.5) 0%,
-    rgba(216, 218, 224, 0.8) 30%,
-    rgba(255, 255, 255, 0.9) 50%,
-    rgba(216, 218, 224, 0.8) 70%,
-    rgba(192, 195, 204, 0.5) 100%
-  ) 1;
+html[data-theme='light'] .chrome-card {
+  box-shadow:
+    0 1px 2px rgba(16, 18, 24, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
 }
 
-/* Sidebar metallic edge */
+/* Sidebar — subtle chrome gradient */
 html[data-theme='light'] aside {
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.6) 0%,
-    rgba(247, 248, 250, 0) 20%,
-    rgba(247, 248, 250, 0) 80%,
-    rgba(237, 238, 242, 0.4) 100%
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(245, 246, 248, 0) 15%,
+    rgba(245, 246, 248, 0) 85%,
+    rgba(224, 226, 232, 0.3) 100%
   );
 }
 
-/* Input metallic border shimmer on focus */
+/* Input focus — chrome edge to purple */
 html[data-theme='light'] input:not([type="checkbox"]):focus,
 html[data-theme='light'] select:focus,
 html[data-theme='light'] textarea:focus {
-  border-image: linear-gradient(135deg, var(--brand), var(--brand-light)) 1;
+  box-shadow:
+    0 0 0 3px var(--input-focus-ring),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
 }
 
-/* Buttons — silver metallic hover sheen */
-html[data-theme='light'] button:not([style*="var(--brand)"]):hover {
+/* Buttons — chrome shimmer on hover */
+html[data-theme='light'] button:not(.brand-primary):hover {
   background-image: var(--metallic-shimmer);
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out;
+  animation: shimmer 1.2s ease-in-out;
+}
+
+/* Surface muted — brushed texture hint */
+html[data-theme='light'] .bg-slate-50,
+html[data-theme='light'] [style*="var(--surface-soft)"] {
+  background-image: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.008) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.008) 50%,
+    rgba(0, 0, 0, 0.008) 75%,
+    transparent 75%
+  );
+  background-size: 4px 4px;
 }
