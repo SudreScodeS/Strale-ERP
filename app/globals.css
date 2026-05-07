@@ -6,43 +6,43 @@
    ========================================== */
 
 /* ────────────────────────────────────────
-   DARK MODE (default) — Deep purple metallic
+   DARK MODE (default) — Full purple metallic
    ──────────────────────────────────────── */
 :root {
   /* Backgrounds — deep purple-black */
-  --background: #0c0a12;
-  --background-elevated: #110e1a;
-  --foreground: #e8e4f0;
+  --background: #0a0814;
+  --background-elevated: #100d1a;
+  --foreground: #eae6f4;
 
   /* Brand — Metallic Purple */
   --brand: #a78bfa;
   --brand-dark: #7c3aed;
   --brand-light: #c4b5fd;
-  --brand-muted: rgba(139, 92, 246, 0.12);
-  --brand-border: rgba(139, 92, 246, 0.22);
+  --brand-muted: rgba(139, 92, 246, 0.14);
+  --brand-border: rgba(139, 92, 246, 0.25);
 
-  /* Surfaces — purple-tinted dark */
-  --surface: #13111c;
-  --surface-soft: #18152a;
-  --surface-muted: #1e1a2e;
-  --surface-hover: #252040;
+  /* Surfaces — purple layers */
+  --surface: #110e1c;
+  --surface-soft: #161228;
+  --surface-muted: #1c1730;
+  --surface-hover: #231d3c;
 
-  /* Borders — purple-tinted edges */
-  --border: #2a2545;
-  --border-strong: #3d3660;
-  --border-subtle: #1f1b32;
+  /* Borders — purple edges */
+  --border: #28224a;
+  --border-strong: #3a3265;
+  --border-subtle: #1d1838;
 
-  /* Text — silver with purple tint */
-  --text-primary: #ece8f4;
-  --text-secondary: #b0a8c4;
-  --text-muted: #7e7598;
-  --text-faint: #5a5274;
+  /* Text — silver-purple */
+  --text-primary: #ece8f6;
+  --text-secondary: #b4aad0;
+  --text-muted: #8478a8;
+  --text-faint: #5e5480;
 
   /* Inputs */
-  --input-bg: rgba(22, 18, 34, 0.6);
-  --input-border: #2a2545;
+  --input-bg: rgba(18, 14, 30, 0.7);
+  --input-border: #28224a;
   --input-focus: #a78bfa;
-  --input-focus-ring: rgba(167, 139, 250, 0.18);
+  --input-focus-ring: rgba(167, 139, 250, 0.2);
 
   /* Status */
   --success: #34d399;
@@ -58,12 +58,12 @@
   --info-bg: rgba(129, 140, 248, 0.08);
   --info-border: rgba(129, 140, 248, 0.18);
 
-  /* Shadows — purple glow + chrome bevel */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(139, 92, 246, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.05);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.06);
-  --shadow-chrome: 0 1px 0 rgba(167, 139, 250, 0.06) inset, 0 -1px 0 rgba(0, 0, 0, 0.2) inset;
-  --shadow-glow: 0 0 24px rgba(139, 92, 246, 0.12);
+  /* Shadows — purple glow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.07);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
+  --shadow-chrome: 0 1px 0 rgba(167, 139, 250, 0.08) inset, 0 -1px 0 rgba(0, 0, 0, 0.2) inset;
+  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
 
   /* Radii */
   --radius-sm: 0.625rem;
@@ -72,39 +72,39 @@
   --radius-full: 9999px;
 
   /* Sidebar */
-  --sidebar-bg: #0e0b18;
-  --sidebar-border: #1f1b32;
-  --sidebar-hover: rgba(167, 139, 250, 0.07);
+  --sidebar-bg: #0c0916;
+  --sidebar-border: #1d1838;
+  --sidebar-hover: rgba(167, 139, 250, 0.08);
   --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #8a82a0;
-  --sidebar-text-strong: #ece8f4;
+  --sidebar-text: #8e84b0;
+  --sidebar-text-strong: #ece8f6;
 
   /* Modal */
-  --modal-overlay: rgba(6, 4, 12, 0.82);
+  --modal-overlay: rgba(6, 4, 14, 0.85);
 
   /* Cards */
-  --card-bg: #13111c;
-  --card-border: #2a2545;
+  --card-bg: #110e1c;
+  --card-border: #28224a;
 
-  /* Metallic shimmer — purple tint */
+  /* Metallic shimmer — purple */
   --metallic-shimmer: linear-gradient(
     110deg,
     rgba(167, 139, 250, 0) 0%,
-    rgba(167, 139, 250, 0.02) 30%,
-    rgba(167, 139, 250, 0.05) 48%,
-    rgba(167, 139, 250, 0.07) 50%,
-    rgba(167, 139, 250, 0.05) 52%,
-    rgba(167, 139, 250, 0.02) 70%,
+    rgba(167, 139, 250, 0.03) 30%,
+    rgba(167, 139, 250, 0.06) 48%,
+    rgba(167, 139, 250, 0.09) 50%,
+    rgba(167, 139, 250, 0.06) 52%,
+    rgba(167, 139, 250, 0.03) 70%,
     rgba(167, 139, 250, 0) 100%
   );
 
-  /* Chrome edge highlight — purple-tinted top lit */
+  /* Chrome edge — purple highlight */
   --chrome-edge: linear-gradient(
     180deg,
-    rgba(167, 139, 250, 0.08) 0%,
-    rgba(167, 139, 250, 0.03) 1px,
-    rgba(167, 139, 250, 0) 3px,
+    rgba(167, 139, 250, 0.1) 0%,
+    rgba(167, 139, 250, 0.04) 1px,
+    rgba(167, 139, 250, 0) 4px,
     rgba(0, 0, 0, 0) 100%
   );
 
@@ -119,41 +119,41 @@
 }
 
 /* ────────────────────────────────────────
-   LIGHT MODE — Polished bright chrome
+   LIGHT MODE — White + purple accents
    ──────────────────────────────────────── */
 html[data-theme='light'] {
-  /* Backgrounds — bright polished chrome */
-  --background: #ecedf2;
+  /* Backgrounds — clean white with purple hint */
+  --background: #f4f2f8;
   --background-elevated: #ffffff;
-  --foreground: #1a1c24;
+  --foreground: #1a1528;
 
   --brand: #7c3aed;
   --brand-dark: #6d28d9;
   --brand-light: #8b5cf6;
-  --brand-muted: rgba(124, 58, 237, 0.05);
-  --brand-border: rgba(124, 58, 237, 0.12);
+  --brand-muted: rgba(124, 58, 237, 0.06);
+  --brand-border: rgba(124, 58, 237, 0.15);
 
-  /* Surfaces — silver layers */
+  /* Surfaces — white with subtle purple */
   --surface: #ffffff;
-  --surface-soft: #f5f6f8;
-  --surface-muted: #e8eaef;
-  --surface-hover: #dfe1e8;
+  --surface-soft: #f8f6fc;
+  --surface-muted: #f0ecf6;
+  --surface-hover: #e8e2f2;
 
-  /* Borders — bright chrome edge */
-  --border: #d0d3dc;
-  --border-strong: #b4b8c4;
-  --border-subtle: #e4e6ec;
+  /* Borders — purple-tinted */
+  --border: #e0daf0;
+  --border-strong: #c8bfe0;
+  --border-subtle: #ece8f4;
 
-  /* Text — dark chrome */
-  --text-primary: #1a1c24;
-  --text-secondary: #4a4e5c;
-  --text-muted: #7a7f8e;
-  --text-faint: #a0a5b4;
+  /* Text — dark purple-gray */
+  --text-primary: #1a1528;
+  --text-secondary: #504670;
+  --text-muted: #8478a0;
+  --text-faint: #a8a0c0;
 
-  --input-bg: #f5f6f8;
-  --input-border: #d0d3dc;
+  --input-bg: #f8f6fc;
+  --input-border: #e0daf0;
   --input-focus: #7c3aed;
-  --input-focus-ring: rgba(124, 58, 237, 0.10);
+  --input-focus-ring: rgba(124, 58, 237, 0.12);
 
   --success: #059669;
   --success-bg: #ecfdf5;
@@ -168,44 +168,44 @@ html[data-theme='light'] {
   --info-bg: #f5f3ff;
   --info-border: #ddd6fe;
 
-  /* Shadows — chrome reflection */
-  --shadow-sm: 0 1px 2px rgba(16, 18, 24, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 4px 12px rgba(16, 18, 24, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
-  --shadow-lg: 0 12px 28px rgba(16, 18, 24, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
-  --shadow-chrome: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 -1px 0 rgba(0, 0, 0, 0.04) inset;
-  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.05);
+  /* Shadows — purple glow */
+  --shadow-sm: 0 1px 3px rgba(124, 58, 237, 0.06), 0 0 0 1px rgba(124, 58, 237, 0.04);
+  --shadow-md: 0 4px 12px rgba(124, 58, 237, 0.08), 0 0 0 1px rgba(124, 58, 237, 0.05);
+  --shadow-lg: 0 12px 28px rgba(124, 58, 237, 0.10), 0 0 0 1px rgba(124, 58, 237, 0.06);
+  --shadow-chrome: 0 1px 0 rgba(124, 58, 237, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.03) inset;
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.08);
 
-  --sidebar-bg: #f5f6f8;
-  --sidebar-border: #d0d3dc;
-  --sidebar-hover: #e8eaef;
+  --sidebar-bg: #f8f6fc;
+  --sidebar-border: #e0daf0;
+  --sidebar-hover: #f0ecf6;
   --sidebar-active: linear-gradient(135deg, #7c3aed, #8b5cf6);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #5a5e6e;
-  --sidebar-text-strong: #1a1c24;
+  --sidebar-text: #6a5e88;
+  --sidebar-text-strong: #1a1528;
 
-  --modal-overlay: rgba(16, 18, 24, 0.32);
+  --modal-overlay: rgba(26, 21, 40, 0.35);
 
   --card-bg: #ffffff;
-  --card-border: #d0d3dc;
+  --card-border: #e0daf0;
 
-  /* Chrome metallic shimmer — bright */
+  /* Metallic shimmer — purple */
   --metallic-shimmer: linear-gradient(
     110deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.4) 30%,
-    rgba(255, 255, 255, 0.7) 48%,
-    rgba(255, 255, 255, 0.9) 50%,
-    rgba(255, 255, 255, 0.7) 52%,
-    rgba(255, 255, 255, 0.4) 70%,
-    rgba(255, 255, 255, 0) 100%
+    rgba(124, 58, 237, 0) 0%,
+    rgba(124, 58, 237, 0.03) 30%,
+    rgba(124, 58, 237, 0.06) 48%,
+    rgba(124, 58, 237, 0.08) 50%,
+    rgba(124, 58, 237, 0.06) 52%,
+    rgba(124, 58, 237, 0.03) 70%,
+    rgba(124, 58, 237, 0) 100%
   );
 
-  /* Chrome edge — top lit highlight */
+  /* Chrome edge — purple highlight */
   --chrome-edge: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.4) 1px,
-    rgba(255, 255, 255, 0) 4px,
+    rgba(124, 58, 237, 0.06) 0%,
+    rgba(124, 58, 237, 0.02) 1px,
+    rgba(124, 58, 237, 0) 4px,
     rgba(0, 0, 0, 0) 100%
   );
 
@@ -540,55 +540,55 @@ html[data-theme='dark'] input[type="date"] { color-scheme: dark; }
 .transition-colors { transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease; }
 
 /* ==========================================
-   LIGHT MODE — CHROME POLISH EFFECTS
+   LIGHT MODE — PURPLE CHROME EFFECTS
    ========================================== */
 
-/* Cards — chrome bevel highlight */
+/* Cards — purple bevel highlight */
 html[data-theme='light'] .shadow-sm,
 html[data-theme='light'] .chrome-card {
   box-shadow:
-    0 1px 2px rgba(16, 18, 24, 0.06),
-    0 0 0 1px rgba(0, 0, 0, 0.03),
-    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    0 1px 3px rgba(124, 58, 237, 0.07),
+    0 0 0 1px rgba(124, 58, 237, 0.05),
+    0 1px 0 rgba(124, 58, 237, 0.04) inset;
 }
 
-/* Sidebar — subtle chrome gradient */
+/* Sidebar — purple gradient edge */
 html[data-theme='light'] aside {
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.5) 0%,
-    rgba(245, 246, 248, 0) 15%,
-    rgba(245, 246, 248, 0) 85%,
-    rgba(224, 226, 232, 0.3) 100%
+    rgba(124, 58, 237, 0.03) 0%,
+    rgba(248, 246, 252, 0) 15%,
+    rgba(248, 246, 252, 0) 85%,
+    rgba(124, 58, 237, 0.02) 100%
   );
 }
 
-/* Input focus — chrome edge to purple */
+/* Input focus — purple glow */
 html[data-theme='light'] input:not([type="checkbox"]):focus,
 html[data-theme='light'] select:focus,
 html[data-theme='light'] textarea:focus {
   box-shadow:
     0 0 0 3px var(--input-focus-ring),
-    0 1px 0 rgba(255, 255, 255, 0.6) inset;
+    0 1px 0 rgba(124, 58, 237, 0.06) inset;
 }
 
-/* Buttons — chrome shimmer on hover */
+/* Buttons — purple shimmer on hover */
 html[data-theme='light'] button:not(.brand-primary):hover {
   background-image: var(--metallic-shimmer);
   background-size: 200% 100%;
   animation: shimmer 1.2s ease-in-out;
 }
 
-/* Surface muted — brushed texture hint */
+/* Surface muted — purple texture hint */
 html[data-theme='light'] .bg-slate-50,
 html[data-theme='light'] [style*="var(--surface-soft)"] {
   background-image: linear-gradient(
     135deg,
-    rgba(0, 0, 0, 0.008) 25%,
+    rgba(124, 58, 237, 0.01) 25%,
     transparent 25%,
     transparent 50%,
-    rgba(0, 0, 0, 0.008) 50%,
-    rgba(0, 0, 0, 0.008) 75%,
+    rgba(124, 58, 237, 0.01) 50%,
+    rgba(124, 58, 237, 0.01) 75%,
     transparent 75%
   );
   background-size: 4px 4px;
