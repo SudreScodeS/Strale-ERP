@@ -20,9 +20,13 @@ const SUGGESTIONS = [
   'Ticket medio',
   'Previsao de demanda',
   'Vendas por periodo',
+  'Orcamentos pendentes',
+  'Taxa de conversao',
   'Usuarios',
   'Despesas',
   'Resumo do sistema',
+  'Quanto custa 500 sacolas TNT azuis?',
+  'Preco de 1000 nylon 30x40 com serigrafia',
   'Como usar',
 ];
 
@@ -90,11 +94,21 @@ export default function AssistantPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [ollamaStatus, setOllamaStatus] = useState<{ available: boolean; model?: string; error?: string } | null>(null);
+  const [lastSource, setLastSource] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
+
+  // Verifica status do Ollama ao carregar
+  useEffect(() => {
+    fetch('/api/assistant', { headers: getAuthHeaders() })
+      .then(r => r.json())
+      .then(data => setOllamaStatus(data))
+      .catch(() => setOllamaStatus({ available: false, error: 'Erro ao verificar' }));
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -126,6 +140,7 @@ export default function AssistantPage() {
 
       const data = await res.json();
       setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, timestamp: new Date() }]);
+      if (data.source) setLastSource(data.source);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -159,9 +174,29 @@ export default function AssistantPage() {
           <h2 className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Assistente
           </h2>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-            Respostas baseadas em dados reais do sistema
-          </p>
+          <div className="mt-0.5 flex items-center gap-2">
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Respostas baseadas em dados reais do sistema
+            </p>
+            {ollamaStatus && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  background: ollamaStatus.available ? 'var(--success-bg)' : 'var(--warning-bg)',
+                  color: ollamaStatus.available ? 'var(--success)' : 'var(--warning)',
+                  border: `1px solid ${ollamaStatus.available ? 'var(--success-border)' : 'var(--warning-border)'}`,
+                }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: ollamaStatus.available ? 'var(--success)' : 'var(--warning)' }} />
+                {ollamaStatus.available ? `IA: ${ollamaStatus.model || 'Ollama'}` : 'IA: Local (pattern)'}
+              </span>
+            )}
+            {lastSource && (
+              <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+                via {lastSource}
+              </span>
+            )}
+          </div>
         </div>
         <button
           onClick={() =>
