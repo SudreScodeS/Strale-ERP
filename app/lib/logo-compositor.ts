@@ -268,6 +268,20 @@ export async function removeBackgroundAdaptive(
   clusters.sort((a, b) => b.count - a.count);
   const bg = clusters[0] || { r: 255, g: 255, b: 255, brightness: 255 };
 
+  // =============================================
+  // COMPLEXITY CHECK: If edge samples are very diverse,
+  // the logo likely extends to the edges (complex image).
+  // In this case, skip background removal entirely —
+  // the "background" is actually part of the logo.
+  // =============================================
+  const dominantClusterFraction = clusters.length > 0 ? clusters[0].count / edgeSamples.length : 0;
+  const isComplexLogo = dominantClusterFraction < 0.45 || clusters.length > 8;
+
+  if (isComplexLogo) {
+    console.log(`[logo-compositor] Complex logo detected (dominant cluster: ${(dominantClusterFraction * 100).toFixed(1)}%, ${clusters.length} clusters) — skipping background removal`);
+    return sharp(logoBuffer).ensureAlpha().png().toBuffer();
+  }
+
   console.log(`[logo-compositor] Background: rgb(${bg.r},${bg.g},${bg.b}) brightness=${bg.brightness.toFixed(0)}`);
 
   // =============================================

@@ -359,19 +359,23 @@ async function refineWithAI(
   const product = productNames[style] || productNames.sacola;
   const material = materialNames[style] || materialNames.sacola;
 
-  // PROMPT MESTRE: Ultra-realistic e-commerce mockup
-  // Covers: perspective, displacement mapping, fabric texture, silk-screen print,
-  // no borders/boxes, lighting coherence, professional studio quality.
-  const withLogoPrompt = `Professional 8k e-commerce photo of a ${product}. Change the material color strictly to ${color || 'the selected color'}, maintaining all original studio lighting, deep shadows, and realistic highlights. The uploaded logo must be integrated using displacement mapping: it must follow the fabric folds, texture, and perspective perfectly. Eliminate any background boxes or black borders from the logo; it should appear as a high-quality silk-screen print absorbed into the ${material} fibers. The background of the image must remain neutral and professional. Sharp focus, cinematic studio quality, photorealistic.`;
+  // Strength 0.32: LOW enough to preserve the recolored product, but HIGH enough
+  // for the AI to add realistic lighting, shadows, and logo integration.
+  // 0.50 was too high — AI was "correcting" the color back to the original.
+  const strength = hasLogo ? 0.32 : 0.20;
+  const steps = hasLogo ? 25 : 8;
 
-  const noLogoPrompt = `Professional 8k e-commerce photo of a plain blank ${product}. Clean ${material} texture with natural drape and folds. Soft directional studio lighting with natural shadows on a neutral professional background. Sharp focus, cinematic studio quality, photorealistic.`;
+  // Color enforcement: repeat the color name prominently so the AI doesn't ignore it
+  const colorWithName = color || 'the selected color';
+  const colorInstruction = colorWithName.startsWith('#')
+    ? `The product color MUST be ${colorWithName}. Do NOT change it back to the original color.`
+    : `The product color MUST be ${colorWithName}.`;
+
+  const withLogoPrompt = `Professional 8k e-commerce photo of a ${product}. ${colorInstruction} The material color is strictly ${colorWithName}, maintaining all original studio lighting, deep shadows, and realistic highlights. The logo on the product must be preserved exactly as shown — do NOT alter, remove, or replace the logo. It must follow the fabric folds, texture, and perspective perfectly with displacement mapping. The logo should appear as a high-quality silk-screen print absorbed into the ${material} fibers. No background boxes, no black borders around the logo. Neutral professional background. Sharp focus, cinematic studio quality, photorealistic.`;
+
+  const noLogoPrompt = `Professional 8k e-commerce photo of a plain blank ${product}. ${colorInstruction} Clean ${material} texture with natural drape and folds. Soft directional studio lighting with natural shadows on a neutral professional background. Sharp focus, cinematic studio quality, photorealistic.`;
 
   const prompt = hasLogo ? withLogoPrompt : noLogoPrompt;
-
-  // Strength 0.50: enough freedom for AI to apply displacement mapping,
-  // perspective deformation, and fabric texture integration
-  const strength = hasLogo ? 0.50 : 0.25;
-  const steps = hasLogo ? 28 : 8;
 
   console.log(`[product-image] AI refinement: strength=${strength}, steps=${steps}, hasLogo=${hasLogo}`);
   console.log(`[product-image] Prompt: ${prompt.substring(0, 120)}...`);
