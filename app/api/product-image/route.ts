@@ -2,10 +2,13 @@
 // Image generation pipeline — AI-FIRST logo integration
 //
 // STRATEGY:
-// 1. Generate neutral product (AI)
-// 2. Recolor via HSL
-// 3. Composite logo LOCALLY with minimal effects (just position + blend)
-// 4. AI refinement with HIGHER strength — the AI renders the logo naturally
+// 1. Generate neutral product (AI) — plain gray, no logo
+// 2. Recolor via LAB color space — product material ONLY
+//    - Preserves luminance (shadows, highlights, texture)
+//    - Changes only chrominance (a*, b*) → color applied to material
+//    - Adaptive background detection with smooth feathering
+// 3. Composite logo with minimal effects (position + multiply blend)
+// 4. AI refinement — the AI renders the logo naturally
 //    onto the product surface with proper lighting, shadows, texture
 //
 // KEY INSIGHT: Don't try to make the logo look "printed" with sharp effects.
@@ -21,6 +24,8 @@ import {
   getPrintArea,
   getProductCompositorOptions,
   detectProductBounds,
+  removeBackgroundAdaptive,
+  autoCropToContent,
 } from '../../lib/logo-compositor';
 
 // ==========================================
@@ -298,11 +303,6 @@ async function compositeLogoLight(
 ): Promise<Buffer> {
   // Use full logo pipeline for proper background removal + auto-crop
   // Then apply minimal effects — the AI refinement will handle realism
-  const {
-    compositeLogo,
-    removeBackgroundAdaptive,
-    autoCropToContent,
-  } = await import('../../lib/logo-compositor');
 
   // Step 1: Properly remove logo background (handles dark/light/any bg)
   let cleanLogo = await removeBackgroundAdaptive(logoBuffer, 220);
