@@ -704,7 +704,7 @@ export default function SalesPage() {
               className="mt-3 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3"
             />
             {logoAnalyzing ? (
-              <div className="mt-3 flex items-center gap-2 text-sm text-blue-600">
+              <div className="mt-3 flex items-center gap-2 text-sm text-[var(--brand)]">
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -730,7 +730,7 @@ export default function SalesPage() {
 
                 {/* Cor do produto detectada */}
                 {logoAnalysisResult.productColor ? (
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3">
+                  <div className="rounded-2xl border border-blue-200 bg-[var(--brand-muted)] p-3">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-blue-800">🎨 Cor do produto detectada:</span>
                       <span
@@ -739,7 +739,7 @@ export default function SalesPage() {
                       />
                       <span className="font-mono text-xs text-blue-700">{logoAnalysisResult.productColor}</span>
                     </div>
-                    <p className="mt-1 text-xs text-blue-600">Esta cor será trocada pela variável selecionada na prévia</p>
+                    <p className="mt-1 text-xs text-[var(--brand)]">Esta cor será trocada pela variável selecionada na prévia</p>
                   </div>
                 ) : null}
 

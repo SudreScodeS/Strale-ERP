@@ -121,7 +121,7 @@ export function DraggableSection({
             onClick={() =>
               updateSection(pagePath, section.id, { colSpan: section.colSpan === 1 ? 2 : 1 })
             }
-            className="rounded-lg p-1 text-blue-600 transition-colors hover:bg-blue-50"
+            className="rounded-lg p-1 text-[var(--brand)] transition-colors hover:bg-[var(--brand-muted)]"
             title={section.colSpan === 1 ? 'Expandir para largura total' : 'Reduzir para metade'}
           >
             {section.colSpan === 1 ? (
@@ -184,7 +184,7 @@ export function LayoutToolbar({ pagePath }: { pagePath: string }) {
         onClick={() => setIsEditing(!isEditing)}
         className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition-all ${
           isEditing
-            ? 'bg-blue-600 text-white shadow-md'
+            ? 'bg-[var(--brand)] text-white shadow-md'
             : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
         }`}
         style={
