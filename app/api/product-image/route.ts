@@ -104,7 +104,7 @@ async function getOrCreateNeutralBase(style: string, variables: string[]): Promi
   const prompt = buildNeutralBasePrompt(style, variables);
   console.log(`[product-image] Generating neutral base for ${style}...`);
 
-  const buffer = await generateImage(prompt, { width: 512, height: 640, steps: 6 });
+  const buffer = await generateImage(prompt, { width: 512, height: 640, steps: 12 });
 
   if (buffer) { neutralBaseCache.set(cacheKey, buffer); console.log(`[product-image] Neutral base cached: ${buffer.length} bytes`); }
   return buffer;
@@ -253,16 +253,16 @@ async function recolorProduct(baseBuffer: Buffer, hexColor: string): Promise<Buf
       continue;
     }
 
-    // Get original pixel's luminance in LAB
-    const [origL] = rgbToLab(r, g, b);
+    // Get original pixel's luminance AND chrominance in LAB
+    const [origL, origA, origB] = rgbToLab(r, g, b);
 
-    // Blend target chrominance with original based on mask strength
-    // At edges (low alpha), keep more of original color → smooth transition
+    // Blend target chrominance with ORIGINAL pixel's chrominance (not zero/gray!)
+    // This preserves the natural color transition at edges instead of desaturating
     const blendFactor = productAlpha / 255;
-    const blendedA = targetA * blendFactor;
-    const blendedB = targetB * blendFactor;
+    const blendedA = origA + (targetA - origA) * blendFactor;
+    const blendedB = origB + (targetB - origB) * blendFactor;
 
-    // Recompose: same L (preserves shadows/highlights), new a/b (new color)
+    // Recompose: same L (preserves shadows/highlights), blended chrominance
     const [newR, newG, newB] = labToRgb(origL, blendedA, blendedB);
 
     outputBuffer[dstIdx] = newR;
@@ -302,34 +302,33 @@ async function compositeLogoLight(
   printArea: { x: number; y: number; width: number; height: number },
 ): Promise<Buffer> {
   // Use full logo pipeline for proper background removal + auto-crop
-  // Then apply minimal effects — the AI refinement will handle realism
-
-  // Step 1: Properly remove logo background (handles dark/light/any bg)
   let cleanLogo = await removeBackgroundAdaptive(logoBuffer, 220);
   cleanLogo = await autoCropToContent(cleanLogo);
 
-  // Step 2: Minimal compositor — just position + multiply blend
-  // The AI refinement step will make it look naturally printed
-  const lightOpts = {
+  // Balanced compositor — enough effects for realism,
+  // but not so much that it looks over-processed before AI refinement.
+  // The AI refinement step (strength 0.65) will re-render the logo area,
+  // so we need a solid base composite for the AI to work with.
+  const balancedOpts = {
     blendMode: 'multiply' as const,
-    opacity: 0.88,
-    featherRadius: 1.5,
-    fabricTexture: false,     // No texture — AI will add
-    textureIntensity: 0,
-    shadowBlur: 2,            // Minimal shadow hint
-    shadowOpacity: 0.08,
+    opacity: 0.92,
+    featherRadius: 2.0,
+    fabricTexture: true,      // Fabric texture bleed-through
+    textureIntensity: 0.05,
+    shadowBlur: 4,
+    shadowOpacity: 0.12,
     shadowAngle: 135,
-    shadowDistance: 1,
+    shadowDistance: 2,
     bgThreshold: 220,
     curvature: 0,
-    matchLighting: false,     // No lighting — AI will add
-    lightingIntensity: 0,
-    printIntegration: false,  // No edge effects — AI will add
-    printEdgeDarken: 0,
-    printHighlight: 0,
+    matchLighting: true,      // Match product surface lighting
+    lightingIntensity: 0.10,
+    printIntegration: true,   // Edge darkening + highlight sheen
+    printEdgeDarken: 0.06,
+    printHighlight: 0.03,
   };
 
-  return compositeLogo(productBuffer, cleanLogo, printArea, lightOpts);
+  return compositeLogo(productBuffer, cleanLogo, printArea, balancedOpts);
 }
 
 // ==========================================
@@ -343,33 +342,38 @@ async function refineWithAI(
   hasLogo: boolean,
 ): Promise<Buffer> {
   // When logo is present, use a prompt that tells the AI to render it as printed
+  // CRITICAL: The prompt must describe the logo as PRINTED ON the fabric, not pasted
   const prompts: Record<string, { withLogo: string; noLogo: string }> = {
     sacola: {
-      withLogo: 'professional product photography of a tote bag with a logo printed on the front surface, the logo looks screen-printed with natural ink absorption into fabric, realistic fabric texture visible through the print, natural studio lighting casting soft shadows, white seamless background, commercial e-commerce photo, sharp focus, 4k quality',
-      noLogo: 'professional product photography of a plain tote bag, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture',
+      withLogo: 'commercial product photography of a tote bag, the logo is screen-printed directly into the cotton fabric with matte ink, the ink has been absorbed by the fabric fibers creating a soft slightly textured print edge, the print follows the natural fabric drape and wrinkles, visible fabric weave texture through the ink, no sticker no decal no rectangular border, the print looks like it was applied during manufacturing, soft diffused studio lighting from above-left casting gentle shadows, seamless white background, Canon EOS R5 85mm f/2.8, sharp focus, 4k ultra detail, professional e-commerce catalog photo',
+      noLogo: 'commercial product photography of a plain blank tote bag, soft studio lighting, seamless white background, realistic cotton fabric texture, natural drape, Canon EOS R5, sharp focus, 4k, professional e-commerce catalog photo',
     },
     camiseta: {
-      withLogo: 'professional product photography of a t-shirt with a logo printed on the chest, the logo looks screen-printed with natural ink absorption into cotton, realistic knit texture visible through the print, natural studio lighting, white seamless background, commercial e-commerce photo, sharp focus',
-      noLogo: 'professional product photography of a plain t-shirt, studio lighting, white background, commercial e-commerce photo, sharp focus, realistic fabric texture',
+      withLogo: 'commercial product photography of a t-shirt, the logo is screen-printed on the chest with water-based ink absorbed into the cotton knit, the print has a soft hand feel with slightly muted colors where ink meets fabric, visible jersey knit texture through the print, no sticker no decal no rectangular outline, the print follows the natural shirt drape and creases, soft diffused studio lighting, seamless white background, Canon EOS R5 85mm, sharp focus, 4k ultra detail, professional e-commerce catalog photo',
+      noLogo: 'commercial product photography of a plain blank t-shirt, soft studio lighting, seamless white background, realistic cotton jersey texture, natural drape on invisible mannequin, Canon EOS R5, sharp focus, 4k, professional e-commerce catalog photo',
     },
     caneca: {
-      withLogo: 'professional product photography of a ceramic mug with a logo printed on the surface, the logo looks sublimation-printed with smooth integration into the glaze, realistic glossy surface with natural reflections, studio lighting, white background, commercial e-commerce photo, sharp focus',
-      noLogo: 'professional product photography of a plain ceramic mug, studio lighting, white background, commercial e-commerce photo, sharp focus, glossy glaze finish',
+      withLogo: 'commercial product photography of a ceramic mug, the logo is sublimation-printed fused into the glaze surface, smooth integration with the glossy ceramic, no sticker no decal no raised edges, the print is part of the mug surface, natural reflections and highlights on the glazed surface following the curve, soft studio lighting, seamless white background, Canon EOS R5 macro lens, sharp focus, 4k ultra detail, professional e-commerce catalog photo',
+      noLogo: 'commercial product photography of a plain blank ceramic mug, soft studio lighting, seamless white background, glossy glaze finish, natural reflections, Canon EOS R5, sharp focus, 4k, professional e-commerce catalog photo',
     },
   };
 
   const stylePrompts = prompts[style] || prompts.sacola;
   const prompt = hasLogo ? stylePrompts.withLogo : stylePrompts.noLogo;
 
-  // Higher strength when logo is present — AI needs to re-render the logo area
+  // Higher strength when logo is present — AI needs to RE-RENDER the logo area
   // to make it look naturally printed (not just refine the product)
-  const strength = hasLogo ? 0.40 : 0.25;
+  // 0.60-0.68 gives the AI enough freedom to integrate the logo into the surface
+  const strength = hasLogo ? 0.65 : 0.25;
 
-  console.log(`[product-image] AI refinement: strength=${strength}, hasLogo=${hasLogo}`);
+  // More steps = better quality, especially for logo integration
+  const steps = hasLogo ? 20 : 8;
+
+  console.log(`[product-image] AI refinement: strength=${strength}, steps=${steps}, hasLogo=${hasLogo}`);
 
   return refineImageWithAI(imageBuffer, prompt, {
     strength,
-    steps: 6,    // More steps for better quality
+    steps,
     width: 512,
     height: 640,
   });

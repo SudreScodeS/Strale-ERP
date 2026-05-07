@@ -60,7 +60,7 @@ export async function refineImageWithAI(
     console.log(`[hf-client] Refining image (${imageBuffer.length} bytes, strength=${opts.strength})...`);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60_000); // 60s for img2img with higher strength
+    const timeout = setTimeout(() => controller.abort(), 120_000); // 120s for img2img with higher strength + more steps
 
     const response = await fetch(url, {
       method: 'POST',

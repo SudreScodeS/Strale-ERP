@@ -446,18 +446,25 @@ async function createFabricTexture(width: number, height: number, intensity: num
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
-      const hFiber = (y % 3 < 1) ? 1 : 0;
-      const vFiber = (x % 3 < 1) ? 1 : 0;
+      // Realistic weave pattern — alternating warp/weft with subtle variation
+      const warpPhase = Math.sin(y * 0.8) * 0.3;
+      const weftPhase = Math.sin(x * 0.8) * 0.3;
+      const hFiber = ((y + Math.floor(weftPhase)) % 4 < 2) ? 1 : 0;
+      const vFiber = ((x + Math.floor(warpPhase)) % 4 < 2) ? 1 : 0;
       const weave = (hFiber + vFiber) % 2;
-      const noise = (rand() - 0.5) * 0.5;
-      const value = Math.round(128 + (weave - 0.5) * 40 + noise * 20);
+      // Combine structured weave with organic noise
+      const noise = (rand() - 0.5) * 0.6;
+      const fiberNoise = (rand() - 0.5) * 0.2;
+      const value = Math.round(128 + (weave - 0.5) * 50 + noise * 25 + fiberNoise * 15);
 
       buf[idx] = value; buf[idx + 1] = value; buf[idx + 2] = value;
       buf[idx + 3] = Math.round(intensity * 255);
     }
   }
 
-  return sharp(buf, { raw: { width, height, channels: 4 } }).png().toBuffer();
+  return sharp(buf, { raw: { width, height, channels: 4 } })
+    .blur(0.4) // Slight blur for more natural fiber appearance
+    .png().toBuffer();
 }
 
 async function createSurfaceLightingMap(
