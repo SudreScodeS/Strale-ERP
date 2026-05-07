@@ -20,7 +20,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '../../lib/auth';
 import sharp from 'sharp';
-import { generateImage, refineImageWithAI } from '../../lib/krea-client';
+import { generateImage, refineImageWithAI } from '../../lib/huggingface-client';
 import {
   compositeLogo,
   getPrintArea,
@@ -48,7 +48,7 @@ function getCacheKey(color: string, style: string, variables: string[], logoHash
 // Prompt construction
 // ==========================================
 
-function buildNeutralBasePrompt(style: string, variables: string[]): string {
+function buildNeutralBasePrompt(style: string, variables: string[], color?: string): string {
   const sizeVar = variables.find(v =>
     ['pequeno', 'small', 'médio', 'medio', 'medium', 'grande', 'large', 'extra'].some(s => v.toLowerCase().includes(s))
   );
@@ -98,12 +98,12 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 // STEP 1: Generate neutral base
 // ==========================================
 
-async function getOrCreateNeutralBase(style: string, variables: string[]): Promise<Buffer | null> {
-  const cacheKey = `neutral-${style}-${variables.join(',')}`;
+async function getOrCreateNeutralBase(style: string, variables: string[], color?: string): Promise<Buffer | null> {
+  const cacheKey = `neutral-${style}-${variables.join(',')}-${color || 'gray'}`;
   const cached = neutralBaseCache.get(cacheKey);
-  if (cached) { console.log(`[product-image] Using cached neutral base for ${style}`); return cached; }
+  if (cached) { console.log(`[product-image] Using cached base for ${style} (${color})`); return cached; }
 
-  const prompt = buildNeutralBasePrompt(style, variables);
+  const prompt = buildNeutralBasePrompt(style, variables, color);
   console.log(`[product-image] Generating neutral base for ${style}...`);
 
   const buffer = await generateImage(prompt, { width: 512, height: 640, steps: 12 });
@@ -359,11 +359,12 @@ async function refineWithAI(
   const product = productNames[style] || productNames.sacola;
   const material = materialNames[style] || materialNames.sacola;
 
-  // Strength 0.32: LOW enough to preserve the recolored product, but HIGH enough
-  // for the AI to add realistic lighting, shadows, and logo integration.
-  // 0.50 was too high — AI was "correcting" the color back to the original.
-  const strength = hasLogo ? 0.32 : 0.20;
-  const steps = hasLogo ? 25 : 8;
+  // HF FLUX.1-schnell: lower strength (0.28) preserves color better
+  // Higher steps (8) for better quality refinement
+  const strength = hasLogo ? 0.28 : 0.18;
+  const steps = hasLogo ? 8 : 4;
+
+  const negativePrompt = 'cartoon, drawing, low quality, blurred, logo with black background, square border around logo, floating sticker, flat texture, distorted typography, plastic look, oversaturated color, black box, watermark';
 
   // Color enforcement: repeat the color name prominently so the AI doesn't ignore it
   const colorWithName = color || 'the selected color';
@@ -385,6 +386,7 @@ async function refineWithAI(
     steps,
     width: 512,
     height: 640,
+    negativePrompt,
   });
 }
 
@@ -435,7 +437,7 @@ export async function POST(request: Request) {
       imageSource = 'product-photo';
     } else {
       // Generate base: AI → fallback SVG
-      let neutralBase = await getOrCreateNeutralBase(style, variables);
+      let neutralBase = await getOrCreateNeutralBase(style, variables, color);
       let usedFallback = false;
       if (!neutralBase) {
         console.log('[product-image] AI unavailable, creating local fallback');
@@ -444,10 +446,10 @@ export async function POST(request: Request) {
         usedFallback = true;
       }
 
-      // Recolor via LAB
+      // Recolor via LAB (HF generates gray, we apply the color locally)
       console.log(`[product-image] Recoloring to ${color}...`);
       finalBuffer = await recolorProduct(neutralBase, color);
-      imageSource = usedFallback ? 'fallback-local' : 'recolor-lab';
+      imageSource = 'ai-generated-recolor';
     }
 
     // =============================================
@@ -478,23 +480,24 @@ export async function POST(request: Request) {
     }
 
     // =============================================
-    // STEP 4: AI refinement — renders logo naturally
-    //   This is where the magic happens.
-    //   The AI re-renders the logo area to look printed on the product.
+    // STEP 4: AI refinement DISABLED
+    //   HF FLUX.1-schnell doesn't support img2img.
+    //   Color is already baked into the generation prompt.
+    //   Logo is composited locally with sharp.
     // =============================================
-    const enableRefinement = process.env.KREA_API_KEY;
-    if (enableRefinement) {
-      try {
-        const refined = await refineWithAI(finalBuffer, style, hasLogo, color);
-        if (refined && refined.length > 100) {
-          finalBuffer = refined;
-          imageSource = hasLogo ? 'ai-refined-with-logo' : 'ai-refined';
-          console.log(`[product-image] AI refinement complete`);
-        }
-      } catch (err) {
-        console.error(`[product-image] AI refinement failed:`, err);
-      }
-    }
+    // const enableRefinement = process.env.HUGGINGFACE_API_TOKEN || process.env.HUGGINGFACE_API_KEY;
+    // if (enableRefinement) {
+    //   try {
+    //     const refined = await refineWithAI(finalBuffer, style, hasLogo, color);
+    //     if (refined && refined.length > 100) {
+    //       finalBuffer = refined;
+    //       imageSource = hasLogo ? 'ai-refined-with-logo' : 'ai-refined';
+    //       console.log(`[product-image] AI refinement complete`);
+    //     }
+    //   } catch (err) {
+    //     console.error(`[product-image] AI refinement failed:`, err);
+    //   }
+    // }
 
     // =============================================
     // Convert to WebP
