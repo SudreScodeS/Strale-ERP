@@ -1,7 +1,7 @@
 // app/components/product-preview.tsx
 // Product preview with realistic logo compositing
-// Pipeline: AI-generated base → HSL recolor → Canvas compositing with print realism
-// Client-side: shadow, blend modes, lighting match, edge feathering
+// ALWAYS uses canvas for final rendering — no CSS overlay fallback
+// Pipeline: API/real-image → Canvas draw → Logo composite with print effects
 
 'use client';
 
@@ -12,7 +12,7 @@ export interface PreviewConfig {
   productImageUrl: string;
   productName: string;
   logoDataUrl: string | null;
-  referenceImageUrl?: string | null; // Optional: reference showing desired logo application
+  referenceImageUrl?: string | null;
   selectedColorHex?: string;
   selectedColorName?: string;
   selectedMaterialName?: string;
@@ -85,9 +85,9 @@ function getBlendMode(hexColor: string): GlobalCompositeOperation {
   const rgb = hexToRgb(hexColor);
   if (!rgb) return 'multiply';
   const brightness = rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114;
-  if (brightness < 80) return 'overlay';     // Dark product
-  if (brightness > 200) return 'multiply';   // Light product
-  return 'soft-light';                        // Mid-tone
+  if (brightness < 80) return 'overlay';
+  if (brightness > 200) return 'multiply';
+  return 'soft-light';
 }
 
 // ==========================================
@@ -101,12 +101,12 @@ export default function ProductPreview({
   compact = false,
 }: ProductPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [baseImage, setBaseImage] = useState<HTMLImageElement | null>(null);
+  const [apiImage, setApiImage] = useState<HTMLImageElement | null>(null);
+  const [realProductImage, setRealProductImage] = useState<HTMLImageElement | null>(null);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [imgError, setImgError] = useState(false);
-  const [imageSource, setImageSource] = useState<string>('ai');
+  const [imageSource, setImageSource] = useState<string>('none');
 
   const {
     productImageUrl,
@@ -122,7 +122,7 @@ export default function ProductPreview({
   } = config;
 
   const productColor = selectedColorHex || getDefaultColor(productName);
-  const hasRealImage = Boolean(productImageUrl && !imgError);
+  const hasRealImage = Boolean(productImageUrl);
   const productStyle = getProductStyle(productName);
 
   // Cache key
@@ -132,18 +132,30 @@ export default function ProductPreview({
   const generationKey = `${productColor}-${productStyle}-${variablesKey}-${logoShortHash}-${refShortHash}`;
 
   // ==========================================
-  // 1. Fetch generated image from API
+  // 1. Load real product image (always, if URL exists)
+  // ==========================================
+  useEffect(() => {
+    if (!productImageUrl) { setRealProductImage(null); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => setRealProductImage(img);
+    img.onerror = () => setRealProductImage(null);
+    img.src = productImageUrl;
+  }, [productImageUrl]);
+
+  // ==========================================
+  // 2. Fetch generated/composited image from API
+  //    When logo exists: ALWAYS call API for proper compositing
   // ==========================================
   const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   useEffect(() => {
-    // When there's a logo, ALWAYS call the API to get a properly composited image.
-    // Only skip the API if we have a real product image AND no logo.
+    // Only skip API if: real image exists AND no logo
     if (hasRealImage && !logoDataUrl) return;
 
     const cached = imageCacheRef.current.get(generationKey);
     if (cached) {
-      setBaseImage(cached);
+      setApiImage(cached);
       return;
     }
 
@@ -162,8 +174,7 @@ export default function ProductPreview({
         if (logoDataUrl) body.logoDataUrl = logoDataUrl;
         if (referenceImageUrl) body.referenceImageUrl = referenceImageUrl;
 
-        // Send real product photo as base so server can composite logo onto it
-        // instead of generating a new image from scratch
+        // Send real product photo as base
         if (hasRealImage && productImageUrl) {
           try {
             const imgResp = await fetch(productImageUrl);
@@ -193,8 +204,8 @@ export default function ProductPreview({
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
           if (data.fallback) {
-            setBaseImage(null);
-            setError('IA não configurada — usando visual ilustrativo');
+            setApiImage(null);
+            setError('IA não configurada — usando composição local');
             setLoading(false);
             return;
           }
@@ -215,7 +226,7 @@ export default function ProductPreview({
         img.onload = () => {
           if (cancelled) { URL.revokeObjectURL(url); return; }
           imageCacheRef.current.set(generationKey, img);
-          setBaseImage(img);
+          setApiImage(img);
           setLoading(false);
         };
         img.onerror = () => {
@@ -236,7 +247,7 @@ export default function ProductPreview({
   }, [generationKey, hasRealImage, productColor, productStyle, selectedVariables, logoDataUrl, referenceImageUrl]);
 
   // ==========================================
-  // 2. Load logo as Image
+  // 3. Load logo as Image
   // ==========================================
   useEffect(() => {
     if (!logoDataUrl) { setLogoImage(null); return; }
@@ -247,7 +258,8 @@ export default function ProductPreview({
   }, [logoDataUrl]);
 
   // ==========================================
-  // 3. Canvas rendering with realistic compositing
+  // 4. Canvas rendering — ALWAYS draws base + composites logo
+  //    No CSS overlay fallback. Canvas is the single source of truth.
   // ==========================================
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -259,13 +271,16 @@ export default function ProductPreview({
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    if (hasRealImage) return;
+    // ─────────────────────────────────────
+    // Determine base image: API result > real product > fallback SVG
+    // ─────────────────────────────────────
+    const baseImg = apiImage || realProductImage;
 
-    if (baseImage) {
-      // ========================================
-      // MODE: AI-generated image
-      // ========================================
-      const imgRatio = baseImage.width / baseImage.height;
+    if (baseImg) {
+      // ─────────────────────────────────────
+      // Draw base image (fit to canvas, centered)
+      // ─────────────────────────────────────
+      const imgRatio = baseImg.width / baseImg.height;
       const canvasRatio = w / h;
       let drawW: number, drawH: number, drawX: number, drawY: number;
 
@@ -275,17 +290,16 @@ export default function ProductPreview({
         drawH = h; drawW = h * imgRatio; drawX = (w - drawW) / 2; drawY = 0;
       }
 
-      ctx.drawImage(baseImage, drawX, drawY, drawW, drawH);
+      ctx.drawImage(baseImg, drawX, drawY, drawW, drawH);
 
-      // If server already composited everything, don't add overlays
-      if (imageSource === 'composited' || imageSource === 'composited-ref' ||
-          imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo' ||
-          imageSource === 'logo-composited') {
-        // Image already processed — render as-is
-      } else if (logoImage) {
-        // ========================================
-        // Client-side logo compositing (fallback)
-        // ========================================
+      // ─────────────────────────────────────
+      // Composite logo (if present and not already baked in)
+      // ─────────────────────────────────────
+      const alreadyComposited = imageSource === 'composited' || imageSource === 'composited-ref' ||
+        imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo' ||
+        imageSource === 'logo-composited';
+
+      if (logoImage && !alreadyComposited) {
         const area = getPrintArea(drawW, drawH, productStyle);
         const logoAreaX = drawX + area.x;
         const logoAreaY = drawY + area.y;
@@ -306,7 +320,7 @@ export default function ProductPreview({
         const logoX = logoAreaX + (area.width - logoW) / 2;
         const logoY = logoAreaY + area.height * 0.40 - logoH / 2;
 
-        // Dynamic blend mode
+        // Dynamic blend mode based on product color
         const blendMode = getBlendMode(productColor);
 
         // 1. Directional shadow (bottom-right)
@@ -330,8 +344,7 @@ export default function ProductPreview({
         ctx.save();
         ctx.globalCompositeOperation = 'overlay';
         ctx.globalAlpha = 0.08;
-        // Re-draw product region as luminance guide
-        ctx.drawImage(baseImage, drawX + area.x, drawY + area.y, area.width, area.height,
+        ctx.drawImage(baseImg, drawX + area.x, drawY + area.y, area.width, area.height,
                       logoX, logoY, logoW, logoH);
         ctx.restore();
 
@@ -339,7 +352,6 @@ export default function ProductPreview({
         ctx.save();
         ctx.globalCompositeOperation = 'multiply';
         ctx.globalAlpha = 0.04;
-        // Slightly smaller version to create edge effect
         const shrink = Math.max(1, logoW * 0.005);
         ctx.drawImage(logoImage, logoX + shrink, logoY + shrink, logoW - shrink * 2, logoH - shrink * 2);
         ctx.restore();
@@ -358,9 +370,9 @@ export default function ProductPreview({
         ctx.restore();
       }
     } else {
-      // ========================================
-      // MODE: Fallback canvas illustration
-      // ========================================
+      // ─────────────────────────────────────
+      // Fallback: canvas-drawn bag illustration
+      // ─────────────────────────────────────
       drawFallbackBag(ctx, w, h, productColor, logoImage);
     }
 
@@ -368,31 +380,19 @@ export default function ProductPreview({
     if (onPreviewGenerated) {
       try { onPreviewGenerated(canvas.toDataURL('image/png')); } catch { /* ignore */ }
     }
-  }, [baseImage, logoImage, productColor, hasRealImage, onPreviewGenerated, imageSource, productStyle]);
+  }, [apiImage, realProductImage, logoImage, productColor, onPreviewGenerated, imageSource, productStyle]);
 
   useEffect(() => { renderCanvas(); }, [renderCanvas]);
 
   // ==========================================
-  // Render
+  // Render — canvas is ALWAYS in the DOM
   // ==========================================
 
   if (compact) {
     return (
       <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-white ${className}`}>
         <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'transparent' }}>
-          {baseImage ? (
-            // API-generated composited image (with logo baked in)
-            <img src={baseImage.src} alt={productName} className="w-full h-full object-contain" />
-          ) : hasRealImage ? (
-            <>
-              <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
-              {logoDataUrl ? (
-                <img src={logoDataUrl} alt="Logo" className="absolute inset-0 m-auto h-12 w-12 object-contain drop-shadow-md" style={{ maxWidth: '35%', maxHeight: '35%' }} />
-              ) : null}
-            </>
-          ) : (
-            <canvas ref={canvasRef} width={compact ? 200 : 400} height={compact ? 200 : 500} className="w-full h-full object-contain" />
-          )}
+          <canvas ref={canvasRef} width={400} height={500} className="w-full h-full object-contain" />
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
               <div className="flex flex-col items-center gap-2">
@@ -412,59 +412,39 @@ export default function ProductPreview({
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`}>
       <div className="relative w-full overflow-hidden" style={{ backgroundColor: 'transparent', aspectRatio: '4/5' }}>
-        {baseImage ? (
-          // API-generated composited image (with logo baked in)
-          <img src={baseImage.src} alt={productName} className="w-full h-full object-contain" />
-        ) : hasRealImage ? (
-          <>
-            <img src={productImageUrl} alt={productName} className="w-full h-full object-cover" onError={() => setImgError(true)} />
-            {logoDataUrl ? (
-              <img src={logoDataUrl} alt="Logo" className="absolute object-contain drop-shadow-lg"
-                style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: '40%', maxHeight: '30%' }} />
-            ) : null}
-          </>
-        ) : (
-          <>
-            <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
+        <canvas ref={canvasRef} width={768} height={960} className="w-full h-full object-contain" />
 
-            {/* Show product image as preview while generating with logo */}
-            {hasRealImage && logoDataUrl && loading ? (
-              <img src={productImageUrl} alt={productName} className="absolute inset-0 w-full h-full object-cover opacity-60" />
-            ) : null}
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3">
+              <svg className="h-8 w-8 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-xs text-slate-600">Gerando imagem com IA…</span>
+            </div>
+          </div>
+        ) : null}
 
-            {loading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-3">
-                  <svg className="h-8 w-8 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span className="text-xs text-slate-600">Gerando imagem com IA…</span>
-                </div>
-              </div>
-            ) : null}
+        {error ? (
+          <div className="absolute bottom-2 left-2 right-2">
+            <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">{error}</p>
+          </div>
+        ) : null}
 
-            {error ? (
-              <div className="absolute bottom-2 left-2 right-2">
-                <p className="text-[10px] text-amber-700 bg-amber-50/90 rounded-lg px-2 py-1 text-center">{error}</p>
-              </div>
-            ) : null}
-
-            {baseImage ? (
-              <div className="absolute top-2 left-2">
-                <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">
-                  ✨ Gerado por IA
-                </span>
-              </div>
-            ) : !loading && !error ? (
-              <div className="absolute top-2 left-2">
-                <span className="text-[9px] bg-slate-100/90 text-slate-500 rounded-full px-2 py-0.5 font-medium">
-                  🎨 Ilustrativo
-                </span>
-              </div>
-            ) : null}
-          </>
-        )}
+        {apiImage && imageSource !== 'none' ? (
+          <div className="absolute top-2 left-2">
+            <span className="text-[9px] bg-blue-100/90 text-blue-700 rounded-full px-2 py-0.5 font-medium">
+              ✨ Gerado por IA
+            </span>
+          </div>
+        ) : !loading && !error && !apiImage ? (
+          <div className="absolute top-2 left-2">
+            <span className="text-[9px] bg-slate-100/90 text-slate-500 rounded-full px-2 py-0.5 font-medium">
+              🎨 Composição local
+            </span>
+          </div>
+        ) : null}
 
         {selectedColorHex ? (
           <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
@@ -496,7 +476,7 @@ export default function ProductPreview({
         ) : (
           <p className="text-[10px] text-slate-400 mt-1">Envie uma logo para personalizar</p>
         )}
-        {!hasRealImage && !baseImage && !loading ? (
+        {!apiImage && !loading && !error ? (
           <p className="text-[10px] text-amber-500 mt-1">
             📐 Configure KREA_API_KEY para imagens geradas por IA
           </p>
