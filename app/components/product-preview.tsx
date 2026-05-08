@@ -307,7 +307,8 @@ export default function ProductPreview({
       const alreadyComposited = imageSource === 'composited' || imageSource === 'composited-ref' ||
         imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo' ||
         imageSource === 'logo-composited' || imageSource === 'logo-replacer' ||
-        imageSource === 'recolored-photo' || imageSource === 'local-recolor';
+        imageSource === 'recolored-photo' || imageSource === 'local-recolor' ||
+        (imageSource && imageSource.includes('+logo'));
 
       if (logoImage && !alreadyComposited) {
         const area = getPrintArea(drawW, drawH, productStyle);
