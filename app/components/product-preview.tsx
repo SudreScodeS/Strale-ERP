@@ -304,7 +304,8 @@ export default function ProductPreview({
       // ─────────────────────────────────────
       // Composite logo (if present and not already baked in)
       // ─────────────────────────────────────
-      const alreadyComposited = imageSource === 'composited' || imageSource === 'composited-ref' ||
+      // Logo is already composited in API result — never draw again
+      const alreadyComposited = Boolean(apiImage) || imageSource === 'composited' || imageSource === 'composited-ref' ||
         imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo' ||
         imageSource === 'logo-composited' || imageSource === 'logo-replacer' ||
         imageSource === 'recolored-photo' || imageSource === 'local-recolor' ||

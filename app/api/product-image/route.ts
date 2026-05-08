@@ -518,45 +518,77 @@ export async function POST(request: Request) {
 
         console.log(`[product-image] Logo: ${lw}x${lh} at ${posX},${posY}`);
 
-        // Shadow
-        const shadowBuf = await sharp(resizedLogo)
-          .ensureAlpha().raw().toBuffer({ resolveWithObject: true })
-          .then(({ data, info }) => {
-            const sb = Buffer.alloc(info.width * info.height * 4);
-            for (let i = 0; i < info.width * info.height; i++) {
-              const si = i * info.channels, di = i * 4;
-              sb[di] = 0; sb[di + 1] = 0; sb[di + 2] = 0; sb[di + 3] = Math.round(data[si + 3] * 0.22);
-            }
-            return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).blur(5).png().toBuffer();
-          });
+        // Ensure logo is white (for dark products) or dark (for light products)
+        // This makes it look printed on the material
+        const isDarkBag = lum(...targetRgb) < 120;
+        if (isDarkBag) {
+          // Make logo white — better visibility on dark bags
+          const { data: ld, info: li } = await sharp(resizedLogo).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+          const whiteLogo = Buffer.alloc(ld.length);
+          for (let i = 0; i < ld.length; i += li.channels) {
+            whiteLogo[i] = 255; whiteLogo[i + 1] = 255; whiteLogo[i + 2] = 255;
+            whiteLogo[i + 3] = ld[i + 3]; // Keep original alpha (transparency)
+          }
+          const resizedLogoWhite = await sharp(whiteLogo, { raw: { width: li.width, height: li.height, channels: 4 } }).png().toBuffer();
 
-        // Composite layers
-        const layers: sharp.OverlayOptions[] = [
-          { input: shadowBuf, left: posX + 3, top: posY + 4, blend: 'over' },
-          { input: resizedLogo, left: posX, top: posY, blend: 'over' },
-        ];
-
-        // If 'both' positions, add logo on back too
-        if (printPosition === 'both') {
-          const backX = Math.round(bagBounds.x + bagBounds.width * 0.55 - lw / 2);
-          const backY = posY + Math.round(bagBounds.height * 0.05);
-          // Create a semi-transparent version for back logo
-          const backLogo = await sharp(resizedLogo)
+          // Shadow
+          const shadowBuf = await sharp(resizedLogoWhite)
             .ensureAlpha().raw().toBuffer({ resolveWithObject: true })
             .then(({ data, info }) => {
               const sb = Buffer.alloc(info.width * info.height * 4);
               for (let i = 0; i < info.width * info.height; i++) {
                 const si = i * info.channels, di = i * 4;
-                sb[di] = data[si]; sb[di + 1] = data[si + 1]; sb[di + 2] = data[si + 2];
-                sb[di + 3] = Math.round(data[si + 3] * 0.7);
+                sb[di] = 0; sb[di + 1] = 0; sb[di + 2] = 0; sb[di + 3] = Math.round(data[si + 3] * 0.18);
               }
-              return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+              return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).blur(4).png().toBuffer();
             });
-          layers.push({ input: shadowBuf, left: backX + 3, top: backY + 4, blend: 'over' });
-          layers.push({ input: backLogo, left: backX, top: backY, blend: 'over' });
-        }
 
-        baseBuffer = await sharp(baseBuffer).composite(layers).png().toBuffer();
+          // Texture from bag surface — makes logo look printed
+          const safeW = Math.min(lw, bw - posX);
+          const safeH = Math.min(lh, bh - posY);
+          let textureBuf: Buffer;
+          try {
+            textureBuf = await sharp(baseBuffer)
+              .extract({ left: posX, top: posY, width: safeW, height: safeH })
+              .greyscale().raw().toBuffer({ resolveWithObject: true })
+              .then(({ data, info }) => {
+                const sb = Buffer.alloc(info.width * info.height * 4);
+                for (let i = 0; i < info.width * info.height; i++) {
+                  const v = data[i];
+                  sb[i * 4] = v; sb[i * 4 + 1] = v; sb[i * 4 + 2] = v;
+                  sb[i * 4 + 3] = Math.round(15 + (v / 255) * 12);
+                }
+                return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+              });
+          } catch {
+            textureBuf = resizedLogoWhite; // fallback
+          }
+
+          const layers: sharp.OverlayOptions[] = [
+            { input: shadowBuf, left: posX + 2, top: posY + 3, blend: 'over' },
+            { input: resizedLogoWhite, left: posX, top: posY, blend: 'over' },
+            { input: textureBuf, left: posX, top: posY, blend: 'multiply' },
+          ];
+
+          baseBuffer = await sharp(baseBuffer).composite(layers).png().toBuffer();
+        } else {
+          // Light bag — use dark logo
+          const shadowBuf = await sharp(resizedLogo)
+            .ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+            .then(({ data, info }) => {
+              const sb = Buffer.alloc(info.width * info.height * 4);
+              for (let i = 0; i < info.width * info.height; i++) {
+                const si = i * info.channels, di = i * 4;
+                sb[di] = 0; sb[di + 1] = 0; sb[di + 2] = 0; sb[di + 3] = Math.round(data[si + 3] * 0.12);
+              }
+              return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).blur(3).png().toBuffer();
+            });
+
+          baseBuffer = await sharp(baseBuffer).composite([
+            { input: shadowBuf, left: posX + 2, top: posY + 3, blend: 'over' },
+            { input: resizedLogo, left: posX, top: posY, blend: 'multiply' },
+          ]).png().toBuffer();
+        }
         imageSource += '+logo';
         console.log('[product-image] Logo composited');
       } catch (err) {
