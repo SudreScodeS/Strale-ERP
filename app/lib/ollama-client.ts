@@ -4,7 +4,7 @@
 // Requer: Ollama instalado e rodando com um modelo (ex: llama3.2:3b)
 
 const OLLAMA_BASE = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
 
 // ==========================================
 // TIPOS
