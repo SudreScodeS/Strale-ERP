@@ -1,26 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1a1028"/>
-      <stop offset="50%" stop-color="#13111c"/>
-      <stop offset="100%" stop-color="#0c0a12"/>
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="50%" stop-color="#0d1f3c"/>
+      <stop offset="100%" stop-color="#061020"/>
     </linearGradient>
     <linearGradient id="chrome" x1="30" y1="20" x2="90" y2="100" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#e8e4f0"/>
-      <stop offset="25%" stop-color="#c4b5fd"/>
-      <stop offset="50%" stop-color="#f0ecf8"/>
-      <stop offset="75%" stop-color="#a78bfa"/>
-      <stop offset="100%" stop-color="#d0c4f0"/>
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="25%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#93c5fd"/>
+      <stop offset="75%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
     </linearGradient>
     <linearGradient id="accent" x1="0" y1="110" x2="120" y2="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.7"/>
-      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.7"/>
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#2563eb" stop-opacity="0.7"/>
     </linearGradient>
     <linearGradient id="edge" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3d3660" stop-opacity="0.5"/>
-      <stop offset="50%" stop-color="#4a3f70" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#2a2545" stop-opacity="0.5"/>
+      <stop offset="0%" stop-color="#1e3a5f" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#2563eb" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#1e3a5f" stop-opacity="0.5"/>
     </linearGradient>
   </defs>
   <rect width="120" height="120" rx="28" fill="url(#bg)"/>
