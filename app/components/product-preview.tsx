@@ -439,7 +439,7 @@ export default function ProductPreview({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                <span className="text-[10px] text-[var(--text-secondary)]">Gerando…</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">Processando…</span>
               </div>
             </div>
           ) : null}
@@ -460,7 +460,7 @@ export default function ProductPreview({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span className="text-xs text-[var(--text-secondary)]">Gerando imagem com IA…</span>
+              <span className="text-xs text-[var(--text-secondary)]">Processando com Logo Replacer Pro…</span>
             </div>
           </div>
         ) : null}
@@ -474,7 +474,7 @@ export default function ProductPreview({
         {apiImage && imageSource !== 'none' ? (
           <div className="absolute top-2 left-2">
             <span className="text-[9px] bg-[var(--info-bg)] text-[var(--info)] rounded-full px-2 py-0.5 font-medium">
-              ✨ Gerado por IA
+              🎨 Logo Replacer Pro
             </span>
           </div>
         ) : !loading && !error && !apiImage ? (
@@ -516,8 +516,8 @@ export default function ProductPreview({
           <p className="text-[10px] text-[var(--text-faint)] mt-1">Envie uma logo para personalizar</p>
         )}
         {!apiImage && !loading && !error ? (
-          <p className="text-[10px] text-[var(--warning)] mt-1">
-            Configure KREA_API_KEY para imagens geradas por IA
+          <p className="text-[10px] text-[var(--success)] mt-1">
+            🎨 Logo Replacer Pro — composição 100% local
           </p>
         ) : null}
       </div>
