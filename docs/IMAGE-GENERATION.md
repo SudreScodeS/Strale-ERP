@@ -257,40 +257,46 @@ O img2img com strength 0.40 **modificava a logo** junto com o produto. O modelo 
 | `7babdca` | 2026-05-06 | Remoção robusta de fundo da logo (gradiente) |
 | `e5dc6b3` | 2026-05-06 | Forma consistente com base neutra cacheada |
 | `09b0239` | 2026-05-06 | Recolor via sharp + logo posicionada corretamente |
+| `ed7dbc0` | 2026-05-09 | Blue brand theme + logo bg removal + product compositing |
+| `9e4536c` | 2026-05-09 | Sacola azul realista com logo branca (referência) |
+| `2068b98` | 2026-05-09 | Sacola fotorrealista via FLUX.1-schnell |
+| `669186e` | 2026-05-09 | Recolor do produto cadastrado + logo proeminente |
+| `11daa1d` | 2026-05-09 | Smart pipeline: análise de referência + detecção de logo |
+| `1fc67a1` | 2026-05-09 | Pipeline completo: material, cor, posição, tamanho |
+| `70fcf35` | 2026-05-09 | Fix: previne composição dupla da logo |
+| `e554477` | 2026-05-09 | Fix: logo impressa na sacola (não sobreposta) |
+| `497f98c` | 2026-05-09 | Fix crítico: remoção de fundo da logo (threshold bug) |
 
 ---
 
 ## 10. Arquivos Modificados
 
 ### `app/api/product-image/route.ts`
-API de geração de imagem de produto. Responsável por:
-- Gerar base neutra via FLUX.1-schnell
-- Recolorir via sharp (luminância × cor)
-- Remover fundo da logo
-- Compor logo na posição correta
+API de geração de imagem de produto. Pipeline completo:
+- Analisa imagem de referência → detecta região do produto e da logo (grid 20x20)
+- Gera sacola fotorrealista via FLUX.1-schnell com descrição do material
+- Recoloreia para a cor selecionada via algoritmo de luminância
+- Remove fundo da logo com detecção adaptativa (mediana + tolerância)
+- Compõe logo na posição detectada com efeitos de impressão
+- Suporte a printPosition (frente/verso/ambos) e printSize (pequeno/médio/grande)
 
 ### `app/components/product-preview.tsx`
-Componente de prévia do produto. Responsável por:
-- Chamar a API com cor, estilo e variáveis
-- Exibir a imagem gerada
-- Canvas fallback quando IA não está configurada
-- Não aplica overlays quando API já processou a imagem
+Componente de prévia do produto:
+- Envia material, printPosition, printSize para a API
+- Canvas não desenha logo quando API já compôs (`Boolean(apiImage)`)
+- Previne composição dupla via verificação `+logo` no imageSource
 
 ### `app/sales/page.tsx`
-Página de vendas. Passa para o ProductPreview:
-- `selectedColorHex` / `selectedColorName`
-- `selectedMaterialName`
-- `selectedVariables` (array com nomes de todas as variáveis selecionadas)
-- `logoDataUrl`
+Página de vendas:
+- PreviewConfig agora inclui printPosition e printSize
+- Passa material, cor, posição e tamanho para a API
 
-### `data/groups.json`
-Grupo "Cor" adicionado com ID `group-color`.
-
-### `data/variables.json`
-4 variáveis de cor: Azul, Amarelo, Preto, Vermelho.
-
-### `app/lib/logo-compositor.ts`
-Engine de composição de logo (Canvas client-side). **Não é mais usado** pelo product-preview (foi substituído pela composição server-side). Existe como dead code.
+### SVG Logos (public/)
+Tema atualizado de roxo para azul:
+- `LogoE.svg` — "E" em gradiente azul sobre fundo escuro
+- `LogoC.svg` — "E" em azul sobre fundo claro
+- `logo.svg` — texto "Elitium" com acento azul
+- `logo-product.svg` — logo azul para uso em produtos
 
 ---
 
@@ -310,31 +316,72 @@ Engine de composição de logo (Canvas client-side). **Não é mais usado** pelo
 
 ### Limitações atuais:
 
-1. **Base neutra é compartilhada entre todos os produtos do mesmo estilo**
-   - Se houver dois produtos "Sacola Personalizada" diferentes, compartilham a mesma base
-   - Solução futura: cache por produto (não apenas por estilo)
-
-2. **Recolor via sharp é uma aproximação**
-   - Multiplica luminância × cor → resultado é uma "versão colorida" da base cinza
-   - Para cores muito escuras (preto), a luminância pode não ser ideal
-   - Para cores muito claras (branco), o produto pode ficar invisível
-
-3. **Posição da logo é fixa por estilo**
-   - Não detecta automaticamente onde está o produto na imagem
-   - Se a base neutra gerar uma sacola deslocada, a logo acompanha o deslocamento
-
-4. **Logo com fundo complexo pode não ser removida perfeitamente**
-   - A detecção funciona bem para fundos escuros/gradientes
-   - Fundos com cores vivas ou padrões podem não ser detectados
+1. **FLUX.1-schnell é assíncrono** — primeira geração pode demorar 15-30s (modelo carregando)
+2. **Detecção de região da logo via grid** — funciona bem para logos centrais, mas pode errar para logos em posições excêntricas
+3. **Recolor é uma aproximação** — para cores muito claras/escuras o resultado pode não ser ideal
+4. **Textura de impressão é sutil** — o efeito multiply pode não ser visível em todas as imagens
 
 ### Melhorias futuras possíveis:
 
-1. **Gerar base por produto** (não apenas por estilo) — cache key incluiria productId
-2. **Detecção automática do produto** na imagem (bounding box) para posicionamento dinâmico da logo
-3. **Suporte a múltiplas logos** (frente + costas + laterais)
+1. **Cache por produto** — incluir productId na cache key
+2. **Detecção de produto com ML** — usar modelo de segmentação em vez de grid de luminância
+3. **Múltiplas logos** — frente + costas + laterais
 4. **Preview em tempo real** — gerar miniatura rápida antes da imagem final
-5. **Queue de geração** — evitar múltiplas gerações simultâneas sobrecarregarem a API
+5. **Queue de geração** — evitar múltiplas gerações simultâneas
+6. **img2img com referência** — usar a imagem de referência como input para FLUX img2img
 
 ---
 
-*Documento gerado em 2026-05-06. Última atualização: commit `09b0239`.*
+## 13. Pipeline Inteligente (v2 — 2026-05-09)
+
+### Fluxo completo:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PIPELINE INTELIGENTE v2                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. ANÁLISE DA REFERÊNCIA                                        │
+│     Imagem cadastrada → detecta produto + região da logo          │
+│     └→ Grid 20x20 de luminância → cluster mais brilhante = logo  │
+│                                                                  │
+│  2. GERAÇÃO FOTORREALISTA                                        │
+│     FLUX.1-schnell → sacola com textura do material               │
+│     └→ Prompt inclui: cor + material (nylon/TNT/lona/etc)        │
+│                                                                  │
+│  3. RECOLORAÇÃO                                                  │
+│     Base FLUX → algoritmo de luminância → cor selecionada         │
+│     └→ Preserva highlights e sombras originais                    │
+│                                                                  │
+│  4. REMOÇÃO DE FUNDO DA LOGO                                     │
+│     Mediana das bordas → tolerância adaptativa                    │
+│     └→ Fundo claro: remove > bgLum - tol                         │
+│     └→ Fundo escuro: remove < bgLum + tol (capped 255)           │
+│                                                                  │
+│  5. COMPOSIÇÃO DA LOGO                                           │
+│     Logo branca (sacolas escuras) ou escura (sacolas claras)      │
+│     └→ Shadow (over) + Logo (over) + Texture (multiply)          │
+│     └→ Posição mapeada da referência → imagem gerada              │
+│     └→ Suporte frente/verso/ambos                                │
+│                                                                  │
+│  6. SAÍDA                                                        │
+│     WebP 92% qualidade + cache 1h                                │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Detecção automática:
+
+| Parâmetro | Como é detectado |
+|-----------|-----------------|
+| Região do produto | Pixels não-brancos na referência |
+| Região da logo | Cluster de pixels brancos (grid 20x20) |
+| Material | Variável selecionada pelo usuário |
+| Cor | Variável de cor selecionada |
+| Posição da logo | printPosition (front/back/both) |
+| Tamanho da logo | printSize (small/medium/large) |
+| Cor da logo | Automática: branca em fundo escuro, escura em fundo claro |
+
+---
+
+*Documento gerado em 2026-05-06. Última atualização: commit `497f98c` (2026-05-09).*
