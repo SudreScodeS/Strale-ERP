@@ -222,45 +222,69 @@ async function removeLogoBg(buf: Buffer): Promise<Buffer> {
   const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const w = info.width, h = info.height, ch = info.channels;
 
-  // Sample edge pixels to detect background color
-  const samples: Map<string, number> = new Map();
+  // Sample ALL edge pixels to detect background color accurately
+  const edgeLums: number[] = [];
   for (let x = 0; x < w; x++) {
-    for (const row of [0, 1, h - 1, h - 2]) {
+    for (const row of [0, 1, 2, h - 1, h - 2, h - 3]) {
       if (row < 0 || row >= h) continue;
       const i = (row * w + x) * ch;
-      const k = `${Math.floor(data[i] / 8)},${Math.floor(data[i + 1] / 8)},${Math.floor(data[i + 2] / 8)}`;
-      samples.set(k, (samples.get(k) || 0) + 1);
+      edgeLums.push(lum(data[i], data[i + 1], data[i + 2]));
     }
   }
   for (let y = 0; y < h; y++) {
-    for (const col of [0, 1, w - 1, w - 2]) {
+    for (const col of [0, 1, 2, w - 1, w - 2, w - 3]) {
       if (col < 0 || col >= w) continue;
       const i = (y * w + col) * ch;
-      const k = `${Math.floor(data[i] / 8)},${Math.floor(data[i + 1] / 8)},${Math.floor(data[i + 2] / 8)}`;
-      samples.set(k, (samples.get(k) || 0) + 1);
+      edgeLums.push(lum(data[i], data[i + 1], data[i + 2]));
     }
   }
-  let best = '31,31,31', bestN = 0;
-  for (const [k, n] of samples) { if (n > bestN) { bestN = n; best = k; } }
-  const bgRgb = best.split(',').map(v => parseInt(v) * 8) as [number, number, number];
-  const bgLum = lum(...bgRgb);
+
+  // Sort and take median as background luminance
+  edgeLums.sort((a, b) => a - b);
+  const bgLum = edgeLums[Math.floor(edgeLums.length / 2)];
+  const isLightBg = bgLum > 180;
+
+  // Calculate edge standard deviation for adaptive tolerance
+  const mean = edgeLums.reduce((a, b) => a + b, 0) / edgeLums.length;
+  const std = Math.sqrt(edgeLums.reduce((a, b) => a + (b - mean) ** 2, 0) / edgeLums.length);
+  const tolerance = Math.max(15, Math.min(50, std * 1.5));
+
+  console.log(`[removeLogoBg] bgLum=${bgLum.toFixed(0)}, isLight=${isLightBg}, std=${std.toFixed(1)}, tol=${tolerance.toFixed(0)}`);
 
   const out = Buffer.alloc(w * h * 4);
-  const threshold = bgLum + 30;
 
   for (let i = 0; i < w * h; i++) {
     const si = i * ch, di = i * 4;
     const r = data[si], g = data[si + 1], b = data[si + 2];
     const p = lum(r, g, b);
-    if (p > threshold) {
-      out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = 255;
-    } else if (p > bgLum + 8) {
-      out[di] = r; out[di + 1] = g; out[di + 2] = b;
-      out[di + 3] = Math.round(255 * (p - bgLum - 8) / (threshold - bgLum - 8));
+
+    if (isLightBg) {
+      // Light background (white/light gray) — remove bright pixels
+      if (p > bgLum - tolerance) {
+        // Background or near-background — transparent
+        out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = 0;
+      } else if (p > bgLum - tolerance * 3) {
+        // Transition zone — feathered alpha
+        const alpha = Math.round(255 * (bgLum - tolerance * 3 - p) / (tolerance * 2));
+        out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = Math.max(0, Math.min(255, alpha));
+      } else {
+        // Foreground — fully opaque
+        out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = 255;
+      }
     } else {
-      out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = 0;
+      // Dark background — remove dark pixels
+      const threshold = Math.min(255, bgLum + tolerance);
+      if (p < threshold) {
+        out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = 0;
+      } else if (p < threshold + tolerance * 2) {
+        const alpha = Math.round(255 * (p - threshold) / (tolerance * 2));
+        out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = Math.max(0, Math.min(255, alpha));
+      } else {
+        out[di] = r; out[di + 1] = g; out[di + 2] = b; out[di + 3] = 255;
+      }
     }
   }
+
   return sharp(out, { raw: { width: w, height: h, channels: 4 } }).ensureAlpha().png().toBuffer();
 }
 
