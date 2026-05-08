@@ -17,6 +17,8 @@ export interface PreviewConfig {
   selectedColorName?: string;
   selectedMaterialName?: string;
   selectedVariables?: string[];
+  printPosition?: string;
+  printSize?: string;
   quantity?: number;
   unitPrice?: number;
 }
@@ -117,6 +119,8 @@ export default function ProductPreview({
     selectedColorName,
     selectedMaterialName,
     selectedVariables = [],
+    printPosition,
+    printSize,
     quantity,
     unitPrice,
   } = config;
@@ -171,6 +175,9 @@ export default function ProductPreview({
           color: productColor,
           style: productStyle,
           variables: selectedVariables,
+          material: selectedMaterialName,
+          printPosition: printPosition || 'front',
+          printSize: printSize || 'medium',
         };
         if (logoDataUrl) body.logoDataUrl = logoDataUrl;
         if (referenceImageUrl) body.referenceImageUrl = referenceImageUrl;

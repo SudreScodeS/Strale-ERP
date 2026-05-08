@@ -337,9 +337,11 @@ export default function SalesPage() {
     selectedColorName,
     selectedMaterialName,
     selectedVariables: selectedVariableNames,
+    printPosition: printType ? printPosition : undefined,
+    printSize: printType ? printSize : undefined,
     quantity,
     unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost) : 0,
-  }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, selectedVariableNames, quantity, currentItemUnitCost]);
+  }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, selectedVariableNames, printType, printPosition, printSize, quantity, currentItemUnitCost]);
 
   function handleAddItemToCart() {
     if (!selectedProduct) return;
