@@ -156,5 +156,46 @@
       "issuedAt": "2026-04-30T20:41:37.289Z"
     },
     "createdAt": "2026-04-30T20:41:37.289Z"
+  },
+  {
+    "id": "f750284c-aafc-4f8b-a752-f013250b0548",
+    "orderId": "5",
+    "number": "NF-1778159934223",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 100
+            },
+            {
+              "variableId": "variable-small",
+              "groupId": "group-size",
+              "quantity": 100
+            },
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 50
+            },
+            {
+              "variableId": "variable-color-preto",
+              "groupId": "group-color",
+              "quantity": 50
+            }
+          ],
+          "quantity": 100,
+          "unitCost": 23,
+          "unitPrice": 27.6
+        }
+      ],
+      "totalPrice": 2820,
+      "issuedAt": "2026-05-07T13:18:54.223Z"
+    },
+    "createdAt": "2026-05-07T13:18:54.223Z"
   }
 ]

@@ -123,5 +123,45 @@
     "logoCost": 10,
     "status": "completed",
     "createdAt": "2026-04-30T20:41:37.259Z"
+  },
+  {
+    "id": "5",
+    "userId": "user-admin",
+    "name": "Narigudo",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-small",
+            "groupId": "group-size",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 50
+          },
+          {
+            "variableId": "variable-color-preto",
+            "groupId": "group-color",
+            "quantity": 50
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 23,
+        "unitPrice": 27.6
+      }
+    ],
+    "totalCost": 2300,
+    "totalPrice": 2820,
+    "logoCost": 50,
+    "status": "completed",
+    "createdAt": "2026-05-07T13:18:54.177Z"
   }
 ]
