@@ -150,8 +150,9 @@ export default function ProductPreview({
   const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   useEffect(() => {
-    // Only skip API if: real image exists AND no logo
-    if (hasRealImage && !logoDataUrl) return;
+    // Always call API to apply color recoloring (logo is optional)
+    // Only skip if we have a real image AND no color change AND no logo
+    if (hasRealImage && !logoDataUrl && !selectedColorHex) return;
 
     const cached = imageCacheRef.current.get(generationKey);
     if (cached) {
@@ -272,7 +273,8 @@ export default function ProductPreview({
     ctx.clearRect(0, 0, w, h);
 
     // ─────────────────────────────────────
-    // Determine base image: API result > real product > fallback SVG
+    // Determine base image: API result (with color applied) > fallback SVG
+    // Always prefer API result — it has the correct color applied
     // ─────────────────────────────────────
     const baseImg = apiImage || realProductImage;
 
@@ -297,7 +299,8 @@ export default function ProductPreview({
       // ─────────────────────────────────────
       const alreadyComposited = imageSource === 'composited' || imageSource === 'composited-ref' ||
         imageSource === 'ai-refined-with-logo' || imageSource === 'ai-with-logo' ||
-        imageSource === 'logo-composited';
+        imageSource === 'logo-composited' || imageSource === 'logo-replacer' ||
+        imageSource === 'recolored-photo' || imageSource === 'local-recolor';
 
       if (logoImage && !alreadyComposited) {
         const area = getPrintArea(drawW, drawH, productStyle);

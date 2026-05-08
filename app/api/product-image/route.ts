@@ -228,11 +228,23 @@ export async function POST(request: Request) {
     let finalBuffer: Buffer;
     let imageSource: string;
 
+    // Resolve color to RGB
+    const targetRgb: [number, number, number] | null = color.startsWith('#')
+      ? (() => { const m = color.replace('#', '').match(/^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null; })()
+      : (() => { const map: Record<string, [number, number, number]> = { red: [200,30,30], blue: [30,60,200], green: [30,160,50], black: [20,20,20], white: [240,240,240], yellow: [240,210,30], purple: [120,40,180], orange: [240,130,20], pink: [240,100,160], cyan: [30,180,220], gray: [128,128,128] }; return map[color.toLowerCase()] || null; })();
+
     if (hasProductImage) {
       console.log(`[product-image] Using provided product image as base`);
       const imgBase64 = productImageBase64.replace(/^data:image\/\w+;base64,/, '');
       finalBuffer = Buffer.from(imgBase64, 'base64');
       imageSource = 'product-photo';
+
+      // Recolor the real product image
+      if (targetRgb) {
+        console.log(`[product-image] Recoloring product to ${color}...`);
+        finalBuffer = await recolor(finalBuffer, targetRgb, 0.80);
+        imageSource = 'recolored-photo';
+      }
     } else {
       // Generate SVG fallback (no external API needed)
       console.log(`[product-image] Creating local SVG base for ${style}`);
@@ -241,12 +253,9 @@ export async function POST(request: Request) {
       imageSource = 'svg-fallback';
 
       // Recolor the SVG base
-      console.log(`[product-image] Recoloring to ${color}...`);
-      const rgb = color.startsWith('#')
-        ? (() => { const m = color.replace('#', '').match(/^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] as [number, number, number] : null; })()
-        : null;
-      if (rgb) {
-        finalBuffer = await recolor(finalBuffer, rgb, 0.85);
+      if (targetRgb) {
+        console.log(`[product-image] Recoloring to ${color}...`);
+        finalBuffer = await recolor(finalBuffer, targetRgb, 0.85);
       }
       imageSource = 'local-recolor';
     }
