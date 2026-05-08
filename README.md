@@ -75,12 +75,18 @@ Elitium-ERP/
 │   │   ├── authClient.ts        # Helpers de auth no client
 │   │   ├── business.ts          # Regras de negocio (preco, pedidos, estoque)
 │   │   ├── color-analyzer.ts    # Analise de cores via sharp
+│   │   ├── config.ts            # Persistencia de configuracoes
 │   │   ├── dashboard.ts         # Logica do dashboard principal
 │   │   ├── data.ts              # Camada de abstracao de dados
 │   │   ├── demand-forecast.ts   # Motor de previsao de demanda
+│   │   ├── finance.ts           # Logica financeira
 │   │   ├── fraud-detection.ts   # Motor de deteccao de fraude
+│   │   ├── huggingface-client.ts# Cliente HuggingFace (opcional)
 │   │   ├── inventory.ts         # Consultas de estoque
+│   │   ├── logo-compositor.ts   # Composicao de logo sobre produto
+│   │   ├── ollama-client.ts     # Cliente Ollama para IA local
 │   │   ├── pricing.ts           # Motor de precos unificado
+│   │   ├── purchases.ts         # Logica de compras
 │   │   └── vision.ts            # Analise de logo (local + Google Vision opcional)
 │   ├── assistant/               # Chat do assistente
 │   ├── demand-forecast/         # Dashboard de previsao
@@ -151,19 +157,23 @@ Elitium-ERP/
 |--------|------|-----------|
 | POST | `/api/auth/login` | Login |
 | POST | `/api/auth/register` | Registro (admin) |
-| GET | `/api/inventory` | Listar estoque |
-| POST/PATCH | `/api/inventory` | Criar/atualizar produto/grupo/variavel |
-| GET/POST/PATCH/DELETE | `/api/orders` | CRUD de pedidos |
+| GET | `/api/inventory` | Listar estoque completo |
+| POST/PATCH | `/api/inventory/product` | Criar/atualizar produto |
+| POST/PATCH | `/api/inventory/group` | Criar/atualizar grupo |
+| POST/PATCH | `/api/inventory/variable` | Criar/atualizar variavel |
+| GET/POST/PATCH/DELETE | `/api/orders` | CRUD de pedidos + deteccao de fraude |
 | GET/POST/PATCH/DELETE | `/api/quotes` | CRUD de orcamentos |
 | GET/POST | `/api/finance` | Financeiro |
 | GET | `/api/dashboard` | Metricas do dashboard |
+| GET/POST | `/api/config` | Configuracoes globais |
 | POST | `/api/logo-analysis` | Analise de logo |
-| GET/PATCH | `/api/fraud` | Deteccao de fraude |
+| POST | `/api/product-image` | Geracao de imagem do produto |
 | GET | `/api/demand-forecast` | Previsao de demanda |
 | POST | `/api/assistant` | Assistente inteligente |
 | GET | `/api/system` | Health check do sistema |
 | GET/POST | `/api/suppliers` | Fornecedores |
 | GET/POST/PATCH | `/api/purchases` | Pedidos de compra |
+| GET/POST/PATCH/DELETE | `/api/users` | Gestao de usuarios |
 
 ## Fluxo Completo de Pedido
 

@@ -15,7 +15,7 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 | 1 | **Cálculo de orçamento é lento** | Precisa fazer **10 a 20 orçamentos** para fechar UMA venda |
 | 2 | **Variabilidade absurda de produtos** | Tamanhos de 10x15cm até ~2m, materiais variados (TNT, nylon, tecido), cada um com custo diferente |
 | 3 | **Múltiplas variáveis por produto** | Tipo de fechamento (velop, forro, alça, cordão), logo (cores, frente/verso), acabamentos especiais |
-| 4 | **Ele é o gargalo** | 3 vendedoras dependem dele pra cada orçamento. Ele tem outras atividades → atrasa respostas |
+| 4 | **Ele é o gargalo** | 3 vendedoras dependem dele pra cada orçamento. Ele tem outras atividades -> atrasa respostas |
 | 5 | **Precisa de sistema automatizado** | Que as vendedoras usem sozinhas, sem depender dele |
 
 ---
@@ -26,22 +26,22 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 
 | Funcionalidade | Status |
 |---|---|
-| Sistema de Produtos → Grupos → Variáveis | ✅ Implementado |
-| Cálculo automático de preço (base + variáveis + markup) | ✅ Implementado |
-| Análise de logo via sharp (detecção de cores local) | ✅ Implementado |
-| Baixa automática de estoque ao finalizar pedido | ✅ Implementado |
-| Geração de nota fiscal | ✅ Implementado |
-| Dois perfis (admin/seller) com JWT | ✅ Implementado |
-| Controle financeiro automático | ✅ Implementado |
-| Previsão de demanda com regressão linear | ✅ Implementado |
-| Detecção de fraude com score 0-100 | ✅ Implementado |
-| Assistente com pattern matching local | ✅ Implementado |
+| Sistema de Produtos -> Grupos -> Variáveis | [OK] Implementado |
+| Cálculo automático de preço (base + variáveis + markup) | [OK] Implementado |
+| Análise de logo via sharp (detecção de cores local) | [OK] Implementado |
+| Baixa automática de estoque ao finalizar pedido | [OK] Implementado |
+| Geração de nota fiscal | [OK] Implementado |
+| Dois perfis (admin/seller) com JWT | [OK] Implementado |
+| Controle financeiro automático | [OK] Implementado |
+| Previsão de demanda com regressão linear | [OK] Implementado |
+| Detecção de fraude com score 0-100 | [OK] Implementado |
+| Assistente com pattern matching local | [OK] Implementado |
 
 ### 2.2 O que NÃO resolvia (gaps críticos)
 
 | Gap | Por que é crítico |
 |-----|-------------------|
-| **Sem módulo de orçamento** | O ERP só tinha "criar pedido" (que já baixa estoque). Não tinha o meio-termo: orçamento → aprovação → pedido |
+| **Sem módulo de orçamento** | O ERP só tinha "criar pedido" (que já baixa estoque). Não tinha o meio-termo: orçamento -> aprovação -> pedido |
 | **Preço não considerava dimensões** | Sacolas de 10x15cm até 2m deveriam ter preços diferentes por área |
 | **Custo de impressão simplificado** | Era apenas R$10/cor. Na realidade depende de tipo, tamanho, posição |
 | **Sem tabela de preços por volume** | O Edson tem preços diferentes para 100, 500, 1000, 5000 unidades |
@@ -64,7 +64,7 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 - `GlobalConfig` expandido — +4 campos: `quoteValidityDays`, `priceTiers`, `printPricingRules`, `pricePerCm2`
 
 #### 3.1.2 Configurações expandidas (`config/global.ts`)
-- **Tabela de preços por faixa**: 5 faixas padrão (Varejo → Mega atacado)
+- **Tabela de preços por faixa**: 5 faixas padrão (Varejo -> Mega atacado)
 - **Regras de impressão**: 36 regras (3 tipos × 3 tamanhos × 3 posições × fallback)
   - Serigrafia: base + R$/cor adicional
   - Sublimação: base fixo (sem custo por cor)
@@ -85,7 +85,7 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 - `criarOrcamento()` — Cria orçamento com validade, notas, status 'draft'
 - `converterOrcamentoEmPedido()` — Converte orçamento aprovado em pedido real (baixa estoque, financeiro, NF)
 - `clonarOrcamento()` — Copia orçamento inteiro com novo ID
-- `atualizarStatusOrcamento()` — Gerencia ciclo de vida (draft→sent→approved→rejected→converted)
+- `atualizarStatusOrcamento()` — Gerencia ciclo de vida (draft->sent->approved->rejected->converted)
 - `listarOrcamentosPorUsuario()` — Para vendedoras verem só os seus
 - `listarOrcamentosPorStatus()` — Filtro por status
 - `getOrcamentosStats()` — Estatísticas (total, conversão, valor médio)
@@ -142,9 +142,9 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 
 #### 3.2.2 API do assistente reescrita (`app/api/assistant/route.ts`)
 - **Fluxo híbrido**:
-  1. Tenta Ollama → extrai parâmetros → calcula preço com `pricing.ts`
-  2. Se Ollama entendeu como "query" → usa pattern matching local
-  3. Se Ollama falhou → fallback 100% pattern matching
+  1. Tenta Ollama -> extrai parâmetros -> calcula preço com `pricing.ts`
+  2. Se Ollama entendeu como "query" -> usa pattern matching local
+  3. Se Ollama falhou -> fallback 100% pattern matching
 - `GET /api/assistant` — Retorna status do Ollama (disponível, modelo, erro)
 - Geração de orçamento rápido via linguagem natural
 
@@ -182,19 +182,19 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 
 | Item | Descrição | Status |
 |------|-----------|--------|
-| **PDF de orçamento** | Gerar PDF profissional com logo da empresa para enviar ao cliente | ❌ Não implementado |
-| **Tabela de preços EDITÁVEL na UI** | O admin precisa configurar as faixas de preço pela interface (atualmente só no código) | ❌ Não implementado |
-| **Regras de impressão EDITÁVEIS** | Mesmo caso — admin precisa editar pela interface | ❌ Não implementado |
+| **PDF de orçamento** | Gerar PDF profissional com logo da empresa para enviar ao cliente | [ ] Nao implementado |
+| **Tabela de preços EDITÁVEL na UI** | O admin precisa configurar as faixas de preço pela interface (atualmente só no código) | [ ] Nao implementado |
+| **Regras de impressão EDITÁVEIS** | Mesmo caso — admin precisa editar pela interface | [ ] Nao implementado |
 
 ### 5.2 Prioridade MÉDIA (melhorias de fluxo)
 
 | Item | Descrição | Status |
 |------|-----------|--------|
-| **Clone de orçamento com edição** | Ao clonar, poder editar antes de salvar | ⚠️ Clona mas não abre editor |
-| **Orçamento → Pedido com seletor** | Ao converter, poder escolher quais itens incluir | ⚠️ Converte tudo de uma vez |
-| **Histórico de preços do cliente** | Mostrar preços anteriores ao criar orçamento para o mesmo cliente | ❌ Não implementado |
-| **PWA / Mobile** | Vendedoras em feiras precisam gerar orçamento no celular | ❌ Não implementado |
-| **Integração WhatsApp** | Enviar orçamento direto pelo WhatsApp Business API | ❌ Não implementado (PDF resolve por enquanto) |
+| **Clone de orçamento com edição** | Ao clonar, poder editar antes de salvar | [!] Clona mas não abre editor |
+| **Orçamento -> Pedido com seletor** | Ao converter, poder escolher quais itens incluir | [!] Converte tudo de uma vez |
+| **Histórico de preços do cliente** | Mostrar preços anteriores ao criar orçamento para o mesmo cliente | [ ] Nao implementado |
+| **PWA / Mobile** | Vendedoras em feiras precisam gerar orçamento no celular | [ ] Nao implementado |
+| **Integração WhatsApp** | Enviar orçamento direto pelo WhatsApp Business API | [ ] Nao implementado (PDF resolve por enquanto) |
 
 ### 5.3 Prioridade BAIXA (futuro)
 
@@ -250,7 +250,7 @@ Elitium-ERP/
 │   │   ├── inventory/             ← Estoque (CRUD)
 │   │   ├── logo-analysis/         ← Análise de imagem
 │   │   ├── orders/route.ts        ← Pedidos
-│   │   ├── quotes/route.ts        ← 🆕 Orçamentos
+│   │   ├── quotes/route.ts        ← Orçamentos
 │   │   ├── purchases/route.ts     ← Compras
 │   │   └── users/route.ts         ← Usuários
 │   ├── assistant/page.tsx         ← Chat do assistente
@@ -268,16 +268,16 @@ Elitium-ERP/
 │   │   ├── demand-forecast.ts     ← Previsão de demanda
 │   │   ├── finance.ts             ← Financeiro
 │   │   ├── inventory.ts           ← Estoque
-│   │   ├── ollama-client.ts       ← 🆕 Cliente Ollama
-│   │   ├── pricing.ts             ← 🆕 Motor de preços unificado
+│   │   ├── ollama-client.ts       ← Cliente Ollama
+│   │   ├── pricing.ts             ← Motor de preços unificado
 │   │   └── purchases.ts           ← Compras
-│   ├── quotes/page.tsx            ← 🆕 Página de orçamentos
+│   ├── quotes/page.tsx            ← Página de orçamentos
 │   ├── sales/page.tsx             ← Pedidos
 │   └── ...                        ← Outras páginas
 ├── config/
 │   └── global.ts                  ← Configurações + tabelas de preço
 ├── data/                          ← JSON files (banco de dados)
-│   ├── quotes.json                ← 🆕 Orçamentos
+│   ├── quotes.json                ← Orçamentos
 │   └── ...                        ← Outros dados
 └── types/
     └── index.ts                   ← Interfaces globais
