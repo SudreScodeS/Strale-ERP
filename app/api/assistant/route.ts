@@ -161,30 +161,30 @@ async function generateQuoteFromParams(params: Awaited<ReturnType<typeof extract
   const lines: string[] = [];
   lines.push(`**Orçamento rápido — ${product.name}**`);
   lines.push('');
-  lines.push(`📦 **${params.quantity} unidades**`);
+  lines.push(`**${params.quantity} unidades**`);
 
   if (matchedNames.length > 0) {
-    lines.push(`🎨 Variáveis: ${matchedNames.join(', ')}`);
+    lines.push(`Variaveis: ${matchedNames.join(', ')}`);
   }
 
   if (params.dimensions) {
-    lines.push(`📐 Dimensão: ${params.dimensions.width}×${params.dimensions.height}cm`);
+    lines.push(`Dimensao: ${params.dimensions.width}×${params.dimensions.height}cm`);
   }
 
   if (params.printType) {
     const printLabel = params.printType === 'serigrafia' ? 'Serigrafia' :
       params.printType === 'sublimacao' ? 'Sublimação' : 'DTF';
-    lines.push(`🖨️ Impressão: ${printLabel} (${params.printSize || 'medium'}, ${params.printPosition || 'frente'})`);
+    lines.push(`Impressao: ${printLabel} (${params.printSize || 'medium'}, ${params.printPosition || 'frente'})`);
   }
 
   lines.push('');
-  lines.push(`💰 **Preço unitário: R$ ${pricing.unitPrice.toFixed(2)}**`);
-  lines.push(`💰 **Total: R$ ${pricing.totalPrice.toFixed(2)}**`);
-  lines.push(`📊 Margem: R$ ${pricing.margin.toFixed(2)}`);
+  lines.push(`**Preco unitario: R$ ${pricing.unitPrice.toFixed(2)}**`);
+  lines.push(`**Total: R$ ${pricing.totalPrice.toFixed(2)}**`);
+  lines.push(`Margem: R$ ${pricing.margin.toFixed(2)}`);
   lines.push('');
   lines.push(`_${pricing.breakdown}_`);
   lines.push('');
-  lines.push('💡 Para criar um orçamento formal, acesse **Orçamentos → Novo orçamento**.');
+  lines.push('Para criar um orcamento formal, acesse **Orcamentos > Novo orcamento**.');
 
   return {
     answer: lines.join('\n'),

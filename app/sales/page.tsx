@@ -46,8 +46,31 @@ interface CartItem {
   selectedVariablesLabel: string;
   unitCost: number;
   unitPrice: number;
-  previewConfig: PreviewConfig; // Config para renderizar prévia no carrinho
+  previewConfig: PreviewConfig;
+  dimensions?: { width: number; height: number };
+  printType?: string;
+  printPosition?: string;
+  printSize?: string;
 }
+
+const PRINT_TYPES = [
+  { value: '', label: 'Sem impressão' },
+  { value: 'serigrafia', label: 'Serigrafia' },
+  { value: 'sublimacao', label: 'Sublimação' },
+  { value: 'dtf', label: 'DTF' },
+];
+
+const PRINT_SIZES = [
+  { value: 'small', label: 'Pequena (~10cm)' },
+  { value: 'medium', label: 'Média (~20cm)' },
+  { value: 'large', label: 'Grande (~30cm+)' },
+];
+
+const PRINT_POSITIONS = [
+  { value: 'front', label: 'Frente' },
+  { value: 'back', label: 'Verso' },
+  { value: 'both', label: 'Frente + Verso' },
+];
 
 export default function SalesPage() {
   const [inventory, setInventory] = useState<ProductOption[]>([]);
@@ -78,6 +101,15 @@ export default function SalesPage() {
   const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
   const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null);
+
+  // Dimensões e impressão
+  const [useDimensions, setUseDimensions] = useState(false);
+  const [dimWidth, setDimWidth] = useState(30);
+  const [dimHeight, setDimHeight] = useState(40);
+  const [printType, setPrintType] = useState('');
+  const [printPosition, setPrintPosition] = useState('front');
+  const [printSize, setPrintSize] = useState('medium');
+
   const currentUser = getCurrentUser();
   const { getPageLayout } = useLayout();
 
@@ -277,6 +309,15 @@ export default function SalesPage() {
 
   const currentItemUnitCost = selectedProduct
     ? selectedProduct.basePrice + selectedVariablesList.reduce((sum, variable) => sum + variable.additionalPrice, 0)
+      + (useDimensions ? dimWidth * dimHeight * (globalConfig.pricePerCm2 || 0) : 0)
+      + (() => {
+          if (!printType) return 0;
+          const rule = globalConfig.printPricingRules.find(
+            r => r.printType === printType && r.size === printSize && r.position === printPosition,
+          );
+          if (rule) return rule.baseCost + Math.max(0, logoColors - 1) * (rule.costPerColor || 0);
+          return 0;
+        })()
     : 0;
   const currentItemTotalCost = currentItemUnitCost * quantity;
   const cartItemsCost = cartItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
@@ -340,6 +381,10 @@ export default function SalesPage() {
         unitCost: currentItemUnitCost,
         unitPrice: calculateSalePrice(currentItemUnitCost),
         previewConfig: { ...previewConfig },
+        dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
+        printType: printType || undefined,
+        printPosition: printType ? printPosition : undefined,
+        printSize: printType ? printSize : undefined,
       },
     ]);
     setSelectedVariables({});
@@ -377,6 +422,10 @@ export default function SalesPage() {
           quantity: item.quantity,
           unitCost: item.unitCost,
           unitPrice: item.unitPrice,
+          dimensions: item.dimensions,
+          printType: item.printType,
+          printPosition: item.printPosition,
+          printSize: item.printSize,
         })),
         logoColors,
       }),
@@ -691,6 +740,60 @@ export default function SalesPage() {
             </div>
           ) : null}
 
+          {/* CALCULAR POR DIMENSÃO */}
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <label className="flex items-center gap-2 text-slate-700">
+              <input type="checkbox" checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)} />
+              <span className="font-medium">Calcular por dimensão (largura x altura)</span>
+            </label>
+            {useDimensions && (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="space-y-1 text-sm text-slate-600">
+                  <span>Largura (cm)</span>
+                  <input type="number" min={1} value={dimWidth} onChange={e => setDimWidth(Number(e.target.value))}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2" />
+                </label>
+                <label className="space-y-1 text-sm text-slate-600">
+                  <span>Altura (cm)</span>
+                  <input type="number" min={1} value={dimHeight} onChange={e => setDimHeight(Number(e.target.value))}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2" />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* IMPRESSÃO DA LOGO */}
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-3 font-medium text-slate-900">Impressão da logo</p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="space-y-1 text-sm text-slate-600">
+                <span>Tipo</span>
+                <select value={printType} onChange={e => setPrintType(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                  {PRINT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </label>
+              {printType && (
+                <>
+                  <label className="space-y-1 text-sm text-slate-600">
+                    <span>Tamanho</span>
+                    <select value={printSize} onChange={e => setPrintSize(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      {PRINT_SIZES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="space-y-1 text-sm text-slate-600">
+                    <span>Posição</span>
+                    <select value={printPosition} onChange={e => setPrintPosition(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      {PRINT_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                    </select>
+                  </label>
+                </>
+              )}
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <p className="font-semibold text-slate-900">Upload de logo</p>
             <input
@@ -720,11 +823,11 @@ export default function SalesPage() {
                 {/* Resumo da análise */}
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
                   <p className="text-sm font-semibold text-emerald-800">
-                    ✓ Análise inteligente concluída
+                    Análise concluída
                   </p>
                   <p className="mt-1 text-xs text-emerald-700">{logoAnalysisResult.description}</p>
                   <p className="mt-1 text-xs text-emerald-600">
-                    {logoAnalysisResult.source === 'google-vision' ? '🔍 Google Cloud Vision AI' : '🎨 Análise local com separação espacial'}
+                    {logoAnalysisResult.source === 'google-vision' ? 'Google Cloud Vision' : 'Análise local'}
                   </p>
                 </div>
 
@@ -732,7 +835,7 @@ export default function SalesPage() {
                 {logoAnalysisResult.productColor ? (
                   <div className="rounded-2xl border border-blue-200 bg-[var(--brand-muted)] p-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-blue-800">🎨 Cor do produto detectada:</span>
+                      <span className="text-sm font-semibold text-blue-800">Cor do produto detectada:</span>
                       <span
                         className="inline-block h-5 w-5 rounded-full border-2 border-white shadow"
                         style={{ backgroundColor: logoAnalysisResult.productColor }}
@@ -747,7 +850,7 @@ export default function SalesPage() {
                 {logoColors > 0 ? (
                   <div className="rounded-2xl border border-purple-200 bg-purple-50 p-3">
                     <p className="text-sm font-semibold text-purple-800">
-                      🏷️ {logoColors} {logoColors === 1 ? 'cor da logo' : 'cores da logo'} detectada{logoColors === 1 ? '' : 's'}
+                      {logoColors} {logoColors === 1 ? 'cor da logo' : 'cores da logo'} detectada{logoColors === 1 ? '' : 's'}
                     </p>
                     <p className="text-xs text-purple-600">Estas cores serão mantidas na prévia (elementos gráficos/texto)</p>
                   </div>
@@ -799,6 +902,8 @@ export default function SalesPage() {
                       <p className="font-semibold text-slate-900">{item.productName}</p>
                       <p className="text-sm text-slate-600">Qtd: {item.quantity}</p>
                       <p className="text-sm text-slate-600 truncate">Variáveis: {item.selectedVariablesLabel}</p>
+                      {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}x{item.dimensions.height}cm</p>}
+                      {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
                       <p className="text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitCost * item.quantity).toFixed(2)}</p>
                       <button
                         type="button"
@@ -844,14 +949,14 @@ export default function SalesPage() {
 
             {/* PRÉVIA VISUAL EM TEMPO REAL — Card de catálogo */}
             <div className="rounded-3xl border border-slate-200 bg-white p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-700">🖼️ Prévia do produto</p>
+              <p className="mb-3 text-sm font-semibold text-slate-700">Prévia do produto</p>
               <ProductPreview
                 config={previewConfig}
                 className="w-full"
               />
               {!selectedColorHex && logoAnalysisResult?.productColor ? (
                 <p className="mt-2 text-[10px] text-amber-600">
-                  ⚠️ Selecione uma variável de cor para aplicar na imagem do produto
+                  Selecione uma variável de cor para aplicar na imagem do produto
                 </p>
               ) : null}
               <p className="mt-2 text-[10px] text-slate-400">
@@ -937,7 +1042,7 @@ export default function SalesPage() {
             {selectedOrder.logoCost > 0 ? (
               <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4">
                 <p className="text-sm font-semibold text-purple-800">
-                  🏷️ Custo da personalização: R$ {selectedOrder.logoCost.toFixed(2)}
+                  Custo da personalização: R$ {selectedOrder.logoCost.toFixed(2)}
                 </p>
               </div>
             ) : null}

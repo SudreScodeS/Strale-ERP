@@ -46,35 +46,35 @@ const AVAILABLE_METRICS: MetricOption[] = [
   {
     id: 'products',
     title: 'Produtos',
-    icon: '📦',
+    icon: 'P',
     getValue: (s) => String(s.productsCount),
     getNote: (s) => `${s.variablesCount} variacoes`,
   },
   {
     id: 'orders',
     title: 'Pedidos',
-    icon: '🛒',
+    icon: 'V',
     getValue: (s) => String(s.ordersCount),
     getNote: () => 'total finalizados',
   },
   {
     id: 'revenue',
     title: 'Receita',
-    icon: '💰',
+    icon: 'R',
     getValue: (s) => `R$ ${s.totalSales.toFixed(2)}`,
     getNote: () => 'vendas acumuladas',
   },
   {
     id: 'profit',
     title: 'Lucro',
-    icon: '📈',
+    icon: 'L',
     getValue: (s) => `R$ ${s.profit.toFixed(2)}`,
     getNote: () => 'receita menos despesas',
   },
   {
     id: 'lowStock',
     title: 'Estoque Baixo',
-    icon: '⚠️',
+    icon: '!',
     getValue: (s) => String(s.lowStockCount + s.watchStockCount),
     getNote: (s) => {
       const parts: string[] = [];
@@ -86,28 +86,28 @@ const AVAILABLE_METRICS: MetricOption[] = [
   {
     id: 'avgTicket',
     title: 'Ticket Médio',
-    icon: '🧾',
+    icon: 'T',
     getValue: (s) => s.ordersCount > 0 ? `R$ ${(s.totalSales / s.ordersCount).toFixed(2)}` : 'R$ 0,00',
     getNote: () => 'por pedido',
   },
   {
     id: 'margin',
     title: 'Margem',
-    icon: '📊',
+    icon: 'M',
     getValue: (s) => s.totalSales > 0 ? `${((s.profit / s.totalSales) * 100).toFixed(1)}%` : '0%',
     getNote: () => 'lucro / receita',
   },
   {
     id: 'items',
     title: 'Itens',
-    icon: '🏷️',
+    icon: 'I',
     getValue: (s) => String(s.variablesCount),
     getNote: (s) => `${s.productsCount} produtos base`,
   },
   {
     id: 'stockHealth',
     title: 'Saúde Estoque',
-    icon: '✅',
+    icon: 'S',
     getValue: (s) => {
       const total = s.lowStockCount + s.watchStockCount;
       if (total === 0) return '100%';
@@ -122,7 +122,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
   {
     id: 'ordersToday',
     title: 'Pedidos Hoje',
-    icon: '📅',
+    icon: 'D',
     getValue: (s) => {
       const today = new Date().toDateString();
       const count = s.recentOrders.filter((o) => new Date(o.createdAt).toDateString() === today).length;
@@ -133,14 +133,14 @@ const AVAILABLE_METRICS: MetricOption[] = [
   {
     id: 'quotesPending',
     title: 'Orçamentos Pendentes',
-    icon: '📋',
+    icon: 'O',
     getValue: (s) => String((s as DashboardSummary & { quotesPending?: number }).quotesPending ?? 0),
     getNote: () => 'rascunho + enviados',
   },
   {
     id: 'quotesConverted',
     title: 'Orçamentos Convertidos',
-    icon: '🔄',
+    icon: 'C',
     getValue: (s) => String((s as DashboardSummary & { quotesConverted?: number }).quotesConverted ?? 0),
     getNote: (s) => {
       const rate = (s as DashboardSummary & { quoteConversionRate?: number }).quoteConversionRate;

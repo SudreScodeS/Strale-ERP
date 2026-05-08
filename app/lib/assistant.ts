@@ -135,7 +135,7 @@ function queryLowStock(): AssistantResponse {
   const lines: string[] = [];
 
   if (alerts.critical.length > 0) {
-    lines.push('🔴 **Estoque CRÍTICO:**');
+    lines.push('[CRITICO] Estoque critico:');
     for (const v of alerts.critical) {
       const group = groups.find(g => g.id === v.groupId);
       lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} unidades restantes`);
@@ -144,7 +144,7 @@ function queryLowStock(): AssistantResponse {
 
   if (alerts.watch.length > 0) {
     if (lines.length > 0) lines.push('');
-    lines.push('🟡 **Estoque em ATENÇÃO:**');
+    lines.push('[ATENCAO] Estoque em atencao:');
     for (const v of alerts.watch) {
       const group = groups.find(g => g.id === v.groupId);
       lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} unidades`);
@@ -329,7 +329,7 @@ function queryDemandForecast(): AssistantResponse {
   const lines: string[] = [];
 
   if (forecast.criticalRisk.length > 0) {
-    lines.push('🔴 **Risco alto de falta:**');
+    lines.push('[RISCO] Risco alto de falta:');
     for (const f of forecast.criticalRisk) {
       lines.push(`  • ${f.variableName} — ${f.currentStock} em estoque, demanda média: ${f.avgWeeklyDemand}/sem — ${f.riskLabel}`);
     }
@@ -337,7 +337,7 @@ function queryDemandForecast(): AssistantResponse {
   }
 
   if (forecast.watchRisk.length > 0) {
-    lines.push('🟡 **Em atenção:**');
+    lines.push('[ATENCAO] Em atencao:');
     for (const f of forecast.watchRisk) {
       lines.push(`  • ${f.variableName} — ${f.currentStock} em estoque, demanda: ${f.avgWeeklyDemand}/sem`);
     }
@@ -345,7 +345,7 @@ function queryDemandForecast(): AssistantResponse {
   }
 
   if (forecast.highDemand.length > 0) {
-    lines.push('🔥 **Alta demanda:**');
+    lines.push('[DEMANDA] Alta demanda:');
     for (const f of forecast.highDemand) {
       lines.push(`  • ${f.variableName} — ${f.avgWeeklyDemand}/sem — tendência: ${f.trend} (${f.trendPercent}%)`);
     }
@@ -472,7 +472,7 @@ function queryPendingQuotes(): AssistantResponse {
   const lines: string[] = [];
 
   if (drafts.length > 0) {
-    lines.push('📝 **Rascunhos:**');
+    lines.push('[RASCUNHO] Rascunhos:');
     for (const q of drafts.slice(-5)) {
       const user = userData.getById(q.userId);
       lines.push(`  • ${q.name} — ${q.customerName} — ${formatCurrency(q.totalPrice)} — por ${user?.username || q.userId}`);
@@ -481,7 +481,7 @@ function queryPendingQuotes(): AssistantResponse {
 
   if (sent.length > 0) {
     if (lines.length > 0) lines.push('');
-    lines.push('📤 **Enviados (aguardando resposta):**');
+    lines.push('[ENVIADO] Enviados (aguardando resposta):');
     for (const q of sent.slice(-5)) {
       const user = userData.getById(q.userId);
       const validUntil = q.validUntil ? ` — válido até ${new Date(q.validUntil).toLocaleDateString('pt-BR')}` : '';
@@ -524,7 +524,7 @@ function queryTodayQuotes(): AssistantResponse {
 
   const lines = todayQuotes.map(q => {
     const user = userData.getById(q.userId);
-    const sl = q.status === 'draft' ? '📝' : q.status === 'sent' ? '📤' : q.status === 'approved' ? '✅' : q.status === 'converted' ? '🔄' : '❌';
+    const sl = q.status === 'draft' ? 'Rascunho' : q.status === 'sent' ? 'Enviado' : q.status === 'approved' ? 'Aprovado' : q.status === 'converted' ? 'Convertido' : 'Rejeitado';
     return `  ${sl} ${q.name} — ${q.customerName} — ${formatCurrency(q.totalPrice)} — por ${user?.username || q.userId}`;
   });
 

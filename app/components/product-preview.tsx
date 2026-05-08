@@ -480,7 +480,7 @@ export default function ProductPreview({
         ) : !loading && !error && !apiImage ? (
           <div className="absolute top-2 left-2">
             <span className="text-[9px] bg-[var(--surface-muted)] text-[var(--text-muted)] rounded-full px-2 py-0.5 font-medium">
-              🎨 Composição local
+              Composicao local
             </span>
           </div>
         ) : null}
@@ -517,7 +517,7 @@ export default function ProductPreview({
         )}
         {!apiImage && !loading && !error ? (
           <p className="text-[10px] text-[var(--warning)] mt-1">
-            📐 Configure KREA_API_KEY para imagens geradas por IA
+            Configure KREA_API_KEY para imagens geradas por IA
           </p>
         ) : null}
       </div>

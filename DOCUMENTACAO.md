@@ -149,7 +149,7 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 - Geração de orçamento rápido via linguagem natural
 
 #### 3.2.3 Interface do assistente (`app/assistant/page.tsx`)
-- Indicador de status da IA (🟢 Ollama ativo / 🟡 Local pattern)
+- Indicador de status da IA (Ollama ativo / Local (pattern matching))
 - Fonte da resposta mostrada ("via ollama", "via local", etc.)
 - +3 sugestões com exemplos de linguagem natural
 

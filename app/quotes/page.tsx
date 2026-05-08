@@ -431,7 +431,7 @@ export default function QuotesPage() {
           <div className="space-y-6">
             {/* Dados do cliente */}
             <section className="rounded-3xl bg-white p-8 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">📋 Dados do orçamento</h3>
+              <h3 className="mb-4 text-lg font-semibold text-slate-900">Dados do orçamento</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2 text-slate-700">
                   <span>Nome do cliente *</span>
@@ -466,7 +466,7 @@ export default function QuotesPage() {
 
             {/* Seleção de produto */}
             <section className="rounded-3xl bg-white p-8 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">📦 Adicionar item</h3>
+              <h3 className="mb-4 text-lg font-semibold text-slate-900">Adicionar item</h3>
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="space-y-2 text-slate-700">
                   <span>Produto</span>
@@ -544,7 +544,7 @@ export default function QuotesPage() {
 
               {/* Impressão */}
               <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-                <p className="mb-3 font-medium text-slate-900">🖨️ Impressão da logo</p>
+                <p className="mb-3 font-medium text-slate-900">Impressão da logo</p>
                 <div className="grid gap-3 md:grid-cols-3">
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Tipo</span>
@@ -576,14 +576,14 @@ export default function QuotesPage() {
 
               <button type="button" onClick={handleAddToCart}
                 className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm text-slate-800 transition hover:bg-slate-100">
-                ➕ Adicionar ao orçamento
+                Adicionar ao orçamento
               </button>
             </section>
 
             {/* Carrinho do orçamento */}
             <section className="rounded-3xl bg-white p-8 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-900">🛒 Itens do orçamento</h3>
+                <h3 className="text-lg font-semibold text-slate-900">Itens do orçamento</h3>
                 <p className="text-sm text-slate-500">{cartItems.length} item(ns)</p>
               </div>
 
@@ -621,7 +621,7 @@ export default function QuotesPage() {
 
               <button type="button" onClick={handleCreateQuote}
                 className="mt-4 inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-8 text-white transition hover:bg-[var(--brand-dark)]">
-                💾 Salvar Orçamento
+                Salvar Orçamento
               </button>
             </section>
           </div>
@@ -674,7 +674,7 @@ export default function QuotesPage() {
 
               {selectedQuote.notes && (
                 <div className="mt-4 rounded-2xl bg-amber-50 p-4">
-                  <p className="text-sm font-semibold text-amber-800">📝 Observações</p>
+                  <p className="text-sm font-semibold text-amber-800">Observações</p>
                   <p className="mt-1 text-sm text-amber-700">{selectedQuote.notes}</p>
                 </div>
               )}
@@ -703,11 +703,11 @@ export default function QuotesPage() {
                   <>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'update-status', 'sent')}
                       className="rounded-2xl bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700">
-                      📤 Marcar como Enviado
+                      Marcar como Enviado
                     </button>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'clone')}
                       className="rounded-2xl bg-slate-600 px-5 py-2 text-sm text-white hover:bg-slate-700">
-                      📋 Clonar
+                      Clonar
                     </button>
                   </>
                 )}
@@ -715,18 +715,18 @@ export default function QuotesPage() {
                   <>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'update-status', 'approved')}
                       className="rounded-2xl bg-emerald-600 px-5 py-2 text-sm text-white hover:bg-emerald-700">
-                      ✅ Aprovar
+                      Aprovar
                     </button>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'update-status', 'rejected')}
                       className="rounded-2xl bg-rose-600 px-5 py-2 text-sm text-white hover:bg-rose-700">
-                      ❌ Rejeitar
+                      Rejeitar
                     </button>
                   </>
                 )}
                 {(selectedQuote.status === 'approved' || selectedQuote.status === 'sent') && (
                   <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'convert')}
                     className="rounded-2xl bg-purple-600 px-5 py-2 text-sm text-white hover:bg-purple-700">
-                    🔄 Converter em Pedido
+                    Converter em Pedido
                   </button>
                 )}
                 <button type="button" onClick={() => setSelectedQuote(null)}

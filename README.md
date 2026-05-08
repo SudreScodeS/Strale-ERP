@@ -1,211 +1,242 @@
-# Elitium - Sistema de Gestão Empresarial Completo
+# Elitium - Sistema de Gestao Empresarial
 
-## 🎯 Visão Geral
+## Visao Geral
 
-O **Elitium** é um sistema completo de gestão empresarial desenvolvido em **Next.js 16** com **TypeScript** e **Tailwind CSS**. Especializado em empresas que trabalham com produtos customizáveis (como sacolas personalizadas, televisões, etc.), oferece módulos integrados de estoque, vendas, finanças, previsão de demanda, detecção de fraude e assistente inteligente — **tudo 100% local, sem dependência de APIs externas de IA**.
+O **Elitium** e um sistema de gestao empresarial desenvolvido em **Next.js 16** com **TypeScript** e **Tailwind CSS**. Especializado em empresas que trabalham com produtos customizaveis (como sacolas personalizadas, televisoes, etc.), oferece modulos integrados de estoque, vendas, orcamentos, financas, previsao de demanda, deteccao de fraude e assistente inteligente.
 
-## 🧠 Módulos Inteligentes (100% Locais)
+**100% local** — sem dependencia de APIs externas de IA.
 
-### 📈 Previsão de Demanda
-- Análise de histórico de vendas por semana ISO
-- Regressão linear para detecção de tendências (crescente/estável/decrescente)
-- Previsão de demanda semanal e mensal com ajuste de tendência
-- Recomendação de reposição de estoque (meta: 4 semanas de cobertura)
-- Detecção de excesso de estoque (>8 semanas de demanda parada)
-- Classificação de risco: alto, médio, baixo, sem risco
+## Modulos
 
-### 🛡️ Detecção de Fraude
-- Score de risco 0-100 com 11 regras de análise
-- Análise automática a cada pedido finalizado
-- Regras: valor alto, frequência, intervalo entre pedidos, quantidades anormais, usuário novo, cancelamentos, produtos atípicos
-- Classificação: aprovado (<40), suspeito (40-69), bloqueado (70+)
-- Logs de análise salvos para auditoria e revisão por admin
-- Dashboard com pendentes de revisão e tendências semanais
+### Previsao de Demanda
+- Analise de historico de vendas por semana ISO
+- Regressao linear para deteccao de tendencias (crescente/estavel/decrescente)
+- Previsao de demanda semanal e mensal com ajuste de tendencia
+- Recomendacao de reposicao de estoque (meta: 4 semanas de cobertura)
+- Deteccao de excesso de estoque (>8 semanas de demanda parada)
+- Classificacao de risco: alto, medio, baixo, sem risco
 
-### 🤖 Assistente Inteligente
-- Perguntas em linguagem natural (português)
-- 20+ intenções: "produto mais vendido", "estoque baixo", "lucro total", "previsão de demanda", etc.
+### Deteccao de Fraude
+- Score de risco 0-100 com 11 regras de analise
+- Analise automatica a cada pedido finalizado
+- Regras: valor alto, frequencia, intervalo entre pedidos, quantidades anormais, usuario novo, cancelamentos, produtos atipicos
+- Classificacao: aprovado (<40), suspeito (40-69), bloqueado (70+)
+- Logs de analise salvos para auditoria e revisao por admin
+- Dashboard com pendentes de revisao e tendencias semanais
+
+### Assistente Inteligente
+- Perguntas em linguagem natural (portugues)
+- 20+ intencoes: "produto mais vendido", "estoque baixo", "lucro total", "previsao de demanda", etc.
 - Pattern matching local — sem APIs externas, sem ChatGPT
 - Respostas com dados reais do sistema
-- Interface de chat com sugestões clicáveis
+- Interface de chat com sugestoes clicaveis
 
-### 🎨 Análise de Logo (Local)
-- Detecção de cores dominantes via **sharp** (processamento local de imagem)
-- Quantização por bucketing para identificar cores significativas
-- Nomeação automática das cores em português
-- Classificação de complexidade (Elitium/moderate/complex)
-- Google Cloud Vision é **opcional** — funciona sem nenhuma configuração externa
+### Analise de Logo (Local)
+- Deteccao de cores dominantes via **sharp** (processamento local de imagem)
+- Quantizacao por bucketing para identificar cores significativas
+- Nomeacao automatica das cores em portugues
+- Classificacao de complexidade (Elitium/moderate/complex)
+- Google Cloud Vision e **opcional** — funciona sem nenhuma configuracao externa
 
-## 🏗️ Arquitetura Técnica
+## Arquitetura Tecnica
 
 ### Tecnologias Principais
 - **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS
 - **Backend**: API Routes do Next.js (Serverless Functions)
-- **Autenticação**: JWT + bcryptjs
+- **Autenticacao**: JWT + bcryptjs
 - **Banco de Dados**: JSON files (preparado para PostgreSQL)
 - **Processamento de Imagem**: sharp (local, sem API externa)
 - **IDs**: UUID v4
 
-### Estrutura de Diretórios
+### Estrutura de Diretorios
 ```
-📁 Elitium-ERP/
-├── 📁 app/
-│   ├── 📁 api/
-│   │   ├── 📁 assistant/       # Assistente inteligente
-│   │   ├── 📁 auth/            # Login / Registro
-│   │   ├── 📁 config/          # Configurações globais
-│   │   ├── 📁 dashboard/       # Métricas consolidadas
-│   │   ├── 📁 demand-forecast/ # Previsão de demanda
-│   │   ├── 📁 finance/         # Financeiro
-│   │   ├── 📁 fraud/           # Detecção de fraude
-│   │   ├── 📁 inventory/       # Estoque (produto/grupo/variável)
-│   │   ├── 📁 logo-analysis/   # Análise de imagem
-│   │   ├── 📁 orders/          # Pedidos
-│   │   ├── 📁 purchases/       # Compras
-│   │   ├── 📁 suppliers/       # Fornecedores
-│   │   ├── 📁 system/          # Health check do sistema
-│   │   └── 📁 users/           # Usuários
-│   ├── 📁 components/          # UI reutilizável (Sidebar, MetricCard, etc.)
-│   ├── 📁 lib/
-│   │   ├── 📄 assistant.ts     # Motor de consultas em linguagem natural
-│   │   ├── 📄 auth.ts          # Autenticação JWT
-│   │   ├── 📄 authClient.ts    # Helpers de auth no client
-│   │   ├── 📄 business.ts      # Regras de negócio (preço, pedidos, estoque)
-│   │   ├── 📄 color-analyzer.ts# Análise de cores via sharp
-│   │   ├── 📄 dashboard.ts     # Lógica do dashboard principal
-│   │   ├── 📄 data.ts          # Camada de abstração de dados
-│   │   ├── 📄 demand-forecast.ts# Motor de previsão de demanda
-│   │   ├── 📄 fraud-detection.ts# Motor de detecção de fraude
-│   │   ├── 📄 inventory.ts     # Consultas de estoque
-│   │   └── 📄 vision.ts        # Análise de logo (local + Google Vision opcional)
-│   ├── 📁 assistant/           # Chat do assistente
-│   ├── 📁 demand-forecast/     # Dashboard de previsão
-│   ├── 📁 fraud/               # Dashboard de fraudes
-│   ├── 📁 finance/             # Dashboard financeiro
-│   ├── 📁 inventory/           # Gestão de estoque
-│   ├── 📁 login/               # Login
-│   ├── 📁 purchases/           # Compras
-│   ├── 📁 register/            # Registro
-│   ├── 📁 sales/               # Pedidos (criar + buscar)
-│   └── 📁 users/               # Gestão de usuários
-├── 📁 config/
-│   └── 📄 global.ts            # Configurações editáveis
-├── 📁 data/                    # JSON files (banco de dados)
-│   ├── 📄 finance.json
-│   ├── 📄 fraud-logs.json
-│   ├── 📄 groups.json
-│   ├── 📄 invoices.json
-│   ├── 📄 orders.json
-│   ├── 📄 products.json
-│   ├── 📄 purchase-orders.json
-│   ├── 📄 suppliers.json
-│   ├── 📄 users.json
-│   └── 📄 variables.json
-├── 📁 types/
-│   └── 📄 index.ts             # Interfaces globais
-└── 📄 package.json
+Elitium-ERP/
+├── app/
+│   ├── api/
+│   │   ├── assistant/           # Assistente inteligente
+│   │   ├── auth/                # Login / Registro
+│   │   ├── config/              # Configuracoes globais
+│   │   ├── dashboard/           # Metricas consolidadas
+│   │   ├── demand-forecast/     # Previsao de demanda
+│   │   ├── finance/             # Financeiro
+│   │   ├── fraud/               # Deteccao de fraude
+│   │   ├── inventory/           # Estoque (produto/grupo/variavel)
+│   │   ├── logo-analysis/       # Analise de imagem
+│   │   ├── orders/              # Pedidos
+│   │   ├── purchases/           # Compras
+│   │   ├── quotes/              # Orcamentos
+│   │   ├── suppliers/           # Fornecedores
+│   │   ├── system/              # Health check do sistema
+│   │   └── users/               # Usuarios
+│   ├── components/              # UI reutilizavel (Sidebar, MetricCard, etc.)
+│   ├── lib/
+│   │   ├── assistant.ts         # Motor de consultas em linguagem natural
+│   │   ├── auth.ts              # Autenticacao JWT
+│   │   ├── authClient.ts        # Helpers de auth no client
+│   │   ├── business.ts          # Regras de negocio (preco, pedidos, estoque)
+│   │   ├── color-analyzer.ts    # Analise de cores via sharp
+│   │   ├── dashboard.ts         # Logica do dashboard principal
+│   │   ├── data.ts              # Camada de abstracao de dados
+│   │   ├── demand-forecast.ts   # Motor de previsao de demanda
+│   │   ├── fraud-detection.ts   # Motor de deteccao de fraude
+│   │   ├── inventory.ts         # Consultas de estoque
+│   │   ├── pricing.ts           # Motor de precos unificado
+│   │   └── vision.ts            # Analise de logo (local + Google Vision opcional)
+│   ├── assistant/               # Chat do assistente
+│   ├── demand-forecast/         # Dashboard de previsao
+│   ├── fraud/                   # Dashboard de fraudes
+│   ├── finance/                 # Dashboard financeiro
+│   ├── inventory/               # Gestao de estoque
+│   ├── login/                   # Login
+│   ├── purchases/               # Compras
+│   ├── quotes/                  # Orcamentos
+│   ├── register/                # Registro
+│   ├── sales/                   # Pedidos (criar + buscar)
+│   └── users/                   # Gestao de usuarios
+├── config/
+│   └── global.ts                # Configuracoes editaveis
+├── data/                        # JSON files (banco de dados)
+│   ├── finance.json
+│   ├── fraud-logs.json
+│   ├── groups.json
+│   ├── invoices.json
+│   ├── orders.json
+│   ├── products.json
+│   ├── purchase-orders.json
+│   ├── quotes.json
+│   ├── suppliers.json
+│   ├── users.json
+│   └── variables.json
+├── types/
+│   └── index.ts                 # Interfaces globais
+└── package.json
 ```
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-### 📦 Estoque
-- Produtos base com grupos de configuração (Material, Tamanho, etc.)
-- Variáveis com estoque individual e preço adicional
-- Alertas automáticos: crítico (≤10) e atenção (≤30)
+### Estoque
+- Produtos base com grupos de configuracao (Material, Tamanho, Cor, etc.)
+- Variaveis com estoque individual e preco adicional
+- Alertas automaticos: critico (<=10) e atencao (<=30)
 
-### 🛒 Vendas
-- Fluxo completo: selecionar produto → variáveis → upload logo → calcular preço → finalizar
-- Carrinho de compras com múltiplos itens
-- Cálculo automático: custo + markup + custo do logo
-- Baixa automática do estoque
-- Geração de nota fiscal
+### Orcamentos
+- Criacao de orcamentos profissionais com validade configuravel
+- Calculo automatico por dimensao (largura x altura)
+- Configuracao de impressao detalhada (tipo, tamanho, posicao)
+- Tabela de precos por faixa de quantidade
+- Clonagem rapida de orcamentos
+- Ciclo de vida: rascunho -> enviado -> aprovado/rejeitado -> convertido em pedido
 
-### 💰 Financeiro
-- Registro automático de vendas
+### Vendas
+- Fluxo completo: selecionar produto -> variaveis -> upload logo -> calcular preco -> finalizar
+- Carrinho de compras com multiplos itens
+- Calculo por dimensao e impressao da logo
+- Calculo automatico: custo + markup + custo do logo
+- Baixa automatica do estoque
+- Geracao de nota fiscal
+
+### Financeiro
+- Registro automatico de vendas
 - Controle de despesas e compras
-- Cálculo de lucro (vendas - despesas)
+- Calculo de lucro (vendas - despesas)
 
-### 🔐 Autenticação
+### Autenticacao
 - Dois perfis: admin (acesso total) e seller (vendas)
-- JWT com expiração
-- Proteção de rotas e páginas
+- JWT com expiracao
+- Protecao de rotas e paginas
 
-## 🔌 API Endpoints (13 rotas)
+## API Endpoints
 
-| Método | Rota | Descrição |
+| Metodo | Rota | Descricao |
 |--------|------|-----------|
 | POST | `/api/auth/login` | Login |
 | POST | `/api/auth/register` | Registro (admin) |
 | GET | `/api/inventory` | Listar estoque |
-| POST/PATCH | `/api/inventory` | Criar/atualizar produto/grupo/variável |
+| POST/PATCH | `/api/inventory` | Criar/atualizar produto/grupo/variavel |
 | GET/POST/PATCH/DELETE | `/api/orders` | CRUD de pedidos |
+| GET/POST/PATCH/DELETE | `/api/quotes` | CRUD de orcamentos |
 | GET/POST | `/api/finance` | Financeiro |
-| GET | `/api/dashboard` | Métricas do dashboard |
-| POST | `/api/logo-analysis` | Análise de logo |
-| GET/PATCH | `/api/fraud` | Detecção de fraude |
-| GET | `/api/demand-forecast` | Previsão de demanda |
+| GET | `/api/dashboard` | Metricas do dashboard |
+| POST | `/api/logo-analysis` | Analise de logo |
+| GET/PATCH | `/api/fraud` | Deteccao de fraude |
+| GET | `/api/demand-forecast` | Previsao de demanda |
 | POST | `/api/assistant` | Assistente inteligente |
 | GET | `/api/system` | Health check do sistema |
 | GET/POST | `/api/suppliers` | Fornecedores |
 | GET/POST/PATCH | `/api/purchases` | Pedidos de compra |
 
-## 📊 Fluxo Completo de Pedido
+## Fluxo Completo de Pedido
 
 ```
-1. Usuário seleciona produto e variáveis
-2. Upload de logo (análise local via sharp)
-3. Sistema detecta cores dominantes automaticamente
-4. Preço calculado: custo + variáveis + logo + margem
-5. Pedido finalizado → dispara:
-   ├── ✅ Baixa de estoque das variáveis
-   ├── ✅ Registro financeiro automático
-   ├── ✅ Geração de nota fiscal
-   └── ✅ Análise de fraude (score 0-100)
-6. Dashboard atualizado com novos dados
+1. Usuario seleciona produto e variaveis
+2. (Opcional) Configura dimensao e impressao
+3. Upload de logo (analise local via sharp)
+4. Sistema detecta cores dominantes automaticamente
+5. Preco calculado: custo + variaveis + dimensao + impressao + margem
+6. Pedido finalizado -> dispara:
+   - Baixa de estoque das variaveis
+   - Registro financeiro automatico
+   - Geracao de nota fiscal
+   - Analise de fraude (score 0-100)
+7. Dashboard atualizado com novos dados
 ```
 
-## ⚙️ Configurações (`config/global.ts`)
+## Configuracoes (`config/global.ts`)
 
 ```typescript
 export const globalConfig = {
-  profitMargin: 20,          // Margem de lucro em %
-  logoPricePerColor: 10,     // R$ por cor detectada na logo
-  minStockAlert: 5,          // Alerta quando estoque ≤ 5
-  systemName: 'Elitium',  // Nome do sistema
-  companyName: 'North Bag',  // Nome da empresa
+  profitMargin: 20,              // Margem de lucro em %
+  logoPricePerColor: 10,         // R$ por cor detectada na logo
+  minStockAlert: 5,              // Alerta quando estoque <= 5
+  systemName: 'Elitium',         // Nome do sistema
+  companyName: 'North Bag',      // Nome da empresa
+  quoteValidityDays: 7,          // Dias de validade padrao do orcamento
+  pricePerCm2: 0.005,            // R$ por cm² para calculo por dimensao
 };
 ```
 
-## 🛠️ Instalação
+## Instalacao
+
+### Requisitos
+- Node.js 18+
+- npm
+
+### Passos
 
 ```bash
-git clone https://github.com/SudreScodeS/Elitium-ERP.git
-cd Elitium-ERP
+git clone https://github.com/SudreScodeS/Strale-ERP.git
+cd Strale-ERP
 npm install
 npm run dev
 ```
 
-Acesse `http://localhost:3000` — Login padrão: `admin` / `admin123`
+Acesse `http://localhost:3000`
 
-## 🧪 Validação do Sistema
+**Login padrao:** `admin` / `admin123`
+
+### Opcional: IA com Ollama
+
+1. Instalar Ollama: https://ollama.com/download
+2. `ollama pull qwen2.5:7b`
+3. Rodar o ERP normalmente
+
+Sem Ollama, o assistente funciona 100% com pattern matching local.
+
+## Validacao do Sistema
 
 ```bash
 # Health check via API
 curl http://localhost:3000/api/system
-
-# Ou via interface: acesse qualquer página do dashboard
 ```
 
 O endpoint `/api/system` verifica:
-- ✅ Integridade de todos os arquivos JSON
-- ✅ Funcionamento de cada módulo (dados, financeiro, estoque, previsão, fraude, assistente)
-- ✅ Disponibilidade do sharp (análise de imagem)
-- ✅ Status geral do sistema
+- Integridade de todos os arquivos JSON
+- Funcionamento de cada modulo (dados, financeiro, estoque, previsao, fraude, assistente)
+- Disponibilidade do sharp (analise de imagem)
+- Status geral do sistema
 
-## 📝 Licença
+## Licenca
 
-Desenvolvido com ❤️ para empresas que valorizam eficiência e controle total.
+Desenvolvido para empresas que valorizam eficiencia e controle total.
 
----
-
-**🚀 100% local. Zero dependência externa de IA. Cresce com você.**
+100% local. Zero dependencia externa de IA.

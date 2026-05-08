@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 Índice
+## Indice
 
 1. [Contexto Inicial](#1-contexto-inicial)
 2. [Problema 1: Sistema de Imagem Quebrado](#2-problema-1-sistema-de-imagem-quebrado)
