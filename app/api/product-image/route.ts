@@ -431,8 +431,8 @@ export async function POST(request: Request) {
 
       // Try FLUX for photorealistic generation
       const matDesc = materialPrompt(material);
-      const fluxPrompt = `single ${color} ${matDesc}, front view, standing upright, centered on pure white background, flat lay product photography, soft studio lighting, no text, no logos, no people, no shadows on background, clean minimalist commercial photo, high detail fabric texture, 4k product catalog style`;
-      const fluxNegative = 'multiple bags, stacked, folded, wrinkled, distorted, blurry, low quality, text, watermark, logo, people, hands, background clutter, shadows, dark, artistic, painting, cartoon, illustration';
+      const fluxPrompt = `single solid ${color} colored ${matDesc}, front view, standing upright, centered on pure white background, even studio lighting, no patterns, no textures, no prints, no text, no logos, no people, clean product photo, commercial catalog, 4k`;
+      const fluxNegative = 'checkerboard, grid, pattern, plaid, stripes, multiple bags, stacked, folded, wrinkled, distorted, blurry, low quality, text, watermark, logo, people, hands, shadows, dark, painting, cartoon, illustration, 3d render';
 
       console.log('[product-image] Generating with FLUX...');
       const fluxResult = await generateWithFlux(fluxPrompt, 1024, 1024, fluxNegative);
@@ -457,11 +457,13 @@ export async function POST(request: Request) {
     }
 
     // =============================================
-    // STEP 2: Recolor if using FLUX base
+    // STEP 2: Light color pass if using FLUX base
     // =============================================
     if (imageSource === 'flux') {
-      console.log('[product-image] Recoloring FLUX output...');
-      baseBuffer = await recolor(baseBuffer, targetRgb, 0.85);
+      // FLUX already generates with the right color from the prompt.
+      // Only apply a very light color pass (30%) to fine-tune, not full recolor.
+      console.log('[product-image] Light color adjustment on FLUX output...');
+      baseBuffer = await recolor(baseBuffer, targetRgb, 0.30);
       imageSource = 'flux-recolor';
     }
 
