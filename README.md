@@ -27,9 +27,10 @@ O **Elitium** e um sistema de gestao empresarial desenvolvido em **Next.js 16** 
 ### Assistente Inteligente
 - Perguntas em linguagem natural (portugues)
 - 20+ intencoes: "produto mais vendido", "estoque baixo", "lucro total", "previsao de demanda", etc.
-- Pattern matching local — sem APIs externas, sem ChatGPT
+- **Com Ollama:** entende perguntas livres (ex: "quanto custa 500 sacolas TNT azuis?")
+- **Sem Ollama:** pattern matching local com sugestoes clicaveis
 - Respostas com dados reais do sistema
-- Interface de chat com sugestoes clicaveis
+- Interface de chat com status da IA em tempo real
 
 ### Analise de Logo (Local)
 - Deteccao de cores dominantes via **sharp** (processamento local de imagem)
@@ -224,13 +225,30 @@ Acesse `http://localhost:3000`
 
 **Login padrao:** `admin` / `admin123`
 
-### Opcional: IA com Ollama
+### Opcional: IA com Ollama (linguagem natural)
 
-1. Instalar Ollama: https://ollama.com/download
-2. `ollama pull qwen2.5:7b`
-3. Rodar o ERP normalmente
+O assistente funciona com pattern matching (sem configurar nada). Para entender perguntas livres em linguagem natural:
 
-Sem Ollama, o assistente funciona 100% com pattern matching local.
+1. **Instalar Ollama:** https://ollama.com/download
+2. **Baixar um modelo:** `ollama pull qwen2.5:7b` (ou `qwen2.5:3b` para máquinas com menos RAM)
+3. **Iniciar o Ollama:** `ollama serve` (ou verifique se o serviço está rodando)
+4. **Configurar `.env.local`** (copie de `.env.local.example`):
+   ```
+   OLLAMA_URL=http://localhost:11434
+   OLLAMA_MODEL=qwen2.5:7b
+   ```
+5. **Rodar o ERP:** `npm run dev`
+
+**Verificar se está funcionando:**
+```bash
+# Testar Ollama diretamente
+curl http://localhost:11434/api/tags
+
+# Testar via ERP
+curl http://localhost:3000/api/assistant  (GET mostra status do Ollama)
+```
+
+**Sem Ollama**, o assistente funciona 100% com pattern matching local (20+ intenções pré-configuradas).
 
 ## Validacao do Sistema
 
