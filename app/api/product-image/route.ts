@@ -463,7 +463,7 @@ export async function POST(request: Request) {
       // FLUX already generates with the right color from the prompt.
       // Only apply a very light color pass (30%) to fine-tune, not full recolor.
       console.log('[product-image] Light color adjustment on FLUX output...');
-      baseBuffer = await recolor(baseBuffer, targetRgb, 0.30);
+      baseBuffer = await recolor(baseBuffer, targetRgb, 0.60);
       imageSource = 'flux-recolor';
     }
 
@@ -613,25 +613,55 @@ export async function POST(request: Request) {
 
           baseBuffer = await sharp(baseBuffer).composite(layers).png().toBuffer();
         } else {
-          // Light bag — use dark logo with clean compositing
-          // Ensure logo has clean alpha (no semi-transparent edges)
+          // Light bag — ensure logo is dark and visible
           const { data: cleanData, info: cleanInfo } = await sharp(resizedLogo).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
           const cleanedLogo = Buffer.alloc(cleanData.length);
+
+          // Calculate average luminance of logo pixels
+          let logoLumSum = 0, logoLumCnt = 0;
+          for (let i = 0; i < cleanData.length; i += cleanInfo.channels) {
+            if (cleanData[i + 3] > 40) {
+              logoLumSum += lum(cleanData[i], cleanData[i + 1], cleanData[i + 2]);
+              logoLumCnt++;
+            }
+          }
+          const logoAvgLum = logoLumCnt > 0 ? logoLumSum / logoLumCnt : 128;
+          const isLightLogo = logoAvgLum > 160;
+
+          console.log(`[product-image] Logo avg lum: ${logoAvgLum.toFixed(0)}, isLightLogo: ${isLightLogo}`);
+
           for (let i = 0; i < cleanData.length; i += cleanInfo.channels) {
             const a = cleanData[i + 3];
-            // Hard threshold: pixels are either fully opaque or fully transparent
             if (a > 40) {
-              cleanedLogo[i] = cleanData[i];
-              cleanedLogo[i + 1] = cleanData[i + 1];
-              cleanedLogo[i + 2] = cleanData[i + 2];
+              if (isLightLogo) {
+                // Logo is light/white — make it dark for visibility on light bag
+                cleanedLogo[i] = 30;
+                cleanedLogo[i + 1] = 30;
+                cleanedLogo[i + 2] = 30;
+              } else {
+                // Logo is already dark — keep it
+                cleanedLogo[i] = cleanData[i];
+                cleanedLogo[i + 1] = cleanData[i + 1];
+                cleanedLogo[i + 2] = cleanData[i + 2];
+              }
               cleanedLogo[i + 3] = 255;
             } else {
               cleanedLogo[i] = 0; cleanedLogo[i + 1] = 0; cleanedLogo[i + 2] = 0; cleanedLogo[i + 3] = 0;
             }
           }
+
           const cleanLogoBuf = await sharp(cleanedLogo, { raw: { width: cleanInfo.width, height: cleanInfo.height, channels: 4 } })
             .trim({ threshold: 5 })
             .png().toBuffer();
+
+          // Re-read clean logo metadata after trim
+          const cleanMeta = await sharp(cleanLogoBuf).metadata();
+          const clw = cleanMeta.width || lw;
+          const clh = cleanMeta.height || lh;
+
+          // Recalculate position with trimmed logo dimensions
+          posX = Math.round(bagBounds.x + (bagBounds.width - clw) / 2);
+          posY = Math.round(bagBounds.y + (bagBounds.height - clh) / 2);
 
           // Subtle shadow
           const shadowBuf = await sharp(cleanLogoBuf)
@@ -644,11 +674,6 @@ export async function POST(request: Request) {
               }
               return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).blur(3).png().toBuffer();
             });
-
-          // Re-read clean logo metadata after trim
-          const cleanMeta = await sharp(cleanLogoBuf).metadata();
-          const clw = cleanMeta.width || lw;
-          const clh = cleanMeta.height || lh;
 
           baseBuffer = await sharp(baseBuffer).composite([
             { input: shadowBuf, left: posX + 2, top: posY + 3, blend: 'over' },
