@@ -613,21 +613,46 @@ export async function POST(request: Request) {
 
           baseBuffer = await sharp(baseBuffer).composite(layers).png().toBuffer();
         } else {
-          // Light bag — use dark logo
-          const shadowBuf = await sharp(resizedLogo)
+          // Light bag — use dark logo with clean compositing
+          // Ensure logo has clean alpha (no semi-transparent edges)
+          const { data: cleanData, info: cleanInfo } = await sharp(resizedLogo).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+          const cleanedLogo = Buffer.alloc(cleanData.length);
+          for (let i = 0; i < cleanData.length; i += cleanInfo.channels) {
+            const a = cleanData[i + 3];
+            // Hard threshold: pixels are either fully opaque or fully transparent
+            if (a > 40) {
+              cleanedLogo[i] = cleanData[i];
+              cleanedLogo[i + 1] = cleanData[i + 1];
+              cleanedLogo[i + 2] = cleanData[i + 2];
+              cleanedLogo[i + 3] = 255;
+            } else {
+              cleanedLogo[i] = 0; cleanedLogo[i + 1] = 0; cleanedLogo[i + 2] = 0; cleanedLogo[i + 3] = 0;
+            }
+          }
+          const cleanLogoBuf = await sharp(cleanedLogo, { raw: { width: cleanInfo.width, height: cleanInfo.height, channels: 4 } })
+            .trim({ threshold: 5 })
+            .png().toBuffer();
+
+          // Subtle shadow
+          const shadowBuf = await sharp(cleanLogoBuf)
             .ensureAlpha().raw().toBuffer({ resolveWithObject: true })
             .then(({ data, info }) => {
               const sb = Buffer.alloc(info.width * info.height * 4);
               for (let i = 0; i < info.width * info.height; i++) {
                 const si = i * info.channels, di = i * 4;
-                sb[di] = 0; sb[di + 1] = 0; sb[di + 2] = 0; sb[di + 3] = Math.round(data[si + 3] * 0.12);
+                sb[di] = 0; sb[di + 1] = 0; sb[di + 2] = 0; sb[di + 3] = Math.round(data[si + 3] * 0.10);
               }
               return sharp(sb, { raw: { width: info.width, height: info.height, channels: 4 } }).blur(3).png().toBuffer();
             });
 
+          // Re-read clean logo metadata after trim
+          const cleanMeta = await sharp(cleanLogoBuf).metadata();
+          const clw = cleanMeta.width || lw;
+          const clh = cleanMeta.height || lh;
+
           baseBuffer = await sharp(baseBuffer).composite([
             { input: shadowBuf, left: posX + 2, top: posY + 3, blend: 'over' },
-            { input: resizedLogo, left: posX, top: posY, blend: 'multiply' },
+            { input: cleanLogoBuf, left: posX, top: posY, blend: 'over' },
           ]).png().toBuffer();
         }
         imageSource += '+logo';
