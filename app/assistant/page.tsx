@@ -186,9 +186,17 @@ export default function AssistantPage() {
                   color: ollamaStatus.available ? 'var(--success)' : 'var(--warning)',
                   border: `1px solid ${ollamaStatus.available ? 'var(--success-border)' : 'var(--warning-border)'}`,
                 }}
+                title={ollamaStatus.error || (ollamaStatus.available ? `Modelo: ${ollamaStatus.model}` : 'Ollama nao detectado')}
               >
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: ollamaStatus.available ? 'var(--success)' : 'var(--warning)' }} />
-                {ollamaStatus.available ? `IA: ${ollamaStatus.model || 'Ollama'}` : 'IA: Local (pattern)'}
+                {ollamaStatus.available
+                  ? (ollamaStatus.error ? `IA: ${ollamaStatus.model || 'Ollama'} ⚠️` : `IA: ${ollamaStatus.model || 'Ollama'}`)
+                  : 'IA: Local (pattern)'}
+              </span>
+            )}
+            {ollamaStatus?.error && (
+              <span className="text-[10px] max-w-xs truncate" style={{ color: 'var(--warning)' }} title={ollamaStatus.error}>
+                {ollamaStatus.error}
               </span>
             )}
             {lastSource && (
