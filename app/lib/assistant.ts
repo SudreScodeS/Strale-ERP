@@ -7,6 +7,7 @@ import { productData, variableData, groupData, orderData, financeData, userData,
 import { getFinanceSummary, getStockAlertsByLevel, getOrcamentosStats } from './business';
 import { getDemandForecastSummary } from './demand-forecast';
 import { globalConfig } from '../../config/global';
+import { calculateItemPricing, type PricingInput } from './pricing';
 
 // ==========================================
 // TIPOS
@@ -552,6 +553,211 @@ function querySystemSummary(): AssistantResponse {
   };
 }
 
+// ==========================================
+// COTAÇÃO DE PREÇO VIA PATTERN MATCHING
+// ==========================================
+
+/**
+ * Extrai parâmetros de cotação de uma pergunta em linguagem natural.
+ * Funciona sem Ollama — usa regex para parsear números e palavras-chave.
+ */
+function extractQuoteParams(question: string): {
+  quantity: number;
+  material?: string;
+  color?: string;
+  width?: number;
+  height?: number;
+  logoColors?: number;
+  printType?: string;
+  printSize?: string;
+  printPosition?: string;
+} | null {
+  const q = question.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  // Extrair quantidade (primeiro número grande encontrado)
+  const qtyMatch = q.match(/(\d+)\s*(sacola|bolsa|unidade|pca|pç|pecas?|units?)/);
+  const qtyFallback = q.match(/(?:quanto|preco|preço|custa|custaria|fazer|produzir|fabricar)\D{0,30}?(\d{2,})/);
+  const quantity = qtyMatch ? parseInt(qtyMatch[1]) : (qtyFallback ? parseInt(qtyFallback[1]) : 0);
+
+  if (quantity < 1) return null;
+
+  // Extrair material
+  let material: string | undefined;
+  if (q.includes('nylon')) material = 'nylon';
+  else if (q.includes('tnt')) material = 'tnt';
+  else if (q.includes('lona')) material = 'lona';
+  else if (q.includes('algodao') || q.includes('algodão')) material = 'algodao';
+  else if (q.includes('ecobag')) material = 'ecobag';
+  else if (q.includes('couro') || q.includes('leather')) material = 'couro';
+
+  // Extrair cor
+  let color: string | undefined;
+  const colorMap: Record<string, string> = {
+    'vermelho': 'vermelho', 'red': 'vermelho',
+    'azul': 'azul', 'blue': 'azul',
+    'verde': 'verde', 'green': 'verde',
+    'preto': 'preto', 'black': 'preto',
+    'branco': 'branco', 'white': 'branco',
+    'amarelo': 'amarelo', 'yellow': 'amarelo',
+    'roxo': 'roxo', 'purple': 'roxo',
+    'laranja': 'laranja', 'orange': 'laranja',
+    'rosa': 'rosa', 'pink': 'rosa',
+    'cinza': 'cinza', 'gray': 'cinza', 'grey': 'cinza',
+    'marrom': 'marrom', 'brown': 'marrom',
+  };
+  for (const [keyword, value] of Object.entries(colorMap)) {
+    if (q.includes(keyword)) { color = value; break; }
+  }
+
+  // Extrair dimensões (LxC, LxL, etc.)
+  let width: number | undefined, height: number | undefined;
+  const dimMatch = q.match(/(\d+)\s*[x×X]\s*(\d+)/);
+  if (dimMatch) {
+    width = parseInt(dimMatch[1]);
+    height = parseInt(dimMatch[2]);
+  }
+
+  // Extrair cores da logo
+  let logoColors: number | undefined;
+  const logoMatch = q.match(/(\d+)\s*cores?\s*(da\s*)?logo/);
+  const logoMatch2 = q.match(/logo\s*(de\s*)?(\d+)\s*cores?/);
+  if (logoMatch) logoColors = parseInt(logoMatch[1]);
+  else if (logoMatch2) logoColors = parseInt(logoMatch2[2]);
+
+  // Extrair tipo de impressão
+  let printType: string | undefined;
+  if (q.includes('serigrafia') || q.includes('silk')) printType = 'serigrafia';
+  else if (q.includes('sublimacao') || q.includes('sublimação')) printType = 'sublimacao';
+  else if (q.includes('dtf')) printType = 'dtf';
+
+  // Extrair tamanho da impressão
+  let printSize: string | undefined;
+  if (q.includes('pequen') || q.includes('small')) printSize = 'small';
+  else if (q.includes('grand') || q.includes('large')) printSize = 'large';
+  else if (q.includes('medio') || q.includes('médio') || q.includes('medium')) printSize = 'medium';
+
+  // Extrair posição
+  let printPosition: string | undefined;
+  if (q.includes('frente') && q.includes('verso')) printPosition = 'both';
+  else if (q.includes('verso') || q.includes('costas') || q.includes('back')) printPosition = 'back';
+  else if (q.includes('frente') || q.includes('front')) printPosition = 'front';
+
+  return { quantity, material, color, width, height, logoColors, printType, printSize, printPosition };
+}
+
+/** Calcula cotação de preço via pattern matching (sem Ollama) */
+function queryPriceQuote(question: string): AssistantResponse {
+  const params = extractQuoteParams(question);
+
+  if (!params) {
+    return {
+      answer: 'Para calcular um preço, preciso de mais detalhes. Tente algo como:\n\n• "Quanto custa 500 sacolas TNT azuis?"\n• "Preço de 1000 nylon 30x40 com serigrafia"\n• "150 sacolas tnt amarelas com logo de 3 cores 65x95"',
+      type: 'text',
+    };
+  }
+
+  const products = productData.getAll();
+  const groups = groupData.getAll();
+  const variables = variableData.getAll();
+
+  // Encontrar produto (pega o primeiro se não encontrar por nome)
+  let product = products[0];
+  if (!product) {
+    return { answer: 'Nenhum produto cadastrado no sistema. Cadastre um produto primeiro.', type: 'text' };
+  }
+
+  const productGroups = groups.filter(g => g.productId === product!.id);
+  const productVariables = variables.filter(v => productGroups.some(g => g.id === v.groupId));
+
+  // Selecionar variáveis por material e cor
+  const selectedVariables: { groupId: string; variableId: string; quantity: number }[] = [];
+  const matchedNames: string[] = [];
+
+  if (params.material) {
+    const match = productVariables.find(v => v.name.toLowerCase().includes(params.material!));
+    if (match) {
+      selectedVariables.push({ groupId: match.groupId, variableId: match.id, quantity: params.quantity });
+      matchedNames.push(match.name);
+    }
+  }
+
+  if (params.color) {
+    const match = productVariables.find(v =>
+      v.name.toLowerCase().includes(params.color!) && !selectedVariables.some(sv => sv.variableId === v.id)
+    );
+    if (match) {
+      selectedVariables.push({ groupId: match.groupId, variableId: match.id, quantity: params.quantity });
+      matchedNames.push(match.name);
+    }
+  }
+
+  // Se não encontrou variáveis, pega a primeira de cada grupo
+  if (selectedVariables.length === 0) {
+    for (const group of productGroups) {
+      const firstVar = variables.find(v => v.groupId === group.id);
+      if (firstVar) {
+        selectedVariables.push({ groupId: group.id, variableId: firstVar.id, quantity: params.quantity });
+        matchedNames.push(firstVar.name);
+      }
+    }
+  }
+
+  // Montar input para o motor de preços
+  const pricingInput: PricingInput = {
+    productId: product.id,
+    selectedVariables,
+    quantity: params.quantity,
+    logoColors: params.logoColors || 1,
+    dimensions: params.width && params.height ? { width: params.width, height: params.height } : undefined,
+    printType: params.printType || undefined,
+    printSize: (params.printSize as 'small' | 'medium' | 'large') || undefined,
+    printPosition: (params.printPosition as 'front' | 'back' | 'both') || undefined,
+  };
+
+  try {
+    const pricing = calculateItemPricing(pricingInput);
+
+    const lines: string[] = [];
+    lines.push(`**Orçamento — ${product.name}**`);
+    lines.push('');
+    lines.push(`**${params.quantity} unidades**`);
+
+    if (matchedNames.length > 0) {
+      lines.push(`Variáveis: ${matchedNames.join(', ')}`);
+    }
+
+    if (params.width && params.height) {
+      lines.push(`Dimensão: ${params.width}×${params.height}cm`);
+    }
+
+    if (params.logoColors && params.logoColors > 1) {
+      lines.push(`Logo: ${params.logoColors} cores`);
+    }
+
+    if (params.printType) {
+      const printLabel = params.printType === 'serigrafia' ? 'Serigrafia' :
+        params.printType === 'sublimacao' ? 'Sublimação' : 'DTF';
+      lines.push(`Impressão: ${printLabel}${params.printSize ? ` (${params.printSize})` : ''}${params.printPosition ? `, ${params.printPosition === 'both' ? 'frente e verso' : params.printPosition === 'back' ? 'verso' : 'frente'}` : ''}`);
+    }
+
+    lines.push('');
+    lines.push(`**Preço unitário: R$ ${pricing.unitPrice.toFixed(2)}**`);
+    lines.push(`**Total: R$ ${pricing.totalPrice.toFixed(2)}**`);
+    lines.push(`Margem: R$ ${pricing.margin.toFixed(2)}`);
+    lines.push('');
+    lines.push(`_${pricing.breakdown}_`);
+    lines.push('');
+    lines.push('Para criar um orçamento formal, acesse **Orçamentos > Novo orçamento**.');
+
+    return { answer: lines.join('\n'), type: 'metric', data: pricing };
+  } catch (error) {
+    return {
+      answer: `Erro ao calcular preço: ${error instanceof Error ? error.message : 'Verifique se o produto e variáveis estão cadastrados corretamente.'}`,
+      type: 'text',
+    };
+  }
+}
+
 /** Ajuda */
 function queryHelp(): AssistantResponse {
   return {
@@ -595,6 +801,18 @@ function detectIntent(question: string): () => AssistantResponse {
   // Como usar
   if (containsAny(q, 'como usar', 'como funciona', 'tutorial', 'guia', 'como cadastrar', 'como fazer', 'como criar')) {
     return queryHowToUse;
+  }
+
+  // Cotação de preço (quanto custa, preço, valor)
+  if (containsAny(q, 'quanto custa', 'quanto custaria', 'preco de', 'preço de', 'valor de', 'valor para',
+    'quanto fica', 'quanto sai', 'quanto seria', 'custa', 'custaria',
+    'fazer', 'produzir', 'fabricar') && containsAny(q, 'sacola', 'bolsa', 'unidade', 'tnt', 'nylon', 'lona')) {
+    return () => queryPriceQuote(q);
+  }
+
+  // Cotação genérica com quantidade
+  if (/\d{2,}\s*(sacola|bolsa|unidade|pca)/.test(q) && containsAny(q, 'quanto', 'preco', 'preço', 'valor', 'custa', 'custaria')) {
+    return () => queryPriceQuote(q);
   }
 
   // Resumo geral
