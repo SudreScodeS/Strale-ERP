@@ -56,15 +56,15 @@ function resolveColor(color: string): [number, number, number] {
 // ==========================================
 
 function materialPrompt(material?: string): string {
-  if (!material) return 'paper shopping bag';
+  if (!material) return 'tote bag';
   const m = material.toLowerCase();
-  if (m.includes('nylon')) return 'nylon fabric shopping bag with stitched seams, soft flexible material';
-  if (m.includes('tnt')) return 'non-woven polypropylene (TNT) shopping bag, slightly textured fabric';
-  if (m.includes('lona')) return 'canvas cotton shopping bag, thick woven fabric texture';
-  if (m.includes('algodão') || m.includes('algodao')) return 'cotton canvas shopping bag, natural woven texture';
-  if (m.includes('couro') || m.includes('leather')) return 'faux leather shopping bag, smooth matte finish';
-  if (m.includes('ecobag')) return 'eco-friendly cotton ecobag, natural fabric texture';
-  return 'paper shopping bag';
+  if (m.includes('nylon')) return 'nylon tote bag, smooth fabric with visible stitching';
+  if (m.includes('tnt')) return 'non-woven polypropylene tote bag, slightly textured matte fabric';
+  if (m.includes('lona')) return 'canvas cotton tote bag, thick woven natural fabric';
+  if (m.includes('algodão') || m.includes('algodao')) return 'cotton tote bag, soft natural woven fabric';
+  if (m.includes('couro') || m.includes('leather')) return 'faux leather tote bag, smooth matte finish';
+  if (m.includes('ecobag')) return 'eco-friendly cotton tote bag, natural fabric';
+  return 'tote bag';
 }
 
 // ==========================================
@@ -155,24 +155,38 @@ async function analyzeReference(refBuffer: Buffer): Promise<ReferenceAnalysis> {
 // FLUX image generation
 // ==========================================
 
-async function generateWithFlux(prompt: string, w: number, h: number): Promise<Buffer | null> {
+async function generateWithFlux(prompt: string, w: number, h: number, negativePrompt?: string): Promise<Buffer | null> {
   const token = process.env.HUGGINGFACE_API_TOKEN || process.env.HUGGINGFACE_API_KEY;
   if (!token) return null;
 
   const url = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 90_000);
+    const t = setTimeout(() => ctrl.abort(), 120_000);
+    const body: Record<string, unknown> = {
+      inputs: prompt,
+      parameters: { width: w, height: h, num_inference_steps: 12 },
+    };
+    if (negativePrompt) {
+      (body.parameters as Record<string, unknown>).negative_prompt = negativePrompt;
+    }
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'image/png' },
-      body: JSON.stringify({ inputs: prompt, parameters: { width: w, height: h, num_inference_steps: 8 } }),
+      body: JSON.stringify(body),
       signal: ctrl.signal,
     });
     clearTimeout(t);
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      console.error(`[product-image] FLUX error ${resp.status}: ${errText}`);
+      return null;
+    }
     return Buffer.from(new Uint8Array(await resp.arrayBuffer()));
-  } catch { return null; }
+  } catch (e) {
+    console.error('[product-image] FLUX exception:', e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 // ==========================================
@@ -417,10 +431,11 @@ export async function POST(request: Request) {
 
       // Try FLUX for photorealistic generation
       const matDesc = materialPrompt(material);
-      const fluxPrompt = `professional product photography of a ${color} colored ${matDesc}, standing upright on white background, studio lighting, centered, no text no logos, 8k commercial photo, realistic material texture`;
+      const fluxPrompt = `single ${color} ${matDesc}, front view, standing upright, centered on pure white background, flat lay product photography, soft studio lighting, no text, no logos, no people, no shadows on background, clean minimalist commercial photo, high detail fabric texture, 4k product catalog style`;
+      const fluxNegative = 'multiple bags, stacked, folded, wrinkled, distorted, blurry, low quality, text, watermark, logo, people, hands, background clutter, shadows, dark, artistic, painting, cartoon, illustration';
 
       console.log('[product-image] Generating with FLUX...');
-      const fluxResult = await generateWithFlux(fluxPrompt, 1024, 1024);
+      const fluxResult = await generateWithFlux(fluxPrompt, 1024, 1024, fluxNegative);
 
       if (fluxResult) {
         baseBuffer = fluxResult;
