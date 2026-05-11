@@ -105,7 +105,7 @@ export default function FinancePage() {
                         {typeLabel[record.type] || record.type}
                       </span>
                       <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-                        R$ {record.amount.toFixed(2)}
+                        R$ {(record.amount ?? 0).toFixed(2)}
                       </span>
                     </div>
                   </div>
