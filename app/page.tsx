@@ -418,6 +418,7 @@ export default function Home() {
                                 title={metric.title}
                                 value={metric.getValue(summary)}
                                 note={metric.getNote(summary)}
+                                icon={metric.icon}
                               />
                             </div>
                           ))}

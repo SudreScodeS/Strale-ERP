@@ -554,23 +554,41 @@ export function PageHeader({ title, description }: { title: string; description?
 // METRIC CARD
 // ==========================================
 
-export function MetricCard({ title, value, note }: { title: string; value: string; note?: string }) {
+export function MetricCard({ title, value, note, icon }: { title: string; value: string; note?: string; icon?: React.ReactNode }) {
   return (
     <div
-      className="rounded-2xl p-5 shadow-sm transition-shadow hover:shadow-md"
+      className="group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md"
       style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
-        {title}
-      </p>
-      <p className="mt-3 text-2xl font-bold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
-        {value}
-      </p>
-      {note ? (
-        <p className="mt-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-          {note}
-        </p>
-      ) : null}
+      {/* Decorative gradient blob */}
+      <div
+        className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full opacity-[0.07] transition-opacity duration-300 group-hover:opacity-[0.12]"
+        style={{ background: 'var(--brand)' }}
+      />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
+            {title}
+          </p>
+          <p className="mt-3 text-2xl font-bold tabular-nums sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+            {value}
+          </p>
+          {note ? (
+            <p className="mt-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {note}
+            </p>
+          ) : null}
+        </div>
+        {icon ? (
+          <div
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110"
+            style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
+          >
+            {icon}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
