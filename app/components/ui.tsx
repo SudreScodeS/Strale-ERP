@@ -232,17 +232,18 @@ export function Sidebar({ children }: SidebarProps) {
               {sectionName}
             </p>
             <div className="space-y-0.5">
-              {items.map((item) => {
+              {items.map((item, itemIdx) => {
                 const active = isActive(item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 animate-slide-in"
                     style={{
                       color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
                       background: active ? 'var(--sidebar-active)' : 'transparent',
                       boxShadow: active ? '0 2px 10px rgba(139, 92, 246, 0.35), 0 1px 0 rgba(167,139,250,0.12) inset' : 'none',
+                      animationDelay: `${itemIdx * 0.04}s`,
                     }}
                     onMouseEnter={(e) => {
                       if (!active) {
@@ -516,7 +517,7 @@ export function Sidebar({ children }: SidebarProps) {
           isSidebarOpen ? 'lg:ml-72' : 'lg:ml-[68px]'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8 animate-fade-in">
           {children}
         </div>
       </main>
@@ -530,7 +531,7 @@ export function Sidebar({ children }: SidebarProps) {
 
 export function PageHeader({ title, description }: { title: string; description?: string }) {
   return (
-    <div className="mb-8 flex flex-col gap-2">
+    <div className="mb-8 flex flex-col gap-2 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--brand)' }}>
@@ -563,12 +564,12 @@ export function PageHeader({ title, description }: { title: string; description?
 export function MetricCard({ title, value, note, icon }: { title: string; value: string; note?: string; icon?: React.ReactNode }) {
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+      className="group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md animate-fade-in-up"
       style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
       {/* Decorative gradient blob */}
       <div
-        className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full opacity-[0.07] transition-opacity duration-300 group-hover:opacity-[0.12]"
+        className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full opacity-[0.07] transition-all duration-300 group-hover:opacity-[0.12] group-hover:scale-110"
         style={{ background: 'var(--brand)' }}
       />
 
@@ -577,7 +578,7 @@ export function MetricCard({ title, value, note, icon }: { title: string; value:
           <p className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
             {title}
           </p>
-          <p className="mt-3 text-2xl font-bold tabular-nums sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+          <p className="mt-3 text-2xl font-bold tabular-nums sm:text-3xl transition-transform duration-200 group-hover:scale-[1.02] origin-left" style={{ color: 'var(--text-primary)' }}>
             {value}
           </p>
           {note ? (
@@ -588,7 +589,7 @@ export function MetricCard({ title, value, note, icon }: { title: string; value:
         </div>
         {icon ? (
           <div
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-110 group-hover:rotate-3"
             style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
           >
             {icon}

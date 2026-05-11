@@ -397,6 +397,7 @@ export default function Home() {
                 const rows = rowLayouts[count] || [Math.min(count, 4)];
                 const gapPx = 20;
                 let idx = 0;
+                let globalIdx = 0;
                 return (
                   <div className="flex flex-col items-center" style={{ gap: `${gapPx}px` }}>
                     {rows.map((cols, rowIdx) => {
@@ -409,19 +410,23 @@ export default function Home() {
                           className="flex justify-center"
                           style={{ gap: `${gapPx}px`, width: '100%' }}
                         >
-                          {rowMetrics.map((metric) => (
-                            <div
-                              key={metric.id}
-                              style={{ width: `calc((100% - ${totalGap}px) / ${cols})`, maxWidth: `calc((100% - ${totalGap}px) / ${cols})` }}
-                            >
-                              <MetricCard
-                                title={metric.title}
-                                value={metric.getValue(summary)}
-                                note={metric.getNote(summary)}
-                                icon={metric.icon}
-                              />
-                            </div>
-                          ))}
+                          {rowMetrics.map((metric) => {
+                            const stagger = globalIdx++;
+                            return (
+                              <div
+                                key={metric.id}
+                                className={`animate-fade-in-up stagger-${Math.min(stagger + 1, 8)}`}
+                                style={{ width: `calc((100% - ${totalGap}px) / ${cols})`, maxWidth: `calc((100% - ${totalGap}px) / ${cols})` }}
+                              >
+                                <MetricCard
+                                  title={metric.title}
+                                  value={metric.getValue(summary)}
+                                  note={metric.getNote(summary)}
+                                  icon={metric.icon}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
