@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     const orderName = name?.trim() || `Pedido ${new Date().toLocaleString()}`;
 
     // PROCESSA PEDIDO COMPLETO (veja business.ts para detalhes)
-    // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal, detecção de fraude
+    // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal
     const { order, invoice } = finalizarPedido(payload.userId, orderName, items, logoColors);
 
     return NextResponse.json({ order, invoice });

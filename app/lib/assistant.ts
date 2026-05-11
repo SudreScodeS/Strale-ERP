@@ -816,7 +816,7 @@ function detectIntent(question: string): () => AssistantResponse {
   }
 
   // Resumo geral
-  if (containsAny(q, 'resumo', 'visao geral', 'visão geral', 'sistema', 'status do sistema') && !containsAny(q, 'fraude', 'venda', 'estoque')) {
+  if (containsAny(q, 'resumo', 'visao geral', 'visão geral', 'sistema', 'status do sistema') && !containsAny(q, 'venda', 'estoque')) {
     return querySystemSummary;
   }
 

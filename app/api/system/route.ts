@@ -36,7 +36,7 @@ export async function GET() {
   const startTime = Date.now();
 
   // 1. Verificar arquivos de dados
-  const dataFiles = ['products.json', 'variables.json', 'groups.json', 'orders.json', 'finance.json', 'users.json', 'suppliers.json', 'purchase-orders.json', 'invoices.json', 'fraud-logs.json'];
+  const dataFiles = ['products.json', 'variables.json', 'groups.json', 'orders.json', 'finance.json', 'users.json', 'suppliers.json', 'purchase-orders.json', 'invoices.json'];
   for (const file of dataFiles) {
     checks.push(checkDataFile(file));
   }
