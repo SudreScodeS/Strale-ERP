@@ -18,5 +18,37 @@
     "name": "Cor",
     "productId": "product-1",
     "createdAt": "2026-05-06T06:23:00.000Z"
+  },
+  {
+    "id": "e94e3a9d-b65d-4d46-9edf-08d3d0c0e69b",
+    "productId": "product-1",
+    "name": "Tamanho G",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-11T22:09:35.323Z"
+  },
+  {
+    "id": "f96894d6-2461-46e2-9f01-c025c68e2927",
+    "productId": "product-1",
+    "name": "Estampa",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-11T22:10:10.316Z"
+  },
+  {
+    "id": "49d944f0-a519-4490-8f91-202f55495000",
+    "productId": "product-1",
+    "name": "Estampa",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-11T22:10:17.536Z"
+  },
+  {
+    "id": "583e01a6-77e3-49a2-8bec-a93a9d57027a",
+    "productId": "product-1",
+    "name": "Estampa",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-11T22:10:26.105Z"
   }
 ]

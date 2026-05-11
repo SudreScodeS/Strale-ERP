@@ -163,5 +163,180 @@
     "logoCost": 50,
     "status": "completed",
     "createdAt": "2026-05-07T13:18:54.177Z"
+  },
+  {
+    "id": "6",
+    "userId": "user-admin",
+    "name": "Orçamento 12/05/2026",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-lona",
+            "groupId": "group-material",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-large",
+            "groupId": "group-size",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-color-vermelho",
+            "groupId": "group-color",
+            "quantity": 100
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 30,
+        "unitPrice": 36
+      }
+    ],
+    "totalCost": 3000,
+    "totalPrice": 3600,
+    "logoCost": 0,
+    "status": "completed",
+    "createdAt": "2026-05-11T22:07:59.917Z"
+  },
+  {
+    "id": "7",
+    "userId": "user-admin",
+    "name": "Escritório Advocacia Souza",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 300
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 300
+          },
+          {
+            "variableId": "variable-color-preto",
+            "groupId": "group-color",
+            "quantity": 300
+          }
+        ],
+        "quantity": 300,
+        "unitCost": 25,
+        "unitPrice": 30
+      }
+    ],
+    "totalCost": 7500,
+    "totalPrice": null,
+    "logoCost": null,
+    "status": "completed",
+    "createdAt": "2026-05-11T22:07:59.942Z"
+  },
+  {
+    "id": "8",
+    "userId": "user-admin",
+    "name": "Padaria Pão Dourado",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 150
+          },
+          {
+            "variableId": "variable-large",
+            "groupId": "group-size",
+            "quantity": 150
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 150
+          }
+        ],
+        "quantity": 150,
+        "unitCost": 30,
+        "unitPrice": 36
+      }
+    ],
+    "totalCost": 4500,
+    "totalPrice": null,
+    "logoCost": null,
+    "status": "completed",
+    "createdAt": "2026-05-11T22:08:00.047Z"
+  },
+  {
+    "id": "9",
+    "userId": "user-admin",
+    "name": "Escritório Advocacia Souza",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 300
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 300
+          },
+          {
+            "variableId": "variable-color-preto",
+            "groupId": "group-color",
+            "quantity": 300
+          }
+        ],
+        "quantity": 300,
+        "unitCost": 25,
+        "unitPrice": 30
+      }
+    ],
+    "totalCost": 7500,
+    "totalPrice": null,
+    "logoCost": null,
+    "status": "pending",
+    "createdAt": "2026-05-11T22:08:21.411Z"
+  },
+  {
+    "id": "10",
+    "userId": "user-admin",
+    "name": "Padaria Pão Dourado",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 150
+          },
+          {
+            "variableId": "variable-large",
+            "groupId": "group-size",
+            "quantity": 150
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 150
+          }
+        ],
+        "quantity": 150,
+        "unitCost": 30,
+        "unitPrice": 36
+      }
+    ],
+    "totalCost": 4500,
+    "totalPrice": null,
+    "logoCost": null,
+    "status": "cancelled",
+    "createdAt": "2026-05-11T22:08:21.439Z"
   }
 ]

@@ -4,5 +4,11 @@
     "name": "Fornecedor",
     "contact": "1196969-6767",
     "createdAt": "2026-04-29T12:38:19.147Z"
+  },
+  {
+    "id": "76aa5501-9111-4f44-8b1d-1951e234ac43",
+    "name": "Fornecedor Teste ABC",
+    "contact": "11999888777",
+    "createdAt": "2026-05-11T22:09:35.861Z"
   }
 ]

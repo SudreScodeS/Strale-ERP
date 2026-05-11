@@ -3,7 +3,7 @@
     "id": "variable-nylon",
     "name": "Nylon",
     "additionalPrice": 3,
-    "stock": 99,
+    "stock": 300,
     "groupId": "group-material",
     "createdAt": "2026-01-01T00:00:00.000Z"
   },
@@ -11,7 +11,7 @@
     "id": "variable-tnt",
     "name": "TNT",
     "additionalPrice": 5,
-    "stock": 1,
+    "stock": 150,
     "groupId": "group-material",
     "createdAt": "2026-01-01T00:00:00.000Z"
   },
@@ -27,7 +27,7 @@
     "id": "variable-medium",
     "name": "Médio",
     "additionalPrice": 2,
-    "stock": 1,
+    "stock": 300,
     "groupId": "group-size",
     "createdAt": "2026-01-01T00:00:00.000Z"
   },
@@ -35,7 +35,7 @@
     "id": "variable-color-azul",
     "name": "Azul",
     "additionalPrice": 0,
-    "stock": 50,
+    "stock": 150,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z"
   },
@@ -51,7 +51,7 @@
     "id": "variable-color-preto",
     "name": "Preto",
     "additionalPrice": 0,
-    "stock": 50,
+    "stock": 300,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z"
   },
@@ -59,7 +59,7 @@
     "id": "variable-color-vermelho",
     "name": "Vermelho",
     "additionalPrice": 0,
-    "stock": 100,
+    "stock": 0,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z"
   }

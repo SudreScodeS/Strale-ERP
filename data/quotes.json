@@ -1,1 +1,141 @@
-[]
+[
+  {
+    "id": "e77a0dc4-1848-412a-851e-db87ad36a04b",
+    "userId": "user-admin",
+    "customerName": "Empresa Alpha Ltda",
+    "name": "Orçamento 12/05/2026",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 200
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 200
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 200
+          }
+        ],
+        "quantity": 200,
+        "unitCost": 25,
+        "unitPrice": 30
+      }
+    ],
+    "totalCost": 5000,
+    "totalPrice": 6000,
+    "logoCost": 0,
+    "status": "sent",
+    "notes": "Sacolas TNT azuis para evento corporativo",
+    "createdAt": "2026-05-11T22:07:03.837Z"
+  },
+  {
+    "id": "0bb9b74a-bb2d-455d-87ad-0ed64b987ebb",
+    "userId": "user-admin",
+    "customerName": "Restaurante Sabor Caseiro",
+    "name": "Orçamento 12/05/2026",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 500
+          },
+          {
+            "variableId": "variable-small",
+            "groupId": "group-size",
+            "quantity": 500
+          }
+        ],
+        "quantity": 500,
+        "unitCost": 27,
+        "unitPrice": 32
+      }
+    ],
+    "totalCost": 13500,
+    "totalPrice": 16200,
+    "logoCost": 0,
+    "status": "draft",
+    "notes": "Sacolas para delivery - marca impressa",
+    "createdAt": "2026-05-11T22:07:03.858Z"
+  },
+  {
+    "id": "25d2a923-6250-4d71-b456-6cfe4265042f",
+    "userId": "user-admin",
+    "customerName": "Farmacia Vida Verde",
+    "name": "Orçamento 12/05/2026",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-lona",
+            "groupId": "group-material",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-large",
+            "groupId": "group-size",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-color-vermelho",
+            "groupId": "group-color",
+            "quantity": 100
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 30,
+        "unitPrice": 36
+      }
+    ],
+    "totalCost": 3000,
+    "totalPrice": 3600,
+    "logoCost": 0,
+    "status": "converted",
+    "notes": "Sacolas premium para rede de farmacias",
+    "createdAt": "2026-05-11T22:07:03.903Z",
+    "convertedOrderId": "6"
+  },
+  {
+    "id": "e88f478f-95c1-4e8c-b410-576b9c91b3ce",
+    "userId": "user-admin",
+    "customerName": "Loja de Roupas Trendy",
+    "name": "Orçamento 12/05/2026",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 50
+          },
+          {
+            "variableId": "variable-small",
+            "groupId": "group-size",
+            "quantity": 50
+          }
+        ],
+        "quantity": 50,
+        "unitCost": 23,
+        "unitPrice": 28
+      }
+    ],
+    "totalCost": 1150,
+    "totalPrice": 1380,
+    "logoCost": 0,
+    "status": "rejected",
+    "notes": "Cliente achou caro - orçamento recusado",
+    "createdAt": "2026-05-11T22:07:03.933Z"
+  }
+]

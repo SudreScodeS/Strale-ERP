@@ -197,5 +197,185 @@
       "issuedAt": "2026-05-07T13:18:54.223Z"
     },
     "createdAt": "2026-05-07T13:18:54.223Z"
+  },
+  {
+    "id": "85f58ab1-252d-422d-b5c6-1e0cc2390351",
+    "orderId": "6",
+    "number": "NF-1778537279918",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-lona",
+              "groupId": "group-material",
+              "quantity": 100
+            },
+            {
+              "variableId": "variable-large",
+              "groupId": "group-size",
+              "quantity": 100
+            },
+            {
+              "variableId": "variable-color-vermelho",
+              "groupId": "group-color",
+              "quantity": 100
+            }
+          ],
+          "quantity": 100,
+          "unitCost": 30,
+          "unitPrice": 36
+        }
+      ],
+      "totalPrice": 3600,
+      "issuedAt": "2026-05-11T22:07:59.918Z"
+    },
+    "createdAt": "2026-05-11T22:07:59.918Z"
+  },
+  {
+    "id": "cb5388c4-62e2-412a-8e0c-8a85deaec85a",
+    "orderId": "7",
+    "number": "NF-1778537279943",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 300
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 300
+            },
+            {
+              "variableId": "variable-color-preto",
+              "groupId": "group-color",
+              "quantity": 300
+            }
+          ],
+          "quantity": 300,
+          "unitCost": 25,
+          "unitPrice": 30
+        }
+      ],
+      "totalPrice": null,
+      "issuedAt": "2026-05-11T22:07:59.943Z"
+    },
+    "createdAt": "2026-05-11T22:07:59.943Z"
+  },
+  {
+    "id": "d8a85933-468e-4356-a8a5-d399e91e1e43",
+    "orderId": "8",
+    "number": "NF-1778537280049",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 150
+            },
+            {
+              "variableId": "variable-large",
+              "groupId": "group-size",
+              "quantity": 150
+            },
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 150
+            }
+          ],
+          "quantity": 150,
+          "unitCost": 30,
+          "unitPrice": 36
+        }
+      ],
+      "totalPrice": null,
+      "issuedAt": "2026-05-11T22:08:00.049Z"
+    },
+    "createdAt": "2026-05-11T22:08:00.049Z"
+  },
+  {
+    "id": "7e095e84-a5f5-416f-a795-312560c6bbb7",
+    "orderId": "9",
+    "number": "NF-1778537301412",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 300
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 300
+            },
+            {
+              "variableId": "variable-color-preto",
+              "groupId": "group-color",
+              "quantity": 300
+            }
+          ],
+          "quantity": 300,
+          "unitCost": 25,
+          "unitPrice": 30
+        }
+      ],
+      "totalPrice": null,
+      "issuedAt": "2026-05-11T22:08:21.412Z"
+    },
+    "createdAt": "2026-05-11T22:08:21.412Z"
+  },
+  {
+    "id": "ffba979c-5075-4772-aa95-fdbe6e4dd68a",
+    "orderId": "10",
+    "number": "NF-1778537301440",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 150
+            },
+            {
+              "variableId": "variable-large",
+              "groupId": "group-size",
+              "quantity": 150
+            },
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 150
+            }
+          ],
+          "quantity": 150,
+          "unitCost": 30,
+          "unitPrice": 36
+        }
+      ],
+      "totalPrice": null,
+      "issuedAt": "2026-05-11T22:08:21.440Z"
+    },
+    "createdAt": "2026-05-11T22:08:21.440Z"
   }
 ]
