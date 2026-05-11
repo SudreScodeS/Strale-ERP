@@ -54,21 +54,5 @@
     "description": "Pedido: Orçamento 12/05/2026",
     "date": "2026-05-11T22:07:59.917Z",
     "orderId": "6"
-  },
-  {
-    "id": "a18b4dbc-8a91-4c7b-bb71-210e21704f07",
-    "type": "sale",
-    "amount": null,
-    "description": "Pedido: Escritório Advocacia Souza",
-    "date": "2026-05-11T22:07:59.942Z",
-    "orderId": "7"
-  },
-  {
-    "id": "0294dd6c-7cb9-4657-af6d-077d82c46b8d",
-    "type": "sale",
-    "amount": null,
-    "description": "Pedido: Padaria Pão Dourado",
-    "date": "2026-05-11T22:08:00.047Z",
-    "orderId": "8"
   }
 ]

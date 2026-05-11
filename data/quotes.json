@@ -64,7 +64,7 @@
     "totalCost": 13500,
     "totalPrice": 16200,
     "logoCost": 0,
-    "status": "draft",
+    "status": "sent",
     "notes": "Sacolas para delivery - marca impressa",
     "createdAt": "2026-05-11T22:07:03.858Z"
   },
@@ -137,5 +137,47 @@
     "status": "rejected",
     "notes": "Cliente achou caro - orçamento recusado",
     "createdAt": "2026-05-11T22:07:03.933Z"
+  },
+  {
+    "id": "2e931bf7-1009-4049-8d37-a1561a3522ed",
+    "userId": "user-admin",
+    "customerName": "Teste",
+    "name": "Teste Sudré",
+    "items": [
+      {
+        "productId": "product-1",
+        "productName": "Sacola Personalizada",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 99
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 98
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 50,
+        "unitPrice": 60,
+        "printType": "serigrafia",
+        "printPosition": "front",
+        "printSize": "medium"
+      }
+    ],
+    "totalCost": 5010,
+    "totalPrice": 6012,
+    "logoCost": 10,
+    "status": "draft",
+    "validUntil": "2026-05-18T22:17:33.915Z",
+    "notes": "Isso é um teste",
+    "createdAt": "2026-05-11T22:17:33.921Z"
   }
 ]
