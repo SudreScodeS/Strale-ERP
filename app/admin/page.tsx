@@ -47,6 +47,7 @@ export default function AdminPage() {
   const [newPrintType, setNewPrintType] = useState({ value: '', label: '' });
   const [selectedSize, setSelectedSize] = useState<Record<string, 'small' | 'medium' | 'large'>>({});
   const [selectedPos, setSelectedPos] = useState<Record<string, 'front' | 'back' | 'both'>>({});
+  const [activePrintType, setActivePrintType] = useState('');
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
@@ -400,7 +401,7 @@ export default function AdminPage() {
                       Preços de Impressão
                     </h3>
                     <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                      Configure o custo base e adicional por cor para cada tipo.
+                      Selecione um tipo para configurar os preços.
                     </p>
                   </div>
 
@@ -409,8 +410,36 @@ export default function AdminPage() {
                       Nenhum tipo de impressão configurado. Adicione tipos na seção acima.
                     </p>
                   ) : (
-                    <div className="space-y-6">
-                      {config.printTypes.map((pt) => {
+                    <>
+                      {/* Botões dos tipos de impressão */}
+                      <div className="mb-6 overflow-x-auto">
+                        <div className="inline-flex gap-2 pb-1">
+                          {config.printTypes.map((pt) => {
+                            const isActive = activePrintType === pt.value;
+                            return (
+                              <button
+                                key={pt.value}
+                                type="button"
+                                onClick={() => setActivePrintType(pt.value)}
+                                className="whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-medium transition-all"
+                                style={{
+                                  background: isActive ? 'var(--brand)' : 'var(--surface-muted)',
+                                  color: isActive ? '#fff' : 'var(--text-secondary)',
+                                  border: isActive ? 'none' : '1px solid var(--border)',
+                                }}
+                              >
+                                {pt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Editor do tipo selecionado */}
+                      {activePrintType && (() => {
+                        const pt = config.printTypes.find((t) => t.value === activePrintType);
+                        if (!pt) return null;
+
                         const curSize = selectedSize[pt.value] || 'medium';
                         const curPos = selectedPos[pt.value] || 'front';
                         const rule = config.printPricingRules.find(
@@ -431,13 +460,13 @@ export default function AdminPage() {
                         function updateRule(field: 'baseCost' | 'costPerColor', val: number) {
                           setConfig((prev) => {
                             const exists = prev.printPricingRules.find(
-                              (r) => r.printType === pt.value && r.size === curSize && r.position === curPos,
+                              (r) => r.printType === pt!.value && r.size === curSize && r.position === curPos,
                             );
                             if (exists) {
                               return {
                                 ...prev,
                                 printPricingRules: prev.printPricingRules.map((r) =>
-                                  r.printType === pt.value && r.size === curSize && r.position === curPos
+                                  r.printType === pt!.value && r.size === curSize && r.position === curPos
                                     ? { ...r, [field]: val }
                                     : r,
                                 ),
@@ -447,19 +476,14 @@ export default function AdminPage() {
                               ...prev,
                               printPricingRules: [
                                 ...prev.printPricingRules,
-                                { printType: pt.value, size: curSize, position: curPos, baseCost: 0, costPerColor: 0, [field]: val },
+                                { printType: pt!.value, size: curSize, position: curPos, baseCost: 0, costPerColor: 0, [field]: val },
                               ],
                             };
                           });
                         }
 
                         return (
-                          <div key={pt.value} className="rounded-xl p-5" style={{ background: 'var(--surface-muted)' }}>
-                            {/* Header do tipo */}
-                            <h4 className="mb-4 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                              {pt.label}
-                            </h4>
-
+                          <div className="rounded-xl p-5" style={{ background: 'var(--surface-muted)' }}>
                             {/* Botões de tamanho */}
                             <div className="mb-3">
                               <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Tamanho</span>
@@ -468,7 +492,7 @@ export default function AdminPage() {
                                   <button
                                     key={s.value}
                                     type="button"
-                                    onClick={() => setSelectedSize((prev) => ({ ...prev, [pt.value]: s.value }))}
+                                    onClick={() => setSelectedSize((prev) => ({ ...prev, [pt!.value]: s.value }))}
                                     className="rounded-md px-4 py-1.5 text-xs font-medium transition-all"
                                     style={{
                                       background: curSize === s.value ? 'var(--brand)' : 'transparent',
@@ -489,7 +513,7 @@ export default function AdminPage() {
                                   <button
                                     key={p.value}
                                     type="button"
-                                    onClick={() => setSelectedPos((prev) => ({ ...prev, [pt.value]: p.value }))}
+                                    onClick={() => setSelectedPos((prev) => ({ ...prev, [pt!.value]: p.value }))}
                                     className="rounded-md px-4 py-1.5 text-xs font-medium transition-all"
                                     style={{
                                       background: curPos === p.value ? 'var(--brand)' : 'transparent',
@@ -538,14 +562,24 @@ export default function AdminPage() {
                               </label>
                             </div>
 
-                            {/* Indicador da combinação atual */}
                             <p className="mt-3 text-xs" style={{ color: 'var(--text-faint)' }}>
-                              Editando: {sizes.find((s) => s.value === curSize)?.label} × {positions.find((p) => p.value === curPos)?.label}
+                              {pt.label} → {sizes.find((s) => s.value === curSize)?.label} × {positions.find((p) => p.value === curPos)?.label}
                             </p>
                           </div>
                         );
-                      })}
-                    </div>
+                      })()}
+
+                      {!activePrintType && (
+                        <div
+                          className="rounded-xl p-8 text-center"
+                          style={{ background: 'var(--surface-muted)', border: '2px dashed var(--border)' }}
+                        >
+                          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                            Selecione um tipo de impressão acima para configurar os preços.
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </section>
               )}
