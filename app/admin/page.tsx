@@ -45,6 +45,8 @@ export default function AdminPage() {
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [saving, setSaving] = useState(false);
   const [newPrintType, setNewPrintType] = useState({ value: '', label: '' });
+  const [selectedSize, setSelectedSize] = useState<Record<string, 'small' | 'medium' | 'large'>>({});
+  const [selectedPos, setSelectedPos] = useState<Record<string, 'front' | 'back' | 'both'>>({});
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
@@ -398,7 +400,7 @@ export default function AdminPage() {
                       Preços de Impressão
                     </h3>
                     <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                      Configure o custo base e adicional por cor para cada tipo, tamanho e posição.
+                      Configure o custo base e adicional por cor para cada tipo.
                     </p>
                   </div>
 
@@ -409,128 +411,137 @@ export default function AdminPage() {
                   ) : (
                     <div className="space-y-6">
                       {config.printTypes.map((pt) => {
-                        const typeRules = config.printPricingRules.filter((r) => r.printType === pt.value);
-                        const sizes: Array<'small' | 'medium' | 'large'> = ['small', 'medium', 'large'];
-                        const positions: Array<'front' | 'back' | 'both'> = ['front', 'back', 'both'];
+                        const curSize = selectedSize[pt.value] || 'medium';
+                        const curPos = selectedPos[pt.value] || 'front';
+                        const rule = config.printPricingRules.find(
+                          (r) => r.printType === pt.value && r.size === curSize && r.position === curPos,
+                        );
+
+                        const sizes: Array<{ value: 'small' | 'medium' | 'large'; label: string }> = [
+                          { value: 'small', label: 'Pequeno' },
+                          { value: 'medium', label: 'Médio' },
+                          { value: 'large', label: 'Grande' },
+                        ];
+                        const positions: Array<{ value: 'front' | 'back' | 'both'; label: string }> = [
+                          { value: 'front', label: 'Frente' },
+                          { value: 'back', label: 'Verso' },
+                          { value: 'both', label: 'Ambos' },
+                        ];
+
+                        function updateRule(field: 'baseCost' | 'costPerColor', val: number) {
+                          setConfig((prev) => {
+                            const exists = prev.printPricingRules.find(
+                              (r) => r.printType === pt.value && r.size === curSize && r.position === curPos,
+                            );
+                            if (exists) {
+                              return {
+                                ...prev,
+                                printPricingRules: prev.printPricingRules.map((r) =>
+                                  r.printType === pt.value && r.size === curSize && r.position === curPos
+                                    ? { ...r, [field]: val }
+                                    : r,
+                                ),
+                              };
+                            }
+                            return {
+                              ...prev,
+                              printPricingRules: [
+                                ...prev.printPricingRules,
+                                { printType: pt.value, size: curSize, position: curPos, baseCost: 0, costPerColor: 0, [field]: val },
+                              ],
+                            };
+                          });
+                        }
 
                         return (
-                          <div key={pt.value} className="rounded-xl p-4" style={{ background: 'var(--surface-muted)' }}>
-                            <div className="mb-4 flex items-center justify-between">
-                              <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                                {pt.label}
-                              </h4>
-                              <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--brand-bg)', color: 'var(--brand)' }}>
-                                {typeRules.length} regras
-                              </span>
+                          <div key={pt.value} className="rounded-xl p-5" style={{ background: 'var(--surface-muted)' }}>
+                            {/* Header do tipo */}
+                            <h4 className="mb-4 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                              {pt.label}
+                            </h4>
+
+                            {/* Botões de tamanho */}
+                            <div className="mb-3">
+                              <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Tamanho</span>
+                              <div className="inline-flex gap-1 rounded-lg p-1" style={{ background: 'var(--input-bg)' }}>
+                                {sizes.map((s) => (
+                                  <button
+                                    key={s.value}
+                                    type="button"
+                                    onClick={() => setSelectedSize((prev) => ({ ...prev, [pt.value]: s.value }))}
+                                    className="rounded-md px-4 py-1.5 text-xs font-medium transition-all"
+                                    style={{
+                                      background: curSize === s.value ? 'var(--brand)' : 'transparent',
+                                      color: curSize === s.value ? '#fff' : 'var(--text-secondary)',
+                                    }}
+                                  >
+                                    {s.label}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
 
-                            {/* Tabela de preços */}
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr>
-                                    <th className="pb-2 pr-3 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Tamanho</th>
-                                    <th className="pb-2 pr-3 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Posição</th>
-                                    <th className="pb-2 pr-3 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Custo Base (R$)</th>
-                                    <th className="pb-2 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Custo/Cor (R$)</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {sizes.map((size) =>
-                                    positions.map((pos) => {
-                                      const rule = typeRules.find((r) => r.size === size && r.position === pos);
-                                      const sizeLabel = size === 'small' ? 'Pequeno' : size === 'medium' ? 'Médio' : 'Grande';
-                                      const posLabel = pos === 'front' ? 'Frente' : pos === 'back' ? 'Verso' : 'Ambos';
-
-                                      return (
-                                        <tr key={`${size}-${pos}`} className="border-t" style={{ borderColor: 'var(--border)' }}>
-                                          <td className="py-2 pr-3" style={{ color: 'var(--text-secondary)' }}>{sizeLabel}</td>
-                                          <td className="py-2 pr-3" style={{ color: 'var(--text-secondary)' }}>{posLabel}</td>
-                                          <td className="py-2 pr-3">
-                                            <input
-                                              type="number"
-                                              min={0}
-                                              step={0.5}
-                                              value={rule?.baseCost ?? 0}
-                                              onChange={(e) => {
-                                                const val = Number(e.target.value);
-                                                setConfig((prev) => {
-                                                  const exists = prev.printPricingRules.find(
-                                                    (r) => r.printType === pt.value && r.size === size && r.position === pos,
-                                                  );
-                                                  if (exists) {
-                                                    return {
-                                                      ...prev,
-                                                      printPricingRules: prev.printPricingRules.map((r) =>
-                                                        r.printType === pt.value && r.size === size && r.position === pos
-                                                          ? { ...r, baseCost: val }
-                                                          : r,
-                                                      ),
-                                                    };
-                                                  }
-                                                  return {
-                                                    ...prev,
-                                                    printPricingRules: [
-                                                      ...prev.printPricingRules,
-                                                      { printType: pt.value, size, position: pos, baseCost: val, costPerColor: 0 },
-                                                    ],
-                                                  };
-                                                });
-                                              }}
-                                              className="w-24 rounded-lg px-2 py-1.5 text-sm"
-                                              style={{
-                                                background: 'var(--input-bg)',
-                                                border: '1px solid var(--input-border)',
-                                                color: 'var(--text-primary)',
-                                              }}
-                                            />
-                                          </td>
-                                          <td className="py-2">
-                                            <input
-                                              type="number"
-                                              min={0}
-                                              step={0.5}
-                                              value={rule?.costPerColor ?? 0}
-                                              onChange={(e) => {
-                                                const val = Number(e.target.value);
-                                                setConfig((prev) => {
-                                                  const exists = prev.printPricingRules.find(
-                                                    (r) => r.printType === pt.value && r.size === size && r.position === pos,
-                                                  );
-                                                  if (exists) {
-                                                    return {
-                                                      ...prev,
-                                                      printPricingRules: prev.printPricingRules.map((r) =>
-                                                        r.printType === pt.value && r.size === size && r.position === pos
-                                                          ? { ...r, costPerColor: val }
-                                                          : r,
-                                                      ),
-                                                    };
-                                                  }
-                                                  return {
-                                                    ...prev,
-                                                    printPricingRules: [
-                                                      ...prev.printPricingRules,
-                                                      { printType: pt.value, size, position: pos, baseCost: 0, costPerColor: val },
-                                                    ],
-                                                  };
-                                                });
-                                              }}
-                                              className="w-24 rounded-lg px-2 py-1.5 text-sm"
-                                              style={{
-                                                background: 'var(--input-bg)',
-                                                border: '1px solid var(--input-border)',
-                                                color: 'var(--text-primary)',
-                                              }}
-                                            />
-                                          </td>
-                                        </tr>
-                                      );
-                                    }),
-                                  )}
-                                </tbody>
-                              </table>
+                            {/* Botões de posição */}
+                            <div className="mb-4">
+                              <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Posição</span>
+                              <div className="inline-flex gap-1 rounded-lg p-1" style={{ background: 'var(--input-bg)' }}>
+                                {positions.map((p) => (
+                                  <button
+                                    key={p.value}
+                                    type="button"
+                                    onClick={() => setSelectedPos((prev) => ({ ...prev, [pt.value]: p.value }))}
+                                    className="rounded-md px-4 py-1.5 text-xs font-medium transition-all"
+                                    style={{
+                                      background: curPos === p.value ? 'var(--brand)' : 'transparent',
+                                      color: curPos === p.value ? '#fff' : 'var(--text-secondary)',
+                                    }}
+                                  >
+                                    {p.label}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
+
+                            {/* Campos de preço */}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <label className="block space-y-1">
+                                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Custo Base (R$)</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.5}
+                                  value={rule?.baseCost ?? 0}
+                                  onChange={(e) => updateRule('baseCost', Number(e.target.value))}
+                                  className="w-full rounded-lg px-3 py-2 text-sm"
+                                  style={{
+                                    background: 'var(--input-bg)',
+                                    border: '1px solid var(--input-border)',
+                                    color: 'var(--text-primary)',
+                                  }}
+                                />
+                              </label>
+                              <label className="block space-y-1">
+                                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Custo por Cor (R$)</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.5}
+                                  value={rule?.costPerColor ?? 0}
+                                  onChange={(e) => updateRule('costPerColor', Number(e.target.value))}
+                                  className="w-full rounded-lg px-3 py-2 text-sm"
+                                  style={{
+                                    background: 'var(--input-bg)',
+                                    border: '1px solid var(--input-border)',
+                                    color: 'var(--text-primary)',
+                                  }}
+                                />
+                              </label>
+                            </div>
+
+                            {/* Indicador da combinação atual */}
+                            <p className="mt-3 text-xs" style={{ color: 'var(--text-faint)' }}>
+                              Editando: {sizes.find((s) => s.value === curSize)?.label} × {positions.find((p) => p.value === curPos)?.label}
+                            </p>
                           </div>
                         );
                       })}
