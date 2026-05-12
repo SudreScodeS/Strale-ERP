@@ -4,7 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GlobalConfig, PriceTier, PrintPricingRule } from '../../types';
+import { GlobalConfig, PriceTier, PrintPricingRule, PrintType } from '../../types';
 
 const CONFIG_FILE = path.join(process.cwd(), 'data', 'config.json');
 
@@ -37,6 +37,12 @@ const DEFAULT_PRINT_PRICING: PrintPricingRule[] = [
   { printType: 'dtf', size: 'large', position: 'both', baseCost: 55, costPerColor: 0 },
 ];
 
+const DEFAULT_PRINT_TYPES: PrintType[] = [
+  { value: 'serigrafia', label: 'Serigrafia' },
+  { value: 'sublimacao', label: 'Sublimação' },
+  { value: 'dtf', label: 'DTF' },
+];
+
 const DEFAULTS: GlobalConfig = {
   profitMargin: 20,
   logoPricePerColor: 10,
@@ -46,6 +52,7 @@ const DEFAULTS: GlobalConfig = {
   quoteValidityDays: 7,
   priceTiers: DEFAULT_PRICE_TIERS,
   printPricingRules: DEFAULT_PRINT_PRICING,
+  printTypes: DEFAULT_PRINT_TYPES,
   pricePerCm2: 0.005,
 };
 
@@ -105,6 +112,9 @@ export function updateServerConfig(updates: Partial<GlobalConfig>): GlobalConfig
   }
   if (Array.isArray(updates.printPricingRules)) {
     current.printPricingRules = updates.printPricingRules;
+  }
+  if (Array.isArray(updates.printTypes)) {
+    current.printTypes = updates.printTypes;
   }
   if (typeof updates.pricePerCm2 === 'number' && updates.pricePerCm2 >= 0) {
     current.pricePerCm2 = updates.pricePerCm2;

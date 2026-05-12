@@ -47,13 +47,6 @@ interface CartItem {
   printSize?: string;
 }
 
-const PRINT_TYPES = [
-  { value: '', label: 'Sem impressão' },
-  { value: 'serigrafia', label: 'Serigrafia' },
-  { value: 'sublimacao', label: 'Sublimação' },
-  { value: 'dtf', label: 'DTF' },
-];
-
 const PRINT_SIZES = [
   { value: 'small', label: 'Pequena (~10cm)' },
   { value: 'medium', label: 'Média (~20cm)' },
@@ -91,6 +84,11 @@ export default function QuotesPage() {
   const [printType, setPrintType] = useState('');
   const [printPosition, setPrintPosition] = useState('front');
   const [printSize, setPrintSize] = useState('medium');
+
+  const printTypesList = useMemo(() => [
+    { value: '', label: 'Sem impressão' },
+    ...globalConfig.printTypes,
+  ], []);
 
   // Filtros da lista
   const [filterStatus, setFilterStatus] = useState('');
@@ -550,7 +548,7 @@ export default function QuotesPage() {
                     <span>Tipo</span>
                     <select value={printType} onChange={e => setPrintType(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      {PRINT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      {printTypesList.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                   </label>
                   {printType && (

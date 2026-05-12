@@ -3,7 +3,7 @@
 // Todas as regras de negócio configuráveis estão aqui
 // A persistência é feita via API /api/config (server-side)
 
-import { GlobalConfig, PriceTier, PrintPricingRule } from '../types';
+import { GlobalConfig, PriceTier, PrintPricingRule, PrintType } from '../types';
 
 // ==========================================
 // TABELA DE PREÇOS POR FAIXA DE QUANTIDADE
@@ -59,6 +59,16 @@ const DEFAULT_PRINT_PRICING: PrintPricingRule[] = [
 ];
 
 // ==========================================
+// TIPOS DE IMPRESSÃO DISPONÍVEIS
+// ==========================================
+
+const DEFAULT_PRINT_TYPES: PrintType[] = [
+  { value: 'serigrafia', label: 'Serigrafia' },
+  { value: 'sublimacao', label: 'Sublimação' },
+  { value: 'dtf', label: 'DTF' },
+];
+
+// ==========================================
 // CONFIGURAÇÕES GLOBAIS DO SISTEMA
 // ==========================================
 
@@ -71,6 +81,7 @@ export const globalConfig: GlobalConfig = {
   quoteValidityDays: 7,
   priceTiers: DEFAULT_PRICE_TIERS,
   printPricingRules: DEFAULT_PRINT_PRICING,
+  printTypes: DEFAULT_PRINT_TYPES,
   pricePerCm2: 0.005, // R$ 0,005 por cm² — ajustável pelo admin
 };
 
@@ -87,6 +98,7 @@ export function applyServerConfig(serverConfig: Partial<GlobalConfig>): void {
   if (typeof serverConfig.quoteValidityDays === 'number') globalConfig.quoteValidityDays = serverConfig.quoteValidityDays;
   if (Array.isArray(serverConfig.priceTiers)) globalConfig.priceTiers = serverConfig.priceTiers;
   if (Array.isArray(serverConfig.printPricingRules)) globalConfig.printPricingRules = serverConfig.printPricingRules;
+  if (Array.isArray(serverConfig.printTypes)) globalConfig.printTypes = serverConfig.printTypes;
   if (typeof serverConfig.pricePerCm2 === 'number') globalConfig.pricePerCm2 = serverConfig.pricePerCm2;
 }
 

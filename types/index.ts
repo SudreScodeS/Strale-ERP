@@ -188,6 +188,11 @@ export interface PrintPricingRule {
 
 // Interface para configurações globais do sistema
 // Todas as regras de negócio configuráveis centralizadas
+export interface PrintType {
+  value: string;  // ID interno (ex: 'serigrafia')
+  label: string;  // Nome exibido (ex: 'Serigrafia')
+}
+
 export interface GlobalConfig {
   profitMargin: number; // Margem de lucro em % (ex: 20 = 20%)
   logoPricePerColor: number; // Preço por cor na logo em R$
@@ -197,6 +202,7 @@ export interface GlobalConfig {
   quoteValidityDays: number; // Dias de validade padrão do orçamento
   priceTiers: PriceTier[]; // Tabela de preços por faixa de quantidade
   printPricingRules: PrintPricingRule[]; // Regras de preço de impressão
+  printTypes: PrintType[]; // Tipos de impressão disponíveis
   pricePerCm2?: number; // Preço por cm² para cálculo por dimensão (opcional)
 }
 
