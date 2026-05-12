@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: 'Elitium',
   description: 'Premium ERP — Gestão empresarial de nova geração.',
   icons: {
-    icon: '/elitium-mark.svg',
-    shortcut: '/elitium-mark.svg',
-    apple: '/elitium-mark.svg',
+    icon: '/Logo.svg',
+    shortcut: '/Logo.svg',
+    apple: '/Logo.svg',
   },
 };
 

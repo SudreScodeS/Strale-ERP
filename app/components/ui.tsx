@@ -194,7 +194,7 @@ export function Sidebar({ children }: SidebarProps) {
       <div className="mb-6 flex items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-3">
           <Image
-            src={theme === 'light' ? '/elitium-mark-light.svg' : '/elitium-mark.svg'}
+            src="/Logo.svg"
             alt="Logo"
             width={36}
             height={36}
@@ -402,7 +402,7 @@ export function Sidebar({ children }: SidebarProps) {
             {/* Logo + expand button */}
             <div className="mb-5 flex flex-col items-center gap-2">
               <Image
-                src={theme === 'light' ? '/elitium-mark-light.svg' : '/elitium-mark.svg'}
+                src="/Logo.svg"
                 alt="Logo"
                 width={28}
                 height={28}
