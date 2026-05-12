@@ -48,6 +48,7 @@ export default function AdminPage() {
   const [selectedSize, setSelectedSize] = useState<Record<string, 'small' | 'medium' | 'large'>>({});
   const [selectedPos, setSelectedPos] = useState<Record<string, 'front' | 'back' | 'both'>>({});
   const [activePrintType, setActivePrintType] = useState('');
+  const [scrollOffset, setScrollOffset] = useState(0);
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
@@ -410,20 +411,36 @@ export default function AdminPage() {
                       Nenhum tipo de impressão configurado. Adicione tipos na seção acima.
                     </p>
                   ) : (
-                    <>
-                      {/* Botões dos tipos de impressão */}
-                      <div className="mb-6 overflow-x-auto">
-                        <div className="inline-flex gap-2 pb-1">
-                          {config.printTypes.map((pt) => {
+                    <div className="rounded-xl p-5" style={{ background: 'var(--surface-muted)' }}>
+                      {/* Botões dos tipos com setas de scroll */}
+                      <div className="relative mb-5 flex items-center gap-2">
+                        {/* Seta esquerda */}
+                        {config.printTypes.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() => setScrollOffset((o) => Math.max(0, o - 1))}
+                            disabled={scrollOffset === 0}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-30"
+                            style={{ background: 'var(--input-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                        )}
+
+                        {/* Container dos botões */}
+                        <div className="flex flex-1 gap-2 overflow-hidden">
+                          {config.printTypes.slice(scrollOffset, scrollOffset + 3).map((pt) => {
                             const isActive = activePrintType === pt.value;
                             return (
                               <button
                                 key={pt.value}
                                 type="button"
                                 onClick={() => setActivePrintType(pt.value)}
-                                className="whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-medium transition-all"
+                                className="flex-1 whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-medium transition-all"
                                 style={{
-                                  background: isActive ? 'var(--brand)' : 'var(--surface-muted)',
+                                  background: isActive ? 'var(--brand)' : 'var(--input-bg)',
                                   color: isActive ? '#fff' : 'var(--text-secondary)',
                                   border: isActive ? 'none' : '1px solid var(--border)',
                                 }}
@@ -433,6 +450,21 @@ export default function AdminPage() {
                             );
                           })}
                         </div>
+
+                        {/* Seta direita */}
+                        {config.printTypes.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() => setScrollOffset((o) => Math.min(config.printTypes.length - 3, o + 1))}
+                            disabled={scrollOffset >= config.printTypes.length - 3}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-30"
+                            style={{ background: 'var(--input-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
 
                       {/* Editor do tipo selecionado */}
@@ -483,7 +515,7 @@ export default function AdminPage() {
                         }
 
                         return (
-                          <div className="rounded-xl p-5" style={{ background: 'var(--surface-muted)' }}>
+                          <div>
                             {/* Botões de tamanho */}
                             <div className="mb-3">
                               <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Tamanho</span>
@@ -571,15 +603,15 @@ export default function AdminPage() {
 
                       {!activePrintType && (
                         <div
-                          className="rounded-xl p-8 text-center"
-                          style={{ background: 'var(--surface-muted)', border: '2px dashed var(--border)' }}
+                          className="rounded-lg p-6 text-center"
+                          style={{ border: '2px dashed var(--border)' }}
                         >
                           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                            Selecione um tipo de impressão acima para configurar os preços.
+                            Selecione um tipo acima para configurar os preços.
                           </p>
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </section>
               )}
