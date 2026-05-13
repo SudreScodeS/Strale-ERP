@@ -1,29 +1,42 @@
 // app/lib/db.ts
 // Conexão com PostgreSQL usando pool de conexões
-// Fornece uma instância compartilhada do pool para todo o sistema
-
-import { Pool } from 'pg';
+// Usa import dinâmico para evitar bundling no client-side do Next.js
 
 // Singleton do pool de conexões
 // Usa DATABASE_URL do ambiente para conectar ao PostgreSQL
-let pool: Pool | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pool: any = null;
+let pgModule: typeof import('pg') | null = null;
 
-export function getPool(): Pool | null {
+async function getPg() {
+  if (!pgModule) {
+    try {
+      pgModule = await import('pg');
+    } catch {
+      return null;
+    }
+  }
+  return pgModule;
+}
+
+export async function getPool() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     return null; // Sem DATABASE_URL, retorna null (fallback para JSON)
   }
 
   if (!pool) {
-    pool = new Pool({
+    const pg = await getPg();
+    if (!pg) return null;
+
+    pool = new pg.Pool({
       connectionString: databaseUrl,
-      max: 20, // Máximo de conexões no pool
-      idleTimeoutMillis: 30000, // Timeout para conexões idle
-      connectionTimeoutMillis: 5000, // Timeout para estabelecer conexão
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
     });
 
-    // Log de erros do pool
-    pool.on('error', (err) => {
+    pool.on('error', (err: Error) => {
       console.error('[PostgreSQL] Erro inesperado no pool:', err);
     });
   }
@@ -33,7 +46,7 @@ export function getPool(): Pool | null {
 
 // Helper para executar queries
 export async function query(text: string, params?: unknown[]) {
-  const p = getPool();
+  const p = await getPool();
   if (!p) {
     throw new Error('PostgreSQL não configurado. Defina DATABASE_URL no .env.local');
   }
@@ -46,9 +59,9 @@ export async function query(text: string, params?: unknown[]) {
   return result;
 }
 
-// Verifica se PostgreSQL está disponível
+// Verifica se PostgreSQL está disponível (síncrono, checa env var)
 export function isPostgresAvailable(): boolean {
-  return getPool() !== null;
+  return !!process.env.DATABASE_URL;
 }
 
 // Fecha o pool (útil para testes e graceful shutdown)
