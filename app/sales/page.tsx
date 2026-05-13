@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { calculateLogoCost, calculateSalePrice, globalConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -98,17 +98,6 @@ export default function SalesPage() {
   const [editOrderName, setEditOrderName] = useState('');
   const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
-
-  // Dialog ref for native modal
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    if (selectedOrder) {
-      dialogRef.current?.showModal();
-    } else {
-      dialogRef.current?.close();
-    }
-  }, [selectedOrder]);
 
   // Seletor de orçamento
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -1183,12 +1172,11 @@ export default function SalesPage() {
       {/* ========================================== */}
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
-      <dialog
-        ref={dialogRef}
-        className="modal-overlay"
-        onClose={() => { setSelectedOrder(null); setEditingOrder(false); }}
-        onClick={(e) => { if (e.target === dialogRef.current) { setSelectedOrder(null); setEditingOrder(false); } }}
-      >
+      {selectedOrder ? (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) { setSelectedOrder(null); setEditingOrder(false); } }}
+        >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
           <div
             className="modal-content rounded-3xl bg-white p-8 shadow-2xl"
@@ -1509,7 +1497,8 @@ export default function SalesPage() {
             )}
           </div>
         </div>
-      </dialog>
+        </div>
+      ) : null}
 
 
       </div>
