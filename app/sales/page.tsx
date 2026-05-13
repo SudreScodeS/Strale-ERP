@@ -104,6 +104,16 @@ export default function SalesPage() {
   const [showQuoteSelector, setShowQuoteSelector] = useState(false);
   const [quoteSearch, setQuoteSearch] = useState('');
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (selectedOrder) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [selectedOrder]);
+
   // Dimensões e impressão
   const [useDimensions, setUseDimensions] = useState(false);
   const [dimWidth, setDimWidth] = useState(30);
