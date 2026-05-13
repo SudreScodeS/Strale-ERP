@@ -655,3 +655,10 @@ html[data-theme='light'] [style*="var(--surface-soft)"] {
   );
   background-size: 4px 4px;
 }
+
+/* Body scroll lock for modals */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}

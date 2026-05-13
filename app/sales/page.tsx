@@ -107,11 +107,11 @@ export default function SalesPage() {
   // Lock body scroll when modal is open
   useEffect(() => {
     if (selectedOrder) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
     } else {
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => { document.body.classList.remove('modal-open'); };
   }, [selectedOrder]);
 
   // Dimensões e impressão
@@ -1173,9 +1173,9 @@ export default function SalesPage() {
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
       {selectedOrder ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" style={{ overflow: 'hidden' }} onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
           <div
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl"
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl bg-white p-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
