@@ -663,6 +663,17 @@ body.modal-open {
   overflow: hidden;
 }
 
+/* Native dialog modal styling */
+dialog[open] {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
 /* Prevent scroll chaining on modal overlay */
 .modal-overlay {
   overscroll-behavior: contain;

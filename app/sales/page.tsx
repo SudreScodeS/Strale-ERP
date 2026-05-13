@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateLogoCost, calculateSalePrice, globalConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -99,6 +98,17 @@ export default function SalesPage() {
   const [editOrderName, setEditOrderName] = useState('');
   const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
+
+  // Dialog ref for native modal
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      dialogRef.current?.showModal();
+    } else {
+      dialogRef.current?.close();
+    }
+  }, [selectedOrder]);
 
   // Seletor de orçamento
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -1173,12 +1183,14 @@ export default function SalesPage() {
       {/* ========================================== */}
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
-      {selectedOrder ? createPortal(
-        <div
-          className="modal-overlay"
-          onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'none' }}
-        >
+      <dialog
+        ref={dialogRef}
+        className="modal-overlay"
+        style={{ padding: 0, border: 'none', maxWidth: '100vw', maxHeight: '100vh', width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)' }}
+        onClose={() => { setSelectedOrder(null); setEditingOrder(false); }}
+        onClick={(e) => { if (e.target === dialogRef.current) { setSelectedOrder(null); setEditingOrder(false); } }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
           <div
             className="modal-content rounded-3xl bg-white p-8 shadow-2xl"
             style={{ maxHeight: '90vh', width: '100%', maxWidth: '42rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
@@ -1497,9 +1509,8 @@ export default function SalesPage() {
               </>
             )}
           </div>
-        </div>,
-        document.body
-      ) : null}
+        </div>
+      </dialog>
 
 
       </div>
