@@ -382,6 +382,13 @@ html[data-theme='dark'] .fixed.inset-0.z-40 {
   backdrop-filter: blur(4px);
 }
 
+/* Ensure modal overlay always centers its content */
+.modal-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Backgrounds */
 html[data-theme='dark'] .bg-white { background-color: var(--surface); }
 html[data-theme='dark'] .bg-slate-50 { background-color: var(--surface-soft); }
@@ -657,11 +664,9 @@ html[data-theme='light'] [style*="var(--surface-soft)"] {
 }
 
 /* Body scroll lock for modals */
+html:has(body.modal-open),
 body.modal-open {
   overflow: hidden;
-  position: fixed;
-  width: 100%;
-  top: var(--modal-scroll-top, 0);
 }
 
 /* Prevent scroll chaining on modal overlay */

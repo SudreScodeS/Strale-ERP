@@ -107,21 +107,11 @@ export default function SalesPage() {
   // Lock body scroll when modal is open
   useEffect(() => {
     if (selectedOrder) {
-      const scrollY = window.scrollY;
-      document.body.style.setProperty('--modal-scroll-top', `-${scrollY}px`);
       document.body.classList.add('modal-open');
     } else {
-      const scrollY = document.body.style.getPropertyValue('--modal-scroll-top');
       document.body.classList.remove('modal-open');
-      document.body.style.removeProperty('--modal-scroll-top');
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY.replace('px', ''), 10) * -1);
-      }
     }
-    return () => {
-      document.body.classList.remove('modal-open');
-      document.body.style.removeProperty('--modal-scroll-top');
-    };
+    return () => { document.body.classList.remove('modal-open'); };
   }, [selectedOrder]);
 
   // Dimensões e impressão
