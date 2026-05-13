@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { calculateLogoCost, calculateSalePrice, globalConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -1172,7 +1173,7 @@ export default function SalesPage() {
       {/* ========================================== */}
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
-      {selectedOrder ? (
+      {selectedOrder ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 modal-overlay" onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
           <div
             className="modal-content max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl bg-white p-8 shadow-2xl"
@@ -1491,7 +1492,8 @@ export default function SalesPage() {
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
 
