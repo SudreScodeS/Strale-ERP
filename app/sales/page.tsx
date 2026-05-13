@@ -549,8 +549,8 @@ export default function SalesPage() {
     if (!selectedOrder) return;
     setEditingOrder(true);
     setEditOrderName(selectedOrder.name);
-    setEditItems(selectedOrder.items.map(item => ({ ...item })));
-    setEditLogoColors(selectedOrder.logoCost > 0 ? Math.round(selectedOrder.logoCost / (globalConfig.logoPricePerColor || 10)) : 0);
+    setEditItems(selectedOrder?.items.map(item => ({ ...item })));
+    setEditLogoColors(selectedOrder?.logoCost > 0 ? Math.round(selectedOrder?.logoCost / (globalConfig.logoPricePerColor || 10)) : 0);
   }
 
   function handleCancelEditOrder() {
@@ -587,7 +587,7 @@ export default function SalesPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
-        orderId: selectedOrder.id,
+        orderId: selectedOrder?.id,
         editData: {
           name: editOrderName,
           items: editItems,
@@ -601,7 +601,7 @@ export default function SalesPage() {
     const data = await safeJson(response);
     if (response.ok) {
       const updatedOrder = data.order || { ...selectedOrder, name: editOrderName, items: editItems, totalCost, totalPrice, logoCost };
-      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, ...updatedOrder } : o));
+      setOrders(prev => prev.map(o => o.id === selectedOrder?.id ? { ...o, ...updatedOrder } : o));
       setSelectedOrder(prev => prev ? { ...prev, ...updatedOrder } : null);
       setEditingOrder(false);
       setStatusMessage('Pedido atualizado com sucesso.');
@@ -1202,12 +1202,12 @@ export default function SalesPage() {
                   {editingOrder ? 'Editar pedido' : 'Detalhes do pedido'}
                 </p>
                 <h3 className="mt-1 text-2xl font-bold text-slate-900">
-                  {editingOrder ? editOrderName : (selectedOrder.name || `Pedido ${selectedOrder.id}`)}
+                  {editingOrder ? editOrderName : (selectedOrder?.name || `Pedido ${selectedOrder?.id ?? ''}`)}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 {/* Toggle visualizar/editar */}
-                {!editingOrder && selectedOrder.status !== 'cancelled' ? (
+                {!editingOrder && selectedOrder?.status !== 'cancelled' ? (
                   <button
                     type="button"
                     onClick={handleStartEditOrder}
@@ -1359,45 +1359,45 @@ export default function SalesPage() {
                 <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">ID</p>
-                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{selectedOrder.id}</p>
+                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{selectedOrder?.id}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder.createdAt).toLocaleDateString('pt-BR')}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder?.createdAt).toLocaleDateString('pt-BR')}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder.createdByName || selectedOrder.userId}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder?.createdByName || selectedOrder?.userId}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status</p>
                     <span
                       className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                        selectedOrder.status === 'completed'
+                        selectedOrder?.status === 'completed'
                           ? 'bg-emerald-100 text-emerald-800'
-                          : selectedOrder.status === 'cancelled'
+                          : selectedOrder?.status === 'cancelled'
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {selectedOrder.status === 'completed' ? 'Concluído' : selectedOrder.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
+                      {selectedOrder?.status === 'completed' ? 'Concluído' : selectedOrder?.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                     </span>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Custo total</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">R$ {(selectedOrder?.totalCost || 0).toFixed(2)}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Preço de venda</p>
-                    <p className="mt-1 text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</p>
+                    <p className="mt-1 text-lg font-bold text-emerald-700">R$ {(selectedOrder?.totalPrice || 0).toFixed(2)}</p>
                   </div>
                 </div>
 
                 {/* Custo da logo */}
-                {selectedOrder.logoCost > 0 ? (
+                {selectedOrder?.logoCost > 0 ? (
                   <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4">
                     <p className="text-sm font-semibold text-purple-800">
-                      Custo da personalização: R$ {selectedOrder.logoCost.toFixed(2)}
+                      Custo da personalização: R$ {selectedOrder?.logoCost.toFixed(2)}
                     </p>
                   </div>
                 ) : null}
@@ -1406,7 +1406,7 @@ export default function SalesPage() {
                 <div className="mt-6">
                   <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
                   <div className="mt-3 space-y-3">
-                    {selectedOrder.items.map((item, idx) => {
+                    {selectedOrder?.items.map((item, idx) => {
                       const product = inventory.find((p) => p.id === item.productId);
                       const allVariables = product?.groups.flatMap((g) => g.variables) || [];
                       const selectedVars = item.selectedVariables.map((sv) => {
@@ -1468,27 +1468,27 @@ export default function SalesPage() {
                   <div className="mt-3 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Custo dos itens</span>
-                      <span className="text-slate-900">R$ {((selectedOrder.totalCost || 0) - (selectedOrder.logoCost || 0)).toFixed(2)}</span>
+                      <span className="text-slate-900">R$ {((selectedOrder?.totalCost || 0) - (selectedOrder?.logoCost || 0)).toFixed(2)}</span>
                     </div>
-                    {selectedOrder.logoCost > 0 ? (
+                    {selectedOrder?.logoCost > 0 ? (
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Custo da logo</span>
-                        <span className="text-slate-900">R$ {selectedOrder.logoCost.toFixed(2)}</span>
+                        <span className="text-slate-900">R$ {selectedOrder?.logoCost.toFixed(2)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Custo total</span>
-                      <span className="font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</span>
+                      <span className="font-semibold text-slate-900">R$ {(selectedOrder?.totalCost || 0).toFixed(2)}</span>
                     </div>
                     <div className="border-t border-slate-200 pt-2">
                       <div className="flex justify-between">
                         <span className="text-sm font-bold text-slate-900">Preço de venda</span>
-                        <span className="text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</span>
+                        <span className="text-lg font-bold text-emerald-700">R$ {(selectedOrder?.totalPrice || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-xs text-slate-500">Margem</span>
                         <span className="text-xs font-semibold text-emerald-600">
-                          R$ {((selectedOrder.totalPrice || 0) - (selectedOrder.totalCost || 0)).toFixed(2)}
+                          R$ {((selectedOrder?.totalPrice || 0) - (selectedOrder?.totalCost || 0)).toFixed(2)}
                         </span>
                       </div>
                     </div>
