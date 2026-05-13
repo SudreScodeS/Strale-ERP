@@ -54,5 +54,13 @@
     "description": "Pedido: Orçamento 12/05/2026",
     "date": "2026-05-11T22:07:59.917Z",
     "orderId": "6"
+  },
+  {
+    "id": "d49c7fc1-20b5-475d-9dbd-1770a5bc9a6d",
+    "type": "sale",
+    "amount": 16200,
+    "description": "Pedido: Orçamento 12/05/2026",
+    "date": "2026-05-12T16:35:55.498Z",
+    "orderId": "7"
   }
 ]

@@ -64,9 +64,10 @@
     "totalCost": 13500,
     "totalPrice": 16200,
     "logoCost": 0,
-    "status": "sent",
+    "status": "converted",
     "notes": "Sacolas para delivery - marca impressa",
-    "createdAt": "2026-05-11T22:07:03.858Z"
+    "createdAt": "2026-05-11T22:07:03.858Z",
+    "convertedOrderId": "7"
   },
   {
     "id": "25d2a923-6250-4d71-b456-6cfe4265042f",

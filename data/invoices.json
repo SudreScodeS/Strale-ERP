@@ -377,5 +377,36 @@
       "issuedAt": "2026-05-11T22:08:21.440Z"
     },
     "createdAt": "2026-05-11T22:08:21.440Z"
+  },
+  {
+    "id": "d1253be5-91ab-4fb7-bdde-a04263ee28b5",
+    "orderId": "7",
+    "number": "NF-1778603755505",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 500
+            },
+            {
+              "variableId": "variable-small",
+              "groupId": "group-size",
+              "quantity": 500
+            }
+          ],
+          "quantity": 500,
+          "unitCost": 27,
+          "unitPrice": 32
+        }
+      ],
+      "totalPrice": 16200,
+      "issuedAt": "2026-05-12T16:35:55.505Z"
+    },
+    "createdAt": "2026-05-12T16:35:55.505Z"
   }
 ]
