@@ -163,7 +163,7 @@ export async function PATCH(request: Request) {
 
     // Extrai dados da atualização
     const body = await request.json();
-    const { orderId, status, editData } = body as {
+    const { orderId, status, editData, delivered, deliveryDate } = body as {
       orderId: string;
       status?: Order['status'];
       editData?: {
@@ -173,6 +173,8 @@ export async function PATCH(request: Request) {
         totalPrice: number;
         logoCost: number;
       };
+      delivered?: boolean;
+      deliveryDate?: string;
     };
 
     // VALIDAÇÃO DOS DADOS
@@ -219,6 +221,21 @@ export async function PATCH(request: Request) {
 
       const updated = orderData.getAll().find((entry) => entry.id === orderId);
       return NextResponse.json({ order: updated || { ...order, ...editData } });
+    }
+
+    // MODO ENTREGA: marcar como entregue ou atualizar data de entrega
+    if (delivered !== undefined || deliveryDate !== undefined) {
+      const updates: Partial<Order> = {};
+      if (delivered !== undefined) {
+        updates.delivered = delivered;
+        updates.deliveredAt = delivered ? new Date().toISOString() : undefined;
+      }
+      if (deliveryDate !== undefined) {
+        updates.deliveryDate = deliveryDate;
+      }
+      orderData.update(orderId, updates);
+      const updated = orderData.getAll().find((entry) => entry.id === orderId);
+      return NextResponse.json({ order: updated || { ...order, ...updates } });
     }
 
     // MODO STATUS: atualiza status do pedido

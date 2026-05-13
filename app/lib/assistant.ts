@@ -512,6 +512,204 @@ function queryQuoteConversion(): AssistantResponse {
   };
 }
 
+// ==========================================
+// FUNÇÕES DE ENTREGA E URGÊNCIA
+// ==========================================
+
+/** Calcula urgência de entrega */
+function getUrgencyLabel(deliveryDate: string, delivered?: boolean): { label: string; level: string; days: number } | null {
+  if (!deliveryDate || delivered) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const delivery = new Date(deliveryDate + 'T12:00:00');
+  const diffMs = delivery.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return { label: `ATRASADO ${Math.abs(diffDays)} dia(s)`, level: 'critical', days: diffDays };
+  if (diffDays === 0) return { label: 'ENTREGA HOJE', level: 'critical', days: 0 };
+  if (diffDays === 1) return { label: 'ENTREGA AMANHÃ', level: 'high', days: 1 };
+  if (diffDays <= 3) return { label: `${diffDays} dias restantes`, level: 'high', days: diffDays };
+  if (diffDays <= 7) return { label: `${diffDays} dias restantes`, level: 'medium', days: diffDays };
+  return { label: `${diffDays} dias restantes`, level: 'low', days: diffDays };
+}
+
+/** Pedidos com entrega urgente (próximos 3 dias + atrasados) */
+function queryUrgentDeliveries(): AssistantResponse {
+  const orders = orderData.getAll().filter(o => o.status === 'completed' && o.deliveryDate && !o.delivered);
+  const users = userData.getAll();
+
+  const withUrgency = orders
+    .map(o => ({ order: o, urgency: getUrgencyLabel(o.deliveryDate!, o.delivered) }))
+    .filter(x => x.urgency !== null)
+    .sort((a, b) => (a.urgency?.days ?? 999) - (b.urgency?.days ?? 999));
+
+  const critical = withUrgency.filter(x => x.urgency?.level === 'critical');
+  const high = withUrgency.filter(x => x.urgency?.level === 'high');
+  const medium = withUrgency.filter(x => x.urgency?.level === 'medium');
+
+  const lines: string[] = [];
+
+  if (critical.length > 0) {
+    lines.push('🔴 **URGENTE:**');
+    for (const { order: o, urgency: u } of critical) {
+      const user = users.find(uu => uu.id === o.userId);
+      lines.push(`  • **${o.name}** — ${u?.label} — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`);
+    }
+    lines.push('');
+  }
+
+  if (high.length > 0) {
+    lines.push('🟠 **Próximos (até 3 dias):**');
+    for (const { order: o, urgency: u } of high) {
+      const user = users.find(uu => uu.id === o.userId);
+      lines.push(`  • **${o.name}** — ${u?.label} — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`);
+    }
+    lines.push('');
+  }
+
+  if (medium.length > 0) {
+    lines.push('🟡 **Esta semana:**');
+    for (const { order: o, urgency: u } of medium) {
+      const user = users.find(uu => uu.id === o.userId);
+      lines.push(`  • **${o.name}** — ${u?.label} — ${formatCurrency(o.totalPrice)}`);
+    }
+  }
+
+  if (lines.length === 0) {
+    return { answer: 'Nenhum pedido com entrega urgente. Tudo em dia! ✅', type: 'text' };
+  }
+
+  return {
+    answer: `**Entregas pendentes por urgência:**\n\n${lines.join('\n')}\n\n_Total: ${withUrgency.length} pedidos pendentes_`,
+    data: { critical: critical.length, high: high.length, medium: medium.length, total: withUrgency.length },
+    type: 'list',
+  };
+}
+
+/** Status de entrega de um pedido específico */
+function queryOrderDelivery(question: string): AssistantResponse {
+  const orders = orderData.getAll().filter(o => o.status === 'completed');
+  const users = userData.getAll();
+
+  // Tenta encontrar pedido por nome ou ID
+  const q = normalize(question);
+  const order = orders.find(o =>
+    normalize(o.name).includes(q.replace(/entrega|pedido|status|data|quando/g, '').trim()) ||
+    o.id.includes(q.replace(/entrega|pedido|status|data|quando/g, '').trim())
+  );
+
+  if (!order) {
+    // Lista todos com status de entrega
+    const pending = orders.filter(o => !o.delivered && o.deliveryDate);
+    const delivered = orders.filter(o => o.delivered);
+    const noDate = orders.filter(o => !o.deliveryDate);
+
+    const lines: string[] = [];
+    if (pending.length > 0) {
+      lines.push('**Pendentes de entrega:**');
+      for (const o of pending) {
+        const u = getUrgencyLabel(o.deliveryDate!, o.delivered);
+        const icon = u?.level === 'critical' ? '🔴' : u?.level === 'high' ? '🟠' : '🟡';
+        lines.push(`  ${icon} **${o.name}** — entrega: ${new Date(o.deliveryDate! + 'T12:00:00').toLocaleDateString('pt-BR')} (${u?.label || '?'})`);
+      }
+      lines.push('');
+    }
+    if (delivered.length > 0) {
+      lines.push('**Entregues:**');
+      for (const o of delivered) {
+        lines.push(`  ✅ **${o.name}** — entregue${o.deliveredAt ? ` em ${new Date(o.deliveredAt).toLocaleDateString('pt-BR')}` : ''}`);
+      }
+    }
+    if (noDate.length > 0) {
+      lines.push(`\n_Sem data de entrega: ${noDate.length} pedido(s)_`);
+    }
+
+    return {
+      answer: lines.length > 0 ? lines.join('\n') : 'Nenhum pedido com status de entrega.',
+      type: 'list',
+    };
+  }
+
+  // Pedido encontrado — detalha status
+  const lines: string[] = [`**Pedido: ${order.name}** (#${order.id})`, ''];
+  lines.push(`Status: ${order.status === 'completed' ? 'Concluído' : order.status}`);
+
+  if (order.deliveryDate) {
+    const deliveryFormatted = new Date(order.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR');
+    lines.push(`Data de entrega: ${deliveryFormatted}`);
+
+    if (order.delivered) {
+      lines.push(`✅ **ENTREGUE**${order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}`);
+    } else {
+      const u = getUrgencyLabel(order.deliveryDate, order.delivered);
+      if (u) {
+        const icon = u.level === 'critical' ? '🔴' : u.level === 'high' ? '🟠' : u.level === 'medium' ? '🟡' : '🟢';
+        lines.push(`${icon} **${u.label}**`);
+      }
+    }
+  } else {
+    lines.push('Data de entrega: Não definida');
+  }
+
+  const user = users.find(u => u.id === order.userId);
+  lines.push(`Valor: ${formatCurrency(order.totalPrice)}`);
+  lines.push(`Criado por: ${user?.username || order.userId}`);
+
+  return { answer: lines.join('\n'), type: 'text' };
+}
+
+/** Resumo de entregas do dia */
+function queryTodayDeliveries(): AssistantResponse {
+  const orders = orderData.getAll().filter(o => o.status === 'completed' && o.deliveryDate && !o.delivered);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  const todayOrders = orders.filter(o => o.deliveryDate === today);
+
+  if (todayOrders.length === 0) {
+    return { answer: 'Nenhuma entrega programada para hoje.', type: 'text' };
+  }
+
+  const users = userData.getAll();
+  const lines = todayOrders.map(o => {
+    const user = users.find(u => u.id === o.userId);
+    return `  🔴 **${o.name}** — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`;
+  });
+
+  return {
+    answer: `**Entregas de hoje:** ${todayOrders.length}\n\n${lines.join('\n')}`,
+    data: { count: todayOrders.length, orders: todayOrders },
+    type: 'list',
+  };
+}
+
+/** Entregas atrasadas */
+function queryLateDeliveries(): AssistantResponse {
+  const orders = orderData.getAll().filter(o => o.status === 'completed' && o.deliveryDate && !o.delivered);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const lateOrders = orders.filter(o => new Date(o.deliveryDate! + 'T12:00:00') < today);
+
+  if (lateOrders.length === 0) {
+    return { answer: 'Nenhum pedido atrasado! Tudo em dia ✅', type: 'text' };
+  }
+
+  const users = userData.getAll();
+  const lines = lateOrders.map(o => {
+    const user = users.find(u => u.id === o.userId);
+    const delivery = new Date(o.deliveryDate! + 'T12:00:00');
+    const diffDays = Math.ceil((today.getTime() - delivery.getTime()) / (1000 * 60 * 60 * 24));
+    return `  🔴 **${o.name}** — atrasado ${diffDays} dia(s) — entrega era ${delivery.toLocaleDateString('pt-BR')} — ${formatCurrency(o.totalPrice)}`;
+  });
+
+  return {
+    answer: `**Pedidos atrasados:** ${lateOrders.length}\n\n${lines.join('\n')}`,
+    data: { count: lateOrders.length, orders: lateOrders },
+    type: 'list',
+  };
+}
+
 /** Orçamentos de hoje */
 function queryTodayQuotes(): AssistantResponse {
   const quotes = quoteData.getAll();
@@ -546,8 +744,18 @@ function querySystemSummary(): AssistantResponse {
   const finance = getFinanceSummary();
   const alerts = getStockAlertsByLevel();
 
+  const completed = orders.filter(o => o.status === 'completed');
+  const pendingDelivery = completed.filter(o => o.deliveryDate && !o.delivered);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const lateDeliveries = pendingDelivery.filter(o => new Date(o.deliveryDate! + 'T12:00:00') < today);
+
+  const deliveryLine = pendingDelivery.length > 0
+    ? `\n${lateDeliveries.length > 0 ? `🔴 ${lateDeliveries.length} entrega(s) atrasada(s) — ` : ''}${pendingDelivery.length} entrega(s) pendente(s)`
+    : '';
+
   return {
-    answer: `**Resumo do Elitium:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${orders.filter(o => o.status === 'completed').length} finalizados)\n${quotes.length} orçamentos (${quotes.filter(q => q.status === 'draft' || q.status === 'sent').length} pendentes)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção`,
+    answer: `**Resumo do Elitium:**\n\n${products.length} produtos — ${variables.length} variações\n${orders.length} pedidos (${completed.length} finalizados)\n${quotes.length} orçamentos (${quotes.filter(q => q.status === 'draft' || q.status === 'sent').length} pendentes)\n${users.length} usuários\nVendas: ${formatCurrency(finance.totalSales)} — Lucro: ${formatCurrency(finance.profit)}\n${alerts.critical.length} estoque crítico — ${alerts.watch.length} em atenção${deliveryLine}`,
     data: { products: products.length, variables: variables.length, orders: orders.length, quotes: quotes.length, users: users.length, finance },
     type: 'metric',
   };
@@ -761,7 +969,7 @@ function queryPriceQuote(question: string): AssistantResponse {
 /** Ajuda */
 function queryHelp(): AssistantResponse {
   return {
-    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Orçamentos:**\n• "orcamentos pendentes"\n• "orcamento aprovado"\n• "taxa de conversao"\n• "orcamento de hoje"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "como usar"`,
+    answer: `**Assistente ${globalConfig.systemName} — Perguntas suportadas:**\n\n**Vendas:**\n• "produto mais vendido"\n• "total de vendas"\n• "ticket medio"\n• "pedidos recentes"\n• "vendas por periodo"\n\n**Entregas:**\n• "entregas urgentes"\n• "entregas atrasadas"\n• "entrega hoje"\n• "proximas entregas"\n• "status entrega do [pedido]"\n\n**Orçamentos:**\n• "orcamentos pendentes"\n• "orcamento aprovado"\n• "taxa de conversao"\n• "orcamento de hoje"\n\n**Estoque:**\n• "estoque baixo"\n• "estoque alto"\n• "produtos cadastrados"\n\n**Financeiro:**\n• "lucro total"\n• "despesas"\n\n**Previsao:**\n• "previsao de demanda"\n\n**Outros:**\n• "usuarios"\n• "fornecedores"\n• "resumo do sistema"\n• "como usar"`,
     type: 'text',
   };
 }
@@ -913,6 +1121,31 @@ function detectIntent(question: string): () => AssistantResponse {
   // Orçamentos de hoje
   if (containsAny(q, 'orcamento hoje', 'orçamento hoje', 'orcamento de hoje', 'orçamento de hoje', 'quote today')) {
     return queryTodayQuotes;
+  }
+
+  // Entregas urgentes / atrasadas
+  if (containsAny(q, 'entrega urgente', 'entrega atrasada', 'entregas atrasadas', 'pedido atrasado', 'pedidos atrasados', 'atrasado', 'atrasada', 'atraso')) {
+    return queryUrgentDeliveries;
+  }
+
+  // Entregas de hoje
+  if (containsAny(q, 'entrega hoje', 'entregas hoje', 'entregar hoje', 'entrega do dia')) {
+    return queryTodayDeliveries;
+  }
+
+  // Entregas da semana / próximas entregas
+  if (containsAny(q, 'proxima entrega', 'próxima entrega', 'proximas entregas', 'próximas entregas', 'entrega semana', 'entregas semana', 'entregas pendentes', 'entrega pendente')) {
+    return queryUrgentDeliveries;
+  }
+
+  // Status de entrega de pedido específico
+  if (containsAny(q, 'status entrega', 'status de entrega', 'quando entrega', 'quando chega', 'previsao entrega', 'previsão entrega', 'data entrega', 'quando é entrega', 'pedido entrega')) {
+    return () => queryOrderDelivery(q);
+  }
+
+  // Entregas (genérico)
+  if (containsAny(q, 'entrega', 'entregas', 'entregar', 'delivery')) {
+    return queryUrgentDeliveries;
   }
 
   // Orçamentos (genérico)

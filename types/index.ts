@@ -59,6 +59,8 @@ export interface Order {
   logoCost: number; // Custo adicional da personalização de logo
   status: 'pending' | 'completed' | 'cancelled'; // Status do processamento
   deliveryDate?: string; // Data de entrega prevista (ISO string)
+  delivered?: boolean; // Se já foi entregue
+  deliveredAt?: string; // Data em que foi marcado como entregue (ISO string)
   createdAt: Date; // Data de criação do pedido
 }
 

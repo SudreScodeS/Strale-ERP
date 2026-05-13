@@ -27,6 +27,8 @@
     "totalPrice": 162,
     "logoCost": 10,
     "status": "completed",
+    "deliveryDate": "2026-05-20",
+    "delivered": false,
     "createdAt": "2026-04-29T11:01:40.121Z"
   },
   {
@@ -62,6 +64,8 @@
     "totalPrice": 174,
     "logoCost": 10,
     "status": "completed",
+    "deliveryDate": "2026-05-16",
+    "delivered": false,
     "createdAt": "2026-04-29T11:26:46.568Z"
   },
   {
@@ -92,6 +96,9 @@
     "totalPrice": 44.4,
     "logoCost": 10,
     "status": "completed",
+    "deliveryDate": "2026-05-15",
+    "delivered": true,
+    "deliveredAt": "2026-05-14T10:00:00.000Z",
     "createdAt": "2026-04-29T12:35:43.088Z"
   },
   {
@@ -122,6 +129,8 @@
     "totalPrice": 39.6,
     "logoCost": 10,
     "status": "completed",
+    "deliveryDate": "2026-05-18",
+    "delivered": false,
     "createdAt": "2026-04-30T20:41:37.259Z"
   },
   {
@@ -162,6 +171,8 @@
     "totalPrice": 2820,
     "logoCost": 50,
     "status": "completed",
+    "deliveryDate": "2026-05-14",
+    "delivered": false,
     "createdAt": "2026-05-07T13:18:54.177Z"
   },
   {
@@ -197,6 +208,8 @@
     "totalPrice": 3600,
     "logoCost": 0,
     "status": "completed",
+    "deliveryDate": "2026-05-25",
+    "delivered": false,
     "createdAt": "2026-05-11T22:07:59.917Z"
   },
   {
@@ -227,6 +240,8 @@
     "totalPrice": 16200,
     "logoCost": 0,
     "status": "completed",
+    "deliveryDate": "2026-05-17",
+    "delivered": false,
     "createdAt": "2026-05-12T16:35:55.497Z"
   }
 ]

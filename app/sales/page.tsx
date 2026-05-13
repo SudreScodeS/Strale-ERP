@@ -101,6 +101,56 @@ export default function SalesPage() {
   const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
 
+  // Urgência de entrega
+  type Urgency = { label: string; color: string; bgColor: string; days: number };
+  function getDeliveryUrgency(deliveryDate?: string, delivered?: boolean): Urgency | null {
+    if (!deliveryDate || delivered) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const delivery = new Date(deliveryDate + 'T12:00:00');
+    const diffMs = delivery.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { label: `Atrasado ${Math.abs(diffDays)}d`, color: 'text-rose-800', bgColor: 'bg-rose-100 border-rose-300', days: diffDays };
+    if (diffDays === 0) return { label: 'Hoje', color: 'text-orange-800', bgColor: 'bg-orange-100 border-orange-300', days: 0 };
+    if (diffDays === 1) return { label: 'Amanhã', color: 'text-amber-800', bgColor: 'bg-amber-100 border-amber-300', days: 1 };
+    if (diffDays <= 3) return { label: `${diffDays} dias`, color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', days: diffDays };
+    if (diffDays <= 7) return { label: `${diffDays} dias`, color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', days: diffDays };
+    return { label: `${diffDays} dias`, color: 'text-slate-600', bgColor: 'bg-slate-50 border-slate-200', days: diffDays };
+  }
+
+  async function handleMarkDelivered(orderId: string, delivered: boolean) {
+    const response = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ orderId, delivered }),
+    });
+    const data = await safeJson(response);
+    if (response.ok) {
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, delivered, deliveredAt: data.order?.deliveredAt } : o));
+      if (selectedOrder?.id === orderId) setSelectedOrder(prev => prev ? { ...prev, delivered, deliveredAt: data.order?.deliveredAt } : null);
+      setStatusMessage(delivered ? 'Pedido marcado como entregue!' : 'Entrega desfeita.');
+    } else {
+      setStatusMessage(data.error || 'Erro ao atualizar entrega.');
+    }
+  }
+
+  async function handleUpdateDeliveryDate(orderId: string, newDate: string) {
+    const response = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ orderId, deliveryDate: newDate }),
+    });
+    const data = await safeJson(response);
+    if (response.ok) {
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, deliveryDate: newDate } : o));
+      if (selectedOrder?.id === orderId) setSelectedOrder(prev => prev ? { ...prev, deliveryDate: newDate } : null);
+      setStatusMessage('Data de entrega atualizada.');
+    } else {
+      setStatusMessage(data.error || 'Erro ao atualizar data.');
+    }
+  }
+
   // Seletor de orçamento
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [showQuoteSelector, setShowQuoteSelector] = useState(false);
@@ -594,6 +644,7 @@ export default function SalesPage() {
           totalPrice,
           logoCost,
         },
+        deliveryDate: selectedOrder?.deliveryDate,
       }),
     });
 
@@ -718,7 +769,17 @@ export default function SalesPage() {
                       <p className="text-sm text-slate-500">Criado por: {order.createdByName || order.userId}</p>
                       <p className="text-sm text-slate-500">Data: {new Date(order.createdAt).toLocaleDateString()}</p>
                       {order.deliveryDate && (
-                        <p className="text-sm text-blue-600">Entrega: {new Date(order.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-blue-600">Entrega: {new Date(order.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                          {(() => {
+                            const urgency = getDeliveryUrgency(order.deliveryDate, order.delivered);
+                            if (!urgency) return null;
+                            return <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${urgency.bgColor} ${urgency.color}`}>{urgency.label}</span>;
+                          })()}
+                        </div>
+                      )}
+                      {order.delivered && (
+                        <p className="text-sm text-emerald-600 font-medium">✓ Entregue{order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
                       )}
                       <p className="text-sm text-slate-500">Total: R$ {(order.totalPrice || 0).toFixed(2)}</p>
                       {order.items && order.items.length > 0 ? (
@@ -733,6 +794,24 @@ export default function SalesPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">Status: {order.status}</span>
+                      {order.status === 'completed' && !order.delivered && (
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkDelivered(order.id, true)}
+                          className="rounded-3xl bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700"
+                        >
+                          ✓ Entregue
+                        </button>
+                      )}
+                      {order.delivered && (
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkDelivered(order.id, false)}
+                          className="rounded-3xl bg-slate-400 px-4 py-2 text-white transition hover:bg-slate-500"
+                        >
+                          Desfazer entrega
+                        </button>
+                      )}
                       {currentUser?.role === 'admin' ? (
                         <>
                           <select
@@ -1229,6 +1308,25 @@ export default function SalesPage() {
                     Editar pedido
                   </button>
                 ) : null}
+                {/* Botão Entregue */}
+                {!editingOrder && selectedOrder?.status === 'completed' && !selectedOrder?.delivered && (
+                  <button
+                    type="button"
+                    onClick={() => void handleMarkDelivered(selectedOrder!.id, true)}
+                    className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                  >
+                    ✓ Entregue
+                  </button>
+                )}
+                {!editingOrder && selectedOrder?.delivered && (
+                  <button
+                    type="button"
+                    onClick={() => void handleMarkDelivered(selectedOrder!.id, false)}
+                    className="rounded-2xl bg-slate-400 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-500"
+                  >
+                    Desfazer entrega
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}
@@ -1380,7 +1478,31 @@ export default function SalesPage() {
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Entrega</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder?.deliveryDate ? new Date(selectedOrder.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
+                    {editingOrder ? (
+                      <input
+                        type="date"
+                        value={selectedOrder?.deliveryDate || ''}
+                        onChange={(e) => setSelectedOrder(prev => prev ? { ...prev, deliveryDate: e.target.value } : null)}
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder?.deliveryDate ? new Date(selectedOrder.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
+                        {(() => {
+                          const urgency = getDeliveryUrgency(selectedOrder?.deliveryDate, selectedOrder?.delivered);
+                          if (!urgency) return null;
+                          return <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${urgency.bgColor} ${urgency.color}`}>{urgency.label}</span>;
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Situação</p>
+                    {selectedOrder?.delivered ? (
+                      <p className="mt-1 text-sm font-bold text-emerald-700">✓ Entregue{selectedOrder?.deliveredAt ? ` em ${new Date(selectedOrder.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
+                    ) : (
+                      <p className="mt-1 text-sm font-semibold text-amber-600">Pendente entrega</p>
+                    )}
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
