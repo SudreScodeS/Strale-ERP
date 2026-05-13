@@ -107,11 +107,21 @@ export default function SalesPage() {
   // Lock body scroll when modal is open
   useEffect(() => {
     if (selectedOrder) {
+      const scrollY = window.scrollY;
+      document.body.style.setProperty('--modal-scroll-top', `-${scrollY}px`);
       document.body.classList.add('modal-open');
     } else {
+      const scrollY = document.body.style.getPropertyValue('--modal-scroll-top');
       document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('--modal-scroll-top');
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY.replace('px', ''), 10) * -1);
+      }
     }
-    return () => { document.body.classList.remove('modal-open'); };
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('--modal-scroll-top');
+    };
   }, [selectedOrder]);
 
   // Dimensões e impressão
@@ -1173,9 +1183,9 @@ export default function SalesPage() {
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
       {selectedOrder ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" style={{ overflow: 'hidden' }} onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 modal-overlay" onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
           <div
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl bg-white p-8 shadow-2xl"
+            className="modal-content max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl bg-white p-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

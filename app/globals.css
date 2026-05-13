@@ -661,4 +661,17 @@ body.modal-open {
   overflow: hidden;
   position: fixed;
   width: 100%;
+  top: var(--modal-scroll-top, 0);
+}
+
+/* Prevent scroll chaining on modal overlay */
+.modal-overlay {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure modal content scrolls independently */
+.modal-content {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
