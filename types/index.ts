@@ -58,6 +58,7 @@ export interface Order {
   totalPrice: number; // Preço final com margem de lucro
   logoCost: number; // Custo adicional da personalização de logo
   status: 'pending' | 'completed' | 'cancelled'; // Status do processamento
+  deliveryDate?: string; // Data de entrega prevista (ISO string)
   createdAt: Date; // Data de criação do pedido
 }
 
@@ -148,6 +149,7 @@ export interface Quote {
   totalPrice: number; // Preço final (com margem)
   logoCost: number; // Custo da personalização
   status: 'draft' | 'sent' | 'approved' | 'rejected' | 'converted'; // Status
+  deliveryDate?: string; // Data de entrega prevista (ISO string, opcional no orçamento)
   validUntil?: string; // Data de validade (ISO string)
   notes?: string; // Observações internas
   convertedOrderId?: string; // ID do pedido gerado quando convertido

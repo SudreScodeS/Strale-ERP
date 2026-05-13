@@ -118,11 +118,15 @@ export async function POST(request: Request) {
 
     // Extrai dados do corpo da requisição
     const body = await request.json();
-    const { name, items, logoColors } = body as { name?: string; items: OrderItem[]; logoColors: number };
+    const { name, items, logoColors, deliveryDate } = body as { name?: string; items: OrderItem[]; logoColors: number; deliveryDate?: string };
 
     // VALIDAÇÃO BÁSICA DOS DADOS
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Dados do pedido inválidos.' }, { status: 400 });
+    }
+
+    if (!deliveryDate) {
+      return NextResponse.json({ error: 'A data de entrega é obrigatória.' }, { status: 400 });
     }
 
     for (const item of items) {
@@ -136,7 +140,7 @@ export async function POST(request: Request) {
 
     // PROCESSA PEDIDO COMPLETO (veja business.ts para detalhes)
     // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal
-    const { order, invoice } = finalizarPedido(payload.userId, orderName, items, logoColors);
+    const { order, invoice } = finalizarPedido(payload.userId, orderName, items, logoColors, deliveryDate);
 
     return NextResponse.json({ order, invoice });
   } catch (error) {

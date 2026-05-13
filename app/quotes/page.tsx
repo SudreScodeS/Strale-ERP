@@ -65,12 +65,15 @@ export default function QuotesPage() {
   const [activeSection, setActiveSection] = useState<'list' | 'create'>('list');
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<QuoteView | null>(null);
+  const [convertingQuote, setConvertingQuote] = useState<QuoteView | null>(null);
+  const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
 
   // Form state
   const [customerName, setCustomerName] = useState('');
   const [quoteName, setQuoteName] = useState('');
   const [notes, setNotes] = useState('');
   const [validDays, setValidDays] = useState(globalConfig.quoteValidityDays);
+  const [deliveryDate, setDeliveryDate] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(100);
@@ -223,6 +226,7 @@ export default function QuotesPage() {
           logoColors,
           validDays,
           notes: notes.trim() || undefined,
+          deliveryDate: deliveryDate || undefined,
         }),
       });
 
@@ -233,6 +237,7 @@ export default function QuotesPage() {
         setCustomerName('');
         setQuoteName('');
         setNotes('');
+        setDeliveryDate('');
         setActiveSection('list');
         await loadQuotes();
       } else {
@@ -241,10 +246,11 @@ export default function QuotesPage() {
     } catch { setStatusMessage('Erro de conexão.'); }
   }
 
-  async function handleQuoteAction(quoteId: string, action: 'clone' | 'convert' | 'update-status', status?: string) {
+  async function handleQuoteAction(quoteId: string, action: 'clone' | 'convert' | 'update-status', status?: string, deliveryDate?: string) {
     try {
       const body: Record<string, string> = { quoteId, action };
       if (status) body.status = status;
+      if (deliveryDate) body.deliveryDate = deliveryDate;
 
       const response = await fetch('/api/quotes', {
         method: 'PATCH',
@@ -284,6 +290,22 @@ export default function QuotesPage() {
         setStatusMessage(data.error || 'Erro ao remover.');
       }
     } catch { setStatusMessage('Erro de conexão.'); }
+  }
+
+  function handleOpenConvertModal(quote: QuoteView) {
+    setConvertingQuote(quote);
+    setConvertDeliveryDate(quote.deliveryDate || '');
+  }
+
+  async function handleConfirmConvert() {
+    if (!convertingQuote) return;
+    if (!convertDeliveryDate) {
+      setStatusMessage('A data de entrega é obrigatória para converter em pedido.');
+      return;
+    }
+    await handleQuoteAction(convertingQuote.id, 'convert', undefined, convertDeliveryDate);
+    setConvertingQuote(null);
+    setConvertDeliveryDate('');
   }
 
   const filteredQuotes = useMemo(() => {
@@ -369,6 +391,11 @@ export default function QuotesPage() {
                               Válido até: {new Date(quote.validUntil).toLocaleDateString('pt-BR')}
                             </p>
                           )}
+                          {quote.deliveryDate && (
+                            <p className="text-xs text-blue-600">
+                              Entrega: {new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
                         </div>
                         <div className="flex flex-wrap items-center gap-2" onClick={e => e.stopPropagation()}>
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${sl.color}`}>{sl.text}</span>
@@ -387,7 +414,7 @@ export default function QuotesPage() {
                           )}
 
                           {(quote.status === 'approved' || quote.status === 'sent') && (
-                            <button type="button" onClick={() => handleQuoteAction(quote.id, 'convert')}
+                            <button type="button" onClick={() => handleOpenConvertModal(quote)}
                               className="rounded-2xl bg-emerald-600 px-3 py-1.5 text-xs text-white hover:bg-emerald-700">
                               → Converter em Pedido
                             </button>
@@ -446,6 +473,11 @@ export default function QuotesPage() {
                 <label className="space-y-2 text-slate-700">
                   <span>Validade (dias)</span>
                   <input type="number" min={1} value={validDays} onChange={e => setValidDays(Number(e.target.value))}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                </label>
+                <label className="space-y-2 text-slate-700">
+                  <span>Data de entrega</span>
+                  <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <label className="space-y-2 text-slate-700">
@@ -661,6 +693,12 @@ export default function QuotesPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase text-slate-500">Entrega</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definida'}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase text-slate-500">Custo</p>
                   <p className="mt-1 text-sm font-semibold text-slate-900">R$ {selectedQuote.totalCost.toFixed(2)}</p>
                 </div>
@@ -722,7 +760,7 @@ export default function QuotesPage() {
                   </>
                 )}
                 {(selectedQuote.status === 'approved' || selectedQuote.status === 'sent') && (
-                  <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'convert')}
+                  <button type="button" onClick={() => { setSelectedQuote(null); handleOpenConvertModal(selectedQuote); }}
                     className="rounded-2xl bg-purple-600 px-5 py-2 text-sm text-white hover:bg-purple-700">
                     Converter em Pedido
                   </button>
@@ -730,6 +768,62 @@ export default function QuotesPage() {
                 <button type="button" onClick={() => setSelectedQuote(null)}
                   className="rounded-2xl bg-slate-200 px-5 py-2 text-sm text-slate-700 hover:bg-slate-300">
                   Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* MODAL DE CONFIRMAÇÃO DE CONVERSÃO */}
+        {/* ============================================ */}
+        {convertingQuote && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}>
+            <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Converter em Pedido</p>
+                  <h3 className="mt-1 text-xl font-bold text-slate-900">{convertingQuote.name}</h3>
+                </div>
+                <button type="button" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
+                  className="rounded-2xl p-2 text-slate-400 hover:bg-slate-100">✕</button>
+              </div>
+
+              <p className="mt-4 text-sm text-slate-600">
+                Para converter este orçamento em pedido, confirme ou altere a data de entrega.
+              </p>
+
+              <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase text-slate-500">Cliente</p>
+                <p className="mt-1 font-semibold text-slate-900">{convertingQuote.customerName}</p>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase text-slate-500">Total</p>
+                <p className="mt-1 text-lg font-bold text-emerald-700">R$ {convertingQuote.totalPrice.toFixed(2)}</p>
+              </div>
+
+              <label className="mt-4 block space-y-2 text-slate-700">
+                <span>Data de entrega *</span>
+                <input
+                  type="date"
+                  value={convertDeliveryDate}
+                  onChange={e => setConvertDeliveryDate(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                />
+                {!convertingQuote.deliveryDate && (
+                  <p className="text-xs text-amber-600">Este orçamento não tinha data de entrega definida.</p>
+                )}
+              </label>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
+                  className="rounded-2xl bg-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-300">
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => void handleConfirmConvert()}
+                  className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700">
+                  Confirmar Conversão
                 </button>
               </div>
             </div>

@@ -76,7 +76,7 @@ export function calculateItemCost(productId: string, variableIds: string[], quan
 // 4. Registra transação financeira
 // 5. Baixa estoque das variáveis utilizadas
 // 6. Gera nota fiscal
-export function finalizarPedido(userId: string, name: string, items: OrderItem[], logoColors: number): { order: Order; invoice: Invoice } {
+export function finalizarPedido(userId: string, name: string, items: OrderItem[], logoColors: number, deliveryDate?: string): { order: Order; invoice: Invoice } {
   // Cálculo dos custos
   const totalCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const logoCost = calculateLogoCost(logoColors);
@@ -92,6 +92,7 @@ export function finalizarPedido(userId: string, name: string, items: OrderItem[]
     totalPrice,
     logoCost,
     status: 'completed',
+    deliveryDate,
     createdAt: new Date(),
   };
 
@@ -256,6 +257,7 @@ export function criarOrcamento(
   logoColors: number,
   validDays?: number,
   notes?: string,
+  deliveryDate?: string,
 ): Quote {
   const totalCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const logoCost = calculateLogoCost(logoColors);
@@ -275,6 +277,7 @@ export function criarOrcamento(
     totalPrice,
     logoCost,
     status: 'draft',
+    deliveryDate,
     validUntil,
     notes,
     createdAt: new Date(),
@@ -290,6 +293,7 @@ export function criarOrcamento(
 export function converterOrcamentoEmPedido(
   quoteId: string,
   userId: string,
+  deliveryDate?: string,
 ): { order: Order; invoice: Invoice } | { error: string } {
   const quote = quoteData.getById(quoteId);
   if (!quote) return { error: 'Orçamento não encontrado.' };
@@ -308,7 +312,7 @@ export function converterOrcamentoEmPedido(
   const logoColors = quote.logoCost > 0 ? Math.round(quote.logoCost / 10) : 0;
 
   // Cria o pedido usando a função existente
-  const { order, invoice } = finalizarPedido(userId, quote.name, orderItems, logoColors);
+  const { order, invoice } = finalizarPedido(userId, quote.name, orderItems, logoColors, deliveryDate);
 
   // Atualiza o orçamento
   quoteData.update(quoteId, {

@@ -71,13 +71,14 @@ export async function POST(request: Request) {
     const payload = requireRole(request, ['admin', 'seller']);
     const body = await request.json();
 
-    const { customerName, name, items, logoColors, validDays, notes } = body as {
+    const { customerName, name, items, logoColors, validDays, notes, deliveryDate } = body as {
       customerName?: string;
       name?: string;
       items: QuoteItem[];
       logoColors?: number;
       validDays?: number;
       notes?: string;
+      deliveryDate?: string;
     };
 
     if (!items || items.length === 0) {
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
       logoColors || 0,
       validDays,
       notes,
+      deliveryDate,
     );
 
     return NextResponse.json({ quote });
@@ -112,10 +114,11 @@ export async function PATCH(request: Request) {
     const payload = requireRole(request, ['admin', 'seller']);
     const body = await request.json();
 
-    const { quoteId, action, status } = body as {
+    const { quoteId, action, status, deliveryDate } = body as {
       quoteId: string;
       action?: 'clone' | 'convert' | 'update-status';
       status?: Quote['status'];
+      deliveryDate?: string;
     };
 
     if (!quoteId) {
@@ -143,7 +146,10 @@ export async function PATCH(request: Request) {
 
     // Converter em pedido
     if (action === 'convert') {
-      const result = converterOrcamentoEmPedido(quoteId, payload.userId);
+      if (!deliveryDate) {
+        return NextResponse.json({ error: 'A data de entrega é obrigatória para converter o orçamento em pedido.' }, { status: 400 });
+      }
+      const result = converterOrcamentoEmPedido(quoteId, payload.userId, deliveryDate);
       if ('error' in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }

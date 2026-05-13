@@ -72,6 +72,7 @@ export default function SalesPage() {
   const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
   const [orderName, setOrderName] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('');
   const [logoDataUrl, setLogoDataUrl] = useState<string>(''); // Data URL da logo para canvas
@@ -380,6 +381,7 @@ export default function SalesPage() {
 
   function handleSelectQuote(quote: Quote) {
     setOrderName(quote.name || '');
+    setDeliveryDate(quote.deliveryDate || '');
     setCartItems(quote.items.map((qi) => ({
       productId: qi.productId,
       productName: qi.productName,
@@ -470,6 +472,11 @@ export default function SalesPage() {
       return;
     }
 
+    if (!deliveryDate) {
+      setStatusMessage('Informe a data de entrega.');
+      return;
+    }
+
     if (cartItems.length === 0) {
       setStatusMessage('Adicione pelo menos um item ao carrinho antes de finalizar.');
       return;
@@ -495,6 +502,7 @@ export default function SalesPage() {
           printSize: item.printSize,
         })),
         logoColors,
+        deliveryDate,
       }),
     });
 
@@ -505,6 +513,7 @@ export default function SalesPage() {
       setLogoFile(null);
       setQuantity(1);
       setOrderName('');
+      setDeliveryDate('');
       setCartItems([]);
       setOrders((prev) => (result.order ? [result.order, ...prev] : prev));
       setOrderStatusUpdates((prev) => ({ ...prev, [result.order.id]: result.order.status }));
@@ -708,6 +717,9 @@ export default function SalesPage() {
                       <p className="text-sm text-slate-500">ID: {order.id}</p>
                       <p className="text-sm text-slate-500">Criado por: {order.createdByName || order.userId}</p>
                       <p className="text-sm text-slate-500">Data: {new Date(order.createdAt).toLocaleDateString()}</p>
+                      {order.deliveryDate && (
+                        <p className="text-sm text-blue-600">Entrega: {new Date(order.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                      )}
                       <p className="text-sm text-slate-500">Total: R$ {(order.totalPrice || 0).toFixed(2)}</p>
                       {order.items && order.items.length > 0 ? (
                         <div className="mt-2 space-y-1">
@@ -784,6 +796,15 @@ export default function SalesPage() {
                 className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
               />
             </label>
+            <label className="space-y-2 text-slate-700">
+              <span>Data de entrega *</span>
+              <input
+                type="date"
+                value={deliveryDate}
+                onChange={(event) => setDeliveryDate(event.target.value)}
+                className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+              />
+            </label>
             <div className="md:col-span-2">
               <button
                 type="button"
@@ -836,6 +857,9 @@ export default function SalesPage() {
                               <p className="font-semibold text-slate-900">{quote.name}</p>
                               <p className="text-xs text-slate-500">Cliente: {quote.customerName}</p>
                               <p className="text-xs text-slate-500">Itens: {quote.items.length} | R$ {(quote.totalPrice || 0).toFixed(2)}</p>
+                              {quote.deliveryDate && (
+                                <p className="text-xs text-blue-600">Entrega: {new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                              )}
                             </div>
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                               quote.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
@@ -1353,6 +1377,10 @@ export default function SalesPage() {
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data</p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder?.createdAt).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Entrega</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder?.deliveryDate ? new Date(selectedOrder.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
