@@ -94,6 +94,10 @@ export default function SalesPage() {
   const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
   const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null);
+  const [editingOrder, setEditingOrder] = useState(false);
+  const [editOrderName, setEditOrderName] = useState('');
+  const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
+  const [editLogoColors, setEditLogoColors] = useState(0);
 
   // Dimensões e impressão
   const [useDimensions, setUseDimensions] = useState(false);
@@ -465,6 +469,71 @@ export default function SalesPage() {
       await loadInventory();
     } else {
       setStatusMessage(data.error || 'Erro ao atualizar o pedido.');
+    }
+  }
+
+  function handleStartEditOrder() {
+    if (!selectedOrder) return;
+    setEditingOrder(true);
+    setEditOrderName(selectedOrder.name);
+    setEditItems(selectedOrder.items.map(item => ({ ...item })));
+    setEditLogoColors(selectedOrder.logoCost > 0 ? Math.round(selectedOrder.logoCost / (globalConfig.logoPricePerColor || 10)) : 0);
+  }
+
+  function handleCancelEditOrder() {
+    setEditingOrder(false);
+    setEditOrderName('');
+    setEditItems([]);
+    setEditLogoColors(0);
+  }
+
+  function handleEditItemQuantity(index: number, newQuantity: number) {
+    setEditItems(prev => prev.map((item, i) => i === index ? { ...item, quantity: Math.max(1, newQuantity) } : item));
+  }
+
+  function handleRemoveEditItem(index: number) {
+    setEditItems(prev => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSaveEditOrder() {
+    if (!selectedOrder) return;
+    if (!editOrderName.trim()) {
+      setStatusMessage('Informe um nome para o pedido.');
+      return;
+    }
+    if (editItems.length === 0) {
+      setStatusMessage('O pedido deve ter pelo menos um item.');
+      return;
+    }
+
+    const totalCost = editItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+    const logoCost = calculateLogoCost(editLogoColors);
+    const totalPrice = calculateSalePrice(totalCost + logoCost);
+
+    const response = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({
+        orderId: selectedOrder.id,
+        editData: {
+          name: editOrderName,
+          items: editItems,
+          totalCost,
+          totalPrice,
+          logoCost,
+        },
+      }),
+    });
+
+    const data = await safeJson(response);
+    if (response.ok) {
+      const updatedOrder = data.order || { ...selectedOrder, name: editOrderName, items: editItems, totalCost, totalPrice, logoCost };
+      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, ...updatedOrder } : o));
+      setSelectedOrder(prev => prev ? { ...prev, ...updatedOrder } : null);
+      setEditingOrder(false);
+      setStatusMessage('Pedido atualizado com sucesso.');
+    } else {
+      setStatusMessage(data.error || 'Erro ao atualizar pedido.');
     }
   }
 
@@ -977,7 +1046,7 @@ export default function SalesPage() {
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
       {selectedOrder ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedOrder(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
           <div
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -985,174 +1054,319 @@ export default function SalesPage() {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Detalhes do pedido</p>
-                <h3 className="mt-1 text-2xl font-bold text-slate-900">{selectedOrder.name || `Pedido ${selectedOrder.id}`}</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="rounded-2xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Fechar"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Info geral */}
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">ID</p>
-                <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{selectedOrder.id}</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder.createdAt).toLocaleDateString('pt-BR')}</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder.createdByName || selectedOrder.userId}</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status</p>
-                <span
-                  className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                    selectedOrder.status === 'completed'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : selectedOrder.status === 'cancelled'
-                      ? 'bg-rose-100 text-rose-800'
-                      : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
-                  {selectedOrder.status === 'completed' ? 'Concluído' : selectedOrder.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
-                </span>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Custo total</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Preço de venda</p>
-                <p className="mt-1 text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</p>
-              </div>
-            </div>
-
-            {/* Custo da logo */}
-            {selectedOrder.logoCost > 0 ? (
-              <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4">
-                <p className="text-sm font-semibold text-purple-800">
-                  Custo da personalização: R$ {selectedOrder.logoCost.toFixed(2)}
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  {editingOrder ? 'Editar pedido' : 'Detalhes do pedido'}
                 </p>
+                <h3 className="mt-1 text-2xl font-bold text-slate-900">
+                  {editingOrder ? editOrderName : (selectedOrder.name || `Pedido ${selectedOrder.id}`)}
+                </h3>
               </div>
-            ) : null}
+              <div className="flex items-center gap-2">
+                {/* Toggle visualizar/editar */}
+                {!editingOrder && selectedOrder.status !== 'cancelled' ? (
+                  <button
+                    type="button"
+                    onClick={handleStartEditOrder}
+                    className="rounded-2xl bg-amber-100 px-4 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
+                  >
+                    Editar pedido
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}
+                  className="rounded-2xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Fechar"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-            {/* Itens do pedido */}
-            <div className="mt-6">
-              <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
-              <div className="mt-3 space-y-3">
-                {selectedOrder.items.map((item, idx) => {
-                  const product = inventory.find((p) => p.id === item.productId);
-                  const allVariables = product?.groups.flatMap((g) => g.variables) || [];
-                  const selectedVars = item.selectedVariables.map((sv) => {
-                    const v = allVariables.find((av) => av.id === sv.variableId);
-                    return {
-                      name: v?.name || sv.variableId,
-                      quantity: sv.quantity,
-                      additionalPrice: v?.additionalPrice || 0,
-                    };
-                  });
+            {editingOrder ? (
+              /* ==================== MODO EDIÇÃO ==================== */
+              <div className="mt-6 space-y-6">
+                {/* Nome do pedido editável */}
+                <label className="block space-y-2 text-slate-700">
+                  <span className="text-sm font-semibold">Nome do pedido</span>
+                  <input
+                    value={editOrderName}
+                    onChange={(e) => setEditOrderName(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                  />
+                </label>
 
+                {/* Itens editáveis */}
+                <div>
+                  <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
+                  <div className="mt-3 space-y-3">
+                    {editItems.map((item, idx) => {
+                      const product = inventory.find((p) => p.id === item.productId);
+                      return (
+                        <div key={idx} className="rounded-2xl border border-slate-200 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
+                              <p className="text-xs text-slate-500">ID: {item.productId}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <label className="flex items-center gap-2 text-sm text-slate-600">
+                                <span>Qtd:</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={item.quantity}
+                                  onChange={(e) => handleEditItemQuantity(idx, Number(e.target.value))}
+                                  className="w-20 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveEditItem(idx)}
+                                className="rounded-xl bg-rose-100 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-200"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between text-sm">
+                            <span className="text-slate-500">Custo un.: R$ {(item.unitCost || 0).toFixed(2)}</span>
+                            <span className="font-semibold text-slate-900">Subtotal: R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Cores da logo editável */}
+                <div className="rounded-2xl border border-slate-200 p-4">
+                  <p className="font-medium text-slate-900">Cores da logo</p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={0}
+                      value={editLogoColors}
+                      onChange={(e) => setEditLogoColors(Number(e.target.value))}
+                      className="w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                    />
+                    <span className="text-sm text-slate-500">cores × R$ {globalConfig.logoPricePerColor} = R$ {calculateLogoCost(editLogoColors).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Preview de custo em tempo real */}
+                {(() => {
+                  const editTotalCost = editItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+                  const editLogoCost = calculateLogoCost(editLogoColors);
+                  const editTotalPrice = calculateSalePrice(editTotalCost + editLogoCost);
                   return (
-                    <div key={idx} className="rounded-2xl border border-slate-200 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
-                          <p className="text-xs text-slate-500">ID: {item.productId}</p>
+                    <div className="rounded-2xl bg-slate-50 p-5">
+                      <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Preview de custo</h4>
+                      <div className="mt-3 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">Custo dos itens</span>
+                          <span className="text-slate-900">R$ {editTotalCost.toFixed(2)}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-slate-900">{item.quantity}x</p>
-                          <p className="text-xs text-slate-500">R$ {(item.unitPrice || 0).toFixed(2)} un.</p>
+                        {editLogoCost > 0 ? (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-600">Custo da logo</span>
+                            <span className="text-slate-900">R$ {editLogoCost.toFixed(2)}</span>
+                          </div>
+                        ) : null}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">Custo total</span>
+                          <span className="font-semibold text-slate-900">R$ {(editTotalCost + editLogoCost).toFixed(2)}</span>
                         </div>
-                      </div>
-
-                      {/* Variáveis selecionadas */}
-                      {selectedVars.length > 0 ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {selectedVars.map((v, vi) => (
-                            <span
-                              key={vi}
-                              className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
-                            >
-                              {v.name}
-                              {v.quantity > 1 ? ` ×${v.quantity}` : ''}
-                              {v.additionalPrice > 0 ? ` (+R$ ${v.additionalPrice.toFixed(2)})` : ''}
-                            </span>
-                          ))}
+                        <div className="border-t border-slate-200 pt-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm font-bold text-slate-900">Preço de venda</span>
+                            <span className="text-lg font-bold text-emerald-700">R$ {editTotalPrice.toFixed(2)}</span>
+                          </div>
                         </div>
-                      ) : null}
-
-                      {/* Subtotal do item */}
-                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                        <span className="text-xs text-slate-500">Custo unitário</span>
-                        <span className="text-sm text-slate-700">R$ {(item.unitCost || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500">Subtotal</span>
-                        <span className="text-sm font-bold text-slate-900">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
                       </div>
                     </div>
                   );
-                })}
-              </div>
-            </div>
+                })()}
 
-            {/* Resumo financeiro */}
-            <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-              <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Resumo financeiro</h4>
-              <div className="mt-3 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Custo dos itens</span>
-                  <span className="text-slate-900">R$ {((selectedOrder.totalCost || 0) - (selectedOrder.logoCost || 0)).toFixed(2)}</span>
+                {/* Botões salvar/cancelar */}
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCancelEditOrder}
+                    className="rounded-2xl bg-slate-100 px-6 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveEditOrder()}
+                    className="rounded-2xl bg-[var(--brand)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
+                  >
+                    Salvar alterações
+                  </button>
                 </div>
-                {selectedOrder.logoCost > 0 ? (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Custo da logo</span>
-                    <span className="text-slate-900">R$ {selectedOrder.logoCost.toFixed(2)}</span>
+              </div>
+            ) : (
+              /* ==================== MODO VISUALIZAÇÃO ==================== */
+              <>
+                {/* Info geral */}
+                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">ID</p>
+                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{selectedOrder.id}</p>
                   </div>
-                ) : null}
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Custo total</span>
-                  <span className="font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</span>
-                </div>
-                <div className="border-t border-slate-200 pt-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-bold text-slate-900">Preço de venda</span>
-                    <span className="text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</span>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder.createdAt).toLocaleDateString('pt-BR')}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-slate-500">Margem</span>
-                    <span className="text-xs font-semibold text-emerald-600">
-                      R$ {((selectedOrder.totalPrice || 0) - (selectedOrder.totalCost || 0)).toFixed(2)}
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder.createdByName || selectedOrder.userId}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status</p>
+                    <span
+                      className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                        selectedOrder.status === 'completed'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : selectedOrder.status === 'cancelled'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {selectedOrder.status === 'completed' ? 'Concluído' : selectedOrder.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                     </span>
                   </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Custo total</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Preço de venda</p>
+                    <p className="mt-1 text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Botão fechar */}
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="rounded-2xl bg-[var(--brand)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
-              >
-                Fechar
-              </button>
-            </div>
+                {/* Custo da logo */}
+                {selectedOrder.logoCost > 0 ? (
+                  <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4">
+                    <p className="text-sm font-semibold text-purple-800">
+                      Custo da personalização: R$ {selectedOrder.logoCost.toFixed(2)}
+                    </p>
+                  </div>
+                ) : null}
+
+                {/* Itens do pedido */}
+                <div className="mt-6">
+                  <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
+                  <div className="mt-3 space-y-3">
+                    {selectedOrder.items.map((item, idx) => {
+                      const product = inventory.find((p) => p.id === item.productId);
+                      const allVariables = product?.groups.flatMap((g) => g.variables) || [];
+                      const selectedVars = item.selectedVariables.map((sv) => {
+                        const v = allVariables.find((av) => av.id === sv.variableId);
+                        return {
+                          name: v?.name || sv.variableId,
+                          quantity: sv.quantity,
+                          additionalPrice: v?.additionalPrice || 0,
+                        };
+                      });
+
+                      return (
+                        <div key={idx} className="rounded-2xl border border-slate-200 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
+                              <p className="text-xs text-slate-500">ID: {item.productId}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-slate-900">{item.quantity}x</p>
+                              <p className="text-xs text-slate-500">R$ {(item.unitPrice || 0).toFixed(2)} un.</p>
+                            </div>
+                          </div>
+
+                          {/* Variáveis selecionadas */}
+                          {selectedVars.length > 0 ? (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {selectedVars.map((v, vi) => (
+                                <span
+                                  key={vi}
+                                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
+                                >
+                                  {v.name}
+                                  {v.quantity > 1 ? ` ×${v.quantity}` : ''}
+                                  {v.additionalPrice > 0 ? ` (+R$ ${v.additionalPrice.toFixed(2)})` : ''}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {/* Subtotal do item */}
+                          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                            <span className="text-xs text-slate-500">Custo unitário</span>
+                            <span className="text-sm text-slate-700">R$ {(item.unitCost || 0).toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-slate-500">Subtotal</span>
+                            <span className="text-sm font-bold text-slate-900">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Resumo financeiro */}
+                <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Resumo financeiro</h4>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Custo dos itens</span>
+                      <span className="text-slate-900">R$ {((selectedOrder.totalCost || 0) - (selectedOrder.logoCost || 0)).toFixed(2)}</span>
+                    </div>
+                    {selectedOrder.logoCost > 0 ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Custo da logo</span>
+                        <span className="text-slate-900">R$ {selectedOrder.logoCost.toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Custo total</span>
+                      <span className="font-semibold text-slate-900">R$ {(selectedOrder.totalCost || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-slate-200 pt-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-bold text-slate-900">Preço de venda</span>
+                        <span className="text-lg font-bold text-emerald-700">R$ {(selectedOrder.totalPrice || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-slate-500">Margem</span>
+                        <span className="text-xs font-semibold text-emerald-600">
+                          R$ {((selectedOrder.totalPrice || 0) - (selectedOrder.totalCost || 0)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão fechar */}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrder(null)}
+                    className="rounded-2xl bg-[var(--brand)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}
+
 
       </div>
     </ProtectedPage>

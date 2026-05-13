@@ -159,17 +159,21 @@ export async function PATCH(request: Request) {
 
     // Extrai dados da atualização
     const body = await request.json();
-    const { orderId, status } = body as { orderId: string; status: Order['status'] };
+    const { orderId, status, editData } = body as {
+      orderId: string;
+      status?: Order['status'];
+      editData?: {
+        name: string;
+        items: OrderItem[];
+        totalCost: number;
+        totalPrice: number;
+        logoCost: number;
+      };
+    };
 
     // VALIDAÇÃO DOS DADOS
-    if (!orderId || !status) {
+    if (!orderId) {
       return NextResponse.json({ error: 'Dados de atualização inválidos.' }, { status: 400 });
-    }
-
-    // CONTROLE DE PERMISSÕES POR ROLE
-    // Seller só pode cancelar pedidos (não pode alterar status para outros valores)
-    if (payload.role === 'seller' && status !== 'cancelled') {
-      return NextResponse.json({ error: 'Vendedor só pode cancelar pedidos.' }, { status: 403 });
     }
 
     // Verifica se pedido existe
@@ -180,6 +184,48 @@ export async function PATCH(request: Request) {
 
     if (payload.role === 'seller' && order.userId !== payload.userId) {
       return NextResponse.json({ error: 'Você não pode atualizar pedidos de outros usuários.' }, { status: 403 });
+    }
+
+    // MODO EDIÇÃO: atualiza nome, itens, custos e preço
+    if (editData) {
+      if (payload.role === 'seller') {
+        return NextResponse.json({ error: 'Vendedor não pode editar pedidos.' }, { status: 403 });
+      }
+
+      if (!editData.name?.trim()) {
+        return NextResponse.json({ error: 'Nome do pedido é obrigatório.' }, { status: 400 });
+      }
+      if (!editData.items || editData.items.length === 0) {
+        return NextResponse.json({ error: 'O pedido deve ter pelo menos um item.' }, { status: 400 });
+      }
+
+      orderData.update(orderId, {
+        name: editData.name,
+        items: editData.items,
+        totalCost: editData.totalCost,
+        totalPrice: editData.totalPrice,
+        logoCost: editData.logoCost,
+      });
+
+      // Atualiza registro financeiro se pedido estiver concluído
+      const saleRecord = financeData.getAll().find((record) => record.type === 'sale' && record.orderId === orderId);
+      if (saleRecord) {
+        financeData.update(saleRecord.id, { amount: editData.totalPrice, description: `Pedido: ${editData.name}` });
+      }
+
+      const updated = orderData.getAll().find((entry) => entry.id === orderId);
+      return NextResponse.json({ order: updated || { ...order, ...editData } });
+    }
+
+    // MODO STATUS: atualiza status do pedido
+    if (!status) {
+      return NextResponse.json({ error: 'Dados de atualização inválidos.' }, { status: 400 });
+    }
+
+    // CONTROLE DE PERMISSÕES POR ROLE
+    // Seller só pode cancelar pedidos (não pode alterar status para outros valores)
+    if (payload.role === 'seller' && status !== 'cancelled') {
+      return NextResponse.json({ error: 'Vendedor só pode cancelar pedidos.' }, { status: 403 });
     }
 
     const previousStatus = order.status;
