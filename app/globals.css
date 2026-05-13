@@ -377,10 +377,6 @@ html[data-theme='dark'] aside {
 }
 
 /* ── Modal overlay chrome ── */
-html[data-theme='dark'] .modal-overlay {
-  backdrop-filter: blur(4px);
-}
-
 /* Ensure modal overlay always centers its content */
 .modal-overlay {
   display: flex;
@@ -663,7 +659,6 @@ html[data-theme='light'] [style*="var(--surface-soft)"] {
 }
 
 /* Body scroll lock for modals */
-html:has(body.modal-open),
 body.modal-open {
   overflow: hidden;
 }

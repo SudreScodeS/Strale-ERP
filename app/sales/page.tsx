@@ -1177,7 +1177,7 @@ export default function SalesPage() {
         <div
           className="modal-overlay"
           onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.6)' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'none' }}
         >
           <div
             className="modal-content rounded-3xl bg-white p-8 shadow-2xl"
