@@ -7,7 +7,7 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
-import { Order } from '../../types';
+import { Order, Quote } from '../../types';
 import ProductPreview from '../components/product-preview';
 import type { PreviewConfig } from '../components/product-preview';
 
@@ -98,6 +98,11 @@ export default function SalesPage() {
   const [editOrderName, setEditOrderName] = useState('');
   const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
+
+  // Seletor de orçamento
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [showQuoteSelector, setShowQuoteSelector] = useState(false);
+  const [quoteSearch, setQuoteSearch] = useState('');
 
   // Dimensões e impressão
   const [useDimensions, setUseDimensions] = useState(false);
@@ -344,6 +349,53 @@ export default function SalesPage() {
     quantity,
     unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost) : 0,
   }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, selectedVariableNames, printType, printPosition, printSize, quantity, currentItemUnitCost]);
+
+  async function loadQuotes() {
+    try {
+      const response = await fetch('/api/quotes', {
+        cache: 'no-store',
+        headers: getAuthHeaders(),
+      });
+      const data = await safeJson(response);
+      if (!response.ok) {
+        setStatusMessage(data.error || 'Falha ao carregar orçamentos.');
+        return;
+      }
+      setQuotes(data.quotes || []);
+    } catch {
+      setStatusMessage('Conexão instável ao carregar orçamentos.');
+    }
+  }
+
+  function handleSelectQuote(quote: Quote) {
+    setOrderName(quote.name || '');
+    setCartItems(quote.items.map((qi) => ({
+      productId: qi.productId,
+      productName: qi.productName,
+      quantity: qi.quantity,
+      selectedVariables: qi.selectedVariables,
+      selectedVariablesLabel: qi.selectedVariables.map((sv) => `${sv.variableId} x${sv.quantity}`).join(', '),
+      unitCost: qi.unitCost,
+      unitPrice: qi.unitPrice,
+      previewConfig: {
+        productImageUrl: '',
+        productName: qi.productName,
+        logoDataUrl: null,
+        selectedColorHex: undefined,
+        selectedColorName: undefined,
+        selectedMaterialName: undefined,
+        selectedVariables: [],
+        quantity: qi.quantity,
+        unitPrice: qi.unitPrice,
+      },
+      dimensions: qi.dimensions,
+      printType: qi.printType,
+      printPosition: qi.printPosition,
+      printSize: qi.printSize,
+    })));
+    setShowQuoteSelector(false);
+    setStatusMessage(`Orçamento "${quote.name}" carregado com sucesso.`);
+  }
 
   function handleAddItemToCart() {
     if (!selectedProduct) return;
@@ -721,6 +773,71 @@ export default function SalesPage() {
                 className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
               />
             </label>
+            <div className="md:col-span-2">
+              <button
+                type="button"
+                onClick={() => { setShowQuoteSelector(true); void loadQuotes(); }}
+                className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100"
+              >
+                📋 Selecionar orçamento
+              </button>
+            </div>
+            {/* Seletor de orçamento */}
+            {showQuoteSelector ? (
+              <div className="md:col-span-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <p className="font-semibold text-emerald-900">Selecionar orçamento</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuoteSelector(false)}
+                    className="rounded-xl bg-emerald-200 px-3 py-1 text-xs text-emerald-800 hover:bg-emerald-300"
+                  >
+                    Fechar
+                  </button>
+                </div>
+                <input
+                  value={quoteSearch}
+                  onChange={(e) => setQuoteSearch(e.target.value)}
+                  placeholder="Buscar orçamento por nome..."
+                  className="mb-3 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm"
+                />
+                <div className="max-h-60 space-y-2 overflow-y-auto">
+                  {quotes
+                    .filter((q) => q.status === 'approved' || q.status === 'sent')
+                    .filter((q) => !quoteSearch.trim() || q.name.toLowerCase().includes(quoteSearch.toLowerCase()) || q.customerName.toLowerCase().includes(quoteSearch.toLowerCase()))
+                    .length === 0 ? (
+                    <p className="text-sm text-emerald-700">Nenhum orçamento disponível.</p>
+                  ) : (
+                    quotes
+                      .filter((q) => q.status === 'approved' || q.status === 'sent')
+                      .filter((q) => !quoteSearch.trim() || q.name.toLowerCase().includes(quoteSearch.toLowerCase()) || q.customerName.toLowerCase().includes(quoteSearch.toLowerCase()))
+                      .map((quote) => (
+                        <div
+                          key={quote.id}
+                          className="cursor-pointer rounded-xl border border-emerald-200 bg-white p-3 transition hover:border-emerald-400"
+                          onClick={() => handleSelectQuote(quote)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectQuote(quote); }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-slate-900">{quote.name}</p>
+                              <p className="text-xs text-slate-500">Cliente: {quote.customerName}</p>
+                              <p className="text-xs text-slate-500">Itens: {quote.items.length} | R$ {(quote.totalPrice || 0).toFixed(2)}</p>
+                            </div>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              quote.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {quote.status === 'approved' ? 'Aprovado' : 'Enviado'}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            ) : null}
             <label className="space-y-2 text-slate-700">
               <span>Produto base</span>
               <select
