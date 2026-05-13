@@ -1,6 +1,6 @@
 // lib/data.ts
 // Camada de abstração de dados
-// Atualmente usa JSON files, mas preparado para PostgreSQL
+// Atualmente usa JSON files
 // Decisão arquitetural: Abstrair acesso a dados para facilitar migração futura
 
 import fs from 'fs';
@@ -352,6 +352,3 @@ export const priceHistoryData = {
     writeJsonFile('price-history.json', history);
   },
 };
-
-// NOTA PARA MIGRAÇÃO: Para migrar para PostgreSQL, substitua essas funções por queries SQL
-// Exemplo: export const userData = { getAll: async () => await db.select().from(users) }
