@@ -1174,9 +1174,14 @@ export default function SalesPage() {
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
       {selectedOrder ? createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 modal-overlay" onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}>
+        <div
+          className="modal-overlay"
+          onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.6)' }}
+        >
           <div
-            className="modal-content max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl bg-white p-8 shadow-2xl"
+            className="modal-content rounded-3xl bg-white p-8 shadow-2xl"
+            style={{ maxHeight: '90vh', width: '100%', maxWidth: '42rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

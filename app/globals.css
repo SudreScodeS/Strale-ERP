@@ -377,8 +377,7 @@ html[data-theme='dark'] aside {
 }
 
 /* ── Modal overlay chrome ── */
-html[data-theme='dark'] .fixed.inset-0.z-50,
-html[data-theme='dark'] .fixed.inset-0.z-40 {
+html[data-theme='dark'] .modal-overlay {
   backdrop-filter: blur(4px);
 }
 
