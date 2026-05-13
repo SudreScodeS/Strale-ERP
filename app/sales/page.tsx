@@ -1186,7 +1186,6 @@ export default function SalesPage() {
       <dialog
         ref={dialogRef}
         className="modal-overlay"
-        style={{ padding: 0, border: 'none', maxWidth: '100vw', maxHeight: '100vh', width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)' }}
         onClose={() => { setSelectedOrder(null); setEditingOrder(false); }}
         onClick={(e) => { if (e.target === dialogRef.current) { setSelectedOrder(null); setEditingOrder(false); } }}
       >

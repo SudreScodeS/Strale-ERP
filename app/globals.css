@@ -664,13 +664,20 @@ body.modal-open {
 }
 
 /* Native dialog modal styling */
-dialog[open] {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
+dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
-dialog::backdrop {
+dialog[open] {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+dialog[open]::backdrop {
   background: rgba(0, 0, 0, 0.6);
 }
 
