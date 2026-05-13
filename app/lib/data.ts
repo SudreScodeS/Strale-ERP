@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier, Quote } from '../../types';
+import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier, Quote, PriceHistory } from '../../types';
 
 // DIRETÓRIO DE ARMAZENAMENTO DOS DADOS
 // Todos os arquivos JSON ficam nesta pasta
@@ -331,6 +331,25 @@ export const quoteData = {
   delete: (id: string) => {
     const quotes = readJsonFile<Quote>('quotes.json').filter(q => q.id !== id);
     writeJsonFile('quotes.json', quotes);
+  },
+};
+
+// ==========================================
+// GERENCIAMENTO DE HISTÓRICO DE PREÇOS
+// ==========================================
+
+export const priceHistoryData = {
+  // Lista todo o histórico de preços
+  getAll: () => readJsonFile<PriceHistory>('price-history.json'),
+
+  // Busca histórico de uma entidade específica
+  getByEntityId: (entityId: string) => readJsonFile<PriceHistory>('price-history.json').filter(ph => ph.entityId === entityId),
+
+  // Registra uma mudança de preço
+  create: (entry: PriceHistory) => {
+    const history = readJsonFile<PriceHistory>('price-history.json');
+    history.push(entry);
+    writeJsonFile('price-history.json', history);
   },
 };
 

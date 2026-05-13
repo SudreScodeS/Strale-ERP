@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { groupData, productData, variableData } from '../../../lib/data';
+import { groupData, productData, variableData, priceHistoryData } from '../../../lib/data';
 import { requireRole } from '../../../lib/auth';
 
 export async function POST(request: Request) {
@@ -70,6 +70,20 @@ export async function PATCH(request: Request) {
   if (typeof basePrice === 'number') updates.basePrice = basePrice;
   if (typeof description === 'string') updates.description = description;
   if (typeof imageUrl === 'string') updates.imageUrl = imageUrl;
+
+  // Registra mudança de preço no histórico
+  if (typeof basePrice === 'number' && basePrice !== existing.basePrice) {
+    priceHistoryData.create({
+      id: uuidv4(),
+      entityType: 'product',
+      entityId: id,
+      oldPrice: existing.basePrice,
+      newPrice: basePrice,
+      changedBy: 'admin',
+      reason: 'Atualização via API',
+      createdAt: new Date(),
+    });
+  }
 
   productData.update(id, updates);
   return NextResponse.json({ message: 'Produto atualizado com sucesso.' });

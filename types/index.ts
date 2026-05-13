@@ -210,6 +210,19 @@ export interface GlobalConfig {
 // TIPOS DE AUTENTICACAO
 // ==========================================
 
+// Interface para histórico de preços
+// Rastreia mudanças de preço ao longo do tempo para produtos e variáveis
+export interface PriceHistory {
+  id: string;
+  entityType: 'product' | 'variable';
+  entityId: string;
+  oldPrice: number;
+  newPrice: number;
+  changedBy: string;
+  reason?: string;
+  createdAt: Date;
+}
+
 export interface TokenPayload {
   id: string;
   username: string;

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { groupData, variableData } from '../../../lib/data';
+import { groupData, variableData, priceHistoryData } from '../../../lib/data';
 import { requireRole } from '../../../lib/auth';
 
 export async function POST(request: Request) {
@@ -69,6 +69,21 @@ export async function PATCH(request: Request) {
   if (name) updates.name = name;
   if (typeof additionalPrice === 'number') updates.additionalPrice = additionalPrice;
   if (typeof stock === 'number') updates.stock = stock;
+
+  // Registra mudança de preço no histórico
+  if (typeof additionalPrice === 'number' && additionalPrice !== existing.additionalPrice) {
+    priceHistoryData.create({
+      id: uuidv4(),
+      entityType: 'variable',
+      entityId: id,
+      oldPrice: existing.additionalPrice,
+      newPrice: additionalPrice,
+      changedBy: 'admin',
+      reason: 'Atualização via API',
+      createdAt: new Date(),
+    });
+  }
+
   variableData.update(id, updates);
 
   return NextResponse.json({ message: 'Variável atualizada com sucesso.' });

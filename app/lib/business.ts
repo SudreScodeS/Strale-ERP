@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { calculateLogoCost, calculateSalePrice, isLowStock } from '../../config/global';
-import { productData, variableData, groupData, orderData, financeData, invoiceData, purchaseOrderData, quoteData } from './data';
+import { productData, variableData, groupData, orderData, financeData, invoiceData, purchaseOrderData, quoteData, priceHistoryData } from './data';
 import { Order, OrderItem, LogoAnalysis, Invoice, Variable, Quote, QuoteItem } from '../../types';
 import { calculateItemPricing, type PricingInput } from './pricing';
 
@@ -122,6 +122,24 @@ export function finalizarPedido(userId: string, name: string, items: OrderItem[]
 
   // Salva o pedido no banco de dados
   orderData.create(order);
+
+  // REGISTRA PREÇOS UTILIZADOS NO HISTÓRICO DE PREÇOS
+  // Para cada item, loga o preço unitário usado no momento da venda
+  items.forEach((item) => {
+    const product = productData.getById(item.productId);
+    if (product) {
+      priceHistoryData.create({
+        id: uuidv4(),
+        entityType: 'product',
+        entityId: item.productId,
+        oldPrice: product.basePrice,
+        newPrice: item.unitCost,
+        changedBy: userId,
+        reason: `Pedido #${order.id} - ${order.name}`,
+        createdAt: new Date(),
+      });
+    }
+  });
 
   // GERA NOTA FISCAL
   const invoice: Invoice = {
