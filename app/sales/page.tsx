@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { calculateLogoCost, calculateSalePrice, globalConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -1172,7 +1173,7 @@ export default function SalesPage() {
       {/* ========================================== */}
       {/* MODAL DE DETALHES DO PEDIDO */}
       {/* ========================================== */}
-      {selectedOrder ? (
+      {selectedOrder ? createPortal(
         <div
           className="modal-overlay"
           onClick={(e) => { if (e.target === e.currentTarget) { setSelectedOrder(null); setEditingOrder(false); } }}
@@ -1498,7 +1499,7 @@ export default function SalesPage() {
           </div>
         </div>
         </div>
-      ) : null}
+      , document.body) : null}
 
 
       </div>
