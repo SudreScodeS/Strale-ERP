@@ -561,7 +561,16 @@ export function PageHeader({ title, description }: { title: string; description?
 // METRIC CARD
 // ==========================================
 
-export function MetricCard({ title, value, note, icon }: { title: string; value: string; note?: string; icon?: React.ReactNode }) {
+export function MetricCard({ title, value, note, icon, href }: { title: string; value: string; note?: string; icon?: React.ReactNode; href?: string }) {
+  const iconElement = icon ? (
+    <div
+      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-110 group-hover:rotate-3"
+      style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
+    >
+      {icon}
+    </div>
+  ) : null;
+
   return (
     <div
       className="group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md animate-fade-in-up"
@@ -587,14 +596,16 @@ export function MetricCard({ title, value, note, icon }: { title: string; value:
             </p>
           ) : null}
         </div>
-        {icon ? (
-          <div
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-110 group-hover:rotate-3"
-            style={{ background: 'var(--brand-muted)', color: 'var(--brand)', border: '1px solid var(--brand-border)' }}
+        {iconElement && href ? (
+          <Link
+            href={href}
+            title={`Ir para ${title}`}
+            className="cursor-pointer rounded-xl transition-all duration-200 hover:ring-2 hover:ring-[var(--brand)] hover:ring-offset-1"
+            onClick={(e) => e.stopPropagation()}
           >
-            {icon}
-          </div>
-        ) : null}
+            {iconElement}
+          </Link>
+        ) : iconElement}
       </div>
     </div>
   );

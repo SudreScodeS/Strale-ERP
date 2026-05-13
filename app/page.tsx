@@ -38,6 +38,7 @@ interface MetricOption {
   id: string;
   title: string;
   icon: React.ReactNode;
+  href?: string;
   getValue: (s: DashboardSummary) => string;
   getNote: (s: DashboardSummary) => string;
 }
@@ -114,6 +115,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'products',
     title: 'Produtos',
     icon: MetricIcons.products,
+    href: '/inventory',
     getValue: (s) => String(s.productsCount),
     getNote: (s) => `${s.variablesCount} variacoes`,
   },
@@ -121,6 +123,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'orders',
     title: 'Pedidos',
     icon: MetricIcons.orders,
+    href: '/sales',
     getValue: (s) => String(s.ordersCount),
     getNote: () => 'total finalizados',
   },
@@ -128,6 +131,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'revenue',
     title: 'Receita',
     icon: MetricIcons.revenue,
+    href: '/finance',
     getValue: (s) => `R$ ${s.totalSales.toFixed(2)}`,
     getNote: () => 'vendas acumuladas',
   },
@@ -135,6 +139,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'profit',
     title: 'Lucro',
     icon: MetricIcons.profit,
+    href: '/finance',
     getValue: (s) => `R$ ${s.profit.toFixed(2)}`,
     getNote: () => 'receita menos despesas',
   },
@@ -142,6 +147,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'lowStock',
     title: 'Estoque Baixo',
     icon: MetricIcons.lowStock,
+    href: '/inventory',
     getValue: (s) => String(s.lowStockCount + s.watchStockCount),
     getNote: (s) => {
       const parts: string[] = [];
@@ -154,6 +160,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'avgTicket',
     title: 'Ticket Médio',
     icon: MetricIcons.avgTicket,
+    href: '/sales',
     getValue: (s) => s.ordersCount > 0 ? `R$ ${(s.totalSales / s.ordersCount).toFixed(2)}` : 'R$ 0,00',
     getNote: () => 'por pedido',
   },
@@ -161,6 +168,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'margin',
     title: 'Margem',
     icon: MetricIcons.margin,
+    href: '/reports',
     getValue: (s) => s.totalSales > 0 ? `${((s.profit / s.totalSales) * 100).toFixed(1)}%` : '0%',
     getNote: () => 'lucro / receita',
   },
@@ -168,6 +176,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'items',
     title: 'Itens',
     icon: MetricIcons.items,
+    href: '/inventory',
     getValue: (s) => String(s.variablesCount),
     getNote: (s) => `${s.productsCount} produtos base`,
   },
@@ -175,6 +184,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'stockHealth',
     title: 'Saúde Estoque',
     icon: MetricIcons.stockHealth,
+    href: '/inventory',
     getValue: (s) => {
       const total = s.lowStockCount + s.watchStockCount;
       if (total === 0) return '100%';
@@ -190,6 +200,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'ordersToday',
     title: 'Pedidos Hoje',
     icon: MetricIcons.ordersToday,
+    href: '/sales',
     getValue: (s) => {
       const today = new Date().toDateString();
       const count = s.recentOrders.filter((o) => new Date(o.createdAt).toDateString() === today).length;
@@ -201,6 +212,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'quotesPending',
     title: 'Orçamentos Pendentes',
     icon: MetricIcons.quotesPending,
+    href: '/quotes',
     getValue: (s) => String((s as DashboardSummary & { quotesPending?: number }).quotesPending ?? 0),
     getNote: () => 'rascunho + enviados',
   },
@@ -208,6 +220,7 @@ const AVAILABLE_METRICS: MetricOption[] = [
     id: 'quotesConverted',
     title: 'Orçamentos Convertidos',
     icon: MetricIcons.quotesConverted,
+    href: '/quotes',
     getValue: (s) => String((s as DashboardSummary & { quotesConverted?: number }).quotesConverted ?? 0),
     getNote: (s) => {
       const rate = (s as DashboardSummary & { quoteConversionRate?: number }).quoteConversionRate;
@@ -423,6 +436,7 @@ export default function Home() {
                                   value={metric.getValue(summary)}
                                   note={metric.getNote(summary)}
                                   icon={metric.icon}
+                                  href={metric.href}
                                 />
                               </div>
                             );
