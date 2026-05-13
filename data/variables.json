@@ -11,7 +11,7 @@
     "id": "variable-tnt",
     "name": "TNT",
     "additionalPrice": 5,
-    "stock": 300,
+    "stock": 0,
     "groupId": "group-material",
     "createdAt": "2026-01-01T00:00:00.000Z"
   },
