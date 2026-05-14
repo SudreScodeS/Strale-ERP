@@ -732,16 +732,58 @@ export default function AdminPage() {
                   >
                     {dirty ? 'Descartar alterações' : 'Restaurar padrão'}
                   </button>
-                  {dirty && (
-                    <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>
-                      ⚠ Alterações não salvas
-                    </span>
-                  )}
                 </div>
               )}
             </DraggableSection>
           ))}
         </form>
+
+        {/* Floating unsaved changes bar */}
+        {dirty && (
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-4 px-6 py-3 shadow-lg"
+            style={{
+              background: 'var(--warning-bg, #fef3c7)',
+              borderTop: '2px solid var(--warning, #f59e0b)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: 'var(--warning, #f59e0b)' }} />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: 'var(--warning, #f59e0b)' }} />
+              </span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--warning-text, #92400e)' }}>
+                ⚠ Você tem alterações não salvas
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void loadConfig()}
+                className="rounded-lg px-4 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                Descartar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const form = document.querySelector('form');
+                  if (form) form.requestSubmit();
+                }}
+                className="rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: 'var(--brand)' }}
+              >
+                Salvar agora
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedPage>
   );
