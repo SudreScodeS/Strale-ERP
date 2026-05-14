@@ -116,58 +116,33 @@ const REPORTS: ReportConfig[] = [
   {
     id: 'finance',
     title: 'Financeiro',
-    description: 'Compras e vendas consolidadas, divididas por mês.',
+    description: 'Todas as compras e vendas registradas no sistema.',
     icon: reportIcons.finance,
     endpoint: '/api/finance',
     columns: [
-      { key: 'month', label: 'Mês' },
-      { key: 'totalSales', label: 'Total Vendas (R$)', format: (v) => Number(v).toFixed(2) },
-      { key: 'totalPurchases', label: 'Total Compras (R$)', format: (v) => Number(v).toFixed(2) },
-      { key: 'totalExpenses', label: 'Total Despesas (R$)', format: (v) => Number(v).toFixed(2) },
-      { key: 'netProfit', label: 'Lucro Líquido (R$)', format: (v) => Number(v).toFixed(2) },
-      { key: 'transactionCount', label: 'Nº Transações' },
+      { key: 'type', label: 'Tipo' },
+      { key: 'description', label: 'Descrição' },
+      { key: 'amount', label: 'Valor (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'date', label: 'Data', format: (v) => new Date(String(v)).toLocaleDateString('pt-BR') },
     ],
     transform: (json): ReportRow[] => {
       const data = json as Record<string, unknown>;
       const records = (data.records || data.transactions || []) as Record<string, unknown>[];
-      if (!Array.isArray(records) || records.length === 0) return [];
+      if (!Array.isArray(records)) return [];
 
-      // Group by month
-      const monthMap = new Map<string, { totalSales: number; totalPurchases: number; totalExpenses: number; count: number }>();
+      const typeLabels: Record<string, string> = {
+        sale: 'Venda',
+        purchase: 'Compra',
+        expense: 'Despesa',
+      };
 
-      for (const record of records) {
-        const date = new Date(String(record.date));
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
-        if (!monthMap.has(monthKey)) {
-          monthMap.set(monthKey, { totalSales: 0, totalPurchases: 0, totalExpenses: 0, count: 0 });
-        }
-
-        const entry = monthMap.get(monthKey)!;
-        entry.count += 1;
-
-        const amount = Number(record.amount) || 0;
-        const recordType = String(record.type);
-
-        if (recordType === 'sale') {
-          entry.totalSales += amount;
-        } else if (recordType === 'purchase') {
-          entry.totalPurchases += amount;
-        } else {
-          entry.totalExpenses += amount;
-        }
-      }
-
-      // Sort by month key (newest first) and build rows
-      return Array.from(monthMap.entries())
-        .sort((a, b) => b[0].localeCompare(a[0]))
-        .map(([key, vals]): ReportRow => ({
-          month: new Date(key + '-01').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' }),
-          totalSales: vals.totalSales,
-          totalPurchases: vals.totalPurchases,
-          totalExpenses: vals.totalExpenses,
-          netProfit: vals.totalSales - vals.totalPurchases - vals.totalExpenses,
-          transactionCount: vals.count,
+      return records
+        .sort((a, b) => new Date(String(b.date)).getTime() - new Date(String(a.date)).getTime())
+        .map((r): ReportRow => ({
+          type: typeLabels[String(r.type)] || String(r.type),
+          description: String(r.description ?? ''),
+          amount: Number(r.amount ?? 0),
+          date: String(r.date ?? ''),
         }));
     },
   },
@@ -307,7 +282,7 @@ export default function ReportsPage() {
   // Date field key per report (the field used for filtering)
   const dateFieldMap: Record<string, string> = {
     sales: 'createdAt',
-    finance: 'month',
+    finance: 'date',
     quotes: 'createdAt',
     inventory: '',
     forecast: '',
@@ -364,23 +339,7 @@ export default function ReportsPage() {
       return;
     }
 
-    // Finance report uses month labels (e.g. "janeiro de 2026"), filter differently
-    if (selectedReport === 'finance' && dateField === 'month') {
-      const filtered = raw.filter((row) => {
-        const monthStr = String(row.month || '');
-        // Parse month label to a comparable date
-        const parsed = parseBrazilianMonth(monthStr);
-        if (!parsed) return true;
-        if (fromDate && parsed < new Date(fromDate + '-01')) return false;
-        if (toDate && parsed > new Date(toDate + '-28')) return false;
-        return true;
-      });
-      setData((prev) => ({ ...prev, [selectedReport]: filtered }));
-      setPreviewData(filtered);
-      return;
-    }
-
-    // Standard date filtering for other reports
+    // Standard date filtering
     if (dateField) {
       const filtered = raw.filter((row) => {
         const dateVal = row[dateField];
@@ -641,32 +600,4 @@ export default function ReportsPage() {
   );
 }
 
-// ==========================================
-// HELPER: Parse Brazilian month name to Date
-// ==========================================
-function parseBrazilianMonth(monthStr: string): Date | null {
-  const months: Record<string, number> = {
-    'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3,
-    'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7,
-    'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11,
-  };
 
-  // Try format like "janeiro de 2026" or "mai de 2026"
-  const lower = monthStr.toLowerCase().trim();
-
-  for (const [name, idx] of Object.entries(months)) {
-    if (lower.includes(name)) {
-      const yearMatch = lower.match(/(\d{4})/);
-      const year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
-      return new Date(year, idx, 1);
-    }
-  }
-
-  // Try format "YYYY-MM"
-  const isoMatch = monthStr.match(/^(\d{4})-(\d{2})/);
-  if (isoMatch) {
-    return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, 1);
-  }
-
-  return null;
-}
