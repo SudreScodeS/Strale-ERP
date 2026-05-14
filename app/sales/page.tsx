@@ -807,18 +807,31 @@ export default function SalesPage() {
       <div>
         <PageHeader title="Pedidos" description="Fluxo de venda com seleção de produto, variáveis, cálculo automático de preço e prévia visual real do produto." />
         <LayoutToolbar pagePath={PAGE_PATH} />
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div
+          className="mb-6 inline-flex gap-1 rounded-xl p-1"
+          style={{ background: 'var(--surface-muted)' }}
+        >
           <button
             type="button"
             onClick={() => setActiveSection('search')}
-            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'search' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{
+              background: activeSection === 'search' ? 'var(--card-bg)' : 'transparent',
+              color: activeSection === 'search' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: activeSection === 'search' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
           >
             Buscar pedidos
           </button>
           <button
             type="button"
             onClick={() => setActiveSection('create')}
-            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'create' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{
+              background: activeSection === 'create' ? 'var(--card-bg)' : 'transparent',
+              color: activeSection === 'create' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: activeSection === 'create' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
           >
             Criar pedido
           </button>
@@ -880,11 +893,11 @@ export default function SalesPage() {
                   key={opt.value}
                   type="button"
                   onClick={() => setSortBy(opt.value as typeof sortBy)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    sortBy === opt.value
-                      ? 'bg-[var(--brand)] text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  className="rounded-lg px-3 py-1 text-xs font-medium transition-all hover:opacity-80"
+                  style={{
+                    background: sortBy === opt.value ? 'var(--brand)' : 'var(--surface-muted)',
+                    color: sortBy === opt.value ? '#fff' : 'var(--text-secondary)',
+                  }}
                 >
                   {opt.label}
                 </button>
@@ -936,12 +949,13 @@ export default function SalesPage() {
                       ) : null}
                     </div>
                     <div className="flex flex-wrap items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">Status: {order.status}</span>
+                      <span className="rounded-full px-3 py-1 text-sm font-medium" style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>Status: {order.status}</span>
                       {order.status === 'completed' && !order.delivered && (
                         <button
                           type="button"
                           onClick={() => void handleMarkDelivered(order.id, true)}
-                          className="rounded-3xl bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700"
+                          className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                          style={{ background: 'var(--brand)', color: '#fff' }}
                         >
                           ✓ Entregue
                         </button>
@@ -950,7 +964,8 @@ export default function SalesPage() {
                         <button
                           type="button"
                           onClick={() => void handleMarkDelivered(order.id, false)}
-                          className="rounded-3xl bg-slate-400 px-4 py-2 text-white transition hover:bg-slate-500"
+                          className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                          style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                         >
                           Desfazer entrega
                         </button>
@@ -972,7 +987,8 @@ export default function SalesPage() {
                             <button
                               type="button"
                               onClick={() => void handleDeleteCancelledOrder(order.id)}
-                              className="rounded-3xl bg-rose-600 px-4 py-2 text-white transition hover:bg-rose-700"
+                              className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                              style={{ background: 'var(--danger)', color: '#fff' }}
                             >
                               Remover cancelado
                             </button>
@@ -982,7 +998,8 @@ export default function SalesPage() {
                         <button
                           type="button"
                           onClick={() => handleStatusChange(order.id, 'cancelled')}
-                          className="rounded-3xl bg-amber-500 px-4 py-2 text-white transition hover:bg-amber-600"
+                          className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                          style={{ background: 'var(--warning, #f59e0b)', color: '#fff' }}
                         >
                           Cancelar pedido
                         </button>
@@ -990,7 +1007,8 @@ export default function SalesPage() {
                         <button
                           type="button"
                           onClick={() => void handleDeleteCancelledOrder(order.id)}
-                          className="rounded-3xl bg-rose-600 px-4 py-2 text-white transition hover:bg-rose-700"
+                          className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                          style={{ background: 'var(--danger)', color: '#fff' }}
                         >
                           Remover cancelado
                         </button>
@@ -1031,7 +1049,8 @@ export default function SalesPage() {
               <button
                 type="button"
                 onClick={() => { setShowQuoteSelector(true); void loadQuotes(); }}
-                className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100"
+                className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                style={{ background: 'var(--brand-muted)', color: 'var(--brand)', borderColor: 'var(--brand-muted)' }}
               >
                 📋 Selecionar orçamento
               </button>
@@ -1044,7 +1063,8 @@ export default function SalesPage() {
                   <button
                     type="button"
                     onClick={() => setShowQuoteSelector(false)}
-                    className="rounded-xl bg-emerald-200 px-3 py-1 text-xs text-emerald-800 hover:bg-emerald-300"
+                    className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
                     Fechar
                   </button>
@@ -1351,7 +1371,8 @@ export default function SalesPage() {
                       <button
                         type="button"
                         onClick={() => handleRemoveCartItem(index)}
-                        className="mt-2 rounded-2xl bg-rose-600 px-3 py-1 text-xs text-white transition hover:bg-rose-700"
+                        className="mt-2 rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                        style={{ background: 'var(--danger)', color: '#fff' }}
                       >
                         Remover item
                       </button>
@@ -1365,7 +1386,8 @@ export default function SalesPage() {
           <button
             type="button"
             onClick={handleAddItemToCart}
-            className="inline-flex h-12 items-center justify-center rounded-3xl border border-slate-200 bg-white px-6 text-slate-800 transition hover:bg-slate-100"
+            className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80"
+            style={{ background: 'var(--brand)', color: '#fff' }}
           >
             Adicionar item ao carrinho
           </button>
@@ -1409,14 +1431,14 @@ export default function SalesPage() {
           </div>
 
           <div className="flex gap-3">
-            <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+            <button className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
               Finalizar Pedido
             </button>
             {(orderName || cartItems.length > 0 || deliveryDate) && (
               <button
                 type="button"
                 onClick={clearFormState}
-                className="inline-flex h-12 items-center justify-center rounded-3xl px-6 text-sm font-medium transition hover:opacity-80"
+                className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-medium transition hover:opacity-80"
                 style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}
               >
                 Cancelar tudo
@@ -1458,7 +1480,8 @@ export default function SalesPage() {
                   <button
                     type="button"
                     onClick={handleStartEditOrder}
-                    className="rounded-2xl bg-amber-100 px-4 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
                     Editar pedido
                   </button>
@@ -1468,7 +1491,8 @@ export default function SalesPage() {
                   <button
                     type="button"
                     onClick={() => void handleMarkDelivered(selectedOrder!.id, true)}
-                    className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}
                   >
                     ✓ Entregue
                   </button>
@@ -1477,7 +1501,8 @@ export default function SalesPage() {
                   <button
                     type="button"
                     onClick={() => void handleMarkDelivered(selectedOrder!.id, false)}
-                    className="rounded-2xl bg-slate-400 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-500"
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
                     Desfazer entrega
                   </button>
@@ -1485,7 +1510,8 @@ export default function SalesPage() {
                 <button
                   type="button"
                   onClick={() => { setSelectedOrder(null); setEditingOrder(false); }}
-                  className="rounded-2xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded-lg p-2 transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-muted)' }}
                   aria-label="Fechar"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1605,14 +1631,16 @@ export default function SalesPage() {
                   <button
                     type="button"
                     onClick={handleCancelEditOrder}
-                    className="rounded-2xl bg-slate-100 px-6 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                    className="rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
                     Cancelar
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleSaveEditOrder()}
-                    className="rounded-2xl bg-[var(--brand)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
+                    className="rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}
                   >
                     Salvar alterações
                   </button>
@@ -1794,7 +1822,8 @@ export default function SalesPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedOrder(null)}
-                    className="rounded-2xl bg-[var(--brand)] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
+                    className="rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}
                   >
                     Fechar
                   </button>

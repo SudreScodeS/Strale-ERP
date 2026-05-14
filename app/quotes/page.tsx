@@ -392,13 +392,32 @@ export default function QuotesPage() {
       <div>
         <PageHeader title="Orçamentos" description="Crie orçamentos profissionais para seus clientes. Calcule preços automaticamente com tabelas por volume, dimensões e impressão detalhada." />
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setActiveSection('list')}
-            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'list' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
+        <div
+          className="mb-6 inline-flex gap-1 rounded-xl p-1"
+          style={{ background: 'var(--surface-muted)' }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveSection('list')}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{
+              background: activeSection === 'list' ? 'var(--card-bg)' : 'transparent',
+              color: activeSection === 'list' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: activeSection === 'list' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
             Meus orçamentos
           </button>
-          <button type="button" onClick={() => setActiveSection('create')}
-            className={`rounded-2xl px-4 py-2 text-sm ${activeSection === 'create' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
+          <button
+            type="button"
+            onClick={() => setActiveSection('create')}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{
+              background: activeSection === 'create' ? 'var(--card-bg)' : 'transparent',
+              color: activeSection === 'create' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: activeSection === 'create' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
             Novo orçamento
           </button>
         </div>
@@ -463,11 +482,13 @@ export default function QuotesPage() {
                           {quote.status === 'draft' && (
                             <>
                               <button type="button" onClick={() => handleQuoteAction(quote.id, 'update-status', 'sent')}
-                                className="rounded-2xl bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700">
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--brand)', color: '#fff' }}>
                                 Enviar
                               </button>
                               <button type="button" onClick={() => handleQuoteAction(quote.id, 'clone')}
-                                className="rounded-2xl bg-slate-600 px-3 py-1.5 text-xs text-white hover:bg-slate-700">
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                                 Clonar
                               </button>
                             </>
@@ -475,7 +496,8 @@ export default function QuotesPage() {
 
                           {(quote.status === 'approved' || quote.status === 'sent') && (
                             <button type="button" onClick={() => handleOpenConvertModal(quote)}
-                              className="rounded-2xl bg-emerald-600 px-3 py-1.5 text-xs text-white hover:bg-emerald-700">
+                              className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                              style={{ background: 'var(--brand)', color: '#fff' }}>
                               → Converter em Pedido
                             </button>
                           )}
@@ -483,11 +505,13 @@ export default function QuotesPage() {
                           {quote.status === 'sent' && (
                             <>
                               <button type="button" onClick={() => handleQuoteAction(quote.id, 'update-status', 'approved')}
-                                className="rounded-2xl bg-emerald-500 px-3 py-1.5 text-xs text-white hover:bg-emerald-600">
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--brand)', color: '#fff' }}>
                                 Aprovar
                               </button>
                               <button type="button" onClick={() => handleQuoteAction(quote.id, 'update-status', 'rejected')}
-                                className="rounded-2xl bg-rose-500 px-3 py-1.5 text-xs text-white hover:bg-rose-600">
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--danger)', color: '#fff' }}>
                                 Rejeitar
                               </button>
                             </>
@@ -495,7 +519,8 @@ export default function QuotesPage() {
 
                           {(quote.status === 'draft' || quote.status === 'rejected') && (
                             <button type="button" onClick={() => handleDeleteQuote(quote.id)}
-                              className="rounded-2xl bg-rose-600 px-3 py-1.5 text-xs text-white hover:bg-rose-700">
+                              className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                              style={{ background: 'var(--danger)', color: '#fff' }}>
                               Remover
                             </button>
                           )}
@@ -665,7 +690,8 @@ export default function QuotesPage() {
               </div>
 
               <button type="button" onClick={handleAddToCart}
-                className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm text-slate-800 transition hover:bg-slate-100">
+                className="mt-4 inline-flex h-11 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80"
+                style={{ background: 'var(--brand)', color: '#fff' }}>
                 Adicionar ao orçamento
               </button>
             </section>
@@ -692,7 +718,8 @@ export default function QuotesPage() {
                       <div className="flex items-center gap-4">
                         <p className="font-semibold text-emerald-700">R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                         <button type="button" onClick={() => handleRemoveCartItem(i)}
-                          className="rounded-xl bg-rose-100 px-3 py-1 text-xs text-rose-700 hover:bg-rose-200">
+                          className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                          style={{ background: 'var(--danger)', color: '#fff' }}>
                           Remover
                         </button>
                       </div>
@@ -711,14 +738,15 @@ export default function QuotesPage() {
 
               <div className="mt-4 flex gap-3">
                 <button type="button" onClick={handleCreateQuote}
-                  className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-8 text-white transition hover:bg-[var(--brand-dark)]">
+                  className="inline-flex h-12 items-center justify-center rounded-lg px-8 text-sm font-semibold transition-all hover:opacity-80"
+                  style={{ background: 'var(--brand)', color: '#fff' }}>
                   Salvar Orçamento
                 </button>
                 {(customerName || cartItems.length > 0) && (
                   <button
                     type="button"
                     onClick={clearFormState}
-                    className="inline-flex h-12 items-center justify-center rounded-3xl px-6 text-sm font-medium transition hover:opacity-80"
+                    className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-medium transition hover:opacity-80"
                     style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}
                   >
                     Cancelar tudo
@@ -740,7 +768,9 @@ export default function QuotesPage() {
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Detalhes do orçamento</p>
                   <h3 className="mt-1 text-2xl font-bold text-slate-900">{selectedQuote.name}</h3>
                 </div>
-                <button type="button" onClick={() => setSelectedQuote(null)} className="rounded-2xl p-2 text-slate-400 hover:bg-slate-100">✕</button>
+                <button type="button" onClick={() => setSelectedQuote(null)}
+                  className="rounded-lg p-2 transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-muted)' }}>✕</button>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -810,11 +840,13 @@ export default function QuotesPage() {
                 {selectedQuote.status === 'draft' && (
                   <>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'update-status', 'sent')}
-                      className="rounded-2xl bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700">
+                      className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--brand)', color: '#fff' }}>
                       Marcar como Enviado
                     </button>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'clone')}
-                      className="rounded-2xl bg-slate-600 px-5 py-2 text-sm text-white hover:bg-slate-700">
+                      className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                       Clonar
                     </button>
                   </>
@@ -822,23 +854,27 @@ export default function QuotesPage() {
                 {selectedQuote.status === 'sent' && (
                   <>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'update-status', 'approved')}
-                      className="rounded-2xl bg-emerald-600 px-5 py-2 text-sm text-white hover:bg-emerald-700">
+                      className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--brand)', color: '#fff' }}>
                       Aprovar
                     </button>
                     <button type="button" onClick={() => handleQuoteAction(selectedQuote.id, 'update-status', 'rejected')}
-                      className="rounded-2xl bg-rose-600 px-5 py-2 text-sm text-white hover:bg-rose-700">
+                      className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--danger)', color: '#fff' }}>
                       Rejeitar
                     </button>
                   </>
                 )}
                 {(selectedQuote.status === 'approved' || selectedQuote.status === 'sent') && (
                   <button type="button" onClick={() => { setSelectedQuote(null); handleOpenConvertModal(selectedQuote); }}
-                    className="rounded-2xl bg-purple-600 px-5 py-2 text-sm text-white hover:bg-purple-700">
+                    className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}>
                     Converter em Pedido
                   </button>
                 )}
                 <button type="button" onClick={() => setSelectedQuote(null)}
-                  className="rounded-2xl bg-slate-200 px-5 py-2 text-sm text-slate-700 hover:bg-slate-300">
+                  className="rounded-lg px-5 py-2 text-sm font-medium transition-all hover:opacity-80"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                   Fechar
                 </button>
               </div>
@@ -858,7 +894,8 @@ export default function QuotesPage() {
                   <h3 className="mt-1 text-xl font-bold text-slate-900">{convertingQuote.name}</h3>
                 </div>
                 <button type="button" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
-                  className="rounded-2xl p-2 text-slate-400 hover:bg-slate-100">✕</button>
+                  className="rounded-lg p-2 transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-muted)' }}>✕</button>
               </div>
 
               <p className="mt-4 text-sm text-slate-600">
@@ -890,11 +927,13 @@ export default function QuotesPage() {
 
               <div className="mt-6 flex justify-end gap-3">
                 <button type="button" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
-                  className="rounded-2xl bg-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-300">
+                  className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                   Cancelar
                 </button>
                 <button type="button" onClick={() => void handleConfirmConvert()}
-                  className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700">
+                  className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                  style={{ background: 'var(--brand)', color: '#fff' }}>
                   Confirmar Conversão
                 </button>
               </div>
