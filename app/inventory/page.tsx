@@ -315,14 +315,14 @@ export default function InventoryPage() {
         <LayoutToolbar pagePath={PAGE_PATH} />
 
         {message ? (
-          <div className="mb-6 rounded-3xl border border-slate-200 bg-emerald-50 p-4 text-slate-800">{message}</div>
+          <div className="mb-6 rounded-xl border border-slate-200 bg-emerald-50 p-4 text-slate-800">{message}</div>
         ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="xl:col-span-1">
           <div className="space-y-8">
             {inventory.map((product) => (
-              <div key={product.id} className="rounded-3xl bg-white p-6 shadow-sm">
+              <div key={product.id} className="rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Produto base</p>
@@ -332,7 +332,7 @@ export default function InventoryPage() {
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt={product.name} className="h-20 w-20 rounded-2xl object-cover border border-slate-200" />
                   ) : null}
-                  <div className="rounded-3xl bg-slate-50 px-4 py-2 text-slate-700">
+                  <div className="rounded-lg bg-slate-50 px-4 py-2 text-slate-700">
                     Preço base: R$ {product.basePrice.toFixed(2)}
                   </div>
                 </div>
@@ -340,14 +340,16 @@ export default function InventoryPage() {
                   <button
                     type="button"
                     onClick={() => void handleUpdateProduct(product)}
-                    className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-sm text-white transition hover:bg-[var(--brand-dark)]"
+                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}
                   >
                     Atualizar produto
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleDeleteProduct(product)}
-                    className="rounded-2xl bg-rose-600 px-4 py-2 text-sm text-white transition hover:bg-rose-700"
+                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                    style={{ background: 'var(--danger)', color: '#fff' }}
                   >
                     Excluir produto
                   </button>
@@ -355,7 +357,7 @@ export default function InventoryPage() {
 
                 <div className="mt-6 space-y-6">
                   {product.groups.map((group) => (
-                    <div key={group.id} className="rounded-3xl border border-slate-200 p-4">
+                    <div key={group.id} className="rounded-xl border border-slate-200 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <h4 className="text-lg font-semibold text-slate-900">{group.name}</h4>
@@ -368,14 +370,16 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => void handleUpdateGroup(group)}
-                            className="rounded-2xl border border-slate-200 px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+                            className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                            style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                           >
                             Atualizar
                           </button>
                           <button
                             type="button"
                             onClick={() => void handleDeleteGroup(group)}
-                            className="rounded-2xl bg-rose-600 px-3 py-1 text-xs text-white transition hover:bg-rose-700"
+                            className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                            style={{ background: 'var(--danger)', color: '#fff' }}
                           >
                             Excluir
                           </button>
@@ -383,7 +387,7 @@ export default function InventoryPage() {
                       </div>
                       <div className="mt-4 grid gap-4 md:grid-cols-2">
                         {group.variables.map((variable) => (
-                          <div key={variable.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                          <div key={variable.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <p className="font-semibold text-slate-900">{variable.name}</p>
                             <p className="text-sm text-slate-600">Preço adicional: R$ {variable.additionalPrice.toFixed(2)}</p>
                             <p className="text-sm text-slate-600">Estoque: {variable.stock}</p>
@@ -397,14 +401,16 @@ export default function InventoryPage() {
                               <button
                                 type="button"
                                 onClick={() => void handleUpdateVariable(variable)}
-                                className="rounded-2xl border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+                                className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                               >
                                 Atualizar estoque
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void handleDeleteVariable(variable)}
-                                className="rounded-2xl bg-rose-600 px-3 py-1 text-xs text-white transition hover:bg-rose-700"
+                                className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--danger)', color: '#fff' }}
                               >
                                 Excluir
                               </button>
@@ -422,15 +428,36 @@ export default function InventoryPage() {
 
           <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length} className="xl:col-span-1">
           <div className="space-y-6">
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setActiveForm('product')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'product' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
+            <div className="rounded-2xl bg-white p-6 shadow-sm">
+              <div
+                className="mb-6 inline-flex gap-1 rounded-xl p-1"
+                style={{ background: 'var(--surface-muted)' }}
+              >
+                <button type="button" onClick={() => setActiveForm('product')}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                  style={{
+                    background: activeForm === 'product' ? 'var(--card-bg)' : 'transparent',
+                    color: activeForm === 'product' ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: activeForm === 'product' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  }}>
                   Produto
                 </button>
-                <button type="button" onClick={() => setActiveForm('group')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'group' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
+                <button type="button" onClick={() => setActiveForm('group')}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                  style={{
+                    background: activeForm === 'group' ? 'var(--card-bg)' : 'transparent',
+                    color: activeForm === 'group' ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: activeForm === 'group' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  }}>
                   Grupo
                 </button>
-                <button type="button" onClick={() => setActiveForm('variable')} className={`rounded-2xl px-4 py-2 text-sm ${activeForm === 'variable' ? 'bg-[var(--brand)] text-white' : 'bg-slate-100 text-slate-700'}`}>
+                <button type="button" onClick={() => setActiveForm('variable')}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                  style={{
+                    background: activeForm === 'variable' ? 'var(--card-bg)' : 'transparent',
+                    color: activeForm === 'variable' ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: activeForm === 'variable' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  }}>
                   Variável
                 </button>
               </div>
@@ -443,7 +470,7 @@ export default function InventoryPage() {
                   <input
                     value={productName}
                     onChange={(event) => setProductName(event.target.value)}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -454,7 +481,7 @@ export default function InventoryPage() {
                     step={0.01}
                     value={productPrice}
                     onChange={(event) => setProductPrice(Number(event.target.value))}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -462,7 +489,7 @@ export default function InventoryPage() {
                   <textarea
                     value={productDescription}
                     onChange={(event) => setProductDescription(event.target.value)}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                     rows={3}
                   />
                 </label>
@@ -478,10 +505,10 @@ export default function InventoryPage() {
                       reader.onload = () => setProductImage(String(reader.result || ''));
                       reader.readAsDataURL(file);
                     }}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
-                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+                <button className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
                   Criar produto
                 </button>
               </form>
@@ -496,7 +523,7 @@ export default function InventoryPage() {
                   <select
                     value={groupProductId}
                     onChange={(event) => setGroupProductId(event.target.value)}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   >
                     {inventory.map((product) => (
                       <option key={product.id} value={product.id}>
@@ -510,7 +537,7 @@ export default function InventoryPage() {
                   <input
                     value={groupName}
                     onChange={(event) => setGroupName(event.target.value)}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -520,7 +547,7 @@ export default function InventoryPage() {
                     min={0}
                     value={groupWatchAlert}
                     onChange={(event) => setGroupWatchAlert(Number(event.target.value))}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -530,10 +557,10 @@ export default function InventoryPage() {
                     min={0}
                     value={groupCriticalAlert}
                     onChange={(event) => setGroupCriticalAlert(Number(event.target.value))}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
-                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+                <button className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
                   Criar grupo
                 </button>
               </form>
@@ -548,7 +575,7 @@ export default function InventoryPage() {
                   <select
                     value={variableGroupId}
                     onChange={(event) => setVariableGroupId(event.target.value)}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   >
                     {allGroups.map((group) => (
                       <option key={group.id} value={group.id}>
@@ -562,7 +589,7 @@ export default function InventoryPage() {
                   <input
                     value={variableName}
                     onChange={(event) => setVariableName(event.target.value)}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -573,7 +600,7 @@ export default function InventoryPage() {
                     step={0.01}
                     value={variablePrice}
                     onChange={(event) => setVariablePrice(Number(event.target.value))}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -583,10 +610,10 @@ export default function InventoryPage() {
                     min={0}
                     value={variableStock}
                     onChange={(event) => setVariableStock(Number(event.target.value))}
-                    className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
-                <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+                <button className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
                   Criar variável
                 </button>
               </form>
@@ -598,7 +625,7 @@ export default function InventoryPage() {
         </section>
         {editingVariable ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar variável</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitVariableUpdate}>
                 <label className="block text-slate-700">
@@ -606,7 +633,7 @@ export default function InventoryPage() {
                   <input
                     value={editVariableName}
                     onChange={(event) => setEditVariableName(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -617,7 +644,7 @@ export default function InventoryPage() {
                     min={0}
                     value={editVariablePrice}
                     onChange={(event) => setEditVariablePrice(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -627,18 +654,18 @@ export default function InventoryPage() {
                     min={0}
                     value={editVariableStock}
                     onChange={(event) => setEditVariableStock(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setEditingVariable(null)}
-                    className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700"
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80" style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }}>
                     Salvar
                   </button>
                 </div>
@@ -648,7 +675,7 @@ export default function InventoryPage() {
         ) : null}
         {editingProduct ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar produto</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitProductUpdate}>
                 <label className="block text-slate-700">
@@ -656,7 +683,7 @@ export default function InventoryPage() {
                   <input
                     value={editProductName}
                     onChange={(event) => setEditProductName(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -667,7 +694,7 @@ export default function InventoryPage() {
                     step={0.01}
                     value={editProductPrice}
                     onChange={(event) => setEditProductPrice(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -676,7 +703,7 @@ export default function InventoryPage() {
                     value={editProductDescription}
                     onChange={(event) => setEditProductDescription(event.target.value)}
                     rows={3}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -691,17 +718,17 @@ export default function InventoryPage() {
                       reader.onload = () => setEditProductImage(String(reader.result || ''));
                       reader.readAsDataURL(file);
                     }}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
                   />
                   {editProductImage ? (
                     <p className="mt-1 text-xs text-green-600">Imagem carregada</p>
                   ) : null}
                 </label>
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => setEditingProduct(null)} className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700">
+                  <button type="button" onClick={() => setEditingProduct(null)} className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80" style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }}>
                     Salvar
                   </button>
                 </div>
@@ -711,7 +738,7 @@ export default function InventoryPage() {
         ) : null}
         {editingGroup ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar grupo</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitGroupUpdate}>
                 <label className="block text-slate-700">
@@ -719,7 +746,7 @@ export default function InventoryPage() {
                   <input
                     value={editGroupName}
                     onChange={(event) => setEditGroupName(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -729,7 +756,7 @@ export default function InventoryPage() {
                     min={0}
                     value={editGroupWatchAlert}
                     onChange={(event) => setEditGroupWatchAlert(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -739,14 +766,14 @@ export default function InventoryPage() {
                     min={0}
                     value={editGroupCriticalAlert}
                     onChange={(event) => setEditGroupCriticalAlert(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => setEditingGroup(null)} className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700">
+                  <button type="button" onClick={() => setEditingGroup(null)} className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80" style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }}>
                     Salvar
                   </button>
                 </div>

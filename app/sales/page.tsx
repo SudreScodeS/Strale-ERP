@@ -839,7 +839,7 @@ export default function SalesPage() {
 
         {activeSection === 'search' && sections[0] ? (
         <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
-        <section className="mb-8 rounded-3xl bg-white p-8 shadow-sm">
+        <section className="mb-8 rounded-2xl bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Pedidos</p>
@@ -853,7 +853,7 @@ export default function SalesPage() {
                 value={orderSearch}
                 onChange={(event) => setOrderSearch(event.target.value)}
                 placeholder="Buscar por ID ou nome do pedido"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2"
               />
               <label className="text-sm text-slate-600">
                 Data inicial
@@ -863,7 +863,7 @@ export default function SalesPage() {
                   aria-label="Data inicial dos pedidos"
                   title="Data inicial dos pedidos"
                   onChange={(event) => setFromDate(event.target.value)}
-                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2"
                 />
               </label>
               <label className="text-sm text-slate-600">
@@ -874,7 +874,7 @@ export default function SalesPage() {
                   aria-label="Data final dos pedidos"
                   title="Data final dos pedidos"
                   onChange={(event) => setToDate(event.target.value)}
-                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2"
                 />
               </label>
             </div>
@@ -912,7 +912,7 @@ export default function SalesPage() {
               {filteredOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="cursor-pointer rounded-3xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-md"
+                  className="cursor-pointer rounded-xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-md"
                   onClick={() => setSelectedOrder(order)}
                   role="button"
                   tabIndex={0}
@@ -977,7 +977,7 @@ export default function SalesPage() {
                             onChange={(event) => handleStatusChange(order.id, event.target.value as Order['status'])}
                             aria-label={`Status do pedido ${order.name || order.id}`}
                             title="Status do pedido"
-                            className="rounded-3xl border border-slate-200 bg-white px-4 py-2"
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2"
                           >
                             <option value="pending">Pendente</option>
                             <option value="completed">Concluído</option>
@@ -1025,7 +1025,7 @@ export default function SalesPage() {
 
         {activeSection === 'create' && sections[1] ? (
         <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl bg-white p-8 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
           <div className="grid gap-5 md:grid-cols-2">
             <label className="space-y-2 text-slate-700 md:col-span-2">
               <span>Nome do pedido</span>
@@ -1033,7 +1033,7 @@ export default function SalesPage() {
                 value={orderName}
                 onChange={(event) => setOrderName(event.target.value)}
                 placeholder="Ex: Sacola - 10 materiais"
-                className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
               />
             </label>
             <label className="space-y-2 text-slate-700">
@@ -1042,7 +1042,7 @@ export default function SalesPage() {
                 type="date"
                 value={deliveryDate}
                 onChange={(event) => setDeliveryDate(event.target.value)}
-                className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
               />
             </label>
             <div className="md:col-span-2">
@@ -1122,7 +1122,7 @@ export default function SalesPage() {
                 onChange={(event) => setSelectedProductId(event.target.value)}
                 aria-label="Produto base"
                 title="Seleção de produto base"
-                className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
               >
                 {inventory.map((product) => (
                   <option key={product.id} value={product.id}>
@@ -1138,7 +1138,7 @@ export default function SalesPage() {
                 min={1}
                 value={quantity}
                 onChange={(event) => setQuantity(Number(event.target.value))}
-                className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
               />
             </label>
           </div>
@@ -1146,12 +1146,12 @@ export default function SalesPage() {
           {selectedProduct ? (
             <div className="space-y-6">
               {selectedProduct.groups.map((group) => (
-                <div key={group.id} className="rounded-3xl border border-slate-200 p-4">
+                <div key={group.id} className="rounded-xl border border-slate-200 p-4">
                   <p className="font-semibold text-slate-900">{group.name}</p>
                   <p className="mt-1 text-xs text-slate-500">A soma das variáveis deste grupo deve ser igual a {quantity}.</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {group.variables.map((variable) => (
-                      <div key={variable.id} className="flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                      <div key={variable.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <input
                           type="checkbox"
                           aria-label={`Selecionar ${variable.name}`}
@@ -1183,7 +1183,7 @@ export default function SalesPage() {
                                 [variable.id]: Math.max(1, Number(event.target.value) || 1),
                               }))
                             }
-                            className="w-20 rounded-2xl border border-slate-200 bg-white px-2 py-1 text-sm"
+                            className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm"
                           />
                         ) : null}
                       </div>
@@ -1204,7 +1204,7 @@ export default function SalesPage() {
           ) : null}
 
           {/* CALCULAR POR DIMENSÃO */}
-          <div className="rounded-2xl border border-slate-200 p-4">
+          <div className="rounded-xl border border-slate-200 p-4">
             <label className="flex items-center gap-2 text-slate-700">
               <input type="checkbox" checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)} />
               <span className="font-medium">Calcular por dimensão (largura x altura)</span>
@@ -1226,7 +1226,7 @@ export default function SalesPage() {
           </div>
 
           {/* IMPRESSÃO DA LOGO */}
-          <div className="rounded-2xl border border-slate-200 p-4">
+          <div className="rounded-xl border border-slate-200 p-4">
             <p className="mb-3 font-medium text-slate-900">Impressão da logo</p>
             <div className="grid gap-3 md:grid-cols-3">
               <label className="space-y-1 text-sm text-slate-600">
@@ -1257,7 +1257,7 @@ export default function SalesPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="font-semibold text-slate-900">Upload de logo</p>
             <input
               type="file"
@@ -1267,7 +1267,7 @@ export default function SalesPage() {
                 const file = event.target.files?.[0] || null;
                 setLogoFile(file);
               }}
-              className="mt-3 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3"
+              className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-4 py-3"
             />
             {logoAnalyzing ? (
               <div className="mt-3 flex items-center gap-2 text-sm text-[var(--brand)]">
@@ -1346,7 +1346,7 @@ export default function SalesPage() {
           </div>
 
           {/* CARRINHO COM PRÉVIAS */}
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between gap-4">
               <p className="font-semibold text-slate-900">Carrinho do pedido</p>
               <p className="text-sm text-slate-600">{cartItems.length} item(ns)</p>
@@ -1356,7 +1356,7 @@ export default function SalesPage() {
             ) : (
               <div className="mt-3 space-y-3">
                 {cartItems.map((item, index) => (
-                  <div key={`${item.productId}-${index}`} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                  <div key={`${item.productId}-${index}`} className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3">
                     {/* Prévia visual do item */}
                     <div className="h-24 w-24 flex-shrink-0">
                       <ProductPreview config={item.previewConfig} compact className="h-24 w-24" />
@@ -1393,7 +1393,7 @@ export default function SalesPage() {
           </button>
 
           <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-            <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+            <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-6">
               <div className="flex items-center justify-between text-slate-700">
                 <span>Custo do item atual</span>
                 <span>R$ {currentItemTotalCost.toFixed(2)}</span>
@@ -1413,7 +1413,7 @@ export default function SalesPage() {
             </div>
 
             {/* PRÉVIA VISUAL EM TEMPO REAL — Card de catálogo */}
-            <div className="rounded-3xl border border-slate-200 bg-white p-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
               <p className="mb-3 text-sm font-semibold text-slate-700">Prévia do produto</p>
               <ProductPreview
                 config={previewConfig}
@@ -1460,7 +1460,7 @@ export default function SalesPage() {
         >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
           <div
-            className="modal-content rounded-3xl bg-white p-8 shadow-2xl"
+            className="modal-content rounded-xl bg-white p-8 shadow-2xl"
             style={{ maxHeight: '90vh', width: '100%', maxWidth: '42rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1530,7 +1530,7 @@ export default function SalesPage() {
                   <input
                     value={editOrderName}
                     onChange={(e) => setEditOrderName(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                   />
                 </label>
 
@@ -1541,7 +1541,7 @@ export default function SalesPage() {
                     {editItems.map((item, idx) => {
                       const product = inventory.find((p) => p.id === item.productId);
                       return (
-                        <div key={idx} className="rounded-2xl border border-slate-200 p-4">
+                        <div key={idx} className="rounded-xl border border-slate-200 p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
@@ -1561,7 +1561,8 @@ export default function SalesPage() {
                               <button
                                 type="button"
                                 onClick={() => handleRemoveEditItem(idx)}
-                                className="rounded-xl bg-rose-100 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-200"
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--danger)', color: '#fff' }}
                               >
                                 Remover
                               </button>
@@ -1578,7 +1579,7 @@ export default function SalesPage() {
                 </div>
 
                 {/* Cores da logo editável */}
-                <div className="rounded-2xl border border-slate-200 p-4">
+                <div className="rounded-xl border border-slate-200 p-4">
                   <p className="font-medium text-slate-900">Cores da logo</p>
                   <div className="mt-2 flex items-center gap-3">
                     <input
@@ -1741,7 +1742,7 @@ export default function SalesPage() {
                       });
 
                       return (
-                        <div key={idx} className="rounded-2xl border border-slate-200 p-4">
+                        <div key={idx} className="rounded-xl border border-slate-200 p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>

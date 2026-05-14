@@ -215,14 +215,14 @@ export default function PurchasesPage() {
               className={section.colSpan === 2 ? 'lg:col-span-2' : ''}
             >
               {section.id === 'suppliers' && (
-                <div className="rounded-3xl bg-white p-6 shadow-sm">
+                <div className="rounded-2xl bg-white p-6 shadow-sm">
                   <h3 className="text-xl font-semibold text-slate-900">Estoque crítico</h3>
                   <div className="mt-4 space-y-4">
                     {lowStockVariables.length === 0 ? (
                       <p className="text-sm text-slate-500">Sem itens em estoque crítico no momento.</p>
                     ) : (
                       lowStockVariables.map((item) => (
-                        <div key={item.id} className="rounded-3xl border border-slate-200 p-4">
+                        <div key={item.id} className="rounded-xl border border-slate-200 p-4">
                           <p className="font-semibold text-slate-900">{item.name}</p>
                           <p className="text-sm text-slate-600">Estoque: {item.stock}</p>
                           <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)}</p>
@@ -234,22 +234,22 @@ export default function PurchasesPage() {
               )}
 
               {section.id === 'purchase-form' && (
-                <div className="rounded-3xl bg-white p-6 shadow-sm">
+                <div className="rounded-2xl bg-white p-6 shadow-sm">
                   <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
-                  <form className="mt-4 grid gap-3 rounded-3xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
+                  <form className="mt-4 grid gap-3 rounded-xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
                     <input
                       value={supplierName}
                       onChange={(event) => setSupplierName(event.target.value)}
                       placeholder="Nome do fornecedor"
-                      className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                     />
                     <input
                       value={supplierContact}
                       onChange={(event) => setSupplierContact(event.target.value)}
                       placeholder="Contato (telefone, email...)"
-                      className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                     />
-                    <button className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+                    <button className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
                       Adicionar fornecedor
                     </button>
                   </form>
@@ -258,7 +258,7 @@ export default function PurchasesPage() {
                       <p className="text-sm text-slate-500">Nenhum fornecedor cadastrado ainda.</p>
                     ) : (
                       suppliers.map((supplier) => (
-                        <div key={supplier.id} className="rounded-3xl border border-slate-200 p-4">
+                        <div key={supplier.id} className="rounded-xl border border-slate-200 p-4">
                           <p className="font-semibold text-slate-900">{supplier.name}</p>
                           <p className="text-sm text-slate-600">Contato: {supplier.contact || 'Não informado'}</p>
                         </div>
@@ -269,7 +269,7 @@ export default function PurchasesPage() {
               )}
 
               {section.id === 'purchase-history' && (
-                <section className="rounded-3xl bg-white p-6 shadow-sm">
+                <section className="rounded-2xl bg-white p-6 shadow-sm">
                   <h3 className="text-xl font-semibold text-slate-900">Registrar compra</h3>
                   <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreatePurchase}>
                     <label className="text-slate-700">
@@ -277,7 +277,7 @@ export default function PurchasesPage() {
                       <select
                         value={selectedSupplierId}
                         onChange={(event) => setSelectedSupplierId(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       >
                         {suppliers.map((supplier) => (
                           <option key={supplier.id} value={supplier.id}>
@@ -291,7 +291,7 @@ export default function PurchasesPage() {
                       <select
                         value={selectedVariableId}
                         onChange={(event) => setSelectedVariableId(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       >
                         {variables.map((variable) => (
                           <option key={variable.id} value={variable.id}>
@@ -307,7 +307,7 @@ export default function PurchasesPage() {
                         min={1}
                         value={purchaseQuantity}
                         onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       />
                     </label>
                     <label className="text-slate-700">
@@ -318,7 +318,7 @@ export default function PurchasesPage() {
                         step={0.01}
                         value={purchaseUnitCost}
                         onChange={(event) => setPurchaseUnitCost(Number(event.target.value))}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       />
                     </label>
                     <label className="text-slate-700">
@@ -327,11 +327,11 @@ export default function PurchasesPage() {
                         type="date"
                         value={purchaseDate}
                         onChange={(event) => setPurchaseDate(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       />
                     </label>
                     <div className="flex items-end">
-                      <button className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+                      <button className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
                         Registrar compra
                       </button>
                     </div>
@@ -340,7 +340,7 @@ export default function PurchasesPage() {
               )}
 
               {section.id === 'purchase-records' && (
-                <section className="rounded-3xl bg-white p-6 shadow-sm">
+                <section className="rounded-2xl bg-white p-6 shadow-sm">
                   <div className="flex flex-wrap items-end gap-3">
                     <h3 className="text-xl font-semibold text-slate-900">Compras registradas</h3>
                     <label className="text-sm text-slate-600">
@@ -351,7 +351,7 @@ export default function PurchasesPage() {
                         aria-label="Data inicial das compras"
                         title="Data inicial das compras"
                         onChange={(event) => setFromDate(event.target.value)}
-                        className="mt-1 rounded-2xl border border-slate-200 px-3 py-2"
+                        className="mt-1 rounded-lg border border-slate-200 px-3 py-2"
                       />
                     </label>
                     <label className="text-sm text-slate-600">
@@ -362,7 +362,7 @@ export default function PurchasesPage() {
                         aria-label="Data final das compras"
                         title="Data final das compras"
                         onChange={(event) => setToDate(event.target.value)}
-                        className="mt-1 rounded-2xl border border-slate-200 px-3 py-2"
+                        className="mt-1 rounded-lg border border-slate-200 px-3 py-2"
                       />
                     </label>
                   </div>
@@ -381,7 +381,7 @@ export default function PurchasesPage() {
                           })
                           .join(', ');
                         return (
-                          <div key={purchase.id} className="rounded-2xl border border-slate-200 p-4">
+                          <div key={purchase.id} className="rounded-xl border border-slate-200 p-4">
                             <p className="font-semibold text-slate-900">{purchasedItemsLabel || 'Itens da compra'}</p>
                             <p className="text-sm text-slate-600">Fornecedor: {supplierNameView}</p>
                             <p className="text-sm text-slate-600">Data: {new Date(purchase.createdAt).toLocaleDateString()}</p>
@@ -390,14 +390,16 @@ export default function PurchasesPage() {
                               <button
                                 type="button"
                                 onClick={() => void handleEditPurchase(purchase)}
-                                className="rounded-2xl border border-slate-200 px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+                                className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                               >
                                 Editar
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void handleDeletePurchase(purchase.id)}
-                                className="rounded-2xl bg-rose-600 px-3 py-1 text-xs text-white transition hover:bg-rose-700"
+                                className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+                                style={{ background: 'var(--danger)', color: '#fff' }}
                               >
                                 Excluir
                               </button>
@@ -415,7 +417,7 @@ export default function PurchasesPage() {
 
         {editingPurchase ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
               <h3 className="text-xl font-semibold text-slate-900">Atualizar compra</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitPurchaseUpdate}>
                 <label className="block text-slate-700">
@@ -423,7 +425,7 @@ export default function PurchasesPage() {
                   <select
                     value={editSupplierId}
                     onChange={(event) => setEditSupplierId(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   >
                     {suppliers.map((supplier) => (
                       <option key={supplier.id} value={supplier.id}>
@@ -437,7 +439,7 @@ export default function PurchasesPage() {
                   <select
                     value={editVariableId}
                     onChange={(event) => setEditVariableId(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   >
                     {variables.map((variable) => (
                       <option key={variable.id} value={variable.id}>
@@ -453,7 +455,7 @@ export default function PurchasesPage() {
                     min={1}
                     value={editQuantity}
                     onChange={(event) => setEditQuantity(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -464,7 +466,7 @@ export default function PurchasesPage() {
                     step={0.01}
                     value={editUnitCost}
                     onChange={(event) => setEditUnitCost(Number(event.target.value))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <label className="block text-slate-700">
@@ -473,18 +475,19 @@ export default function PurchasesPage() {
                     type="date"
                     value={editDate}
                     onChange={(event) => setEditDate(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   />
                 </label>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setEditingPurchase(null)}
-                    className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700"
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-white">
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }}>
                     Salvar
                   </button>
                 </div>
