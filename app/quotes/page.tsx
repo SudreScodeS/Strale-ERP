@@ -7,6 +7,8 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { Quote } from '../../types';
 
+const QUOTES_FORM_KEY = 'elitium-quotes-form';
+
 interface VariableOption {
   id: string;
   name: string;
@@ -68,25 +70,33 @@ export default function QuotesPage() {
   const [convertingQuote, setConvertingQuote] = useState<QuoteView | null>(null);
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
 
+  // Restore form state from sessionStorage
+  const savedForm = typeof window !== 'undefined' ? (() => {
+    try {
+      const raw = sessionStorage.getItem(QUOTES_FORM_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })() : null;
+
   // Form state
-  const [customerName, setCustomerName] = useState('');
-  const [quoteName, setQuoteName] = useState('');
-  const [notes, setNotes] = useState('');
-  const [validDays, setValidDays] = useState(globalConfig.quoteValidityDays);
-  const [deliveryDate, setDeliveryDate] = useState('');
+  const [customerName, setCustomerName] = useState(savedForm?.customerName || '');
+  const [quoteName, setQuoteName] = useState(savedForm?.quoteName || '');
+  const [notes, setNotes] = useState(savedForm?.notes || '');
+  const [validDays, setValidDays] = useState(savedForm?.validDays || globalConfig.quoteValidityDays);
+  const [deliveryDate, setDeliveryDate] = useState(savedForm?.deliveryDate || '');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(100);
-  const [logoColors, setLogoColors] = useState(1);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [logoColors, setLogoColors] = useState(savedForm?.logoColors || 1);
+  const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
 
   // Dimensões e impressão
-  const [useDimensions, setUseDimensions] = useState(false);
-  const [dimWidth, setDimWidth] = useState(30);
-  const [dimHeight, setDimHeight] = useState(40);
-  const [printType, setPrintType] = useState('');
-  const [printPosition, setPrintPosition] = useState('front');
-  const [printSize, setPrintSize] = useState('medium');
+  const [useDimensions, setUseDimensions] = useState(savedForm?.useDimensions || false);
+  const [dimWidth, setDimWidth] = useState(savedForm?.dimWidth || 30);
+  const [dimHeight, setDimHeight] = useState(savedForm?.dimHeight || 40);
+  const [printType, setPrintType] = useState(savedForm?.printType || '');
+  const [printPosition, setPrintPosition] = useState(savedForm?.printPosition || 'front');
+  const [printSize, setPrintSize] = useState(savedForm?.printSize || 'medium');
 
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -123,6 +133,35 @@ export default function QuotesPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const currentUser = getCurrentUser();
+
+  // Save form state to sessionStorage for persistence across navigation
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(QUOTES_FORM_KEY, JSON.stringify({
+        customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems,
+        useDimensions, dimWidth, dimHeight, printType, printPosition, printSize,
+      }));
+    } catch {}
+  }, [customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize]);
+
+  function clearFormState() {
+    setCustomerName('');
+    setQuoteName('');
+    setNotes('');
+    setValidDays(globalConfig.quoteValidityDays);
+    setDeliveryDate('');
+    setSelectedVariables({});
+    setQuantity(100);
+    setLogoColors(1);
+    setCartItems([]);
+    setUseDimensions(false);
+    setDimWidth(30);
+    setDimHeight(40);
+    setPrintType('');
+    setPrintPosition('front');
+    setPrintSize('medium');
+    try { sessionStorage.removeItem(QUOTES_FORM_KEY); } catch {}
+  }
 
   async function safeJson(response: Response) {
     try { return await response.json(); } catch { return { error: 'Falha ao interpretar resposta.' }; }
@@ -258,11 +297,7 @@ export default function QuotesPage() {
       const data = await safeJson(response);
       if (response.ok) {
         setStatusMessage('Orçamento criado com sucesso!');
-        setCartItems([]);
-        setCustomerName('');
-        setQuoteName('');
-        setNotes('');
-        setDeliveryDate('');
+        clearFormState();
         setActiveSection('list');
         await loadQuotes();
       } else {
@@ -674,10 +709,21 @@ export default function QuotesPage() {
                 </div>
               </div>
 
-              <button type="button" onClick={handleCreateQuote}
-                className="mt-4 inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-8 text-white transition hover:bg-[var(--brand-dark)]">
-                Salvar Orçamento
-              </button>
+              <div className="mt-4 flex gap-3">
+                <button type="button" onClick={handleCreateQuote}
+                  className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-8 text-white transition hover:bg-[var(--brand-dark)]">
+                  Salvar Orçamento
+                </button>
+                {(customerName || cartItems.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={clearFormState}
+                    className="inline-flex h-12 items-center justify-center rounded-3xl border border-rose-200 bg-rose-50 px-6 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                  >
+                    Cancelar tudo
+                  </button>
+                )}
+              </div>
             </section>
           </div>
         )}

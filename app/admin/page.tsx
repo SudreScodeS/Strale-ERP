@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -49,9 +49,28 @@ export default function AdminPage() {
   const [selectedPos, setSelectedPos] = useState<Record<string, 'front' | 'back' | 'both'>>({});
   const [activePrintType, setActivePrintType] = useState('');
   const [scrollOffset, setScrollOffset] = useState(0);
+  const savedConfigRef = useRef<string>('');
+  const [dirty, setDirty] = useState(false);
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
+
+  // Track dirty state by comparing current config with last saved
+  useEffect(() => {
+    if (!savedConfigRef.current) return;
+    const current = JSON.stringify(config);
+    setDirty(current !== savedConfigRef.current);
+  }, [config]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
 
   async function loadConfig() {
     try {
@@ -61,6 +80,8 @@ export default function AdminPage() {
       const data = await response.json();
       if (response.ok && data.config) {
         setConfig(data.config);
+        savedConfigRef.current = JSON.stringify(data.config);
+        setDirty(false);
       } else {
         setMessage(data.error || 'Erro ao carregar configurações.');
         setMessageType('error');
@@ -97,6 +118,8 @@ export default function AdminPage() {
         setMessageType('success');
         if (data.config) {
           setConfig(data.config);
+          savedConfigRef.current = JSON.stringify(data.config);
+          setDirty(false);
         }
       } else {
         setMessage(data.error || 'Erro ao salvar configurações.');
@@ -687,8 +710,13 @@ export default function AdminPage() {
                       border: '1px solid var(--border)',
                     }}
                   >
-                    Restaurar padrão
+                    {dirty ? 'Descartar alterações' : 'Restaurar padrão'}
                   </button>
+                  {dirty && (
+                    <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>
+                      ⚠ Alterações não salvas
+                    </span>
+                  )}
                 </div>
               )}
             </DraggableSection>

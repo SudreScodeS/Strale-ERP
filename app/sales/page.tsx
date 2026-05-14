@@ -12,6 +12,8 @@ import { Order, Quote } from '../../types';
 import ProductPreview from '../components/product-preview';
 import type { PreviewConfig } from '../components/product-preview';
 
+const SALES_FORM_KEY = 'elitium-sales-form';
+
 interface VariableOption {
   id: string;
   name: string;
@@ -71,8 +73,16 @@ export default function SalesPage() {
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
-  const [orderName, setOrderName] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
+  // Restore form state from sessionStorage
+  const savedForm = typeof window !== 'undefined' ? (() => {
+    try {
+      const raw = sessionStorage.getItem(SALES_FORM_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })() : null;
+
+  const [orderName, setOrderName] = useState(savedForm?.orderName || '');
+  const [deliveryDate, setDeliveryDate] = useState(savedForm?.deliveryDate || '');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('');
   const [logoDataUrl, setLogoDataUrl] = useState<string>(''); // Data URL da logo para canvas
@@ -87,7 +97,7 @@ export default function SalesPage() {
   } | null>(null);
   const [logoAnalyzing, setLogoAnalyzing] = useState(false);
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
   const [statusMessage, setStatusMessage] = useState('');
   const [orders, setOrders] = useState<OrderView[]>([]);
   const [orderStatusUpdates, setOrderStatusUpdates] = useState<Record<string, Order['status']>>({});
@@ -168,12 +178,12 @@ export default function SalesPage() {
   }, [selectedOrder]);
 
   // Dimensões e impressão
-  const [useDimensions, setUseDimensions] = useState(false);
-  const [dimWidth, setDimWidth] = useState(30);
-  const [dimHeight, setDimHeight] = useState(40);
-  const [printType, setPrintType] = useState('');
-  const [printPosition, setPrintPosition] = useState('front');
-  const [printSize, setPrintSize] = useState('medium');
+  const [useDimensions, setUseDimensions] = useState(savedForm?.useDimensions || false);
+  const [dimWidth, setDimWidth] = useState(savedForm?.dimWidth || 30);
+  const [dimHeight, setDimHeight] = useState(savedForm?.dimHeight || 40);
+  const [printType, setPrintType] = useState(savedForm?.printType || '');
+  const [printPosition, setPrintPosition] = useState(savedForm?.printPosition || 'front');
+  const [printSize, setPrintSize] = useState(savedForm?.printSize || 'medium');
 
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -207,6 +217,33 @@ export default function SalesPage() {
 
   const currentUser = getCurrentUser();
   const { getPageLayout } = useLayout();
+
+  // Save form state to sessionStorage for persistence across navigation
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SALES_FORM_KEY, JSON.stringify({
+        orderName, deliveryDate, cartItems,
+        useDimensions, dimWidth, dimHeight,
+        printType, printPosition, printSize,
+      }));
+    } catch {}
+  }, [orderName, deliveryDate, cartItems, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize]);
+
+  function clearFormState() {
+    setOrderName('');
+    setDeliveryDate('');
+    setCartItems([]);
+    setUseDimensions(false);
+    setDimWidth(30);
+    setDimHeight(40);
+    setPrintType('');
+    setPrintPosition('front');
+    setPrintSize('medium');
+    setSelectedVariables({});
+    setQuantity(1);
+    setLogoFile(null);
+    try { sessionStorage.removeItem(SALES_FORM_KEY); } catch {}
+  }
 
   async function safeJson(response: Response) {
     try {
@@ -639,6 +676,13 @@ export default function SalesPage() {
       setOrderName('');
       setDeliveryDate('');
       setCartItems([]);
+      setUseDimensions(false);
+      setDimWidth(30);
+      setDimHeight(40);
+      setPrintType('');
+      setPrintPosition('front');
+      setPrintSize('medium');
+      try { sessionStorage.removeItem(SALES_FORM_KEY); } catch {}
       setOrders((prev) => (result.order ? [result.order, ...prev] : prev));
       setOrderStatusUpdates((prev) => ({ ...prev, [result.order.id]: result.order.status }));
       await loadInventory();
@@ -1364,9 +1408,20 @@ export default function SalesPage() {
             </div>
           </div>
 
-          <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
-            Finalizar Pedido
-          </button>
+          <div className="flex gap-3">
+            <button className="inline-flex h-12 items-center justify-center rounded-3xl bg-[var(--brand)] px-6 text-white transition hover:bg-[var(--brand-dark)]" type="submit">
+              Finalizar Pedido
+            </button>
+            {(orderName || cartItems.length > 0 || deliveryDate) && (
+              <button
+                type="button"
+                onClick={clearFormState}
+                className="inline-flex h-12 items-center justify-center rounded-3xl border border-rose-200 bg-rose-50 px-6 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+              >
+                Cancelar tudo
+              </button>
+            )}
+          </div>
           {statusMessage ? <p className="text-sm text-slate-600">{statusMessage}</p> : null}
         </form>
         </DraggableSection>
