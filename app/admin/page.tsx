@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { FormEvent } from 'react';
 import { PageHeader } from '../components/ui';
 import { setGlobalDirty } from '../components/ui';
@@ -738,14 +739,14 @@ export default function AdminPage() {
           ))}
         </form>
 
-        {/* Floating unsaved changes bar */}
-        {dirty && (
+        {/* Floating unsaved changes bar — portal to body for true fixed positioning */}
+        {dirty && createPortal(
           <div
-            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-4 px-6 py-3 shadow-lg"
+            className="fixed bottom-0 left-0 right-0 z-[90] flex items-center justify-center gap-4 px-6 py-3"
             style={{
-              background: 'var(--warning-bg, #fef3c7)',
+              background: 'var(--card-bg)',
               borderTop: '2px solid var(--warning, #f59e0b)',
-              backdropFilter: 'blur(8px)',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
             }}
           >
             <div className="flex items-center gap-2">
@@ -753,7 +754,7 @@ export default function AdminPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: 'var(--warning, #f59e0b)' }} />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: 'var(--warning, #f59e0b)' }} />
               </span>
-              <span className="text-sm font-semibold" style={{ color: 'var(--warning-text, #92400e)' }}>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                 ⚠ Você tem alterações não salvas
               </span>
             </div>
@@ -763,7 +764,7 @@ export default function AdminPage() {
                 onClick={() => void loadConfig()}
                 className="rounded-lg px-4 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  background: 'transparent',
+                  background: 'var(--surface-muted)',
                   color: 'var(--text-secondary)',
                   border: '1px solid var(--border)',
                 }}
@@ -782,7 +783,8 @@ export default function AdminPage() {
                 Salvar agora
               </button>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </ProtectedPage>
