@@ -94,6 +94,7 @@ export default function SalesPage() {
   const [orderSearch, setOrderSearch] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [sortBy, setSortBy] = useState<'createdAt-desc' | 'createdAt-asc' | 'deliveryDate-asc' | 'deliveryDate-desc' | 'price-desc' | 'price-asc' | 'urgency'>('createdAt-desc');
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
   const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null);
   const [editingOrder, setEditingOrder] = useState(false);
@@ -351,7 +352,7 @@ export default function SalesPage() {
 
   const filteredOrders = useMemo(() => {
     const term = orderSearch.trim().toLowerCase();
-    return orders.filter((order) => {
+    const filtered = orders.filter((order) => {
       const matchText = !term || order.id.toLowerCase().includes(term) || order.name.toLowerCase().includes(term);
       if (!matchText) return false;
       const createdAt = new Date(order.createdAt);
@@ -359,7 +360,55 @@ export default function SalesPage() {
       if (toDate && createdAt > new Date(`${toDate}T23:59:59`)) return false;
       return true;
     });
-  }, [orders, orderSearch, fromDate, toDate]);
+
+    const sorted = [...filtered];
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (sortBy) {
+      case 'createdAt-desc':
+        sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'createdAt-asc':
+        sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case 'deliveryDate-asc':
+        sorted.sort((a, b) => {
+          const aDate = a.deliveryDate ? new Date(a.deliveryDate + 'T12:00:00').getTime() : Infinity;
+          const bDate = b.deliveryDate ? new Date(b.deliveryDate + 'T12:00:00').getTime() : Infinity;
+          return aDate - bDate;
+        });
+        break;
+      case 'deliveryDate-desc':
+        sorted.sort((a, b) => {
+          const aDate = a.deliveryDate ? new Date(a.deliveryDate + 'T12:00:00').getTime() : 0;
+          const bDate = b.deliveryDate ? new Date(b.deliveryDate + 'T12:00:00').getTime() : 0;
+          return bDate - aDate;
+        });
+        break;
+      case 'price-desc':
+        sorted.sort((a, b) => (b.totalPrice || 0) - (a.totalPrice || 0));
+        break;
+      case 'price-asc':
+        sorted.sort((a, b) => (a.totalPrice || 0) - (b.totalPrice || 0));
+        break;
+      case 'urgency':
+        sorted.sort((a, b) => {
+          // Entregas pendentes primeiro, ordenadas por urgência
+          const getScore = (o: OrderView) => {
+            if (o.delivered) return 1000;
+            if (!o.deliveryDate) return 999;
+            const delivery = new Date(o.deliveryDate + 'T12:00:00');
+            const diff = Math.ceil((delivery.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            return diff;
+          };
+          return getScore(a) - getScore(b);
+        });
+        break;
+    }
+
+    return sorted;
+  }, [orders, orderSearch, fromDate, toDate, sortBy]);
 
   const groupQuantityWarnings = useMemo(() => {
     if (!selectedProduct) return [];
@@ -746,6 +795,31 @@ export default function SalesPage() {
                   className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2"
                 />
               </label>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Ordenar por:</span>
+              {[
+                { value: 'createdAt-desc', label: 'Mais recentes' },
+                { value: 'createdAt-asc', label: 'Mais antigos' },
+                { value: 'urgency', label: '🔴 Urgência' },
+                { value: 'deliveryDate-asc', label: 'Entrega ↑' },
+                { value: 'deliveryDate-desc', label: 'Entrega ↓' },
+                { value: 'price-desc', label: 'Maior valor' },
+                { value: 'price-asc', label: 'Menor valor' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSortBy(opt.value as typeof sortBy)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                    sortBy === opt.value
+                      ? 'bg-[var(--brand)] text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 
