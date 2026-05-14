@@ -12,6 +12,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const summary = getFinancialRecords();
+  const { searchParams } = new URL(request.url);
+  const fromDate = searchParams.get('fromDate') || undefined;
+  const toDate = searchParams.get('toDate') || undefined;
+
+  const summary = getFinancialRecords(fromDate, toDate);
   return NextResponse.json(summary);
 }

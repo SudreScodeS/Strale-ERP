@@ -82,7 +82,20 @@ export async function GET(request: Request) {
     const payload = requireRole(request, ['admin', 'seller']);
 
     // Busca todos os pedidos
-    const orders = orderData.getAll();
+    let orders = orderData.getAll();
+
+    // Date range filtering
+    const { searchParams } = new URL(request.url);
+    const fromDate = searchParams.get('fromDate');
+    const toDate = searchParams.get('toDate');
+    if (fromDate || toDate) {
+      orders = orders.filter((order) => {
+        const d = new Date(order.createdAt);
+        if (fromDate && d < new Date(`${fromDate}T00:00:00`)) return false;
+        if (toDate && d > new Date(`${toDate}T23:59:59`)) return false;
+        return true;
+      });
+    }
 
     // Filtra baseado na role do usuário
     const visibleOrders = payload.role === 'admin'

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
@@ -16,6 +16,8 @@ interface ReportConfig {
   icon: React.ReactNode;
   endpoint: string;
   columns: { key: string; label: string; format?: (v: unknown) => string }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transform?: (json: any) => ReportRow[];
 }
 
 // ==========================================
@@ -69,11 +71,16 @@ const REPORTS: ReportConfig[] = [
       { key: 'createdByName', label: 'Vendedor' },
       { key: 'createdAt', label: 'Data', format: (v) => new Date(String(v)).toLocaleDateString('pt-BR') },
     ],
+    transform: (json): ReportRow[] => {
+      const data = json as Record<string, unknown>;
+      const orders = data.orders || data;
+      return Array.isArray(orders) ? orders as ReportRow[] : [];
+    },
   },
   {
     id: 'inventory',
     title: 'Estoque',
-    description: 'Produtos, variáveis e níveis de estoque.',
+    description: 'Todos os produtos, grupos, variáveis e níveis de estoque.',
     icon: reportIcons.inventory,
     endpoint: '/api/inventory',
     columns: [
@@ -82,21 +89,87 @@ const REPORTS: ReportConfig[] = [
       { key: 'variableName', label: 'Variável' },
       { key: 'stock', label: 'Estoque' },
       { key: 'price', label: 'Preço (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'basePrice', label: 'Preço Base (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'totalValue', label: 'Valor Total (R$)', format: (v) => Number(v).toFixed(2) },
     ],
+    transform: (json): ReportRow[] => {
+      const data = json as Record<string, unknown>;
+      const products = (data.inventory || data.products || []) as Record<string, unknown>[];
+      if (!Array.isArray(products)) return [];
+      return products.flatMap((p) => {
+        const groups = (p.groups || []) as Record<string, unknown>[];
+        return groups.flatMap((g) => {
+          const vars = (g.variables || []) as Record<string, unknown>[];
+          return vars.map((v): ReportRow => ({
+            productName: String(p.name ?? ''),
+            groupName: String(g.name ?? ''),
+            variableName: String(v.name ?? ''),
+            stock: Number(v.stock ?? 0),
+            price: Number(v.additionalPrice ?? 0),
+            basePrice: Number(p.basePrice ?? 0),
+            totalValue: Number(v.stock ?? 0) * (Number(p.basePrice ?? 0) + Number(v.additionalPrice ?? 0)),
+          }));
+        });
+      });
+    },
   },
   {
     id: 'finance',
     title: 'Financeiro',
-    description: 'Receitas, despesas e lucro consolidado.',
+    description: 'Compras e vendas consolidadas, divididas por mês.',
     icon: reportIcons.finance,
     endpoint: '/api/finance',
     columns: [
-      { key: 'type', label: 'Tipo' },
-      { key: 'description', label: 'Descrição' },
-      { key: 'amount', label: 'Valor (R$)', format: (v) => Number(v).toFixed(2) },
-      { key: 'date', label: 'Data', format: (v) => new Date(String(v)).toLocaleDateString('pt-BR') },
-      { key: 'category', label: 'Categoria' },
+      { key: 'month', label: 'Mês' },
+      { key: 'totalSales', label: 'Total Vendas (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'totalPurchases', label: 'Total Compras (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'totalExpenses', label: 'Total Despesas (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'netProfit', label: 'Lucro Líquido (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'transactionCount', label: 'Nº Transações' },
     ],
+    transform: (json): ReportRow[] => {
+      const data = json as Record<string, unknown>;
+      const records = (data.records || data.transactions || []) as Record<string, unknown>[];
+      if (!Array.isArray(records) || records.length === 0) return [];
+
+      // Group by month
+      const monthMap = new Map<string, { totalSales: number; totalPurchases: number; totalExpenses: number; count: number }>();
+
+      for (const record of records) {
+        const date = new Date(String(record.date));
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!monthMap.has(monthKey)) {
+          monthMap.set(monthKey, { totalSales: 0, totalPurchases: 0, totalExpenses: 0, count: 0 });
+        }
+
+        const entry = monthMap.get(monthKey)!;
+        entry.count += 1;
+
+        const amount = Number(record.amount) || 0;
+        const recordType = String(record.type);
+
+        if (recordType === 'sale') {
+          entry.totalSales += amount;
+        } else if (recordType === 'purchase') {
+          entry.totalPurchases += amount;
+        } else {
+          entry.totalExpenses += amount;
+        }
+      }
+
+      // Sort by month key (newest first) and build rows
+      return Array.from(monthMap.entries())
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .map(([key, vals]): ReportRow => ({
+          month: new Date(key + '-01').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' }),
+          totalSales: vals.totalSales,
+          totalPurchases: vals.totalPurchases,
+          totalExpenses: vals.totalExpenses,
+          netProfit: vals.totalSales - vals.totalPurchases - vals.totalExpenses,
+          transactionCount: vals.count,
+        }));
+    },
   },
   {
     id: 'quotes',
@@ -111,6 +184,18 @@ const REPORTS: ReportConfig[] = [
       { key: 'status', label: 'Status' },
       { key: 'createdAt', label: 'Data', format: (v) => new Date(String(v)).toLocaleDateString('pt-BR') },
     ],
+    transform: (json): ReportRow[] => {
+      const data = json as Record<string, unknown>;
+      const quotes = (data.quotes || data || []) as Record<string, unknown>[];
+      if (!Array.isArray(quotes)) return [];
+      return quotes.map((q): ReportRow => ({
+        id: String(q.id ?? ''),
+        clientName: String(q.customerName ?? ''),
+        totalPrice: Number(q.totalPrice ?? 0),
+        status: String(q.status ?? ''),
+        createdAt: String(q.createdAt ?? ''),
+      }));
+    },
   },
   {
     id: 'forecast',
@@ -120,12 +205,52 @@ const REPORTS: ReportConfig[] = [
     endpoint: '/api/demand-forecast',
     columns: [
       { key: 'productName', label: 'Produto' },
+      { key: 'variableName', label: 'Variável' },
+      { key: 'groupName', label: 'Grupo' },
+      { key: 'currentStock', label: 'Estoque Atual' },
+      { key: 'avgWeeklyDemand', label: 'Demanda Semanal' },
+      { key: 'avgMonthlyDemand', label: 'Demanda Mensal' },
       { key: 'trend', label: 'Tendência' },
-      { key: 'weeklyForecast', label: 'Previsão Semanal' },
-      { key: 'monthlyForecast', label: 'Previsão Mensal' },
       { key: 'riskLevel', label: 'Risco' },
+      { key: 'daysOfStock', label: 'Dias de Estoque' },
       { key: 'recommendation', label: 'Recomendação' },
     ],
+    transform: (json): ReportRow[] => {
+      const data = json as Record<string, unknown>;
+      const summary = data.summary as Record<string, unknown> | undefined;
+      if (!summary) return [];
+
+      // Merge all forecast categories into one flat list
+      const allForecasts: Record<string, unknown>[] = [];
+      const categories = ['highDemand', 'lowDemand', 'criticalRisk', 'watchRisk', 'overstocked'] as const;
+
+      for (const cat of categories) {
+        const items = (summary[cat] || []) as Record<string, unknown>[];
+        if (Array.isArray(items)) {
+          for (const item of items) {
+            // Avoid duplicates by checking if variableId already added
+            if (!allForecasts.some((f) => f.variableId === item.variableId)) {
+              allForecasts.push(item);
+            }
+          }
+        }
+      }
+
+      return allForecasts.map((f): ReportRow => ({
+        productName: String(f.productName ?? ''),
+        variableName: String(f.variableName ?? ''),
+        groupName: String(f.groupName ?? ''),
+        currentStock: Number(f.currentStock ?? 0),
+        avgWeeklyDemand: Number(f.avgWeeklyDemand ?? 0),
+        avgMonthlyDemand: Number(f.avgMonthlyDemand ?? 0),
+        trend: `${f.trend} (${f.trendPercent !== undefined ? (Number(f.trendPercent) > 0 ? '+' : '') + f.trendPercent + '%' : '—'})`,
+        riskLevel: String(f.riskLabel || f.riskLevel || ''),
+        daysOfStock: Number(f.daysOfStock ?? 0),
+        recommendation: f.suggestedReplenishment && Number(f.suggestedReplenishment) > 0
+          ? `Repor ${f.suggestedReplenishment} un.`
+          : (f.alerts && Array.isArray(f.alerts) && f.alerts.length > 0 ? String(f.alerts[0]) : 'Estoque adequado'),
+      }));
+    },
   },
 ];
 
@@ -170,9 +295,23 @@ function exportCSV(report: ReportConfig, data: ReportRow[]) {
 export default function ReportsPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [data, setData] = useState<Record<string, ReportRow[]>>({});
+  const [rawData, setRawData] = useState<Record<string, ReportRow[]>>({});
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<ReportRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Date range filter
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
+  // Date field key per report (the field used for filtering)
+  const dateFieldMap: Record<string, string> = {
+    sales: 'createdAt',
+    finance: 'month',
+    quotes: 'createdAt',
+    inventory: '',
+    forecast: '',
+  };
 
   async function fetchReport(report: ReportConfig) {
     setLoading(report.id);
@@ -182,36 +321,27 @@ export default function ReportsPage() {
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const json = await res.json();
 
-      // Normalize different response shapes
+      // Use custom transform if available, else fall back to generic
       let rows: ReportRow[] = [];
-      if (Array.isArray(json)) {
-        rows = json;
-      } else if (json.orders) rows = json.orders;
-      else if (json.products) {
-        // Flatten inventory: products → rows
-        rows = json.products.flatMap((p: Record<string, unknown>) => {
-          const groups = (p.groups || []) as Record<string, unknown>[];
-          return groups.flatMap((g: Record<string, unknown>) => {
-            const vars = (g.variables || []) as Record<string, unknown>[];
-            return vars.map((v: Record<string, unknown>) => ({
-              productName: p.name,
-              groupName: g.name,
-              variableName: v.name,
-              stock: v.stock,
-              price: v.price,
-            }));
-          });
-        });
+      if (report.transform) {
+        rows = report.transform(json);
+      } else {
+        if (Array.isArray(json)) rows = json;
+        else if (json.orders) rows = json.orders;
+        else if (json.products) rows = json.products;
+        else if (json.transactions) rows = json.transactions;
+        else if (json.quotes) rows = json.quotes;
+        else if (json.forecasts) rows = json.forecasts;
+        else if (json.data) rows = Array.isArray(json.data) ? json.data : [];
       }
-      else if (json.transactions) rows = json.transactions;
-      else if (json.quotes) rows = json.quotes;
-      else if (json.forecasts) rows = json.forecasts;
-      else if (json.data) rows = Array.isArray(json.data) ? json.data : [];
-      else rows = [];
 
+      setRawData((prev) => ({ ...prev, [report.id]: rows }));
       setData((prev) => ({ ...prev, [report.id]: rows }));
       setPreviewData(rows);
       setSelectedReport(report.id);
+      // Reset date filter when switching reports
+      setFromDate('');
+      setToDate('');
     } catch {
       setError(`Falha ao carregar dados de ${report.title}.`);
     } finally {
@@ -219,25 +349,65 @@ export default function ReportsPage() {
     }
   }
 
+  // Apply date filter when dates or rawData change
+  useEffect(() => {
+    if (!selectedReport) return;
+    const report = REPORTS.find((r) => r.id === selectedReport);
+    if (!report) return;
+
+    const dateField = dateFieldMap[selectedReport];
+    const raw = rawData[selectedReport] || [];
+
+    if (!fromDate && !toDate) {
+      setData((prev) => ({ ...prev, [selectedReport]: raw }));
+      setPreviewData(raw);
+      return;
+    }
+
+    // Finance report uses month labels (e.g. "janeiro de 2026"), filter differently
+    if (selectedReport === 'finance' && dateField === 'month') {
+      const filtered = raw.filter((row) => {
+        const monthStr = String(row.month || '');
+        // Parse month label to a comparable date
+        const parsed = parseBrazilianMonth(monthStr);
+        if (!parsed) return true;
+        if (fromDate && parsed < new Date(fromDate + '-01')) return false;
+        if (toDate && parsed > new Date(toDate + '-28')) return false;
+        return true;
+      });
+      setData((prev) => ({ ...prev, [selectedReport]: filtered }));
+      setPreviewData(filtered);
+      return;
+    }
+
+    // Standard date filtering for other reports
+    if (dateField) {
+      const filtered = raw.filter((row) => {
+        const dateVal = row[dateField];
+        if (!dateVal) return true;
+        const d = new Date(String(dateVal));
+        if (fromDate && d < new Date(`${fromDate}T00:00:00`)) return false;
+        if (toDate && d > new Date(`${toDate}T23:59:59`)) return false;
+        return true;
+      });
+      setData((prev) => ({ ...prev, [selectedReport]: filtered }));
+      setPreviewData(filtered);
+    }
+  }, [fromDate, toDate, rawData, selectedReport]);
+
   function handleExport(report: ReportConfig) {
     const rows = data[report.id];
     if (!rows || rows.length === 0) {
       fetchReport(report).then(() => {
-        // Will export after data loads — handled in effect below
+        // Will export after data loads
       });
       return;
     }
     exportCSV(report, rows);
   }
 
-  // Auto-export after fetch if user clicked export with no data
-  useEffect(() => {
-    if (selectedReport && data[selectedReport]) {
-      // Data is ready
-    }
-  }, [selectedReport, data]);
-
   const activeReport = REPORTS.find((r) => r.id === selectedReport);
+  const hasDateFilter = selectedReport && dateFieldMap[selectedReport];
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
@@ -324,6 +494,63 @@ export default function ReportsPage() {
           })}
         </div>
 
+        {/* Date range filter */}
+        {hasDateFilter && (
+          <div
+            className="mt-6 rounded-2xl p-5"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+          >
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex-1 min-w-[160px]">
+                <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  Data inicial
+                </label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+              <div className="flex-1 min-w-[160px]">
+                <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  Data final
+                </label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+              {(fromDate || toDate) && (
+                <button
+                  type="button"
+                  onClick={() => { setFromDate(''); setToDate(''); }}
+                  className="rounded-xl px-4 py-2 text-xs font-medium transition-colors"
+                  style={{
+                    background: 'var(--surface-muted)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  Limpar filtro
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Error message */}
         {error && (
           <div
@@ -347,6 +574,7 @@ export default function ReportsPage() {
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   Mostrando até 50 registros. Exporte para ver todos.
+                  {(fromDate || toDate) && ` · Filtrado por período`}
                 </p>
               </div>
               <button
@@ -411,4 +639,34 @@ export default function ReportsPage() {
       </div>
     </ProtectedPage>
   );
+}
+
+// ==========================================
+// HELPER: Parse Brazilian month name to Date
+// ==========================================
+function parseBrazilianMonth(monthStr: string): Date | null {
+  const months: Record<string, number> = {
+    'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3,
+    'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7,
+    'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11,
+  };
+
+  // Try format like "janeiro de 2026" or "mai de 2026"
+  const lower = monthStr.toLowerCase().trim();
+
+  for (const [name, idx] of Object.entries(months)) {
+    if (lower.includes(name)) {
+      const yearMatch = lower.match(/(\d{4})/);
+      const year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+      return new Date(year, idx, 1);
+    }
+  }
+
+  // Try format "YYYY-MM"
+  const isoMatch = monthStr.match(/^(\d{4})-(\d{2})/);
+  if (isoMatch) {
+    return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, 1);
+  }
+
+  return null;
 }

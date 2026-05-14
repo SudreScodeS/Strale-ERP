@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { calculateSalePrice, globalConfig } from '../../config/global';
+import { calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
@@ -88,10 +88,25 @@ export default function QuotesPage() {
   const [printPosition, setPrintPosition] = useState('front');
   const [printSize, setPrintSize] = useState('medium');
 
+  const [configLoaded, setConfigLoaded] = useState(false);
+
+  // Load server config so printTypes and pricing rules are up to date
+  useEffect(() => {
+    fetch('/api/config', { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.config) {
+          applyServerConfig(data.config);
+          setConfigLoaded(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const printTypesList = useMemo(() => [
     { value: '', label: 'Sem impressão' },
     ...globalConfig.printTypes,
-  ], []);
+  ], [configLoaded]);
 
   // Filtros da lista
   const [filterStatus, setFilterStatus] = useState('');

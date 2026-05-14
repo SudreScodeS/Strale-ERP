@@ -4,8 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { globalConfig } from '../../config/global';
-import { getCurrentUser, getStoredToken, logout } from '../lib/authClient';
+import { globalConfig, applyServerConfig } from '../../config/global';
+import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/authClient';
 
 // ==========================================
 // SVG ICONS (inline, no dependencies)
@@ -166,6 +166,18 @@ export function Sidebar({ children }: SidebarProps) {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  // Load server config on mount (syncs printTypes, pricing rules, etc.)
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) return;
+    fetch('/api/config', { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.config) applyServerConfig(data.config);
+      })
+      .catch(() => {});
+  }, []);
 
   function toggleTheme() {
     const next = theme === 'light' ? 'dark' : 'light';
