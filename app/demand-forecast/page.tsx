@@ -6,6 +6,8 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
+import { ProductAIPanel } from '../components/product-ai-panel';
+import type { ProductAIReport } from '../lib/product-ai';
 
 interface DemandForecast {
   variableId: string;
@@ -46,9 +48,10 @@ const PAGE_PATH = '/demand-forecast';
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'metrics', visible: true, order: 0, colSpan: 2 },
-  { id: 'chart', visible: true, order: 1, colSpan: 2 },
-  { id: 'alerts', visible: true, order: 2, colSpan: 2 },
-  { id: 'tables', visible: true, order: 3, colSpan: 2 },
+  { id: 'product-ai', visible: true, order: 1, colSpan: 2 },
+  { id: 'chart', visible: true, order: 2, colSpan: 2 },
+  { id: 'alerts', visible: true, order: 3, colSpan: 2 },
+  { id: 'tables', visible: true, order: 4, colSpan: 2 },
 ];
 
 function StatCard({ title, value, note, color }: { title: string; value: string | number; note?: string; color?: string }) {
@@ -122,6 +125,24 @@ function MiniBarChart({ labels, values, title }: { labels: string[]; values: num
   );
 }
 
+function SectionIntro({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+  return (
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--text-faint)' }}>
+          {eyebrow}
+        </p>
+        <h3 className="mt-1 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+          {title}
+        </h3>
+      </div>
+      <p className="max-w-xl text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+        {description}
+      </p>
+    </div>
+  );
+}
+
 function ForecastTable({ title, forecasts }: { title: string; forecasts: DemandForecast[] }) {
   return (
     <div className="rounded-xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
@@ -179,6 +200,9 @@ function ForecastTable({ title, forecasts }: { title: string; forecasts: DemandF
 export default function DemandForecastPage() {
   const [summary, setSummary] = useState<ForecastSummary | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
+  const [productAIReport, setProductAIReport] = useState<ProductAIReport | null>(null);
+  const [productAIError, setProductAIError] = useState<string | null>(null);
+  const [productAILoading, setProductAILoading] = useState(true);
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
@@ -192,6 +216,22 @@ export default function DemandForecastPage() {
       .then((r) => r.json())
       .then((d) => setWeeklyData(d.weeklyData))
       .catch(() => {});
+    fetch('/api/product-ai', { headers: getAuthHeaders() })
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => null);
+          throw new Error(body?.error || 'Falha ao carregar IA de Produtos.');
+        }
+        return r.json();
+      })
+      .then((d) => {
+        setProductAIReport(d.report);
+        setProductAIError(null);
+      })
+      .catch((error) => {
+        setProductAIError(error instanceof Error ? error.message : 'Falha ao carregar IA de Produtos.');
+      })
+      .finally(() => setProductAILoading(false));
   }, []);
 
   if (!summary) {
@@ -214,11 +254,11 @@ export default function DemandForecastPage() {
         <PageHeader title="Previsao de Demanda" description="Analise baseada em dados reais de pedidos e estoque." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
-        <div className="mb-4 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}>
+        <div className="mb-5 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}>
           Confiabilidade: {summary.forecastAccuracy} · Gerado em {new Date(summary.generatedAt).toLocaleString('pt-BR')}
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           {sections.map((section, index) => (
             <DraggableSection
               key={`${section.id}-${section.order}`}
@@ -238,24 +278,47 @@ export default function DemandForecastPage() {
               )}
 
               {section.id === 'chart' && weeklyData && weeklyData.quantities.length > 0 && (
-                <MiniBarChart labels={weeklyData.labels} values={weeklyData.quantities} title="Vendas semanais (quantidade)" />
+                <div className="space-y-3">
+                  <SectionIntro
+                    eyebrow="Previsao operacional"
+                    title="Comportamento de vendas"
+                    description="Leitura agregada para validar tendencia antes de entrar nos dados detalhados."
+                  />
+                  <MiniBarChart labels={weeklyData.labels} values={weeklyData.quantities} title="Vendas semanais (quantidade)" />
+                </div>
+              )}
+
+              {section.id === 'product-ai' && (
+                <ProductAIPanel report={productAIReport} loading={productAILoading} error={productAIError} />
               )}
 
               {section.id === 'alerts' && allAlerts.length > 0 && (
-                <div className="rounded-xl p-5" style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)' }}>
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--warning)' }}>Alertas ativos</h3>
-                  <div className="mt-2 space-y-1">
-                    {allAlerts.slice(0, 8).map((alert, i) => (
-                      <p key={i} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="font-semibold">{alert.variable}:</span> {alert.message}
-                      </p>
-                    ))}
+                <div className="space-y-3">
+                  <SectionIntro
+                    eyebrow="Alertas"
+                    title="Sinais que precisam de acompanhamento"
+                    description="Mensagens geradas pela previsao local para itens com risco, tendencia ou excesso."
+                  />
+                  <div className="rounded-xl p-5" style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)' }}>
+                    <h3 className="text-sm font-semibold" style={{ color: 'var(--warning)' }}>Alertas ativos</h3>
+                    <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                      {allAlerts.slice(0, 8).map((alert, i) => (
+                        <p key={i} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          <span className="font-semibold">{alert.variable}:</span> {alert.message}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
               {section.id === 'tables' && (
                 <div className="space-y-4">
+                  <SectionIntro
+                    eyebrow="Dados detalhados"
+                    title="Tabelas de previsao"
+                    description="Consulta completa por categoria para validar os numeros usados nos resumos acima."
+                  />
                   <ForecastTable title="Alta demanda" forecasts={summary.highDemand} />
                   <ForecastTable title="Risco de falta — reposicao urgente" forecasts={summary.criticalRisk} />
                   <ForecastTable title="Em atencao" forecasts={summary.watchRisk} />
