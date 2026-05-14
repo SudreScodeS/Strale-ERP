@@ -191,6 +191,10 @@
     {
       "value": "flexografia",
       "label": "Flexografia"
+    },
+    {
+      "value": "d",
+      "label": "D"
     }
   ],
   "pricePerCm2": 0.005
