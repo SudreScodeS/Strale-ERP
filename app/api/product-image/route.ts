@@ -323,8 +323,8 @@ function getLogoPosition(
 
   let baseX = bagBounds.x + (logoRegion.x - reference.x) * scaleX;
   let baseY = bagBounds.y + (logoRegion.y - reference.y) * scaleY;
-  let regionW = logoRegion.width * scaleX;
-  let regionH = logoRegion.height * scaleY;
+  const regionW = logoRegion.width * scaleX;
+  const regionH = logoRegion.height * scaleY;
 
   // Adjust based on print position
   const bagCenterX = bagBounds.x + bagBounds.width / 2;

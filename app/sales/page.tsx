@@ -333,7 +333,7 @@ export default function SalesPage() {
   }, [selectedProduct, selectedVariables]);
 
   // Encontra cor selecionada (variável de grupo "Cor" ou similar)
-  const selectedColorHex = useMemo(() => {
+  const selectedColorHex = (() => {
     if (!selectedProduct) return undefined;
     for (const group of selectedProduct.groups) {
       if (group.name.toLowerCase().includes('cor')) {
@@ -345,7 +345,7 @@ export default function SalesPage() {
       }
     }
     return undefined;
-  }, [selectedProduct, selectedVariables]);
+  })();
 
   // Nome da cor selecionada
   const selectedColorName = useMemo(() => {

@@ -869,7 +869,7 @@ function queryPriceQuote(question: string): AssistantResponse {
   const variables = variableData.getAll();
 
   // Encontrar produto (pega o primeiro se não encontrar por nome)
-  let product = products[0];
+  const product = products[0];
   if (!product) {
     return { answer: 'Nenhum produto cadastrado no sistema. Cadastre um produto primeiro.', type: 'text' };
   }

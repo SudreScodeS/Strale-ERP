@@ -41,15 +41,31 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
 
-  const formatContent = (text: string) => {
-    return text
-      .split('\n')
-      .map((line, i) => {
-        let formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        formatted = formatted.replace(/_(.*?)_/g, '<em>$1</em>');
-        return `<div key="${i}">${formatted}</div>`;
-      })
-      .join('');
+  const renderFormattedLine = (line: string, lineIndex: number) => {
+    if (!line) return <div key={lineIndex} className="h-2" />;
+
+    const parts = line.split(/(\*\*.*?\*\*|_.*?_)/g).filter(Boolean);
+    return (
+      <div key={lineIndex}>
+        {parts.map((part, partIndex) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+              <strong key={partIndex} style={{ color: 'var(--text-primary)' }}>
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          if (part.startsWith('_') && part.endsWith('_')) {
+            return (
+              <em key={partIndex} style={{ color: 'var(--text-muted)' }}>
+                {part.slice(1, -1)}
+              </em>
+            );
+          }
+          return part;
+        })}
+      </div>
+    );
   };
 
   return (
@@ -67,14 +83,9 @@ function ChatBubble({ message }: { message: ChatMessage }) {
         {isUser ? (
           <p>{message.content}</p>
         ) : (
-          <div
-            className="space-y-1 [&_strong]:font-semibold [&_em]:italic"
-            dangerouslySetInnerHTML={{
-              __html: formatContent(message.content)
-                .replace(/<strong>/g, '<strong style="color:var(--text-primary)">')
-                .replace(/<em>/g, '<em style="color:var(--text-muted)">'),
-            }}
-          />
+          <div className="space-y-1 [&_strong]:font-semibold [&_em]:italic">
+            {message.content.split('\n').map(renderFormattedLine)}
+          </div>
         )}
         <p className={`mt-1.5 text-[10px] ${isUser ? 'opacity-50' : ''}`} style={isUser ? {} : { color: 'var(--text-faint)' }}>
           {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}

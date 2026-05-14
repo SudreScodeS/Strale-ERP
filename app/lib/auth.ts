@@ -15,7 +15,13 @@ import { User } from '../../types';
 // CHAVE SECRETA PARA ASSINATURA JWT
 // CRÍTICO: Em produção, deve vir de variável de ambiente (process.env.JWT_SECRET)
 // Nunca commitar chave real no código
-const SECRET_KEY = process.env.JWT_SECRET || 'CHANGE_ME_SECRET';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (!secret || secret === 'CHANGE_ME_SECRET') {
+    throw new Error('JWT_SECRET deve ser configurado com um valor seguro antes de usar autenticacao.');
+  }
+  return secret;
+}
 
 // TEMPO DE EXPIRAÇÃO DOS TOKENS
 // Define quanto tempo um usuário fica logado sem precisar renovar
@@ -46,7 +52,7 @@ export async function comparePassword(password: string, hashed: string): Promise
 // Payload contém apenas dados essenciais: id, username, role
 // Evita armazenar dados sensíveis no token (stateless)
 export function generateJWT(user: User): string {
-  return jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY, {
+  return jwt.sign({ id: user.id, username: user.username, role: user.role }, getJwtSecret(), {
     expiresIn: TOKEN_EXPIRATION,
   });
 }
@@ -56,8 +62,11 @@ export function generateJWT(user: User): string {
 // Usado por middlewares de proteção de rotas
 export function verifyJWT(token: string): { id: string; username: string; role: string } | null {
   try {
-    return jwt.verify(token, SECRET_KEY) as { id: string; username: string; role: string };
-  } catch {
+    return jwt.verify(token, getJwtSecret()) as { id: string; username: string; role: string };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('JWT_SECRET')) {
+      throw error;
+    }
     return null;
   }
 }

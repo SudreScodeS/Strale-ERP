@@ -8,6 +8,7 @@ import {
   getVariableSalesHistory,
   getWeeklySalesData,
 } from '../../lib/demand-forecast';
+import { requireRole } from '../../lib/auth';
 
 /**
  * GET /api/demand-forecast
@@ -15,6 +16,21 @@ import {
  * Usado pelo dashboard principal.
  */
 export async function GET(request: Request) {
+  try {
+    requireRole(request, ['admin']);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      {
+        status: error instanceof Error && error.message.startsWith('JWT_SECRET')
+          ? 500
+          : error instanceof Error && error.message === 'Forbidden'
+            ? 403
+            : 401,
+      },
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const variableId = searchParams.get('variableId');
   const mode = searchParams.get('mode');
