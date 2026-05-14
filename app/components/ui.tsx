@@ -700,7 +700,7 @@ export function FooterLogo() {
     <div className="mt-12 flex flex-col items-center gap-3 pb-6 animate-fade-in">
       <div className="h-px w-32" style={{ background: 'linear-gradient(90deg, transparent, var(--brand-border), transparent)' }} />
       <Image
-        src={theme === 'light' ? '/LogoE.svg' : '/LogoCE.svg'}
+        src={theme === 'light' ? '/LogoCE.svg' : '/LogoE.svg'}
         alt="Elitium"
         width={160}
         height={70}

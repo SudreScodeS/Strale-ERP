@@ -45,7 +45,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-4">
           <Image
-            src={theme === 'light' ? '/LogoE.svg' : '/LogoCE.svg'}
+            src={theme === 'light' ? '/LogoCE.svg' : '/LogoE.svg'}
             alt="Elitium"
             width={200}
             height={88}
