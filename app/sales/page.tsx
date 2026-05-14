@@ -178,16 +178,26 @@ export default function SalesPage() {
   const [configLoaded, setConfigLoaded] = useState(false);
 
   // Load server config so printTypes and pricing rules are up to date
+  // Also reload when page becomes visible (user may have changed config in admin)
   useEffect(() => {
-    fetch('/api/config', { headers: getAuthHeaders() })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.config) {
-          applyServerConfig(data.config);
-          setConfigLoaded(true);
-        }
-      })
-      .catch(() => {});
+    function loadConfig() {
+      fetch('/api/config', { headers: getAuthHeaders() })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.config) {
+            applyServerConfig(data.config);
+            setConfigLoaded((prev) => !prev); // toggle to trigger useMemo
+          }
+        })
+        .catch(() => {});
+    }
+    loadConfig();
+    document.addEventListener('visibilitychange', loadConfig);
+    window.addEventListener('focus', loadConfig);
+    return () => {
+      document.removeEventListener('visibilitychange', loadConfig);
+      window.removeEventListener('focus', loadConfig);
+    };
   }, []);
 
   const printTypesList = useMemo(() => [
