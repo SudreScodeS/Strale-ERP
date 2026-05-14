@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { globalConfig } from '../../config/global';
 
 export default function RegisterPage() {
@@ -8,6 +9,18 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const t = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+    setTheme(t);
+    const observer = new MutationObserver(() => {
+      const nt = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+      setTheme(nt);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,11 +43,16 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            {globalConfig.systemName}
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+        <div className="mb-8 flex flex-col items-center gap-4">
+          <Image
+            src={theme === 'light' ? '/LogoE.svg' : '/LogoCE.svg'}
+            alt="Elitium"
+            width={200}
+            height={88}
+            className="h-auto w-48"
+            priority
+          />
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             Criar conta de vendedor
           </p>
         </div>

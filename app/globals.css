@@ -9,9 +9,9 @@
    DARK MODE (default) — Full purple metallic
    ──────────────────────────────────────── */
 :root {
-  /* Backgrounds — deep purple-black */
-  --background: #0a0814;
-  --background-elevated: #100d1a;
+  /* Backgrounds — deep gray-black with purple undertone */
+  --background: #0b0b0f;
+  --background-elevated: #111117;
   --foreground: #eae6f4;
 
   /* Brand — Metallic Purple */
@@ -21,16 +21,16 @@
   --brand-muted: rgba(139, 92, 246, 0.14);
   --brand-border: rgba(139, 92, 246, 0.25);
 
-  /* Surfaces — purple layers */
-  --surface: #110e1c;
-  --surface-soft: #161228;
-  --surface-muted: #1c1730;
-  --surface-hover: #231d3c;
+  /* Surfaces — neutral dark with subtle purple */
+  --surface: #121218;
+  --surface-soft: #18181f;
+  --surface-muted: #1e1e27;
+  --surface-hover: #262630;
 
-  /* Borders — purple edges */
-  --border: #28224a;
-  --border-strong: #3a3265;
-  --border-subtle: #1d1838;
+  /* Borders — dark with purple edge */
+  --border: #252533;
+  --border-strong: #363648;
+  --border-subtle: #1a1a24;
 
   /* Text — silver-purple */
   --text-primary: #ece8f6;
@@ -39,8 +39,8 @@
   --text-faint: #5e5480;
 
   /* Inputs */
-  --input-bg: rgba(18, 14, 30, 0.7);
-  --input-border: #28224a;
+  --input-bg: rgba(14, 14, 20, 0.7);
+  --input-border: #252533;
   --input-focus: #a78bfa;
   --input-focus-ring: rgba(167, 139, 250, 0.2);
 
@@ -58,7 +58,7 @@
   --info-bg: rgba(129, 140, 248, 0.08);
   --info-border: rgba(129, 140, 248, 0.18);
 
-  /* Shadows — purple glow */
+  /* Shadows — dark with purple glow */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.07);
   --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
@@ -71,9 +71,9 @@
   --radius-lg: 1.25rem;
   --radius-full: 9999px;
 
-  /* Sidebar */
-  --sidebar-bg: #0c0916;
-  --sidebar-border: #1d1838;
+  /* Sidebar — deep gray-black */
+  --sidebar-bg: #0d0d12;
+  --sidebar-border: #1a1a24;
   --sidebar-hover: rgba(167, 139, 250, 0.08);
   --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
@@ -81,11 +81,11 @@
   --sidebar-text-strong: #ece8f6;
 
   /* Modal */
-  --modal-overlay: rgba(6, 4, 14, 0.85);
+  --modal-overlay: rgba(4, 4, 8, 0.85);
 
   /* Cards */
-  --card-bg: #110e1c;
-  --card-border: #28224a;
+  --card-bg: #121218;
+  --card-border: #252533;
 
   /* Metallic shimmer — purple */
   --metallic-shimmer: linear-gradient(

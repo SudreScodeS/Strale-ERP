@@ -565,6 +565,7 @@ export function Sidebar({ children }: SidebarProps) {
       >
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8 animate-fade-in">
           {children}
+          <FooterLogo />
         </div>
       </main>
 
@@ -674,6 +675,38 @@ export function PageHeader({ title, description }: { title: string; description?
           {description}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+// ==========================================
+// FOOTER LOGO
+// ==========================================
+
+export function FooterLogo() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  useEffect(() => {
+    const t = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+    setTheme(t);
+    const observer = new MutationObserver(() => {
+      const nt = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+      setTheme(nt);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="mt-12 flex flex-col items-center gap-3 pb-6 animate-fade-in">
+      <div className="h-px w-32" style={{ background: 'linear-gradient(90deg, transparent, var(--brand-border), transparent)' }} />
+      <Image
+        src={theme === 'light' ? '/LogoE.svg' : '/LogoCE.svg'}
+        alt="Elitium"
+        width={160}
+        height={70}
+        className="h-auto w-40 opacity-40"
+        style={{ filter: 'grayscale(0.3)' }}
+      />
     </div>
   );
 }
