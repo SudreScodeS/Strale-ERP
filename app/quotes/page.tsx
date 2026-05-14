@@ -718,7 +718,8 @@ export default function QuotesPage() {
                   <button
                     type="button"
                     onClick={clearFormState}
-                    className="inline-flex h-12 items-center justify-center rounded-3xl border border-rose-200 bg-rose-50 px-6 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                    className="inline-flex h-12 items-center justify-center rounded-3xl px-6 text-sm font-medium transition hover:opacity-80"
+                    style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}
                   >
                     Cancelar tudo
                   </button>

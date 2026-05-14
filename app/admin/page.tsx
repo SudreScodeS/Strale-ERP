@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { PageHeader } from '../components/ui';
+import { setGlobalDirty } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -59,7 +60,9 @@ export default function AdminPage() {
   useEffect(() => {
     if (!savedConfigRef.current) return;
     const current = JSON.stringify(config);
-    setDirty(current !== savedConfigRef.current);
+    const isDirty = current !== savedConfigRef.current;
+    setDirty(isDirty);
+    setGlobalDirty(isDirty, 'Você tem alterações não salvas nas configurações. Deseja sair sem salvar?');
   }, [config]);
 
   // Warn before leaving with unsaved changes
@@ -82,6 +85,7 @@ export default function AdminPage() {
         setConfig(data.config);
         savedConfigRef.current = JSON.stringify(data.config);
         setDirty(false);
+        setGlobalDirty(false);
       } else {
         setMessage(data.error || 'Erro ao carregar configurações.');
         setMessageType('error');
@@ -120,6 +124,7 @@ export default function AdminPage() {
           setConfig(data.config);
           savedConfigRef.current = JSON.stringify(data.config);
           setDirty(false);
+          setGlobalDirty(false);
         }
       } else {
         setMessage(data.error || 'Erro ao salvar configurações.');

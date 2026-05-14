@@ -7,6 +7,16 @@ import { useEffect, useState } from 'react';
 import { globalConfig, applyServerConfig } from '../../config/global';
 import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/authClient';
 
+// Global dirty state for unsaved changes warning
+// Pages with forms set this to warn before navigation
+let globalDirty = false;
+let globalDirtyMessage = 'Você tem alterações não salvas. Deseja sair mesmo assim?';
+export function setGlobalDirty(dirty: boolean, message?: string) {
+  globalDirty = dirty;
+  if (message) globalDirtyMessage = message;
+}
+export function isGlobalDirty() { return globalDirty; }
+
 // ==========================================
 // SVG ICONS (inline, no dependencies)
 // ==========================================
@@ -250,6 +260,15 @@ export function Sidebar({ children }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={(e) => {
+                      if (globalDirty && !active) {
+                        if (!window.confirm(globalDirtyMessage)) {
+                          e.preventDefault();
+                          return;
+                        }
+                        setGlobalDirty(false);
+                      }
+                    }}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 animate-slide-in"
                     style={{
                       color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
