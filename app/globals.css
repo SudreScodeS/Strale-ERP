@@ -9,38 +9,38 @@
    DARK MODE (default) — Full purple metallic
    ──────────────────────────────────────── */
 :root {
-  /* Backgrounds — deep gray-black with purple undertone */
-  --background: #0b0b0f;
-  --background-elevated: #111117;
-  --foreground: #eae6f4;
+  /* Backgrounds — pure premium black */
+  --background: #09090b;
+  --background-elevated: #0f0f12;
+  --foreground: #ecedef;
 
-  /* Brand — Metallic Purple */
+  /* Brand — Metallic Purple (unchanged) */
   --brand: #a78bfa;
   --brand-dark: #7c3aed;
   --brand-light: #c4b5fd;
   --brand-muted: rgba(139, 92, 246, 0.14);
   --brand-border: rgba(139, 92, 246, 0.25);
 
-  /* Surfaces — neutral dark with subtle purple */
-  --surface: #121218;
-  --surface-soft: #18181f;
-  --surface-muted: #1e1e27;
-  --surface-hover: #262630;
+  /* Surfaces — neutral charcoal, no purple cast */
+  --surface: #131316;
+  --surface-soft: #19191d;
+  --surface-muted: #1f1f24;
+  --surface-hover: #27272e;
 
-  /* Borders — dark with purple edge */
-  --border: #252533;
-  --border-strong: #363648;
-  --border-subtle: #1a1a24;
+  /* Borders — cool gray with purple highlight */
+  --border: #232329;
+  --border-strong: #35353e;
+  --border-subtle: #19191e;
 
-  /* Text — silver-purple */
-  --text-primary: #ece8f6;
-  --text-secondary: #b4aad0;
-  --text-muted: #8478a8;
-  --text-faint: #5e5480;
+  /* Text — crisp silver */
+  --text-primary: #ecedf0;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-faint: #52525b;
 
   /* Inputs */
-  --input-bg: rgba(14, 14, 20, 0.7);
-  --input-border: #252533;
+  --input-bg: rgba(12, 12, 15, 0.75);
+  --input-border: #232329;
   --input-focus: #a78bfa;
   --input-focus-ring: rgba(167, 139, 250, 0.2);
 
@@ -58,11 +58,11 @@
   --info-bg: rgba(129, 140, 248, 0.08);
   --info-border: rgba(129, 140, 248, 0.18);
 
-  /* Shadows — dark with purple glow */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.07);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
-  --shadow-chrome: 0 1px 0 rgba(167, 139, 250, 0.08) inset, 0 -1px 0 rgba(0, 0, 0, 0.2) inset;
+  /* Shadows — deep black + purple rim */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.07);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.08);
+  --shadow-chrome: 0 1px 0 rgba(167, 139, 250, 0.07) inset, 0 -1px 0 rgba(0, 0, 0, 0.25) inset;
   --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
 
   /* Radii */
@@ -71,21 +71,21 @@
   --radius-lg: 1.25rem;
   --radius-full: 9999px;
 
-  /* Sidebar — deep gray-black */
-  --sidebar-bg: #0d0d12;
-  --sidebar-border: #1a1a24;
+  /* Sidebar — deep black */
+  --sidebar-bg: #0a0a0d;
+  --sidebar-border: #19191e;
   --sidebar-hover: rgba(167, 139, 250, 0.08);
   --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #8e84b0;
-  --sidebar-text-strong: #ece8f6;
+  --sidebar-text: #71717a;
+  --sidebar-text-strong: #ecedf0;
 
   /* Modal */
-  --modal-overlay: rgba(4, 4, 8, 0.85);
+  --modal-overlay: rgba(2, 2, 4, 0.88);
 
   /* Cards */
-  --card-bg: #121218;
-  --card-border: #252533;
+  --card-bg: #131316;
+  --card-border: #232329;
 
   /* Metallic shimmer — purple */
   --metallic-shimmer: linear-gradient(
