@@ -258,11 +258,6 @@ export default function DemandForecastPage() {
         <PageHeader title="Previsao de Demanda" description="Analise baseada em dados reais de pedidos e estoque." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
-        {/* Confiabilidade bar */}
-        <div className="mb-5 rounded-lg px-4 py-2 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}>
-          Confiabilidade: {summary.forecastAccuracy} · Gerado em {new Date(summary.generatedAt).toLocaleString('pt-BR')}
-        </div>
-
         {/* Tabs */}
         <div
           className="mb-6 inline-flex gap-1 rounded-xl p-1"
@@ -299,22 +294,265 @@ export default function DemandForecastPage() {
         {/* ==================== TAB: RESUMO ==================== */}
         {activeTab === 'resumo' && (
           <div className="space-y-6">
-            {/* Metrics */}
+            {/* Distribution bar — visual health overview */}
             <section
               className="rounded-xl p-5"
               style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
             >
-              <div className="mb-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--text-faint)' }}>Indicadores</p>
-                <h3 className="mt-1 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Visao geral</h3>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--text-faint)' }}>Saude do estoque</p>
+                  <h3 className="mt-1 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {summary.totalVariablesAnalyzed} variaveis analisadas
+                  </h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Confiabilidade</p>
+                  <p className="text-sm font-bold" style={{ color: 'var(--brand)' }}>{summary.forecastAccuracy}</p>
+                </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Analisados" value={summary.totalVariablesAnalyzed} note="variaveis" />
-                <StatCard title="Risco alto" value={summary.criticalRisk.length} note="reposicao urgente" color={summary.criticalRisk.length > 0 ? 'red' : undefined} />
-                <StatCard title="Atencao" value={summary.watchRisk.length} note="estoque baixo" color={summary.watchRisk.length > 0 ? 'yellow' : undefined} />
-                <StatCard title="Excesso" value={summary.overstocked.length} note="acima da demanda" color={summary.overstocked.length > 0 ? 'green' : undefined} />
-              </div>
+
+              {/* Distribution bar */}
+              {uniqueForecasts.length > 0 && (
+                <div>
+                  <div className="mb-2 flex h-3 overflow-hidden rounded-full" style={{ background: 'var(--surface-muted)' }}>
+                    {summary.criticalRisk.length > 0 && (
+                      <div
+                        className="transition-all"
+                        style={{
+                          width: `${(summary.criticalRisk.length / uniqueForecasts.length) * 100}%`,
+                          background: 'var(--danger)',
+                          minWidth: '4px',
+                        }}
+                        title={`Risco alto: ${summary.criticalRisk.length}`}
+                      />
+                    )}
+                    {summary.watchRisk.length > 0 && (
+                      <div
+                        className="transition-all"
+                        style={{
+                          width: `${(summary.watchRisk.length / uniqueForecasts.length) * 100}%`,
+                          background: 'var(--warning)',
+                          minWidth: '4px',
+                        }}
+                        title={`Atencao: ${summary.watchRisk.length}`}
+                      />
+                    )}
+                    {summary.highDemand.length > 0 && (
+                      <div
+                        className="transition-all"
+                        style={{
+                          width: `${(summary.highDemand.length / uniqueForecasts.length) * 100}%`,
+                          background: 'var(--success)',
+                          minWidth: '4px',
+                        }}
+                        title={`Alta demanda: ${summary.highDemand.length}`}
+                      />
+                    )}
+                    {summary.lowDemand.length > 0 && (
+                      <div
+                        className="transition-all"
+                        style={{
+                          width: `${(summary.lowDemand.length / uniqueForecasts.length) * 100}%`,
+                          background: 'var(--text-faint)',
+                          minWidth: '4px',
+                        }}
+                        title={`Baixa saida: ${summary.lowDemand.length}`}
+                      />
+                    )}
+                    {summary.overstocked.length > 0 && (
+                      <div
+                        className="transition-all"
+                        style={{
+                          width: `${(summary.overstocked.length / uniqueForecasts.length) * 100}%`,
+                          background: 'var(--info)',
+                          minWidth: '4px',
+                        }}
+                        title={`Excesso: ${summary.overstocked.length}`}
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {summary.criticalRisk.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--danger)' }} />
+                        Risco alto ({summary.criticalRisk.length})
+                      </span>
+                    )}
+                    {summary.watchRisk.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--warning)' }} />
+                        Atencao ({summary.watchRisk.length})
+                      </span>
+                    )}
+                    {summary.highDemand.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--success)' }} />
+                        Alta demanda ({summary.highDemand.length})
+                      </span>
+                    )}
+                    {summary.lowDemand.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--text-faint)' }} />
+                        Baixa saida ({summary.lowDemand.length})
+                      </span>
+                    )}
+                    {summary.overstocked.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--info)' }} />
+                        Excesso ({summary.overstocked.length})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
+
+            {/* Stat cards */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard title="Risco alto" value={summary.criticalRisk.length} note="reposicao urgente" color={summary.criticalRisk.length > 0 ? 'red' : undefined} />
+              <StatCard title="Atencao" value={summary.watchRisk.length} note="estoque baixo" color={summary.watchRisk.length > 0 ? 'yellow' : undefined} />
+              <StatCard title="Alta demanda" value={summary.highDemand.length} note="tendencia crescente" color="green" />
+              <StatCard title="Excesso" value={summary.overstocked.length} note="acima da demanda" color={summary.overstocked.length > 0 ? 'green' : undefined} />
+            </div>
+
+            {/* Two-column: Critical items + Trend */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              {/* Top critical items */}
+              {summary.criticalRisk.length > 0 && (
+                <section
+                  className="rounded-xl p-5"
+                  style={{ background: 'var(--card-bg)', border: '1px solid var(--danger-border)' }}
+                >
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: 'var(--danger)' }} />
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--danger)' }}>Acao urgente</p>
+                  </div>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Itens com risco de falta</h3>
+                  <div className="mt-3 space-y-2">
+                    {summary.criticalRisk.slice(0, 5).map((f) => (
+                      <div
+                        key={f.variableId}
+                        className="flex items-center justify-between rounded-lg px-3 py-2"
+                        style={{ background: 'var(--danger-bg)' }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{f.variableName}</p>
+                          <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{f.productName}</p>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                          <div className="text-right">
+                            <p className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{f.currentStock} un.</p>
+                            <p className="text-[10px]" style={{ color: f.daysOfStock >= 999 ? 'var(--text-faint)' : 'var(--danger)' }}>
+                              {f.daysOfStock >= 999 ? 'sem estoque' : `${f.daysOfStock}d restantes`}
+                            </p>
+                          </div>
+                          {f.suggestedReplenishment > 0 && (
+                            <span
+                              className="rounded-md px-2 py-0.5 text-[10px] font-bold"
+                              style={{ background: 'var(--brand)', color: '#fff' }}
+                            >
+                              +{f.suggestedReplenishment}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {summary.criticalRisk.length > 5 && (
+                      <p className="text-xs text-center" style={{ color: 'var(--text-faint)' }}>
+                        + {summary.criticalRisk.length - 5} outros itens
+                      </p>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* Trend breakdown */}
+              <section
+                className="rounded-xl p-5"
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--text-faint)' }}>Tendencias</p>
+                <h3 className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Direcao da demanda</h3>
+
+                {(() => {
+                  const ascending = uniqueForecasts.filter((f) => f.trend === 'crescente');
+                  const stable = uniqueForecasts.filter((f) => f.trend === 'estavel');
+                  const descending = uniqueForecasts.filter((f) => f.trend === 'decrescente');
+                  const total = uniqueForecasts.length || 1;
+
+                  return (
+                    <div className="mt-4 space-y-3">
+                      {/* Ascending */}
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--success)' }}>
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                            </svg>
+                            Crescente
+                          </span>
+                          <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{ascending.length} ({Math.round((ascending.length / total) * 100)}%)</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-muted)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${(ascending.length / total) * 100}%`, background: 'var(--success)' }} />
+                        </div>
+                      </div>
+
+                      {/* Stable */}
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5" />
+                            </svg>
+                            Estavel
+                          </span>
+                          <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{stable.length} ({Math.round((stable.length / total) * 100)}%)</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-muted)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${(stable.length / total) * 100}%`, background: 'var(--text-faint)' }} />
+                        </div>
+                      </div>
+
+                      {/* Descending */}
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--danger)' }}>
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+                            </svg>
+                            Decrescente
+                          </span>
+                          <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{descending.length} ({Math.round((descending.length / total) * 100)}%)</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-muted)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${(descending.length / total) * 100}%`, background: 'var(--danger)' }} />
+                        </div>
+                      </div>
+
+                      {/* Top ascending items */}
+                      {ascending.length > 0 && (
+                        <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-faint)' }}>Maiores altas</p>
+                          <div className="space-y-1">
+                            {ascending
+                              .sort((a, b) => b.trendPercent - a.trendPercent)
+                              .slice(0, 3)
+                              .map((f) => (
+                                <div key={f.variableId} className="flex items-center justify-between text-xs">
+                                  <span className="truncate" style={{ color: 'var(--text-primary)' }}>{f.variableName}</span>
+                                  <span className="font-mono font-semibold ml-2" style={{ color: 'var(--success)' }}>+{f.trendPercent}%</span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </section>
+            </div>
 
             {/* Chart */}
             {weeklyData && weeklyData.quantities.length > 0 && (
@@ -324,8 +562,8 @@ export default function DemandForecastPage() {
               >
                 <div className="mb-4">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--text-faint)' }}>Previsao operacional</p>
-                  <h3 className="mt-1 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Comportamento de vendas</h3>
-                  <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Leitura agregada para validar tendencia antes de entrar nos dados detalhados.</p>
+                  <h3 className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Comportamento de vendas</h3>
+                  <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Leitura agregada para validar tendencia.</p>
                 </div>
                 <MiniBarChart labels={weeklyData.labels} values={weeklyData.quantities} title="Vendas semanais (quantidade)" />
               </section>
@@ -335,23 +573,39 @@ export default function DemandForecastPage() {
             {allAlerts.length > 0 && (
               <section
                 className="rounded-xl p-5"
-                style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)' }}
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--warning-border)' }}
               >
-                <div className="mb-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--text-faint)' }}>Alertas</p>
-                  <h3 className="mt-1 text-sm font-semibold" style={{ color: 'var(--warning)' }}>Sinais que precisam de acompanhamento</h3>
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--warning)' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <h3 className="text-sm font-semibold" style={{ color: 'var(--warning)' }}>Alertas ({allAlerts.length})</h3>
+                  </div>
                 </div>
-                <div className="grid gap-1 sm:grid-cols-2">
-                  {allAlerts.slice(0, 8).map((alert, i) => (
-                    <p key={i} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="font-semibold">{alert.variable}:</span> {alert.message}
-                    </p>
+                <div className="space-y-1.5">
+                  {allAlerts.slice(0, 6).map((alert, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 rounded-lg px-3 py-2"
+                      style={{ background: 'var(--warning-bg)' }}
+                    >
+                      <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: 'var(--warning)' }} />
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="font-semibold">{alert.variable}:</span> {alert.message}
+                      </p>
+                    </div>
                   ))}
                 </div>
-                {allAlerts.length > 8 && (
-                  <p className="mt-2 text-xs" style={{ color: 'var(--text-faint)' }}>
-                    + {allAlerts.length - 8} outros alertas
-                  </p>
+                {allAlerts.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('tabelas')}
+                    className="mt-3 text-xs font-medium transition-colors hover:underline"
+                    style={{ color: 'var(--brand)' }}
+                  >
+                    Ver todos os {allAlerts.length} alertas nas tabelas →
+                  </button>
                 )}
               </section>
             )}
