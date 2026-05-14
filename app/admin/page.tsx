@@ -62,7 +62,22 @@ export default function AdminPage() {
     const current = JSON.stringify(config);
     const isDirty = current !== savedConfigRef.current;
     setDirty(isDirty);
-    setGlobalDirty(isDirty, 'Você tem alterações não salvas nas configurações. Deseja sair sem salvar?');
+    setGlobalDirty(isDirty, {
+      message: 'Você tem alterações não salvas nas configurações.',
+      onSave: async () => {
+        // Trigger form submit programmatically
+        const form = document.querySelector('form');
+        if (form) {
+          form.requestSubmit();
+          // Wait a bit for the save to complete
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      },
+      onDiscard: () => {
+        // Reload config from server, discarding changes
+        void loadConfig();
+      },
+    });
   }, [config]);
 
   // Warn before leaving with unsaved changes

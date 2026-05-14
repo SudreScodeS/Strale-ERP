@@ -10,12 +10,21 @@ import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/a
 // Global dirty state for unsaved changes warning
 // Pages with forms set this to warn before navigation
 let globalDirty = false;
-let globalDirtyMessage = 'Você tem alterações não salvas. Deseja sair mesmo assim?';
-export function setGlobalDirty(dirty: boolean, message?: string) {
+let globalDirtyMessage = 'Você tem alterações não salvas.';
+let globalSaveFn: (() => Promise<void>) | null = null;
+let globalDiscardFn: (() => void) | null = null;
+let showDirtyModal: ((show: boolean) => void) | null = null;
+
+export function setGlobalDirty(dirty: boolean, opts?: { message?: string; onSave?: () => Promise<void>; onDiscard?: () => void }) {
   globalDirty = dirty;
-  if (message) globalDirtyMessage = message;
+  if (opts?.message) globalDirtyMessage = opts.message;
+  if (opts?.onSave) globalSaveFn = opts.onSave;
+  if (opts?.onDiscard) globalDiscardFn = opts.onDiscard;
 }
 export function isGlobalDirty() { return globalDirty; }
+
+// Pending navigation target when dirty modal is shown
+let pendingNavigation = '';
 
 // ==========================================
 // SVG ICONS (inline, no dependencies)
@@ -163,6 +172,14 @@ export function Sidebar({ children }: SidebarProps) {
     return stored === null ? true : stored === 'true';
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [savingFromModal, setSavingFromModal] = useState(false);
+
+  // Register modal show function
+  useEffect(() => {
+    showDirtyModal = setShowUnsavedModal;
+    return () => { showDirtyModal = null; };
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -262,11 +279,9 @@ export function Sidebar({ children }: SidebarProps) {
                     href={item.href}
                     onClick={(e) => {
                       if (globalDirty && !active) {
-                        if (!window.confirm(globalDirtyMessage)) {
-                          e.preventDefault();
-                          return;
-                        }
-                        setGlobalDirty(false);
+                        e.preventDefault();
+                        pendingNavigation = item.href;
+                        showDirtyModal?.(true);
                       }
                     }}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 animate-slide-in"
@@ -552,6 +567,81 @@ export function Sidebar({ children }: SidebarProps) {
           {children}
         </div>
       </main>
+
+      {/* Unsaved changes modal */}
+      {showUnsavedModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ background: 'var(--modal-overlay)' }}
+          onClick={() => { if (!savingFromModal) setShowUnsavedModal(false); }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+            style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+              Alterações não salvas
+            </h3>
+            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+              {globalDirtyMessage}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowUnsavedModal(false)}
+                disabled={savingFromModal}
+                className="rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  globalDiscardFn?.();
+                  setGlobalDirty(false);
+                  setShowUnsavedModal(false);
+                  if (pendingNavigation) {
+                    window.location.href = pendingNavigation;
+                    pendingNavigation = '';
+                  }
+                }}
+                disabled={savingFromModal}
+                className="rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}
+              >
+                Descartar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!globalSaveFn) return;
+                  setSavingFromModal(true);
+                  try {
+                    await globalSaveFn();
+                    setGlobalDirty(false);
+                    setShowUnsavedModal(false);
+                    if (pendingNavigation) {
+                      window.location.href = pendingNavigation;
+                      pendingNavigation = '';
+                    }
+                  } catch {
+                    // Save failed, stay on page
+                  } finally {
+                    setSavingFromModal(false);
+                  }
+                }}
+                disabled={savingFromModal}
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                style={{ background: 'var(--brand)' }}
+              >
+                {savingFromModal ? 'Salvando…' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
