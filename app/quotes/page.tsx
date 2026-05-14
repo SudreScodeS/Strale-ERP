@@ -426,7 +426,7 @@ export default function QuotesPage() {
         {/* LISTA DE ORÇAMENTOS */}
         {/* ============================================ */}
         {activeSection === 'list' && (
-          <section className="rounded-3xl bg-white p-8 shadow-sm">
+          <section className="rounded-2xl bg-white p-8 shadow-sm">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Orçamentos</p>
@@ -435,9 +435,9 @@ export default function QuotesPage() {
               <div className="flex flex-wrap gap-2">
                 <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Buscar por nome ou cliente"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm" />
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm" />
                 <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm">
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm">
                   <option value="">Todos os status</option>
                   <option value="draft">Rascunho</option>
                   <option value="sent">Enviado</option>
@@ -456,7 +456,7 @@ export default function QuotesPage() {
                   const sl = statusLabel(quote.status);
                   return (
                     <div key={quote.id}
-                      className="cursor-pointer rounded-3xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-md"
+                      className="cursor-pointer rounded-xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-md"
                       onClick={() => setSelectedQuote(quote)}>
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
@@ -540,60 +540,60 @@ export default function QuotesPage() {
         {activeSection === 'create' && (
           <div className="space-y-6">
             {/* Dados do cliente */}
-            <section className="rounded-3xl bg-white p-8 shadow-sm">
+            <section className="rounded-2xl bg-white p-8 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-slate-900">Dados do orçamento</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2 text-slate-700">
                   <span>Nome do cliente *</span>
                   <input value={customerName} onChange={e => setCustomerName(e.target.value)}
                     placeholder="Ex: Empresa ABC"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Nome do orçamento</span>
                   <input value={quoteName} onChange={e => setQuoteName(e.target.value)}
                     placeholder="Ex: Sacolas TNT 500un"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Validade (dias)</span>
                   <input type="number" min={1} value={validDays} onChange={e => setValidDays(Number(e.target.value))}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Data de entrega</span>
                   <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Cores da logo</span>
                   <input type="number" min={0} max={10} value={logoColors} onChange={e => setLogoColors(Number(e.target.value))}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <label className="space-y-2 text-slate-700 md:col-span-2">
                   <span>Observações</span>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                     placeholder="Notas internas sobre este orçamento..."
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
               </div>
             </section>
 
             {/* Seleção de produto */}
-            <section className="rounded-3xl bg-white p-8 shadow-sm">
+            <section className="rounded-2xl bg-white p-8 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-slate-900">Adicionar item</h3>
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="space-y-2 text-slate-700">
                   <span>Produto</span>
                   <select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); setSelectedVariables({}); }}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                     {inventory.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Quantidade</span>
                   <input type="number" min={1} value={quantity} onChange={e => setQuantity(Number(e.target.value))}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <div className="flex items-end">
                   <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
@@ -697,7 +697,7 @@ export default function QuotesPage() {
             </section>
 
             {/* Carrinho do orçamento */}
-            <section className="rounded-3xl bg-white p-8 shadow-sm">
+            <section className="rounded-2xl bg-white p-8 shadow-sm">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-900">Itens do orçamento</h3>
                 <p className="text-sm text-slate-500">{cartItems.length} item(ns)</p>
@@ -762,7 +762,7 @@ export default function QuotesPage() {
         {/* ============================================ */}
         {selectedQuote && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedQuote(null)}>
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Detalhes do orçamento</p>
@@ -887,7 +887,7 @@ export default function QuotesPage() {
         {/* ============================================ */}
         {convertingQuote && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}>
-            <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Converter em Pedido</p>
