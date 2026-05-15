@@ -71,8 +71,6 @@ const PRINT_POSITIONS = [
 export default function SalesPage() {
   const [inventory, setInventory] = useState<ProductOption[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
-  const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>(savedForm?.selectedVariables || {});
-  const [quantity, setQuantity] = useState(savedForm?.quantity || 1);
   // Restore form state from sessionStorage
   const savedForm = typeof window !== 'undefined' ? (() => {
     try {
@@ -81,6 +79,8 @@ export default function SalesPage() {
     } catch { return null; }
   })() : null;
 
+  const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>(savedForm?.selectedVariables || {});
+  const [quantity, setQuantity] = useState(savedForm?.quantity || 1);
   const [orderName, setOrderName] = useState(savedForm?.orderName || '');
   const [deliveryDate, setDeliveryDate] = useState(savedForm?.deliveryDate || '');
   const [logoFile, setLogoFile] = useState<File | null>(null);
