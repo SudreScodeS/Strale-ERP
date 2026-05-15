@@ -370,11 +370,6 @@ export default function InventoryPage() {
             <p className="text-xs text-slate-400">{stats.totalGroups} grupos · {stats.totalVariables} variáveis</p>
           </div>
           <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Estoque total</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{stats.totalStock.toLocaleString('pt-BR')}</p>
-            <p className="text-xs text-slate-400">unidades em todas as variáveis</p>
-          </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Estoque crítico</p>
             <p className="mt-1 text-2xl font-bold text-rose-600">{stats.criticalCount}</p>
             <p className="text-xs text-rose-400">variáveis abaixo do limite</p>
@@ -398,7 +393,7 @@ export default function InventoryPage() {
               boxShadow: pageTab === 'list' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
             }}
           >
-            📦 Produtos
+            Produtos
           </button>
           <button
             type="button"
@@ -410,7 +405,7 @@ export default function InventoryPage() {
               boxShadow: pageTab === 'create' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
             }}
           >
-            ➕ Adicionar novo
+            Adicionar novo
           </button>
         </div>
 
@@ -454,7 +449,9 @@ export default function InventoryPage() {
                           <img src={product.imageUrl} alt={product.name} className="h-14 w-14 rounded-xl object-cover border border-slate-200 flex-shrink-0" />
                         ) : (
                           <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-400">
-                            📦
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
@@ -567,7 +564,7 @@ export default function InventoryPage() {
                                                     <span className="flex-shrink-0 rounded-full bg-rose-200 px-1.5 py-0.5 text-[10px] font-bold text-rose-800">!</span>
                                                   )}
                                                   {status === 'watch' && (
-                                                    <span className="flex-shrink-0 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">⚠</span>
+                                                    <span className="flex-shrink-0 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">!</span>
                                                   )}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -631,9 +628,9 @@ export default function InventoryPage() {
                 style={{ background: 'var(--surface-muted)' }}
               >
                 {[
-                  { key: 'product' as const, label: '📦 Produto', desc: 'Base' },
-                  { key: 'group' as const, label: '📁 Grupo', desc: 'Categoria' },
-                  { key: 'variable' as const, label: '🏷️ Variável', desc: 'Item' },
+                  { key: 'product' as const, label: 'Produto', desc: 'Base' },
+                  { key: 'group' as const, label: 'Grupo', desc: 'Categoria' },
+                  { key: 'variable' as const, label: 'Variável', desc: 'Item' },
                 ].map(tab => (
                   <button
                     key={tab.key}
