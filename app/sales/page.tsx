@@ -186,6 +186,23 @@ export default function SalesPage() {
   const [printSize, setPrintSize] = useState(savedForm?.printSize || 'medium');
 
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [formIsDirty, setFormIsDirty] = useState(false);
+
+  // Track if any form field has changed from initial state
+  useEffect(() => {
+    const isDirty =
+      !!orderName.trim() ||
+      !!deliveryDate ||
+      cartItems.length > 0 ||
+      useDimensions ||
+      !!printType ||
+      printPosition !== 'front' ||
+      printSize !== 'medium' ||
+      Object.keys(selectedVariables).some(k => (selectedVariables[k] || 0) > 0) ||
+      quantity !== 1 ||
+      !!logoFile;
+    setFormIsDirty(isDirty);
+  }, [orderName, deliveryDate, cartItems, useDimensions, printType, printPosition, printSize, selectedVariables, quantity, logoFile]);
 
   // Load server config so printTypes and pricing rules are up to date
   // Also reload when page becomes visible (user may have changed config in admin)
@@ -1434,7 +1451,7 @@ export default function SalesPage() {
             <button className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
               Finalizar Pedido
             </button>
-            {(orderName || cartItems.length > 0 || deliveryDate) && (
+            {formIsDirty && (
               <button
                 type="button"
                 onClick={clearFormState}

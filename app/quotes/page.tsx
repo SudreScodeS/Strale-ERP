@@ -99,6 +99,26 @@ export default function QuotesPage() {
   const [printSize, setPrintSize] = useState(savedForm?.printSize || 'medium');
 
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [formIsDirty, setFormIsDirty] = useState(false);
+
+  // Track if any form field has changed from initial state
+  useEffect(() => {
+    const isDirty =
+      !!customerName.trim() ||
+      !!quoteName.trim() ||
+      !!notes.trim() ||
+      validDays !== globalConfig.quoteValidityDays ||
+      !!deliveryDate ||
+      logoColors !== 1 ||
+      cartItems.length > 0 ||
+      useDimensions ||
+      !!printType ||
+      printPosition !== 'front' ||
+      printSize !== 'medium' ||
+      Object.keys(selectedVariables).some(k => (selectedVariables[k] || 0) > 0) ||
+      quantity !== 100;
+    setFormIsDirty(isDirty);
+  }, [customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems, useDimensions, printType, printPosition, printSize, selectedVariables, quantity]);
 
   // Load server config so printTypes and pricing rules are up to date
   // Also reload when page becomes visible (user may have changed config in admin)
@@ -742,7 +762,7 @@ export default function QuotesPage() {
                   style={{ background: 'var(--brand)', color: '#fff' }}>
                   Salvar Orçamento
                 </button>
-                {(customerName || cartItems.length > 0) && (
+                {formIsDirty && (
                   <button
                     type="button"
                     onClick={clearFormState}
