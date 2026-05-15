@@ -611,6 +611,11 @@ export default function QuotesPage() {
                     {inventory.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </label>
+                <label className="space-y-2 text-slate-700">
+                  <span>Quantidade</span>
+                  <input type="number" min={1} value={quantity} onChange={e => setQuantity(Number(e.target.value))}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
+                </label>
                 <div className="flex items-end">
                   <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
                     Unitário: R$ {calculateSalePrice(currentItemUnitCost).toFixed(2)} | Total: R$ {currentItemTotalPrice.toFixed(2)}

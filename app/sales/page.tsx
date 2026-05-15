@@ -1149,6 +1149,16 @@ export default function SalesPage() {
                 ))}
               </select>
             </label>
+            <label className="space-y-2 text-slate-700">
+              <span>Quantidade</span>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(event) => setQuantity(Number(event.target.value))}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+              />
+            </label>
           </div>
 
           {selectedProduct ? (
