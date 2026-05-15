@@ -1199,7 +1199,7 @@ export default function SalesPage() {
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               {groupQuantityWarnings.map((warning) => (
                 <p key={warning.groupId}>
-                  Grupo &quot;{warning.groupName}&quot; soma {warning.sum}; deve ser {quantity}.
+                  Uma {warning.groupName.toLowerCase()} deve ser escolhida.
                 </p>
               ))}
             </div>
