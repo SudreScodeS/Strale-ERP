@@ -241,10 +241,10 @@ export function Sidebar({ children }: SidebarProps) {
             priority
           />
           <div>
-            <h1 className="text-base font-bold" style={{ color: 'var(--sidebar-text-strong)' }}>
+            <h1 className="text-base font-bold" style={{ color: 'var(--sidebar-text-strong)', fontFamily: 'var(--font-alumni-sans)' }}>
               {globalConfig.systemName}
             </h1>
-            <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+            <p className="text-xs" style={{ color: 'var(--text-faint)', fontFamily: 'var(--font-alumni-sans)' }}>
               {globalConfig.companyName}
             </p>
           </div>

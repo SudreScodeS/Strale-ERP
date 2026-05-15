@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Alumni_Sans } from 'next/font/google';
 import { Sidebar } from './components/ui';
 import { LayoutProvider } from './components/layout-context';
 import './globals.css';
@@ -12,6 +12,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+});
+
+const alumniSans = Alumni_Sans({
+  variable: '--font-alumni-sans',
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} ${alumniSans.variable} h-full antialiased`}>
       <body className="min-h-full">
         <LayoutProvider>
           <Sidebar>{children}</Sidebar>
