@@ -32,7 +32,7 @@
     "totalCost": 5000,
     "totalPrice": 6000,
     "logoCost": 0,
-    "status": "sent",
+    "status": "approved",
     "notes": "Sacolas TNT azuis para evento corporativo",
     "createdAt": "2026-05-11T22:07:03.837Z"
   },
@@ -180,5 +180,47 @@
     "validUntil": "2026-05-18T22:17:33.915Z",
     "notes": "Isso é um teste",
     "createdAt": "2026-05-11T22:17:33.921Z"
+  },
+  {
+    "id": "21ade169-3eb3-4aad-a0aa-cb1817b9bd04",
+    "userId": "user-admin",
+    "customerName": "Teste",
+    "name": "Teste Sudré (cópia)",
+    "items": [
+      {
+        "productId": "product-1",
+        "productName": "Sacola Personalizada",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 99
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 100
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 98
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 50,
+        "unitPrice": 60,
+        "printType": "serigrafia",
+        "printPosition": "front",
+        "printSize": "medium"
+      }
+    ],
+    "totalCost": 5010,
+    "totalPrice": 6012,
+    "logoCost": 10,
+    "status": "sent",
+    "validUntil": "2026-05-18T22:17:33.915Z",
+    "notes": "Isso é um teste",
+    "createdAt": "2026-05-15T14:26:44.620Z"
   }
 ]
