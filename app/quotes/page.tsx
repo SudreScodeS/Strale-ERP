@@ -85,8 +85,8 @@ export default function QuotesPage() {
   const [validDays, setValidDays] = useState(savedForm?.validDays || globalConfig.quoteValidityDays);
   const [deliveryDate, setDeliveryDate] = useState(savedForm?.deliveryDate || '');
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>({});
-  const [quantity, setQuantity] = useState(100);
+  const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>(savedForm?.selectedVariables || {});
+  const [quantity, setQuantity] = useState(savedForm?.quantity || 100);
   const [logoColors, setLogoColors] = useState(savedForm?.logoColors || 1);
   const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
 
@@ -160,9 +160,10 @@ export default function QuotesPage() {
       sessionStorage.setItem(QUOTES_FORM_KEY, JSON.stringify({
         customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems,
         useDimensions, dimWidth, dimHeight, printType, printPosition, printSize,
+        selectedVariables, quantity,
       }));
     } catch {}
-  }, [customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize]);
+  }, [customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize, selectedVariables, quantity]);
 
   function clearFormState() {
     setCustomerName('');
