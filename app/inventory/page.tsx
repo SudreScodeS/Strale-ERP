@@ -68,6 +68,7 @@ export default function InventoryPage() {
   const [editGroupCriticalAlert, setEditGroupCriticalAlert] = useState(DEFAULT_CRITICAL_STOCK_ALERT);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pageTab, setPageTab] = useState<'list' | 'create'>('list');
 
   const PAGE_PATH = '/inventory';
   const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -385,9 +386,39 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-          {/* LISTA DE PRODUTOS */}
-          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="xl:col-span-1">
+        {/* Tabs de navegação */}
+        <div className="mb-6 inline-flex gap-1 rounded-xl p-1" style={{ background: 'var(--surface-muted)' }}>
+          <button
+            type="button"
+            onClick={() => setPageTab('list')}
+            className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all"
+            style={{
+              background: pageTab === 'list' ? 'var(--card-bg)' : 'transparent',
+              color: pageTab === 'list' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: pageTab === 'list' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            📦 Produtos
+          </button>
+          <button
+            type="button"
+            onClick={() => setPageTab('create')}
+            className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all"
+            style={{
+              background: pageTab === 'create' ? 'var(--card-bg)' : 'transparent',
+              color: pageTab === 'create' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: pageTab === 'create' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            ➕ Adicionar novo
+          </button>
+        </div>
+
+        {/* ============================================ */}
+        {/* ABA: LISTA DE PRODUTOS */}
+        {/* ============================================ */}
+        {pageTab === 'list' && (
+          <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
             <div className="space-y-4">
               {/* Busca */}
               <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -586,9 +617,13 @@ export default function InventoryPage() {
               )}
             </div>
           </DraggableSection>
+        )}
 
-          {/* FORMULÁRIOS DE CRIAÇÃO */}
-          <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length} className="xl:col-span-1">
+        {/* ============================================ */}
+        {/* ABA: ADICIONAR NOVO */}
+        {/* ============================================ */}
+        {pageTab === 'create' && (
+          <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
             <div className="rounded-2xl bg-white p-6 shadow-sm">
               {/* Tabs */}
               <div
@@ -821,7 +856,7 @@ export default function InventoryPage() {
               )}
             </div>
           </DraggableSection>
-        </section>
+        )}
 
         {/* ============================================ */}
         {/* MODAL: Editar Variável */}
