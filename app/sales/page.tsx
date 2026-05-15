@@ -1199,7 +1199,7 @@ export default function SalesPage() {
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               {groupQuantityWarnings.map((warning) => (
                 <p key={warning.groupId}>
-                  Uma {warning.groupName.toLowerCase()} deve ser escolhida.
+                  Selecione uma opção de {warning.groupName.toLowerCase()}.
                 </p>
               ))}
             </div>
