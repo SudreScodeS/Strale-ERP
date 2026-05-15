@@ -49,18 +49,16 @@ function applyStock(order: Order, direction: 'decrease' | 'increase') {
 
 function validateGroupQuantities(item: OrderItem): { ok: boolean; message?: string } {
   const groups = groupData.getByProductId(item.productId);
-  const groupsWithSelection = new Map<string, number>();
+  const groupsWithSelection = new Set<string>();
   item.selectedVariables.forEach((selected) => {
-    const current = groupsWithSelection.get(selected.groupId) || 0;
-    groupsWithSelection.set(selected.groupId, current + getUsedQuantity(selected, item.quantity));
+    groupsWithSelection.add(selected.groupId);
   });
 
   for (const group of groups) {
-    const totalForGroup = groupsWithSelection.get(group.id) || 0;
-    if (totalForGroup !== item.quantity) {
+    if (!groupsWithSelection.has(group.id)) {
       return {
         ok: false,
-        message: `No grupo "${group.name}", a soma das variáveis (${totalForGroup}) deve ser igual à quantidade do produto (${item.quantity}).`,
+        message: `Selecione uma opção de ${group.name.toLowerCase()}.`,
       };
     }
   }
