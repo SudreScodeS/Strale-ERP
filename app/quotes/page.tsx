@@ -260,7 +260,7 @@ export default function QuotesPage() {
 
     const label = selectedEntries.map(e => {
       const v = selectedProduct.groups.flatMap(g => g.variables).find(v => v.id === e.variableId);
-      return `${v?.name || e.variableId} x${e.quantity}`;
+      return v?.name || e.variableId;
     }).join(', ');
 
     setCartItems(prev => [...prev, {
@@ -629,25 +629,25 @@ export default function QuotesPage() {
                   {selectedProduct.groups.map(group => (
                     <div key={group.id} className="rounded-2xl border border-slate-200 p-4">
                       <p className="font-semibold text-slate-900">{group.name}</p>
-                      <p className="mt-1 text-xs text-slate-500">A soma deve ser igual a {quantity}.</p>
                       <div className="mt-3 grid gap-3 md:grid-cols-2">
                         {group.variables.map(variable => (
                           <div key={variable.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                            <input type="checkbox" checked={(selectedVariables[variable.id] || 0) > 0}
-                              onChange={e => setSelectedVariables(prev => ({
-                                ...prev, [variable.id]: e.target.checked ? (prev[variable.id] || 1) : 0,
-                              }))}
+                            <input type="radio" name={`group-${group.id}`}
+                              checked={(selectedVariables[variable.id] || 0) > 0}
+                              onChange={() => setSelectedVariables(prev => {
+                                const next: Record<string, number> = {};
+                                for (const v of group.variables) next[v.id] = 0;
+                                for (const [k, v] of Object.entries(prev)) {
+                                  if (!(group.variables.some(gv => gv.id === k))) next[k] = v;
+                                }
+                                next[variable.id] = 1;
+                                return next;
+                              })}
                               aria-label={`Selecionar ${variable.name}`} />
                             <div className="flex-1">
                               <p className="font-medium text-slate-900">{variable.name}</p>
                               <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} | Estoque: {variable.stock}</p>
                             </div>
-                            {(selectedVariables[variable.id] || 0) > 0 && (
-                              <input type="number" min={1} max={variable.stock}
-                                value={selectedVariables[variable.id] || 1}
-                                onChange={e => setSelectedVariables(prev => ({ ...prev, [variable.id]: Math.max(1, Number(e.target.value) || 1) }))}
-                                className="w-20 rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm" />
-                            )}
                           </div>
                         ))}
                       </div>

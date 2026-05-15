@@ -494,16 +494,16 @@ export default function SalesPage() {
     if (!selectedProduct) return [];
     return selectedProduct.groups
       .map((group) => {
-        const groupSum = group.variables.reduce((sum, variable) => sum + (selectedVariables[variable.id] || 0), 0);
+        const selectedCount = group.variables.filter((v) => (selectedVariables[v.id] || 0) > 0).length;
         return {
           groupId: group.id,
           groupName: group.name,
-          sum: groupSum,
-          ok: groupSum === quantity,
+          selectedCount,
+          ok: selectedCount === 1,
         };
       })
       .filter((item) => !item.ok);
-  }, [selectedProduct, selectedVariables, quantity]);
+  }, [selectedProduct, selectedVariables]);
 
   const currentItemUnitCost = selectedProduct
     ? selectedProduct.basePrice + selectedVariablesList.reduce((sum, variable) => sum + variable.additionalPrice, 0)
@@ -566,7 +566,7 @@ export default function SalesPage() {
       productName: qi.productName,
       quantity: qi.quantity,
       selectedVariables: qi.selectedVariables,
-      selectedVariablesLabel: qi.selectedVariables.map((sv) => `${sv.variableId} x${sv.quantity}`).join(', '),
+      selectedVariablesLabel: qi.selectedVariables.map((sv) => sv.variableId).join(', '),
       unitCost: qi.unitCost,
       unitPrice: qi.unitPrice,
       previewConfig: {
@@ -601,19 +601,19 @@ export default function SalesPage() {
       });
 
     if (selectedEntries.length === 0) {
-      setStatusMessage('Selecione pelo menos uma variável e informe quantidade.');
+      setStatusMessage('Selecione pelo menos uma variável.');
       return;
     }
 
     if (groupQuantityWarnings.length > 0) {
-      setStatusMessage(`A soma por grupo deve ser igual à quantidade do pedido (${quantity}).`);
+      setStatusMessage('Selecione uma opção de cada grupo.');
       return;
     }
 
     const selectedVariablesLabel = selectedEntries
       .map((entry) => {
         const variable = selectedProduct.groups.flatMap((group) => group.variables).find((item) => item.id === entry.variableId);
-        return `${variable?.name || entry.variableId} x${entry.quantity}`;
+        return variable?.name || entry.variableId;
       })
       .join(', ');
 
@@ -1166,20 +1166,31 @@ export default function SalesPage() {
               {selectedProduct.groups.map((group) => (
                 <div key={group.id} className="rounded-xl border border-slate-200 p-4">
                   <p className="font-semibold text-slate-900">{group.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">A soma das variáveis deste grupo deve ser igual a {quantity}.</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {group.variables.map((variable) => (
                       <div key={variable.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <input
-                          type="checkbox"
+                          type="radio"
+                          name={`group-${group.id}`}
                           aria-label={`Selecionar ${variable.name}`}
                           checked={(selectedVariables[variable.id] || 0) > 0}
-                          onChange={(event) => {
-                            if (event.target.checked) {
-                              setSelectedVariables((state) => ({ ...state, [variable.id]: state[variable.id] || 1 }));
-                            } else {
-                              setSelectedVariables((state) => ({ ...state, [variable.id]: 0 }));
-                            }
+                          onChange={() => {
+                            setSelectedVariables((state) => {
+                              const next: Record<string, number> = {};
+                              // Clear all variables in this group
+                              for (const v of group.variables) {
+                                next[v.id] = 0;
+                              }
+                              // Keep variables from other groups
+                              for (const [k, v] of Object.entries(state)) {
+                                if (!(group.variables.some(gv => gv.id === k))) {
+                                  next[k] = v;
+                                }
+                              }
+                              // Select this variable
+                              next[variable.id] = 1;
+                              return next;
+                            });
                           }}
                         />
                         <div className="flex-1">
@@ -1187,23 +1198,6 @@ export default function SalesPage() {
                           <p className="text-sm text-slate-600">R$ {variable.additionalPrice.toFixed(2)}</p>
                           <p className="text-xs text-slate-500">Estoque: {variable.stock}</p>
                         </div>
-                        {(selectedVariables[variable.id] || 0) > 0 ? (
-                          <input
-                            type="number"
-                            min={1}
-                            max={variable.stock}
-                            value={selectedVariables[variable.id] || 1}
-                            aria-label={`Quantidade da variável ${variable.name}`}
-                            placeholder="Qtd"
-                            onChange={(event) =>
-                              setSelectedVariables((state) => ({
-                                ...state,
-                                [variable.id]: Math.max(1, Number(event.target.value) || 1),
-                              }))
-                            }
-                            className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm"
-                          />
-                        ) : null}
                       </div>
                     ))}
                   </div>
