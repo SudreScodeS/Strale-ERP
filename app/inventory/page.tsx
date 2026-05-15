@@ -382,7 +382,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Tabs de navegação */}
-        <div className="mb-6 inline-flex gap-1 rounded-xl p-1" style={{ background: 'var(--surface-muted)' }}>
+        <div className="mb-6 flex gap-1 rounded-xl p-1" style={{ background: 'var(--surface-muted)', width: 'fit-content' }}>
           <button
             type="button"
             onClick={() => setPageTab('list')}
