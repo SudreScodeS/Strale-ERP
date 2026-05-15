@@ -363,7 +363,7 @@ export default function InventoryPage() {
         ) : null}
 
         {/* Cards de resumo */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Produtos</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{stats.totalProducts}</p>
