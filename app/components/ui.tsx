@@ -241,10 +241,24 @@ export function Sidebar({ children }: SidebarProps) {
             priority
           />
           <div>
-            <h1 className="text-base font-bold" style={{ color: 'var(--sidebar-text-strong)', fontFamily: 'var(--font-alumni-sans)' }}>
+            <h1
+              className="text-xl font-bold uppercase"
+              style={{
+                color: 'var(--sidebar-text-strong)',
+                fontFamily: 'var(--font-alumni-sans)',
+                letterSpacing: '0.25em',
+              }}
+            >
               {globalConfig.systemName}
             </h1>
-            <p className="text-xs" style={{ color: 'var(--text-faint)', fontFamily: 'var(--font-alumni-sans)' }}>
+            <p
+              className="text-xs font-semibold uppercase"
+              style={{
+                color: 'var(--text-faint)',
+                fontFamily: 'var(--font-alumni-sans)',
+                letterSpacing: '0.35em',
+              }}
+            >
               {globalConfig.companyName}
             </p>
           </div>
