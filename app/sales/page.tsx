@@ -111,6 +111,7 @@ export default function SalesPage() {
   const [editOrderName, setEditOrderName] = useState('');
   const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
+  const [editDeliveryDate, setEditDeliveryDate] = useState('');
 
   // Urgência de entrega
   type Urgency = { label: string; color: string; bgColor: string; days: number };
@@ -736,6 +737,7 @@ export default function SalesPage() {
     setEditOrderName(selectedOrder.name);
     setEditItems(selectedOrder?.items.map(item => ({ ...item })));
     setEditLogoColors(selectedOrder?.logoCost > 0 ? Math.round(selectedOrder?.logoCost / (globalConfig.logoPricePerColor || 10)) : 0);
+    setEditDeliveryDate(selectedOrder?.deliveryDate || '');
   }
 
   function handleCancelEditOrder() {
@@ -743,6 +745,7 @@ export default function SalesPage() {
     setEditOrderName('');
     setEditItems([]);
     setEditLogoColors(0);
+    setEditDeliveryDate('');
   }
 
   function handleEditItemQuantity(index: number, newQuantity: number) {
@@ -780,13 +783,13 @@ export default function SalesPage() {
           totalPrice,
           logoCost,
         },
-        deliveryDate: selectedOrder?.deliveryDate,
+        deliveryDate: editDeliveryDate || selectedOrder?.deliveryDate,
       }),
     });
 
     const data = await safeJson(response);
     if (response.ok) {
-      const updatedOrder = data.order || { ...selectedOrder, name: editOrderName, items: editItems, totalCost, totalPrice, logoCost };
+      const updatedOrder = data.order || { ...selectedOrder, name: editOrderName, items: editItems, totalCost, totalPrice, logoCost, deliveryDate: editDeliveryDate || selectedOrder?.deliveryDate };
       setOrders(prev => prev.map(o => o.id === selectedOrder?.id ? { ...o, ...updatedOrder } : o));
       setSelectedOrder(prev => prev ? { ...prev, ...updatedOrder } : null);
       setEditingOrder(false);
@@ -1537,14 +1540,25 @@ export default function SalesPage() {
               /* ==================== MODO EDIÇÃO ==================== */
               <div className="mt-6 space-y-6">
                 {/* Nome do pedido editável */}
-                <label className="block space-y-2 text-slate-700">
-                  <span className="text-sm font-semibold">Nome do pedido</span>
-                  <input
-                    value={editOrderName}
-                    onChange={(e) => setEditOrderName(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
-                  />
-                </label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block space-y-2 text-slate-700">
+                    <span className="text-sm font-semibold">Nome do pedido</span>
+                    <input
+                      value={editOrderName}
+                      onChange={(e) => setEditOrderName(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                    />
+                  </label>
+                  <label className="block space-y-2 text-slate-700">
+                    <span className="text-sm font-semibold">Data de entrega</span>
+                    <input
+                      type="date"
+                      value={editDeliveryDate}
+                      onChange={(e) => setEditDeliveryDate(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                    />
+                  </label>
+                </div>
 
                 {/* Itens editáveis */}
                 <div>

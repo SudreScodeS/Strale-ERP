@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -100,6 +101,16 @@ export default function QuotesPage() {
 
   const [configLoaded, setConfigLoaded] = useState(false);
   const [formIsDirty, setFormIsDirty] = useState(false);
+
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (selectedQuote || convertingQuote) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => { document.body.classList.remove('modal-open'); };
+  }, [selectedQuote, convertingQuote]);
 
   // Track if any form field has changed from initial state
   useEffect(() => {
@@ -781,9 +792,17 @@ export default function QuotesPage() {
         {/* ============================================ */}
         {/* MODAL DE DETALHES DO ORÇAMENTO */}
         {/* ============================================ */}
-        {selectedQuote && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedQuote(null)}>
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+        {selectedQuote ? createPortal(
+          <div
+            className="modal-overlay"
+            onClick={() => setSelectedQuote(null)}
+          >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
+            <div
+              className="modal-content rounded-xl bg-white p-8 shadow-2xl"
+              style={{ maxHeight: '90vh', width: '100%', maxWidth: '42rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
+              onClick={e => e.stopPropagation()}
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Detalhes do orçamento</p>
@@ -901,14 +920,23 @@ export default function QuotesPage() {
               </div>
             </div>
           </div>
-        )}
+          </div>
+        , document.body) : null}
 
         {/* ============================================ */}
         {/* MODAL DE CONFIRMAÇÃO DE CONVERSÃO */}
         {/* ============================================ */}
-        {convertingQuote && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}>
-            <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+        {convertingQuote ? createPortal(
+          <div
+            className="modal-overlay"
+            onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
+          >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
+            <div
+              className="modal-content rounded-xl bg-white p-8 shadow-2xl"
+              style={{ maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
+              onClick={e => e.stopPropagation()}
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Converter em Pedido</p>
@@ -960,7 +988,8 @@ export default function QuotesPage() {
               </div>
             </div>
           </div>
-        )}
+          </div>
+        , document.body) : null}
 
         {statusMessage && (
           <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
