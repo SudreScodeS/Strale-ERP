@@ -866,7 +866,6 @@ export default function ReportsPage() {
       setSortCol(colKey);
       setSortDir('asc');
     }
-    setSortPreset('');
   }
 
   function handlePresetChange(presetKey: string) {
