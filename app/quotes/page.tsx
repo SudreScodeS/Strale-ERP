@@ -258,7 +258,18 @@ export default function QuotesPage() {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedVariables, setSelectedVariables] = useState<Record<string, number>>(savedForm?.selectedVariables || {});
   const [quantity, setQuantity] = useState(savedForm?.quantity || 100);
-  const [logoColors, setLogoColors] = useState(savedForm?.logoColors || 1);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
+  const [logoAnalysisResult, setLogoAnalysisResult] = useState<{
+    totalColors: number;
+    colors: { hex: string; rgb: { r: number; g: number; b: number }; name?: string; pixelFraction: number }[];
+    productColor: string | null;
+    complexity: string;
+    description: string;
+    source?: string;
+  } | null>(null);
+  const [logoAnalyzing, setLogoAnalyzing] = useState(false);
+  const [logoAnalysisError, setLogoAnalysisError] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
 
   // Dimensões e impressão
@@ -290,7 +301,7 @@ export default function QuotesPage() {
       !!notes.trim() ||
       validDays !== globalConfig.quoteValidityDays ||
       !!deliveryDate ||
-      logoColors !== 1 ||
+      !!logoFile ||
       cartItems.length > 0 ||
       useDimensions ||
       !!printType ||
@@ -299,7 +310,7 @@ export default function QuotesPage() {
       Object.keys(selectedVariables).some(k => (selectedVariables[k] || 0) > 0) ||
       quantity !== 100;
     setFormIsDirty(isDirty);
-  }, [customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems, useDimensions, printType, printPosition, printSize, selectedVariables, quantity]);
+  }, [customerName, quoteName, notes, validDays, deliveryDate, logoFile, cartItems, useDimensions, printType, printPosition, printSize, selectedVariables, quantity]);
 
   // Load server config so printTypes and pricing rules are up to date
   // Also reload when page becomes visible (user may have changed config in admin)
@@ -324,6 +335,55 @@ export default function QuotesPage() {
     };
   }, []);
 
+  // Análise de cores da logo via IA
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreviewUrl('');
+      setLogoAnalysisResult(null);
+      setLogoAnalysisError('');
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(logoFile);
+    setLogoPreviewUrl(objectUrl);
+
+    setLogoAnalyzing(true);
+    setLogoAnalysisError('');
+    setLogoAnalysisResult(null);
+
+    const analyzeLogo = async () => {
+      try {
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+
+        const response = await fetch('/api/logo-analysis', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setLogoAnalysisError(data.error || 'Falha na análise da logo.');
+          return;
+        }
+
+        setLogoAnalysisResult(data);
+      } catch {
+        setLogoAnalysisError('Erro ao conectar com o serviço de análise.');
+      } finally {
+        setLogoAnalyzing(false);
+      }
+    };
+
+    void analyzeLogo();
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logoFile]);
+
+  const logoColors = logoAnalysisResult?.totalColors ?? 0;
+
   const printTypesList = useMemo(() => [
     { value: '', label: 'Sem impressão' },
     ...globalConfig.printTypes,
@@ -339,12 +399,12 @@ export default function QuotesPage() {
   useEffect(() => {
     try {
       sessionStorage.setItem(QUOTES_FORM_KEY, JSON.stringify({
-        customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems,
+        customerName, quoteName, notes, validDays, deliveryDate, cartItems,
         useDimensions, dimWidth, dimHeight, printType, printPosition, printSize,
         selectedVariables, quantity,
       }));
     } catch {}
-  }, [customerName, quoteName, notes, validDays, deliveryDate, logoColors, cartItems, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize, selectedVariables, quantity]);
+  }, [customerName, quoteName, notes, validDays, deliveryDate, logoFile, cartItems, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize, selectedVariables, quantity]);
 
   function clearFormState() {
     setCustomerName('');
@@ -354,7 +414,10 @@ export default function QuotesPage() {
     setDeliveryDate('');
     setSelectedVariables({});
     setQuantity(100);
-    setLogoColors(1);
+    setLogoFile(null);
+    setLogoPreviewUrl('');
+    setLogoAnalysisResult(null);
+    setLogoAnalysisError('');
     setCartItems([]);
     setUseDimensions(false);
     setDimWidth(30);
@@ -890,11 +953,54 @@ export default function QuotesPage() {
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                   <p className="text-xs text-slate-400">Opcional — pode ser definida ao converter em pedido.</p>
                 </label>
-                <label className="space-y-2 text-slate-700">
-                  <span>Cores da logo</span>
-                  <input type="number" min={0} max={10} value={logoColors} onChange={e => setLogoColors(Number(e.target.value))}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
-                </label>
+                <div className="space-y-2 text-slate-700">
+                  <span>Logo (análise automática de cores)</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff"
+                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                  />
+                  {logoAnalyzing ? (
+                    <div className="flex items-center gap-2 text-sm text-[var(--brand)]">
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Analisando cores da logo…
+                    </div>
+                  ) : logoAnalysisError ? (
+                    <p className="text-xs text-red-600">{logoAnalysisError}</p>
+                  ) : logoAnalysisResult ? (
+                    <div className="space-y-2">
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                        <p className="text-xs font-semibold text-emerald-800">
+                          {logoColors} {logoColors === 1 ? 'cor detectada' : 'cores detectadas'}
+                        </p>
+                        <p className="text-xs text-emerald-700">{logoAnalysisResult.description}</p>
+                      </div>
+                      {logoAnalysisResult.colors.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {logoAnalysisResult.colors.map((color, i) => (
+                            <div key={i} className="group relative">
+                              <span
+                                className="inline-block h-6 w-6 rounded-full border-2 border-white shadow-sm"
+                                style={{ backgroundColor: color.hex }}
+                              />
+                              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
+                                {color.hex}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : logoPreviewUrl ? (
+                    <p className="text-xs text-slate-500">Aguardando análise…</p>
+                  ) : (
+                    <p className="text-xs text-slate-400">Faça upload da logo para detectar as cores automaticamente.</p>
+                  )}
+                </div>
                 <label className="space-y-2 text-slate-700 md:col-span-2">
                   <span>Observações</span>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
