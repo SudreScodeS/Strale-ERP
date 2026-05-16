@@ -4,7 +4,7 @@ import { requireRole } from '../../lib/auth';
 
 export async function GET(request: Request) {
   try {
-    requireRole(request, ['admin']);
+    requireRole(request, ['admin', 'seller']);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unauthorized' },

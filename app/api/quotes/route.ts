@@ -97,6 +97,7 @@ export async function POST(request: Request) {
       deliveryDate,
     );
 
+    const creator = userData.getById(payload.userId);
     logActivity(payload.userId, creator?.username || payload.userId, 'create', 'quote', `Criou orçamento "${name}"`, quote.id, `Cliente: ${customerName}`);
     return NextResponse.json({ quote });
   } catch (error) {
