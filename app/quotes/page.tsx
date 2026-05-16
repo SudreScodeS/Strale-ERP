@@ -247,7 +247,6 @@ export default function QuotesPage() {
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
   const [convertQuoteName, setConvertQuoteName] = useState('');
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
-  const [showVariableWarning, setShowVariableWarning] = useState(false);
 
   // Restore form state from sessionStorage
   const savedForm = typeof window !== 'undefined' ? (() => {
@@ -293,13 +292,13 @@ export default function QuotesPage() {
 
   // Lock body scroll when any modal is open
   useEffect(() => {
-    if (selectedQuote || convertingQuote || showVariableWarning) {
+    if (selectedQuote || convertingQuote) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
     }
     return () => { document.body.classList.remove('modal-open'); };
-  }, [selectedQuote, convertingQuote, showVariableWarning]);
+  }, [selectedQuote, convertingQuote]);
 
   // Track if any form field has changed from initial state
   useEffect(() => {
@@ -472,6 +471,22 @@ export default function QuotesPage() {
     return selectedProduct.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0);
   }, [selectedProduct, selectedVariables]);
 
+  // Avisos de grupos sem seleção (igual pedidos)
+  const groupQuantityWarnings = useMemo(() => {
+    if (!selectedProduct) return [];
+    return selectedProduct.groups
+      .map((group) => {
+        const selectedCount = group.variables.filter((v) => (selectedVariables[v.id] || 0) > 0).length;
+        return {
+          groupId: group.id,
+          groupName: group.name,
+          selectedCount,
+          ok: selectedCount === 1,
+        };
+      })
+      .filter((item) => !item.ok);
+  }, [selectedProduct, selectedVariables]);
+
   // Cálculo de preço do item atual
   const currentItemUnitCost = useMemo(() => {
     if (!selectedProduct) return 0;
@@ -506,7 +521,6 @@ export default function QuotesPage() {
       });
 
     if (selectedEntries.length === 0) {
-      setShowVariableWarning(true);
       return;
     }
 
@@ -1074,6 +1088,17 @@ export default function QuotesPage() {
                 </div>
               )}
 
+              {/* Aviso de variáveis não selecionadas */}
+              {groupQuantityWarnings.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {groupQuantityWarnings.map((warning) => (
+                    <p key={warning.groupId}>
+                      Selecione uma opção de {warning.groupName.toLowerCase()}.
+                    </p>
+                  ))}
+                </div>
+              )}
+
               {/* Dimensões */}
               <div className="mt-4 rounded-2xl border border-slate-200 p-4">
                 <label className="flex items-center gap-2 text-slate-700">
@@ -1413,50 +1438,6 @@ export default function QuotesPage() {
           </div>
           </div>
         , document.body) : null}
-
-        {/* ============================================ */}
-        {/* MODAL DE AVISO: SELECIONAR VARIÁVEIS */}
-        {/* ============================================ */}
-        {showVariableWarning && createPortal(
-          <div
-            className="modal-overlay"
-            onClick={() => setShowVariableWarning(false)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
-              <div
-                className="modal-content rounded-xl bg-white p-8 shadow-2xl"
-                style={{ maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Atenção</p>
-                    <h3 className="mt-1 text-xl font-bold text-slate-900">Atenção</h3>
-                  </div>
-                  <button type="button" onClick={() => setShowVariableWarning(false)}
-                    className="rounded-lg p-2 transition-colors hover:opacity-80"
-                    style={{ color: 'var(--text-muted)' }}>✕</button>
-                </div>
-
-                <div className="mt-4">
-                  <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
-                    <p className="text-sm font-semibold text-amber-800">
-                      Selecione as variáveis do produto antes de adicionar ao orçamento.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button type="button" onClick={() => setShowVariableWarning(false)}
-                    className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all hover:opacity-80"
-                    style={{ background: 'var(--brand)', color: '#fff' }}>
-                    Fechar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        , document.body)}
 
         {/* Toast de undo para remoção de orçamentos */}
         {undoData && createPortal(
