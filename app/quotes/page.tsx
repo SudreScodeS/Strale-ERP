@@ -238,6 +238,7 @@ export default function QuotesPage() {
   const [convertingQuote, setConvertingQuote] = useState<QuoteView | null>(null);
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
   const [convertQuoteName, setConvertQuoteName] = useState('');
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
 
   // Restore form state from sessionStorage
   const savedForm = typeof window !== 'undefined' ? (() => {
@@ -553,6 +554,47 @@ export default function QuotesPage() {
     } catch { setStatusMessage('Erro de conexão.'); }
   }
 
+  async function handleBulkDeleteQuotes() {
+    if (selectedQuoteIds.size === 0) return;
+    const count = selectedQuoteIds.size;
+    if (!confirm(`Tem certeza que deseja remover ${count} orçamento(s)? Essa ação não pode ser desfeita.`)) return;
+
+    let removed = 0;
+    let errors = 0;
+    for (const id of selectedQuoteIds) {
+      try {
+        const response = await fetch(`/api/quotes?quoteId=${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (response.ok) removed++;
+        else errors++;
+      } catch { errors++; }
+    }
+
+    setSelectedQuoteIds(new Set());
+    setStatusMessage(errors > 0
+      ? `${removed} removido(s), ${errors} erro(s).`
+      : `${removed} orçamento(s) removido(s) com sucesso!`);
+    await loadQuotes();
+  }
+
+  function toggleQuoteSelection(id: string) {
+    setSelectedQuoteIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllQuotes() {
+    setSelectedQuoteIds(prev => {
+      if (prev.size === filteredQuotes.length) return new Set();
+      return new Set(filteredQuotes.map(q => q.id));
+    });
+  }
+
   function handleOpenConvertModal(quote: QuoteView) {
     setConvertingQuote(quote);
     setConvertDeliveryDate(quote.deliveryDate || '');
@@ -655,6 +697,32 @@ export default function QuotesPage() {
               <p className="text-sm text-slate-500">Nenhum orçamento encontrado.</p>
             ) : (
               <div className="space-y-4">
+                {/* Barra de seleção múltipla */}
+                <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedQuoteIds.size === filteredQuotes.length && filteredQuotes.length > 0}
+                      onChange={toggleAllQuotes}
+                      className="h-4 w-4 rounded border-slate-300"
+                    />
+                    <span>Selecionar todos</span>
+                  </label>
+                  {selectedQuoteIds.size > 0 && (
+                    <>
+                      <span className="text-xs text-slate-500">{selectedQuoteIds.size} selecionado(s)</span>
+                      <button
+                        type="button"
+                        onClick={() => void handleBulkDeleteQuotes()}
+                        className="ml-auto rounded-lg px-4 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                        style={{ background: 'var(--danger)', color: '#fff' }}
+                      >
+                        🗑 Remover selecionados
+                      </button>
+                    </>
+                  )}
+                </div>
+
                 {filteredQuotes.map(quote => {
                   const sl = statusLabel(quote.status);
                   return (
@@ -662,7 +730,15 @@ export default function QuotesPage() {
                       className="cursor-pointer rounded-xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-md"
                       onClick={() => setSelectedQuote(quote)}>
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <div>
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedQuoteIds.has(quote.id)}
+                            onChange={() => toggleQuoteSelection(quote.id)}
+                            onClick={e => e.stopPropagation()}
+                            className="mt-1 h-4 w-4 rounded border-slate-300 cursor-pointer"
+                          />
+                          <div>
                           <p className="font-semibold text-slate-900">{quote.name}</p>
                           <p className="text-sm text-slate-500">Cliente: {quote.customerName}</p>
                           <p className="text-sm text-slate-500">Criado por: {quote.createdByName || quote.userId}</p>
@@ -678,6 +754,7 @@ export default function QuotesPage() {
                               Entrega: {new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                             </p>
                           )}
+                          </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2" onClick={e => e.stopPropagation()}>
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${sl.color}`}>{sl.text}</span>

@@ -107,6 +107,7 @@ export default function SalesPage() {
   const [sortBy, setSortBy] = useState<'createdAt-desc' | 'createdAt-asc' | 'deliveryDate-asc' | 'deliveryDate-desc' | 'price-desc' | 'price-asc' | 'urgency'>('createdAt-desc');
   const [activeSection, setActiveSection] = useState<'search' | 'create'>('search');
   const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [editingOrder, setEditingOrder] = useState(false);
   const [editOrderName, setEditOrderName] = useState('');
   const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
@@ -816,6 +817,59 @@ export default function SalesPage() {
     }
   }
 
+  async function handleBulkDeleteOrders() {
+    if (selectedOrderIds.size === 0) return;
+
+    const idsToDelete = [...selectedOrderIds].filter(id => {
+      const order = orders.find(o => o.id === id);
+      return order?.status === 'cancelled';
+    });
+
+    if (idsToDelete.length === 0) {
+      setStatusMessage('Nenhum pedido cancelado selecionado. Apenas pedidos cancelados podem ser removidos.');
+      return;
+    }
+
+    if (!confirm(`Tem certeza que deseja remover ${idsToDelete.length} pedido(s) cancelado(s)? Essa ação não pode ser desfeita.`)) return;
+
+    let removed = 0;
+    let errors = 0;
+    for (const id of idsToDelete) {
+      try {
+        const response = await fetch(`/api/orders?orderId=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (response.ok) removed++;
+        else errors++;
+      } catch { errors++; }
+    }
+
+    setSelectedOrderIds(new Set());
+    if (removed > 0) {
+      setOrders(prev => prev.filter(o => !idsToDelete.includes(o.id)));
+    }
+    setStatusMessage(errors > 0
+      ? `${removed} removido(s), ${errors} erro(s).`
+      : `${removed} pedido(s) removido(s) com sucesso!`);
+  }
+
+  function toggleOrderSelection(id: string) {
+    setSelectedOrderIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllOrders() {
+    setSelectedOrderIds(prev => {
+      if (prev.size === filteredOrders.length) return new Set();
+      return new Set(filteredOrders.map(o => o.id));
+    });
+  }
+
   const PAGE_PATH = '/sales';
   const DEFAULT_SECTIONS: SectionConfig[] = [
     { id: 'search-section', visible: true, order: 0, colSpan: 2 },
@@ -930,6 +984,32 @@ export default function SalesPage() {
             <p className="text-sm text-slate-500">Nenhum pedido registrado ainda.</p>
           ) : (
             <div className="space-y-4">
+              {/* Barra de seleção múltipla */}
+              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrderIds.size === filteredOrders.length && filteredOrders.length > 0}
+                    onChange={toggleAllOrders}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  <span>Selecionar todos</span>
+                </label>
+                {selectedOrderIds.size > 0 && (
+                  <>
+                    <span className="text-xs text-slate-500">{selectedOrderIds.size} selecionado(s)</span>
+                    <button
+                      type="button"
+                      onClick={() => void handleBulkDeleteOrders()}
+                      className="ml-auto rounded-lg px-4 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--danger)', color: '#fff' }}
+                    >
+                      🗑 Remover selecionados (cancelados)
+                    </button>
+                  </>
+                )}
+              </div>
+
               {filteredOrders.map((order) => (
                 <div
                   key={order.id}
@@ -940,7 +1020,15 @@ export default function SalesPage() {
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedOrder(order); }}
                 >
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrderIds.has(order.id)}
+                        onChange={() => toggleOrderSelection(order.id)}
+                        onClick={e => e.stopPropagation()}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 cursor-pointer"
+                      />
+                      <div>
                       <p className="font-semibold text-slate-900">{order.name || `Pedido ${order.id}`}</p>
                       <p className="text-sm text-slate-500">ID: {order.id}</p>
                       <p className="text-sm text-slate-500">Criado por: {order.createdByName || order.userId}</p>
@@ -968,6 +1056,7 @@ export default function SalesPage() {
                           ))}
                         </div>
                       ) : null}
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       <span className="rounded-full px-3 py-1 text-sm font-medium" style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>Status: {order.status}</span>
