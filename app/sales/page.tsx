@@ -1953,17 +1953,24 @@ export default function SalesPage() {
         </div>
       , document.body) : null}
 
-        {/* Toast de status */}
+        {/* Toast de status — barra fixa no topo */}
         {statusMessage && (
-          <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
-            {statusMessage}
-            <button type="button" onClick={() => setStatusMessage('')} className="ml-3 text-white/60 hover:text-white">✕</button>
+          <div
+            className="fixed top-4 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-3 rounded-xl px-5 py-3 text-sm font-medium shadow-lg"
+            style={{
+              background: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-bg, #fef2f2)' : 'var(--success-bg, #f0fdf4)',
+              color: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)',
+              border: `1px solid ${statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-border, #fecaca)' : 'var(--success-border, #bbf7d0)'}`,
+            }}
+          >
+            <span>{statusMessage}</span>
+            <button type="button" onClick={() => setStatusMessage('')} className="ml-1 opacity-60 hover:opacity-100">✕</button>
           </div>
         )}
 
         {/* Toast de undo para remoção de pedidos */}
         {undoOrderData && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg" style={statusMessage ? { bottom: '4.5rem' } : undefined}>
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
             <span>{undoOrderData.message}</span>
             <button
               type="button"
