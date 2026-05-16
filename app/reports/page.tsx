@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
-import { getAuthHeaders } from '../lib/authClient';
+import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 
 interface ReportRow {
   [key: string]: string | number | boolean | null;
@@ -637,6 +637,10 @@ function CompactReportCard({
 // ==========================================
 
 export default function ReportsPage() {
+  const currentUser = getCurrentUser();
+  const isSeller = currentUser?.role === 'seller';
+  const availableReports = isSeller ? REPORTS.filter(r => r.id === 'sales' || r.id === 'quotes') : REPORTS;
+
   const [loading, setLoading] = useState<string | null>(null);
   const [data, setData] = useState<Record<string, ReportRow[]>>({});
   const [rawData, setRawData] = useState<Record<string, ReportRow[]>>({});
@@ -788,11 +792,11 @@ export default function ReportsPage() {
   const stats = activeReport ? computeStats(previewData, activeReport.id) : null;
 
   return (
-    <ProtectedPage allowedRoles={['admin']}>
+    <ProtectedPage allowedRoles={['admin', 'seller']}>
       <div>
         <PageHeader
           title="Relatórios"
-          description="Gere relatórios estilizados para impressão ou exporte dados em CSV para análise externa."
+          description={isSeller ? "Seus relatórios de vendas e orçamentos." : "Gere relatórios estilizados para impressão ou exporte dados em CSV para análise externa."}
         />
 
         {/* Tabs */}
@@ -865,7 +869,7 @@ export default function ReportsPage() {
 
             {/* Report list */}
             <div className="space-y-2">
-              {REPORTS.map((report) => (
+              {availableReports.map((report) => (
                 <CompactReportCard
                   key={report.id}
                   report={report}

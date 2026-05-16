@@ -230,7 +230,7 @@ const navItems: NavItem[] = [
   { href: '/inventory', label: 'Estoque', icon: icons.inventory, roles: ['admin'], section: 'Operacoes' },
   { href: '/purchases', label: 'Compras', icon: icons.purchases, roles: ['admin'], section: 'Operacoes' },
   { href: '/finance', label: 'Financeiro', icon: icons.finance, roles: ['admin'], section: 'Financeiro' },
-  { href: '/reports', label: 'Relatórios', icon: icons.reports, roles: ['admin'], section: 'Financeiro' },
+  { href: '/reports', label: 'Relatórios', icon: icons.reports, roles: ['admin', 'seller'], section: 'Financeiro' },
   { href: '/demand-forecast', label: 'Previsao', icon: icons.forecast, roles: ['admin'], section: 'Financeiro' },
   { href: '/assistant', label: 'Assistente', icon: icons.assistant, roles: ['admin', 'seller'], section: 'Ferramentas' },
   { href: '/users', label: 'Usuarios', icon: icons.users, roles: ['admin'], section: 'Configuracoes' },

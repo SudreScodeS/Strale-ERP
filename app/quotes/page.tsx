@@ -1413,18 +1413,20 @@ export default function QuotesPage() {
           </div>
         , document.body) : null}
 
-        {/* Toast de status — barra fixa no topo */}
+        {/* Toast de status — barra fixa embaixo */}
         {statusMessage && (
           <div
-            className="fixed top-4 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-3 rounded-xl px-5 py-3 text-sm font-medium shadow-lg"
+            className="fixed bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-6 py-3"
             style={{
               background: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-bg, #fef2f2)' : 'var(--success-bg, #f0fdf4)',
-              color: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)',
-              border: `1px solid ${statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-border, #fecaca)' : 'var(--success-border, #bbf7d0)'}`,
+              borderTop: `2px solid ${statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)'}`,
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
             }}
           >
-            <span>{statusMessage}</span>
-            <button type="button" onClick={() => setStatusMessage('')} className="ml-1 opacity-60 hover:opacity-100">✕</button>
+            <span className="text-sm font-semibold" style={{ color: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)' }}>
+              {statusMessage.includes('Erro') || statusMessage.includes('erro') ? '✕' : '✓'} {statusMessage}
+            </span>
+            <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>✕</button>
           </div>
         )}
 
