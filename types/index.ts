@@ -197,6 +197,19 @@ export interface PrintType {
   label: string;  // Nome exibido (ex: 'Serigrafia')
 }
 
+export interface NotificationSettings {
+  orderCreated: boolean;
+  orderStatusChanged: boolean;
+  orderDelivered: boolean;
+  quoteCreated: boolean;
+  quoteStatusChanged: boolean;
+  stockAlert: boolean;
+  purchaseCreated: boolean;
+  purchaseReceived: boolean;
+  userLogin: boolean;
+  financialRecord: boolean;
+}
+
 export interface GlobalConfig {
   profitMargin: number; // Margem de lucro em % (ex: 20 = 20%)
   logoPricePerColor: number; // Preço por cor na logo em R$
@@ -208,6 +221,7 @@ export interface GlobalConfig {
   printPricingRules: PrintPricingRule[]; // Regras de preço de impressão
   printTypes: PrintType[]; // Tipos de impressão disponíveis
   pricePerCm2?: number; // Preço por cm² para cálculo por dimensão (opcional)
+  notifications?: NotificationSettings; // Configurações de notificação
 }
 
 // ==========================================

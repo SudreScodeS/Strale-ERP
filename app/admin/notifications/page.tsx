@@ -5,6 +5,10 @@ import { PageHeader } from '../../components/ui';
 import { ProtectedPage } from '../../components/protected';
 import { getAuthHeaders } from '../../lib/authClient';
 
+// ==========================================
+// TYPES
+// ==========================================
+
 interface ActivityLog {
   id: string;
   timestamp: string;
@@ -16,6 +20,23 @@ interface ActivityLog {
   description: string;
   details?: string;
 }
+
+interface NotificationSettings {
+  orderCreated: boolean;
+  orderStatusChanged: boolean;
+  orderDelivered: boolean;
+  quoteCreated: boolean;
+  quoteStatusChanged: boolean;
+  stockAlert: boolean;
+  purchaseCreated: boolean;
+  purchaseReceived: boolean;
+  userLogin: boolean;
+  financialRecord: boolean;
+}
+
+// ==========================================
+// CONSTANTS
+// ==========================================
 
 const ACTION_ICONS: Record<string, string> = {
   create: '➕', update: '✏️', delete: '🗑️', convert: '🔄',
@@ -37,11 +58,79 @@ const ENTITY_LABELS: Record<string, string> = {
   user: 'Usuário', config: 'Configuração', invoice: 'Nota Fiscal', supplier: 'Fornecedor', other: 'Outro',
 };
 
+const NOTIFICATION_ITEMS: { key: keyof NotificationSettings; label: string; description: string; icon: string }[] = [
+  { key: 'orderCreated', label: 'Novo Pedido', description: 'Quando um novo pedido é criado no sistema', icon: '🛒' },
+  { key: 'orderStatusChanged', label: 'Status do Pedido', description: 'Quando o status de um pedido muda (pendente, concluído, cancelado)', icon: '🔁' },
+  { key: 'orderDelivered', label: 'Entrega do Pedido', description: 'Quando um pedido é marcado como entregue', icon: '📦' },
+  { key: 'quoteCreated', label: 'Novo Orçamento', description: 'Quando um novo orçamento é criado', icon: '📋' },
+  { key: 'quoteStatusChanged', label: 'Status do Orçamento', description: 'Quando o status de um orçamento muda (enviado, aprovado, rejeitado)', icon: '📝' },
+  { key: 'stockAlert', label: 'Alerta de Estoque', description: 'Quando o estoque de uma variável atinge nível crítico ou de atenção', icon: '⚠️' },
+  { key: 'purchaseCreated', label: 'Nova Compra', description: 'Quando um pedido de compra é criado para reposição de estoque', icon: '🛍️' },
+  { key: 'purchaseReceived', label: 'Compra Recebida', description: 'Quando um pedido de compra é marcado como recebido', icon: '✅' },
+  { key: 'userLogin', label: 'Login de Usuário', description: 'Quando um usuário faz login no sistema', icon: '🔑' },
+  { key: 'financialRecord', label: 'Registro Financeiro', description: 'Quando uma transação financeira é registrada (venda, despesa, compra)', icon: '💰' },
+];
+
+// ==========================================
+// TOGGLE COMPONENT
+// ==========================================
+
+function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      onClick={() => onChange(!enabled)}
+      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none"
+      style={{
+        background: enabled ? 'var(--brand)' : 'var(--border)',
+      }}
+    >
+      <span
+        className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+        style={{
+          transform: enabled ? 'translateX(22px)' : 'translateX(2px)',
+          marginTop: '2px',
+        }}
+      />
+    </button>
+  );
+}
+
+// ==========================================
+// MAIN PAGE
+// ==========================================
+
 export default function NotificationsPage() {
+  const [activeTab, setActiveTab] = useState<'search' | 'config'>('search');
+
+  // Activity log state
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState('all');
   const [filterEntity, setFilterEntity] = useState('all');
+
+  // Notification settings state
+  const [settings, setSettings] = useState<NotificationSettings>({
+    orderCreated: true,
+    orderStatusChanged: true,
+    orderDelivered: true,
+    quoteCreated: true,
+    quoteStatusChanged: true,
+    stockAlert: true,
+    purchaseCreated: true,
+    purchaseReceived: true,
+    userLogin: false,
+    financialRecord: true,
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState('');
+  const [settingsMessageType, setSettingsMessageType] = useState<'success' | 'error'>('success');
+
+  // ==========================================
+  // DATA LOADING
+  // ==========================================
 
   async function loadLogs() {
     setLoading(true);
@@ -53,9 +142,66 @@ export default function NotificationsPage() {
     setLoading(false);
   }
 
+  async function loadSettings() {
+    setSettingsLoading(true);
+    try {
+      const res = await fetch('/api/config', { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (res.ok && data.config?.notifications) {
+        setSettings(data.config.notifications);
+      }
+    } catch { /* ignore */ }
+    setSettingsLoading(false);
+  }
+
   useEffect(() => {
     void loadLogs();
+    void loadSettings();
   }, []);
+
+  // ==========================================
+  // SETTINGS SAVE
+  // ==========================================
+
+  async function handleSaveSettings() {
+    setSettingsMessage('');
+    try {
+      const res = await fetch('/api/config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ notifications: settings }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSettingsMessage('Configurações de notificação salvas com sucesso!');
+        setSettingsMessageType('success');
+      } else {
+        setSettingsMessage(data.error || 'Erro ao salvar configurações.');
+        setSettingsMessageType('error');
+      }
+    } catch {
+      setSettingsMessage('Erro ao conectar com o servidor.');
+      setSettingsMessageType('error');
+    }
+  }
+
+  function toggleSetting(key: keyof NotificationSettings) {
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function toggleAll(enabled: boolean) {
+    setSettings(prev => {
+      const next = { ...prev };
+      for (const key of Object.keys(next)) {
+        (next as Record<string, boolean>)[key] = enabled;
+      }
+      return next;
+    });
+  }
+
+  // ==========================================
+  // FILTERED LOGS
+  // ==========================================
 
   const filteredLogs = logs.filter(log => {
     if (filterAction !== 'all' && log.action !== filterAction) return false;
@@ -63,7 +209,6 @@ export default function NotificationsPage() {
     return true;
   });
 
-  // Group logs by date
   const groupedLogs: Record<string, ActivityLog[]> = {};
   filteredLogs.forEach(log => {
     const date = new Date(log.timestamp).toLocaleDateString('pt-BR');
@@ -71,107 +216,257 @@ export default function NotificationsPage() {
     groupedLogs[date].push(log);
   });
 
+  const enabledCount = Object.values(settings).filter(Boolean).length;
+  const totalCount = Object.values(settings).length;
+
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
-        <PageHeader title="Notificações" description="Histórico completo de ações realizadas no sistema." />
+        <PageHeader title="Notificações" description="Gerencie alertas e visualize o histórico de ações do sistema." />
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <select
-            value={filterAction}
-            onChange={e => setFilterAction(e.target.value)}
-            className="rounded-lg border px-3 py-2 text-sm"
-            style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-          >
-            <option value="all">Todas as ações</option>
-            {Object.entries(ACTION_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-
-          <select
-            value={filterEntity}
-            onChange={e => setFilterEntity(e.target.value)}
-            className="rounded-lg border px-3 py-2 text-sm"
-            style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-          >
-            <option value="all">Todos os tipos</option>
-            {Object.entries(ENTITY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-
+        {/* Tab Toggle Bar */}
+        <div
+          className="mb-6 inline-flex gap-1 rounded-xl p-1"
+          style={{ background: 'var(--surface-muted)' }}
+        >
           <button
-            onClick={() => void loadLogs()}
-            className="rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-            style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+            type="button"
+            onClick={() => setActiveTab('search')}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{
+              background: activeTab === 'search' ? 'var(--card-bg)' : 'transparent',
+              color: activeTab === 'search' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: activeTab === 'search' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
           >
-            Atualizar
+            Buscar notificações
           </button>
-
-          <span className="ml-auto text-xs" style={{ color: 'var(--text-faint)' }}>
-            {filteredLogs.length} registro{filteredLogs.length !== 1 ? 's' : ''}
-          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('config')}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{
+              background: activeTab === 'config' ? 'var(--card-bg)' : 'transparent',
+              color: activeTab === 'config' ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: activeTab === 'config' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            Configurar notificações
+          </button>
         </div>
 
-        {/* Logs grouped by date */}
-        {loading ? (
-          <div className="py-16 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
-            Carregando...
-          </div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="py-16 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
-            Nenhuma atividade registrada.
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedLogs).map(([date, dateLogs]) => (
-              <div key={date}>
-                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
-                  {date}
-                </h3>
-                <div className="overflow-hidden rounded-xl" style={{ border: '1px solid var(--border)' }}>
-                  {dateLogs.map((log, i) => {
-                    const timeStr = new Date(log.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    return (
-                      <div
-                        key={log.id}
-                        className="flex items-start gap-4 px-5 py-3.5 transition-colors"
-                        style={{
-                          borderBottom: i < dateLogs.length - 1 ? '1px solid var(--border)' : 'none',
-                          background: 'var(--card-bg)',
-                        }}
-                      >
-                        <span
-                          className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm"
-                          style={{ background: `${ACTION_COLORS[log.action] || '#6b7280'}12`, color: ACTION_COLORS[log.action] || '#6b7280' }}
-                        >
-                          {ACTION_ICONS[log.action] || '📌'}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                            <span className="font-semibold">{log.username}</span>
-                            {' · '}
-                            {log.description}
-                          </p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-faint)' }}>
-                            <span className="rounded px-1.5 py-0.5 text-xs font-medium" style={{ background: `${ACTION_COLORS[log.action] || '#6b7280'}12`, color: ACTION_COLORS[log.action] || '#6b7280' }}>
-                              {ACTION_LABELS[log.action] || log.action}
-                            </span>
-                            <span className="rounded px-1.5 py-0.5 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)' }}>
-                              {ENTITY_LABELS[log.entity] || log.entity}
-                            </span>
-                            <span>{timeStr}</span>
-                            {log.details && <span>· {log.details}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        {/* ==========================================
+            TAB: BUSCAR NOTIFICAÇÕES
+            ========================================== */}
+        {activeTab === 'search' && (
+          <div>
+            {/* Filters */}
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <select
+                value={filterAction}
+                onChange={e => setFilterAction(e.target.value)}
+                className="rounded-lg border px-3 py-2 text-sm"
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              >
+                <option value="all">Todas as ações</option>
+                {Object.entries(ACTION_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+
+              <select
+                value={filterEntity}
+                onChange={e => setFilterEntity(e.target.value)}
+                className="rounded-lg border px-3 py-2 text-sm"
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              >
+                <option value="all">Todos os tipos</option>
+                {Object.entries(ENTITY_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => void loadLogs()}
+                className="rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+              >
+                Atualizar
+              </button>
+
+              <span className="ml-auto text-xs" style={{ color: 'var(--text-faint)' }}>
+                {filteredLogs.length} registro{filteredLogs.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {/* Logs grouped by date */}
+            {loading ? (
+              <div className="py-16 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
+                Carregando...
               </div>
-            ))}
+            ) : filteredLogs.length === 0 ? (
+              <div className="py-16 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
+                Nenhuma atividade registrada.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(groupedLogs).map(([date, dateLogs]) => (
+                  <div key={date}>
+                    <h3 className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
+                      {date}
+                    </h3>
+                    <div className="overflow-hidden rounded-xl" style={{ border: '1px solid var(--border)' }}>
+                      {dateLogs.map((log, i) => {
+                        const timeStr = new Date(log.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        return (
+                          <div
+                            key={log.id}
+                            className="flex items-start gap-4 px-5 py-3.5 transition-colors"
+                            style={{
+                              borderBottom: i < dateLogs.length - 1 ? '1px solid var(--border)' : 'none',
+                              background: 'var(--card-bg)',
+                            }}
+                          >
+                            <span
+                              className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm"
+                              style={{ background: `${ACTION_COLORS[log.action] || '#6b7280'}12`, color: ACTION_COLORS[log.action] || '#6b7280' }}
+                            >
+                              {ACTION_ICONS[log.action] || '📌'}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                                <span className="font-semibold">{log.username}</span>
+                                {' · '}
+                                {log.description}
+                              </p>
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-faint)' }}>
+                                <span className="rounded px-1.5 py-0.5 text-xs font-medium" style={{ background: `${ACTION_COLORS[log.action] || '#6b7280'}12`, color: ACTION_COLORS[log.action] || '#6b7280' }}>
+                                  {ACTION_LABELS[log.action] || log.action}
+                                </span>
+                                <span className="rounded px-1.5 py-0.5 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)' }}>
+                                  {ENTITY_LABELS[log.entity] || log.entity}
+                                </span>
+                                <span>{timeStr}</span>
+                                {log.details && <span>· {log.details}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ==========================================
+            TAB: CONFIGURAR NOTIFICAÇÕES
+            ========================================== */}
+        {activeTab === 'config' && (
+          <div>
+            {/* Status message */}
+            {settingsMessage && (
+              <div
+                className="mb-6 rounded-2xl p-4 text-sm font-medium"
+                style={{
+                  background: settingsMessageType === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                  color: settingsMessageType === 'success' ? 'var(--success)' : 'var(--danger)',
+                  border: `1px solid ${settingsMessageType === 'success' ? 'var(--success-border)' : 'var(--danger-border)'}`,
+                }}
+              >
+                {settingsMessage}
+              </div>
+            )}
+
+            {/* Header with bulk actions */}
+            <div
+              className="mb-6 flex items-center justify-between rounded-2xl p-5"
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+            >
+              <div>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Preferências de Notificação
+                </h3>
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {enabledCount} de {totalCount} notificações ativas
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleAll(true)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                >
+                  Ativar todas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleAll(false)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                >
+                  Desativar todas
+                </button>
+              </div>
+            </div>
+
+            {/* Notification toggles */}
+            <div
+              className="overflow-hidden rounded-2xl"
+              style={{ border: '1px solid var(--card-border)' }}
+            >
+              {NOTIFICATION_ITEMS.map((item, i) => (
+                <div
+                  key={item.key}
+                  className="flex items-center gap-4 px-5 py-4 transition-colors"
+                  style={{
+                    borderBottom: i < NOTIFICATION_ITEMS.length - 1 ? '1px solid var(--border)' : 'none',
+                    background: 'var(--card-bg)',
+                  }}
+                >
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-base"
+                    style={{ background: 'var(--surface-muted)' }}
+                  >
+                    {item.icon}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {item.label}
+                    </p>
+                    <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {item.description}
+                    </p>
+                  </div>
+                  <Toggle
+                    enabled={settings[item.key]}
+                    onChange={() => toggleSetting(item.key)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Save button */}
+            <div className="mt-6 flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => void handleSaveSettings()}
+                className="inline-flex h-11 items-center justify-center rounded-xl px-6 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md"
+                style={{ background: 'var(--brand)' }}
+              >
+                Salvar Configurações
+              </button>
+              <button
+                type="button"
+                onClick={() => void loadSettings()}
+                className="inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-medium transition-colors"
+                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+              >
+                Restaurar padrão
+              </button>
+            </div>
           </div>
         )}
       </div>

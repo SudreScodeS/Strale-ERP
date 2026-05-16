@@ -4,7 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GlobalConfig, PriceTier, PrintPricingRule, PrintType } from '../../types';
+import { GlobalConfig, PriceTier, PrintPricingRule, PrintType, NotificationSettings } from '../../types';
 
 const CONFIG_FILE = path.join(process.cwd(), 'data', 'config.json');
 
@@ -43,6 +43,19 @@ const DEFAULT_PRINT_TYPES: PrintType[] = [
   { value: 'dtf', label: 'DTF' },
 ];
 
+const DEFAULT_NOTIFICATIONS: NotificationSettings = {
+  orderCreated: true,
+  orderStatusChanged: true,
+  orderDelivered: true,
+  quoteCreated: true,
+  quoteStatusChanged: true,
+  stockAlert: true,
+  purchaseCreated: true,
+  purchaseReceived: true,
+  userLogin: false,
+  financialRecord: true,
+};
+
 const DEFAULTS: GlobalConfig = {
   profitMargin: 20,
   logoPricePerColor: 10,
@@ -54,6 +67,7 @@ const DEFAULTS: GlobalConfig = {
   printPricingRules: DEFAULT_PRINT_PRICING,
   printTypes: DEFAULT_PRINT_TYPES,
   pricePerCm2: 0.005,
+  notifications: DEFAULT_NOTIFICATIONS,
 };
 
 /**
@@ -118,6 +132,9 @@ export function updateServerConfig(updates: Partial<GlobalConfig>): GlobalConfig
   }
   if (typeof updates.pricePerCm2 === 'number' && updates.pricePerCm2 >= 0) {
     current.pricePerCm2 = updates.pricePerCm2;
+  }
+  if (updates.notifications && typeof updates.notifications === 'object') {
+    current.notifications = { ...(current.notifications || DEFAULT_NOTIFICATIONS), ...updates.notifications };
   }
 
   saveConfig(current);
