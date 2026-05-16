@@ -177,8 +177,9 @@ export async function PATCH(request: Request) {
 
     // Extrai dados da atualização
     const body = await request.json();
-    const { orderId, status, editData, delivered, deliveryDate } = body as {
-      orderId: string;
+    const { orderId, action, status, editData, delivered, deliveryDate, restoreData } = body as {
+      orderId?: string;
+      action?: 'restore';
       status?: Order['status'];
       editData?: {
         name: string;
@@ -189,7 +190,20 @@ export async function PATCH(request: Request) {
       };
       delivered?: boolean;
       deliveryDate?: string;
+      restoreData?: Order;
     };
+
+    // MODO RESTAURAR: reinsere pedido deletado
+    if (action === 'restore' && restoreData) {
+      const existing = orderData.getAll().find((entry) => entry.id === restoreData.id);
+      if (existing) {
+        return NextResponse.json({ error: 'Pedido já existe.' }, { status: 409 });
+      }
+      orderData.create(restoreData);
+      const restorer = userData.getById(payload.userId);
+      logActivity(payload.userId, restorer?.username || payload.userId, 'restore', 'order', `Restaurou pedido "${restoreData.name}"`, restoreData.id);
+      return NextResponse.json({ order: restoreData, message: 'Pedido restaurado com sucesso.' });
+    }
 
     // VALIDAÇÃO DOS DADOS
     if (!orderId) {

@@ -99,6 +99,7 @@ export default function SalesPage() {
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
   const [statusMessage, setStatusMessage] = useState('');
+  const [undoOrderData, setUndoOrderData] = useState<{ message: string; items: OrderView[]; timer: ReturnType<typeof setTimeout> } | null>(null);
   const [orders, setOrders] = useState<OrderView[]>([]);
   const [orderStatusUpdates, setOrderStatusUpdates] = useState<Record<string, Order['status']>>({});
   const [orderSearch, setOrderSearch] = useState('');
@@ -800,10 +801,35 @@ export default function SalesPage() {
     }
   }
 
+  async function handleUndoDeleteOrders(deletedItems: OrderView[]) {
+    if (undoOrderData?.timer) clearTimeout(undoOrderData.timer);
+    setUndoOrderData(null);
+    let restored = 0;
+    for (const order of deletedItems) {
+      try {
+        const resp = await fetch('/api/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ action: 'restore', restoreData: order }),
+        });
+        if (resp.ok) restored++;
+      } catch { /* skip */ }
+    }
+    setStatusMessage(`${restored} pedido(s) restaurado(s)!`);
+    await loadOrders();
+  }
+
+  function showOrderUndoToast(message: string, items: OrderView[]) {
+    if (undoOrderData?.timer) clearTimeout(undoOrderData.timer);
+    const timer = setTimeout(() => setUndoOrderData(null), 10000);
+    setUndoOrderData({ message, items, timer });
+  }
+
   async function handleDeleteCancelledOrder(orderId: string) {
-    const confirmed = window.confirm('Tem certeza que deseja remover este pedido cancelado? Essa ação não pode ser desfeita.');
+    const confirmed = window.confirm('Tem certeza que deseja remover este pedido cancelado?');
     if (!confirmed) return;
 
+    const orderToDelete = orders.find(o => o.id === orderId);
     const response = await fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
@@ -811,7 +837,8 @@ export default function SalesPage() {
     const data = await safeJson(response);
     if (response.ok) {
       setOrders((prev) => prev.filter((order) => order.id !== orderId));
-      setStatusMessage(data.message || 'Pedido removido com sucesso.');
+      if (orderToDelete) showOrderUndoToast(data.message || 'Pedido removido.', [orderToDelete]);
+      else setStatusMessage(data.message || 'Pedido removido com sucesso.');
     } else {
       setStatusMessage(data.error || 'Erro ao remover pedido.');
     }
@@ -830,17 +857,19 @@ export default function SalesPage() {
       return;
     }
 
-    if (!confirm(`Tem certeza que deseja remover ${idsToDelete.length} pedido(s) cancelado(s)? Essa ação não pode ser desfeita.`)) return;
+    if (!confirm(`Tem certeza que deseja remover ${idsToDelete.length} pedido(s) cancelado(s)?`)) return;
 
+    const deletedItems: OrderView[] = [];
     let removed = 0;
     let errors = 0;
     for (const id of idsToDelete) {
+      const orderToDelete = orders.find(o => o.id === id);
       try {
         const response = await fetch(`/api/orders?orderId=${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });
-        if (response.ok) removed++;
+        if (response.ok) { removed++; if (orderToDelete) deletedItems.push(orderToDelete); }
         else errors++;
       } catch { errors++; }
     }
@@ -848,10 +877,10 @@ export default function SalesPage() {
     setSelectedOrderIds(new Set());
     if (removed > 0) {
       setOrders(prev => prev.filter(o => !idsToDelete.includes(o.id)));
+      showOrderUndoToast(`${removed} pedido(s) removido(s).`, deletedItems);
+    } else if (errors > 0) {
+      setStatusMessage(`${errors} erro(s) ao remover.`);
     }
-    setStatusMessage(errors > 0
-      ? `${removed} removido(s), ${errors} erro(s).`
-      : `${removed} pedido(s) removido(s) com sucesso!`);
   }
 
   function toggleOrderSelection(id: string) {
@@ -1951,6 +1980,20 @@ export default function SalesPage() {
         </div>
       , document.body) : null}
 
+        {/* Toast de undo para remoção de pedidos */}
+        {(undoOrderData) && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+            <span>{undoOrderData.message}</span>
+            <button
+              type="button"
+              onClick={() => void handleUndoDeleteOrders(undoOrderData.items)}
+              className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
+            >
+              ↩ Desfazer
+            </button>
+            <button type="button" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
+          </div>
+        )}
 
       </div>
     </ProtectedPage>

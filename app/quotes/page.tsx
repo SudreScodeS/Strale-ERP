@@ -234,6 +234,7 @@ export default function QuotesPage() {
   const [quotes, setQuotes] = useState<QuoteView[]>([]);
   const [activeSection, setActiveSection] = useState<'list' | 'create'>('list');
   const [statusMessage, setStatusMessage] = useState('');
+  const [undoData, setUndoData] = useState<{ message: string; items: QuoteView[]; timer: ReturnType<typeof setTimeout> } | null>(null);
   const [selectedQuote, setSelectedQuote] = useState<QuoteView | null>(null);
   const [convertingQuote, setConvertingQuote] = useState<QuoteView | null>(null);
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
@@ -537,8 +538,40 @@ export default function QuotesPage() {
     } catch { setStatusMessage('Erro de conexão.'); }
   }
 
+  async function handleUndoDeleteQuotes(deletedItems: QuoteView[]) {
+    if (undoData?.timer) clearTimeout(undoData.timer);
+    setUndoData(null);
+    let restored = 0;
+    for (const q of deletedItems) {
+      try {
+        const resp = await fetch('/api/quotes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            customerName: q.customerName,
+            name: q.name,
+            items: q.items,
+            logoColors: q.logoCost > 0 ? Math.round(q.logoCost / (globalConfig.logoPricePerColor || 10)) : 0,
+            notes: q.notes,
+            deliveryDate: q.deliveryDate,
+          }),
+        });
+        if (resp.ok) restored++;
+      } catch { /* skip */ }
+    }
+    setStatusMessage(`${restored} orçamento(s) restaurado(s)!`);
+    await loadQuotes();
+  }
+
+  function showUndoToast(message: string, items: QuoteView[]) {
+    if (undoData?.timer) clearTimeout(undoData.timer);
+    const timer = setTimeout(() => setUndoData(null), 10000);
+    setUndoData({ message, items, timer });
+  }
+
   async function handleDeleteQuote(quoteId: string) {
     if (!confirm('Tem certeza que deseja remover este orçamento?')) return;
+    const quoteToDelete = quotes.find(q => q.id === quoteId);
     try {
       const response = await fetch(`/api/quotes?quoteId=${quoteId}`, {
         method: 'DELETE',
@@ -546,7 +579,8 @@ export default function QuotesPage() {
       });
       const data = await safeJson(response);
       if (response.ok) {
-        setStatusMessage('Orçamento removido.');
+        if (quoteToDelete) showUndoToast('Orçamento removido.', [quoteToDelete]);
+        else setStatusMessage('Orçamento removido.');
         await loadQuotes();
       } else {
         setStatusMessage(data.error || 'Erro ao remover.');
@@ -557,25 +591,29 @@ export default function QuotesPage() {
   async function handleBulkDeleteQuotes() {
     if (selectedQuoteIds.size === 0) return;
     const count = selectedQuoteIds.size;
-    if (!confirm(`Tem certeza que deseja remover ${count} orçamento(s)? Essa ação não pode ser desfeita.`)) return;
+    if (!confirm(`Tem certeza que deseja remover ${count} orçamento(s)?`)) return;
 
+    const deletedItems: QuoteView[] = [];
     let removed = 0;
     let errors = 0;
     for (const id of selectedQuoteIds) {
+      const quoteToDelete = quotes.find(q => q.id === id);
       try {
         const response = await fetch(`/api/quotes?quoteId=${id}`, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });
-        if (response.ok) removed++;
+        if (response.ok) { removed++; if (quoteToDelete) deletedItems.push(quoteToDelete); }
         else errors++;
       } catch { errors++; }
     }
 
     setSelectedQuoteIds(new Set());
-    setStatusMessage(errors > 0
-      ? `${removed} removido(s), ${errors} erro(s).`
-      : `${removed} orçamento(s) removido(s) com sucesso!`);
+    if (removed > 0) {
+      showUndoToast(`${removed} orçamento(s) removido(s).`, deletedItems);
+    } else if (errors > 0) {
+      setStatusMessage(`${errors} erro(s) ao remover.`);
+    }
     await loadQuotes();
   }
 
@@ -1262,10 +1300,19 @@ export default function QuotesPage() {
           </div>
         , document.body) : null}
 
-        {statusMessage && (
-          <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
-            {statusMessage}
-            <button type="button" onClick={() => setStatusMessage('')} className="ml-3 text-white/60 hover:text-white">✕</button>
+        {(statusMessage || undoData) && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+            <span>{undoData?.message || statusMessage}</span>
+            {undoData && (
+              <button
+                type="button"
+                onClick={() => void handleUndoDeleteQuotes(undoData.items)}
+                className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
+              >
+                ↩ Desfazer
+              </button>
+            )}
+            <button type="button" onClick={() => { setStatusMessage(''); if (undoData?.timer) clearTimeout(undoData.timer); setUndoData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
           </div>
         )}
       </div>

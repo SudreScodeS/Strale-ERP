@@ -253,7 +253,7 @@ export interface ActivityLog {
   timestamp: string;
   userId: string;
   username: string;
-  action: 'create' | 'update' | 'delete' | 'convert' | 'send' | 'status_change' | 'login' | 'other';
+  action: 'create' | 'update' | 'delete' | 'convert' | 'send' | 'status_change' | 'login' | 'restore' | 'other';
   entity: 'order' | 'quote' | 'product' | 'purchase' | 'user' | 'config' | 'invoice' | 'supplier' | 'other';
   entityId?: string;
   description: string;
