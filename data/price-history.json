@@ -58,5 +58,25 @@
     "changedBy": "user-admin",
     "reason": "Pedido #10 - Teste Sudré",
     "createdAt": "2026-05-16T15:09:19.307Z"
+  },
+  {
+    "id": "c1148ffd-7f93-447b-a132-3bff8abd1e0e",
+    "entityType": "variable",
+    "entityId": "variable-garrafa-material-inox-304",
+    "oldPrice": 0,
+    "newPrice": 4,
+    "changedBy": "admin",
+    "reason": "Atualização via API",
+    "createdAt": "2026-05-16T15:25:11.360Z"
+  },
+  {
+    "id": "b83bfbd6-2f27-4029-b36f-22c36aaec6de",
+    "entityType": "variable",
+    "entityId": "variable-garrafa-material-plástico-abs",
+    "oldPrice": -5,
+    "newPrice": 2,
+    "changedBy": "admin",
+    "reason": "Atualização via API",
+    "createdAt": "2026-05-16T15:25:18.481Z"
   }
 ]
