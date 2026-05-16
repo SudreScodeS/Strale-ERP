@@ -235,6 +235,13 @@ export default function QuotesPage() {
   const [activeSection, setActiveSection] = useState<'list' | 'create'>('list');
   const [statusMessage, setStatusMessage] = useState('');
   const [undoData, setUndoData] = useState<{ message: string; items: QuoteView[]; timer: ReturnType<typeof setTimeout> } | null>(null);
+
+  // Auto-dismiss status messages after 4 seconds
+  useEffect(() => {
+    if (!statusMessage) return;
+    const timer = setTimeout(() => setStatusMessage(''), 4000);
+    return () => clearTimeout(timer);
+  }, [statusMessage]);
   const [selectedQuote, setSelectedQuote] = useState<QuoteView | null>(null);
   const [convertingQuote, setConvertingQuote] = useState<QuoteView | null>(null);
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
@@ -1406,19 +1413,26 @@ export default function QuotesPage() {
           </div>
         , document.body) : null}
 
-        {(statusMessage || undoData) && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
-            <span>{undoData?.message || statusMessage}</span>
-            {undoData && (
-              <button
-                type="button"
-                onClick={() => void handleUndoDeleteQuotes(undoData.items)}
-                className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
-              >
-                ↩ Desfazer
-              </button>
-            )}
-            <button type="button" onClick={() => { setStatusMessage(''); if (undoData?.timer) clearTimeout(undoData.timer); setUndoData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
+        {/* Toast de status */}
+        {statusMessage && (
+          <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+            {statusMessage}
+            <button type="button" onClick={() => setStatusMessage('')} className="ml-3 text-white/60 hover:text-white">✕</button>
+          </div>
+        )}
+
+        {/* Toast de undo para remoção de orçamentos */}
+        {undoData && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg" style={statusMessage ? { bottom: '4.5rem' } : undefined}>
+            <span>{undoData.message}</span>
+            <button
+              type="button"
+              onClick={() => void handleUndoDeleteQuotes(undoData.items)}
+              className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
+            >
+              ↩ Desfazer
+            </button>
+            <button type="button" onClick={() => { if (undoData.timer) clearTimeout(undoData.timer); setUndoData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
           </div>
         )}
       </div>

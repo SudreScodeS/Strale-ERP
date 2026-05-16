@@ -100,6 +100,14 @@ export default function SalesPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
   const [statusMessage, setStatusMessage] = useState('');
   const [undoOrderData, setUndoOrderData] = useState<{ message: string; items: OrderView[]; timer: ReturnType<typeof setTimeout> } | null>(null);
+
+  // Auto-dismiss status messages after 4 seconds
+  useEffect(() => {
+    if (!statusMessage) return;
+    const timer = setTimeout(() => setStatusMessage(''), 4000);
+    return () => clearTimeout(timer);
+  }, [statusMessage]);
+
   const [orders, setOrders] = useState<OrderView[]>([]);
   const [orderStatusUpdates, setOrderStatusUpdates] = useState<Record<string, Order['status']>>({});
   const [orderSearch, setOrderSearch] = useState('');
@@ -1408,68 +1416,33 @@ export default function SalesPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Analisando cores da logo (ignorando fundo)…
+                Analisando cores da logo…
               </div>
             ) : logoAnalysisError ? (
-              <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {logoAnalysisError}
-              </div>
+              <p className="mt-3 text-xs text-red-600">{logoAnalysisError}</p>
             ) : logoAnalysisResult ? (
               <div className="mt-3 space-y-2">
-                {/* Resumo da análise */}
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-                  <p className="text-sm font-semibold text-emerald-800">
-                    Análise concluída
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-xs font-semibold text-emerald-800">
+                    {logoColors} {logoColors === 1 ? 'cor detectada' : 'cores detectadas'}
                   </p>
-                  <p className="mt-1 text-xs text-emerald-700">{logoAnalysisResult.description}</p>
-                  <p className="mt-1 text-xs text-emerald-600">
-                    {logoAnalysisResult.source === 'google-vision' ? 'Google Cloud Vision' : 'Análise local'}
-                  </p>
+                  <p className="text-xs text-emerald-700">{logoAnalysisResult.description}</p>
                 </div>
-
-                {/* Cor do produto detectada */}
-                {logoAnalysisResult.productColor ? (
-                  <div className="rounded-2xl border border-blue-200 bg-[var(--brand-muted)] p-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-blue-800">Cor do produto detectada:</span>
-                      <span
-                        className="inline-block h-5 w-5 rounded-full border-2 border-white shadow"
-                        style={{ backgroundColor: logoAnalysisResult.productColor }}
-                      />
-                      <span className="font-mono text-xs text-blue-700">{logoAnalysisResult.productColor}</span>
-                    </div>
-                    <p className="mt-1 text-xs text-[var(--brand)]">Esta cor será trocada pela variável selecionada na prévia</p>
-                  </div>
-                ) : null}
-
-                {/* Cores da logo */}
-                {logoColors > 0 ? (
-                  <div className="rounded-2xl border border-purple-200 bg-purple-50 p-3">
-                    <p className="text-sm font-semibold text-purple-800">
-                      {logoColors} {logoColors === 1 ? 'cor da logo' : 'cores da logo'} detectada{logoColors === 1 ? '' : 's'}
-                    </p>
-                    <p className="text-xs text-purple-600">Estas cores serão mantidas na prévia (elementos gráficos/texto)</p>
-                  </div>
-                ) : null}
-
-                {/* Swatches de cores da logo */}
-                {logoAnalysisResult.colors.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                {logoAnalysisResult.colors.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
                     {logoAnalysisResult.colors.map((color, i) => (
-                      <div
-                        key={`${color.hex}-${i}`}
-                        className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs"
-                      >
+                      <div key={i} className="group relative">
                         <span
-                          className="inline-block h-3 w-3 rounded-full border border-slate-300"
+                          className="inline-block h-6 w-6 rounded-full border-2 border-white shadow-sm"
                           style={{ backgroundColor: color.hex }}
                         />
-                        <span className="font-mono text-slate-600">{color.hex}</span>
-                        <span className="text-slate-400">{(color.pixelFraction * 100).toFixed(1)}%</span>
+                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
+                          {color.hex}
+                        </span>
                       </div>
                     ))}
                   </div>
-                ) : null}
+                )}
               </div>
             ) : (
               <p className="mt-3 text-sm text-slate-600">
@@ -1578,7 +1551,7 @@ export default function SalesPage() {
               </button>
             )}
           </div>
-          {statusMessage ? <p className="text-sm text-slate-600">{statusMessage}</p> : null}
+
         </form>
         </DraggableSection>
         ) : null}
@@ -1980,9 +1953,17 @@ export default function SalesPage() {
         </div>
       , document.body) : null}
 
+        {/* Toast de status */}
+        {statusMessage && (
+          <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+            {statusMessage}
+            <button type="button" onClick={() => setStatusMessage('')} className="ml-3 text-white/60 hover:text-white">✕</button>
+          </div>
+        )}
+
         {/* Toast de undo para remoção de pedidos */}
-        {(undoOrderData) && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+        {undoOrderData && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg" style={statusMessage ? { bottom: '4.5rem' } : undefined}>
             <span>{undoOrderData.message}</span>
             <button
               type="button"
