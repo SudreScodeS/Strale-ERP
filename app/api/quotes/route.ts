@@ -7,6 +7,7 @@ import { Quote, QuoteItem } from '../../../types';
 import { criarOrcamento, converterOrcamentoEmPedido, clonarOrcamento, atualizarStatusOrcamento } from '../../lib/business';
 import { quoteData, userData } from '../../lib/data';
 import { requireRole } from '../../lib/auth';
+import { logActivity } from '../../lib/activity-logger';
 
 // ==========================================
 // GET /api/quotes - LISTAR ORÇAMENTOS
@@ -96,6 +97,7 @@ export async function POST(request: Request) {
       deliveryDate,
     );
 
+    logActivity(payload.userId, creator?.username || payload.userId, 'create', 'quote', `Criou orçamento "${name}"`, quote.id, `Cliente: ${customerName}`);
     return NextResponse.json({ quote });
   } catch (error) {
     return NextResponse.json(
@@ -154,6 +156,8 @@ export async function PATCH(request: Request) {
       if ('error' in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
+      const converter = userData.getById(payload.userId);
+      logActivity(payload.userId, converter?.username || payload.userId, 'convert', 'quote', `Converteu orçamento "${quote.name}" em pedido #${result.order.id}`, quoteId, `Pedido: ${result.order.id}`);
       return NextResponse.json({ order: result.order, invoice: result.invoice });
     }
 
@@ -163,6 +167,8 @@ export async function PATCH(request: Request) {
       if ('error' in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
+      const updater = userData.getById(payload.userId);
+      logActivity(payload.userId, updater?.username || payload.userId, 'status_change', 'quote', `Alterou status do orçamento "${quote.name}" para ${status}`, quoteId);
       return NextResponse.json({ quote: result });
     }
 
@@ -204,6 +210,8 @@ export async function DELETE(request: Request) {
     }
 
     quoteData.delete(quoteId);
+    const deleter = userData.getById(payload.userId);
+    logActivity(payload.userId, deleter?.username || payload.userId, 'delete', 'quote', `Removeu orçamento "${quote.name}"`, quoteId);
     return NextResponse.json({ message: 'Orçamento removido com sucesso.' });
   } catch (error) {
     return NextResponse.json(

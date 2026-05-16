@@ -233,3 +233,15 @@ export interface TokenPayload {
   role: 'admin' | 'seller';
   exp?: number;
 }
+
+export interface ActivityLog {
+  id: string;
+  timestamp: string;
+  userId: string;
+  username: string;
+  action: 'create' | 'update' | 'delete' | 'convert' | 'send' | 'status_change' | 'login' | 'other';
+  entity: 'order' | 'quote' | 'product' | 'purchase' | 'user' | 'config' | 'invoice' | 'supplier' | 'other';
+  entityId?: string;
+  description: string;
+  details?: string;
+}

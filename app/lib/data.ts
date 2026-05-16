@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier, Quote, PriceHistory } from '../../types';
+import { User, Product, Group, Variable, Order, FinancialRecord, Invoice, PurchaseOrder, Supplier, Quote, PriceHistory, ActivityLog } from '../../types';
 
 // DIRETÓRIO DE ARMAZENAMENTO DOS DADOS
 // Todos os arquivos JSON ficam nesta pasta
@@ -350,5 +350,21 @@ export const priceHistoryData = {
     const history = readJsonFile<PriceHistory>('price-history.json');
     history.push(entry);
     writeJsonFile('price-history.json', history);
+  },
+};
+
+// ==========================================
+// LOG DE ATIVIDADES
+// ==========================================
+
+export const activityLogData = {
+  getAll: () => readJsonFile<ActivityLog>('activity-logs.json'),
+
+  create: (entry: ActivityLog) => {
+    const logs = readJsonFile<ActivityLog>('activity-logs.json');
+    logs.push(entry);
+    // Manter apenas os últimos 500 registros
+    if (logs.length > 500) logs.splice(0, logs.length - 500);
+    writeJsonFile('activity-logs.json', logs);
   },
 };

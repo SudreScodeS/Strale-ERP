@@ -9,6 +9,7 @@ import { Order, OrderItem } from '../../../types';
 import { finalizarPedido } from '../../lib/business';
 import { financeData, groupData, orderData, userData, variableData } from '../../lib/data';
 import { requireRole } from '../../lib/auth';
+import { logActivity } from '../../lib/activity-logger';
 
 function getUsedQuantity(variable: { quantity: number }, fallback: number): number {
   return Math.max(0, Number(variable.quantity || fallback));
@@ -152,6 +153,8 @@ export async function POST(request: Request) {
     // PROCESSA PEDIDO COMPLETO (veja business.ts para detalhes)
     // Inclui: cálculos, financeiro, baixa de estoque, nota fiscal
     const { order, invoice } = finalizarPedido(payload.userId, orderName, items, logoColors, deliveryDate);
+    const creator = userData.getById(payload.userId);
+    logActivity(payload.userId, creator?.username || payload.userId, 'create', 'order', `Criou pedido "${orderName}"`, order.id, `Total: R$ ${order.totalPrice.toFixed(2)}`);
 
     return NextResponse.json({ order, invoice });
   } catch (error) {
@@ -305,6 +308,8 @@ export async function PATCH(request: Request) {
     }
 
     // Retorna pedido atualizado
+    const updater = userData.getById(payload.userId);
+    logActivity(payload.userId, updater?.username || payload.userId, 'status_change', 'order', `Alterou status do pedido "${order.name}" para ${status}`, order.id);
     return NextResponse.json({ order: { ...order, status } });
   } catch (error) {
     return NextResponse.json(
@@ -337,6 +342,8 @@ export async function DELETE(request: Request) {
     }
 
     orderData.delete(orderId);
+    const deleter = userData.getById(payload.userId);
+    logActivity(payload.userId, deleter?.username || payload.userId, 'delete', 'order', `Removeu pedido "${order.name}"`, orderId);
 
     const saleRecord = financeData.getAll().find((record) => record.type === 'sale' && record.orderId === orderId);
     if (saleRecord) {
