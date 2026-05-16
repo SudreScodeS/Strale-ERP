@@ -180,6 +180,7 @@ export function Sidebar({ children }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [savingFromModal, setSavingFromModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Register modal show function
   useEffect(() => {
@@ -211,6 +212,36 @@ export function Sidebar({ children }: SidebarProps) {
       })
       .catch(() => {});
   }, []);
+
+  // Check for unread notifications
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) return;
+    fetch('/api/activity-logs', { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.logs) return;
+        const lastRead = window.localStorage.getItem('erp-notifications-last-read');
+        if (!lastRead) {
+          // First visit — if there are logs, show badge
+          setUnreadCount(data.logs.length > 0 ? Math.min(data.logs.length, 99) : 0);
+        } else {
+          const lastReadTime = new Date(lastRead).getTime();
+          const newLogs = data.logs.filter((l: { timestamp: string }) => new Date(l.timestamp).getTime() > lastReadTime);
+          setUnreadCount(Math.min(newLogs.length, 99));
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  // Mark notifications as read when visiting the page
+  useEffect(() => {
+    if (pathname === '/notifications') {
+      const now = new Date().toISOString();
+      window.localStorage.setItem('erp-notifications-last-read', now);
+      setUnreadCount(0);
+    }
+  }, [pathname]);
 
   function toggleTheme() {
     const next = theme === 'light' ? 'dark' : 'light';
@@ -326,7 +357,14 @@ export function Sidebar({ children }: SidebarProps) {
                       }
                     }}
                   >
-                    <span className="flex-shrink-0">{item.icon}</span>
+                    <span className="relative flex-shrink-0">
+                      {item.icon}
+                      {item.href === '/notifications' && unreadCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-[var(--sidebar-bg)]">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </span>
                     <span>{item.label}</span>
                     {active && (
                       <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/60" />
