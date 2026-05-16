@@ -108,38 +108,6 @@
     "convertedOrderId": "6"
   },
   {
-    "id": "e88f478f-95c1-4e8c-b410-576b9c91b3ce",
-    "userId": "user-admin",
-    "customerName": "Loja de Roupas Trendy",
-    "name": "Orçamento 12/05/2026",
-    "items": [
-      {
-        "productId": "product-1",
-        "selectedVariables": [
-          {
-            "variableId": "variable-nylon",
-            "groupId": "group-material",
-            "quantity": 50
-          },
-          {
-            "variableId": "variable-small",
-            "groupId": "group-size",
-            "quantity": 50
-          }
-        ],
-        "quantity": 50,
-        "unitCost": 23,
-        "unitPrice": 28
-      }
-    ],
-    "totalCost": 1150,
-    "totalPrice": 1380,
-    "logoCost": 0,
-    "status": "rejected",
-    "notes": "Cliente achou caro - orçamento recusado",
-    "createdAt": "2026-05-11T22:07:03.933Z"
-  },
-  {
     "id": "2e931bf7-1009-4049-8d37-a1561a3522ed",
     "userId": "user-admin",
     "customerName": "Teste",
@@ -223,5 +191,92 @@
     "validUntil": "2026-05-18T22:17:33.915Z",
     "notes": "Isso é um teste",
     "createdAt": "2026-05-15T14:26:44.620Z"
+  },
+  {
+    "id": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "customerName": "Xbox",
+    "name": "Kit evento",
+    "items": [
+      {
+        "productId": "product-1",
+        "productName": "Sacola Personalizada",
+        "selectedVariables": [
+          {
+            "variableId": "variable-color-preto",
+            "groupId": "group-color",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 1
+          }
+        ],
+        "quantity": 500,
+        "unitCost": 73.5,
+        "unitPrice": 88.2,
+        "dimensions": {
+          "width": 45,
+          "height": 60
+        },
+        "printType": "sublimacao",
+        "printPosition": "front",
+        "printSize": "medium"
+      },
+      {
+        "productId": "product-garrafa",
+        "productName": "Garrafa Térmica",
+        "selectedVariables": [
+          {
+            "variableId": "variable-garrafa-material-inox-316",
+            "groupId": "group-garrafa-material",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-garrafa-cor-preto",
+            "groupId": "group-garrafa-cor",
+            "quantity": 1
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 82,
+        "unitPrice": 98.4,
+        "printType": "sublimacao",
+        "printPosition": "front",
+        "printSize": "medium"
+      },
+      {
+        "productId": "product-bone",
+        "productName": "Boné Personalizado",
+        "selectedVariables": [
+          {
+            "variableId": "variable-bone-tamanho-único-ajustável",
+            "groupId": "group-bone-tamanho",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-bone-cor-preto",
+            "groupId": "group-bone-cor",
+            "quantity": 1
+          }
+        ],
+        "quantity": 199,
+        "unitCost": 57,
+        "unitPrice": 68.4,
+        "printType": "sublimacao",
+        "printPosition": "front",
+        "printSize": "medium"
+      }
+    ],
+    "totalCost": 56333,
+    "totalPrice": 67599.6,
+    "logoCost": 40,
+    "status": "converted",
+    "deliveryDate": "2026-05-19",
+    "validUntil": "2026-05-19T17:06:12.053Z",
+    "notes": "Urgente",
+    "createdAt": "2026-05-16T17:06:12.053Z",
+    "convertedOrderId": "11"
   }
 ]

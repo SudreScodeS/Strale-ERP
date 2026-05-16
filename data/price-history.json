@@ -78,5 +78,35 @@
     "changedBy": "admin",
     "reason": "Atualização via API",
     "createdAt": "2026-05-16T15:25:18.481Z"
+  },
+  {
+    "id": "76b399ff-2a25-4cd9-84ba-c05ff7db5855",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 73.5,
+    "changedBy": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "reason": "Pedido #11 - Kit evento",
+    "createdAt": "2026-05-16T17:28:48.101Z"
+  },
+  {
+    "id": "83501b1c-008e-4d6d-8925-8742fecb5ae1",
+    "entityType": "product",
+    "entityId": "product-garrafa",
+    "oldPrice": 35,
+    "newPrice": 82,
+    "changedBy": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "reason": "Pedido #11 - Kit evento",
+    "createdAt": "2026-05-16T17:28:48.109Z"
+  },
+  {
+    "id": "e7d72087-b535-42f1-b088-8dfd19f4aa0d",
+    "entityType": "product",
+    "entityId": "product-bone",
+    "oldPrice": 22,
+    "newPrice": 57,
+    "changedBy": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "reason": "Pedido #11 - Kit evento",
+    "createdAt": "2026-05-16T17:28:48.115Z"
   }
 ]

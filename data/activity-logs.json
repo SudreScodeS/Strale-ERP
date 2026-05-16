@@ -29,5 +29,469 @@
     "entityId": "2e931bf7-1009-4049-8d37-a1561a3522ed",
     "description": "Converteu orçamento \"Teste Sudré\" em pedido #10",
     "details": "Pedido: 10"
+  },
+  {
+    "id": "log_1778950398503_v9qerd",
+    "timestamp": "2026-05-16T16:53:18.503Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "create",
+    "entity": "quote",
+    "entityId": "f61adb30-440d-4e58-83d0-dfe3250253f1",
+    "description": "Criou orçamento \"Xbox\"",
+    "details": "Cliente: Teste Vendedor"
+  },
+  {
+    "id": "log_1778950410492_tr3iw6",
+    "timestamp": "2026-05-16T16:53:30.492Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "f61adb30-440d-4e58-83d0-dfe3250253f1",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950413506_qpxotu",
+    "timestamp": "2026-05-16T16:53:33.506Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "75eb309f-6e83-49e0-9667-9d9072d024b4",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950416584_h9f4ys",
+    "timestamp": "2026-05-16T16:53:36.584Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "dba82491-1736-404f-9a5c-93ee74857175",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950419526_qjp7o2",
+    "timestamp": "2026-05-16T16:53:39.526Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "4d94576c-79b4-4d98-b033-b9b64c5dbb64",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950468164_mn6vgv",
+    "timestamp": "2026-05-16T16:54:28.164Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "8c78f360-1f2b-4b78-b632-b600547e443c",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950472830_59deus",
+    "timestamp": "2026-05-16T16:54:32.830Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "b4058e6b-2e92-43c6-a72e-11b0c3d3cd5b",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950474122_zrw6uh",
+    "timestamp": "2026-05-16T16:54:34.122Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "54c1aaf7-831f-4254-9b2d-746811d7ed6e",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950474969_6d67do",
+    "timestamp": "2026-05-16T16:54:34.969Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "333097ce-d8c0-49b8-a787-ef644ab1c033",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950478497_onupao",
+    "timestamp": "2026-05-16T16:54:38.497Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "696ffd8f-d7fd-40af-92aa-d3a81fc2a01d",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950479424_tkrr2h",
+    "timestamp": "2026-05-16T16:54:39.424Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "0a8ff2db-e4f6-49be-99b4-88b3458d07af",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950480371_gb9e0t",
+    "timestamp": "2026-05-16T16:54:40.371Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "8e0fefa6-07bb-469e-a95d-cfa5a3b55f67",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950481243_d8n6x2",
+    "timestamp": "2026-05-16T16:54:41.243Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "31998bda-d35d-4d83-8532-4164917ca283",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950482188_jcy72u",
+    "timestamp": "2026-05-16T16:54:42.188Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "68f12ade-145f-4702-a144-31e2bda0cb37",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950483069_b1x6df",
+    "timestamp": "2026-05-16T16:54:43.069Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "58987e07-0064-4fdf-adbf-ab0633447eb6",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950483865_x2spuv",
+    "timestamp": "2026-05-16T16:54:43.865Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "74f4c578-399b-4912-b73f-a32a6cd6b547",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950484622_z8exr3",
+    "timestamp": "2026-05-16T16:54:44.622Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "9419d8a3-f188-48d1-a557-94da97d2448a",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950485352_cmwnt2",
+    "timestamp": "2026-05-16T16:54:45.352Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "8fe48067-a1db-4c0f-980f-1e1138eeff66",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950486051_io0mjd",
+    "timestamp": "2026-05-16T16:54:46.051Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "b0ca9fdc-82eb-4136-9ab1-d4f33a3f9028",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950486690_wtnghs",
+    "timestamp": "2026-05-16T16:54:46.690Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "8b9bfec8-4497-442c-9aa7-03272923773a",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950487405_fntz67",
+    "timestamp": "2026-05-16T16:54:47.405Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "eec7f758-249a-40e2-93e3-03edebb227f2",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950488084_iilulp",
+    "timestamp": "2026-05-16T16:54:48.084Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "ac1ab0c4-1bde-47f7-bf95-eb303173c4bb",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950488689_91idcc",
+    "timestamp": "2026-05-16T16:54:48.689Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "5f25a0fb-21a3-453e-ac94-67c58bf25b77",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950489306_44858n",
+    "timestamp": "2026-05-16T16:54:49.306Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "cd5c0728-8205-4dcb-b390-48739c015749",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950489903_evklwh",
+    "timestamp": "2026-05-16T16:54:49.903Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "f04518b6-2cd1-4d52-a622-6801c29c5fce",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950490513_cnbpli",
+    "timestamp": "2026-05-16T16:54:50.513Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "9c265254-6d7e-454f-bf6d-f4120774082c",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950491120_a2qzxo",
+    "timestamp": "2026-05-16T16:54:51.120Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "3e0c5e4f-943a-4d65-9151-6d04ef3d82b6",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950491716_nbbhlp",
+    "timestamp": "2026-05-16T16:54:51.716Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "c466bbc7-8cde-45d9-b5da-30e284436ee2",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950492287_z4pmhi",
+    "timestamp": "2026-05-16T16:54:52.287Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "ba6f2b9a-9bf1-40db-b877-9960dd6a89a2",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950493680_kjbl8y",
+    "timestamp": "2026-05-16T16:54:53.680Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "b39b5fa7-75d1-4bd9-8969-45ea076cae0f",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950494301_c6hw0e",
+    "timestamp": "2026-05-16T16:54:54.301Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "b59b1ff4-4b42-47fd-9803-721aceca54b5",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950494933_jc4rsy",
+    "timestamp": "2026-05-16T16:54:54.933Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "c27b21d8-87a7-4789-8861-e71f89b0be7d",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950495552_hzvj89",
+    "timestamp": "2026-05-16T16:54:55.552Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "d8d96088-5562-4ee2-bba8-b3351012373b",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950496117_h4vw15",
+    "timestamp": "2026-05-16T16:54:56.117Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "89fd8b30-35c0-479e-85bc-c4637832dffc",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950496681_dc8wns",
+    "timestamp": "2026-05-16T16:54:56.681Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "e6a981c4-dd6f-4ca7-8633-8c499f59cdbc",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950497365_qdfhbx",
+    "timestamp": "2026-05-16T16:54:57.365Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "fd68d00a-68f1-4165-8166-90be7729a1cf",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950497984_y9swpa",
+    "timestamp": "2026-05-16T16:54:57.984Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "2b8ea87a-8907-4c59-b96b-ba1fc0506283",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950498586_9h2h5p",
+    "timestamp": "2026-05-16T16:54:58.586Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "cc18e29d-78bc-49bd-aa81-c615b07b7b9d",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778950499131_dcv830",
+    "timestamp": "2026-05-16T16:54:59.131Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "d0b225d2-6ce4-4755-ace2-caee28a432c5",
+    "description": "Removeu orçamento \"Xbox\""
+  },
+  {
+    "id": "log_1778951172057_eocvt3",
+    "timestamp": "2026-05-16T17:06:12.057Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "create",
+    "entity": "quote",
+    "entityId": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
+    "description": "Criou orçamento \"Kit evento\"",
+    "details": "Cliente: Xbox"
+  },
+  {
+    "id": "log_1778951489788_pgv1b0",
+    "timestamp": "2026-05-16T17:11:29.788Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "e88f478f-95c1-4e8c-b410-576b9c91b3ce",
+    "description": "Removeu orçamento \"Orçamento 12/05/2026\""
+  },
+  {
+    "id": "log_1778951492358_t0xqtv",
+    "timestamp": "2026-05-16T17:11:32.358Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "create",
+    "entity": "quote",
+    "entityId": "79f51ad0-247c-4500-a378-2d94dd9b9585",
+    "description": "Criou orçamento \"Orçamento 12/05/2026\"",
+    "details": "Cliente: Loja de Roupas Trendy"
+  },
+  {
+    "id": "log_1778951503702_zrooy8",
+    "timestamp": "2026-05-16T17:11:43.702Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "79f51ad0-247c-4500-a378-2d94dd9b9585",
+    "description": "Removeu orçamento \"Orçamento 12/05/2026\""
+  },
+  {
+    "id": "log_1778952092276_pwbdhy",
+    "timestamp": "2026-05-16T17:21:32.276Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
+    "description": "Alterou status do orçamento \"Kit evento\" para sent"
+  },
+  {
+    "id": "log_1778952101865_k1rxzx",
+    "timestamp": "2026-05-16T17:21:41.865Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
+    "description": "Alterou status do orçamento \"Kit evento\" para approved"
+  },
+  {
+    "id": "log_1778952528148_5lb3ve",
+    "timestamp": "2026-05-16T17:28:48.148Z",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "username": "Teste",
+    "action": "convert",
+    "entity": "quote",
+    "entityId": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
+    "description": "Converteu orçamento \"Kit evento\" em pedido #11",
+    "details": "Pedido: 11"
   }
 ]

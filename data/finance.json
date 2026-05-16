@@ -102,5 +102,13 @@
     "description": "Pedido: Teste Sudré",
     "date": "2026-05-16T15:09:19.292Z",
     "orderId": "10"
+  },
+  {
+    "id": "f665b166-535b-4e38-bf7d-ff4878162473",
+    "type": "sale",
+    "amount": 67599.6,
+    "description": "Pedido: Kit evento",
+    "date": "2026-05-16T17:28:48.056Z",
+    "orderId": "11"
   }
 ]

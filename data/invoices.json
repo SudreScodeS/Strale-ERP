@@ -595,5 +595,72 @@
       "issuedAt": "2026-05-16T15:09:19.310Z"
     },
     "createdAt": "2026-05-16T15:09:19.310Z"
+  },
+  {
+    "id": "e811cfa7-c9e0-4520-b6b2-5621344681c5",
+    "orderId": "11",
+    "number": "NF-1778952528131",
+    "data": {
+      "customer": "7b735e51-2408-4dab-9b97-505420324cf3",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-color-preto",
+              "groupId": "group-color",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 1
+            }
+          ],
+          "quantity": 500,
+          "unitCost": 73.5,
+          "unitPrice": 88.2
+        },
+        {
+          "productId": "product-garrafa",
+          "selectedVariables": [
+            {
+              "variableId": "variable-garrafa-material-inox-316",
+              "groupId": "group-garrafa-material",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-garrafa-cor-preto",
+              "groupId": "group-garrafa-cor",
+              "quantity": 1
+            }
+          ],
+          "quantity": 100,
+          "unitCost": 82,
+          "unitPrice": 98.4
+        },
+        {
+          "productId": "product-bone",
+          "selectedVariables": [
+            {
+              "variableId": "variable-bone-tamanho-único-ajustável",
+              "groupId": "group-bone-tamanho",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-bone-cor-preto",
+              "groupId": "group-bone-cor",
+              "quantity": 1
+            }
+          ],
+          "quantity": 199,
+          "unitCost": 57,
+          "unitPrice": 68.4
+        }
+      ],
+      "totalPrice": 67599.6,
+      "issuedAt": "2026-05-16T17:28:48.131Z"
+    },
+    "createdAt": "2026-05-16T17:28:48.131Z"
   }
 ]

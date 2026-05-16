@@ -65,8 +65,9 @@
     "logoCost": 10,
     "status": "completed",
     "deliveryDate": "2026-05-16",
-    "delivered": false,
-    "createdAt": "2026-04-29T11:26:46.568Z"
+    "delivered": true,
+    "createdAt": "2026-04-29T11:26:46.568Z",
+    "deliveredAt": "2026-05-16T17:39:52.141Z"
   },
   {
     "id": "3",
@@ -242,8 +243,9 @@
     "logoCost": 0,
     "status": "completed",
     "deliveryDate": "2026-05-17",
-    "delivered": false,
-    "createdAt": "2026-05-12T16:35:55.497Z"
+    "delivered": true,
+    "createdAt": "2026-05-12T16:35:55.497Z",
+    "deliveredAt": "2026-05-16T17:40:09.124Z"
   },
   {
     "id": "8",
@@ -331,7 +333,9 @@
     "logoCost": 0,
     "status": "completed",
     "deliveryDate": "2026-06-19",
-    "createdAt": "2026-05-15T15:29:03.489Z"
+    "createdAt": "2026-05-15T15:29:03.489Z",
+    "delivered": true,
+    "deliveredAt": "2026-05-16T17:37:36.914Z"
   },
   {
     "id": "9",
@@ -431,5 +435,72 @@
     "status": "completed",
     "deliveryDate": "2026-07-03",
     "createdAt": "2026-05-16T15:09:19.292Z"
+  },
+  {
+    "id": "11",
+    "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
+    "name": "Kit evento",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-color-preto",
+            "groupId": "group-color",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "quantity": 1
+          }
+        ],
+        "quantity": 500,
+        "unitCost": 73.5,
+        "unitPrice": 88.2
+      },
+      {
+        "productId": "product-garrafa",
+        "selectedVariables": [
+          {
+            "variableId": "variable-garrafa-material-inox-316",
+            "groupId": "group-garrafa-material",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-garrafa-cor-preto",
+            "groupId": "group-garrafa-cor",
+            "quantity": 1
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 82,
+        "unitPrice": 98.4
+      },
+      {
+        "productId": "product-bone",
+        "selectedVariables": [
+          {
+            "variableId": "variable-bone-tamanho-único-ajustável",
+            "groupId": "group-bone-tamanho",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-bone-cor-preto",
+            "groupId": "group-bone-cor",
+            "quantity": 1
+          }
+        ],
+        "quantity": 199,
+        "unitCost": 57,
+        "unitPrice": 68.4
+      }
+    ],
+    "totalCost": 56293,
+    "totalPrice": 67599.6,
+    "logoCost": 40,
+    "status": "completed",
+    "deliveryDate": "2026-05-19",
+    "createdAt": "2026-05-16T17:28:48.055Z"
   }
 ]

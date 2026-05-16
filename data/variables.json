@@ -11,7 +11,7 @@
     "id": "variable-tnt",
     "name": "TNT",
     "additionalPrice": 5,
-    "stock": 999,
+    "stock": 998,
     "groupId": "group-material",
     "createdAt": "2026-01-01T00:00:00.000Z"
   },
@@ -35,7 +35,7 @@
     "id": "variable-color-preto",
     "name": "Preto",
     "additionalPrice": 0,
-    "stock": 599,
+    "stock": 598,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z"
   },
@@ -52,7 +52,7 @@
     "groupId": "group-garrafa-cor",
     "name": "Preto",
     "additionalPrice": 0,
-    "stock": 150,
+    "stock": 149,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
   {
@@ -100,7 +100,7 @@
     "groupId": "group-garrafa-material",
     "name": "Inox 316",
     "additionalPrice": 12,
-    "stock": 100,
+    "stock": 99,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
   {
@@ -188,7 +188,7 @@
     "groupId": "group-bone-cor",
     "name": "Preto",
     "additionalPrice": 0,
-    "stock": 300,
+    "stock": 299,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
   {
@@ -220,7 +220,7 @@
     "groupId": "group-bone-tamanho",
     "name": "Único (Ajustável)",
     "additionalPrice": 0,
-    "stock": 500,
+    "stock": 499,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
   {
