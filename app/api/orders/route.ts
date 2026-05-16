@@ -263,6 +263,17 @@ export async function PATCH(request: Request) {
       }
       orderData.update(orderId, updates);
       const updated = orderData.getAll().find((entry) => entry.id === orderId);
+      const actor = userData.getById(payload.userId);
+      if (delivered !== undefined) {
+        logActivity(
+          payload.userId,
+          actor?.username || payload.userId,
+          delivered ? 'update' : 'update',
+          'order',
+          delivered ? `Marcou pedido "${order.name}" como entregue` : `Desfez entrega do pedido "${order.name}"`,
+          orderId,
+        );
+      }
       return NextResponse.json({ order: updated || { ...order, ...updates } });
     }
 
