@@ -811,16 +811,41 @@ export default function ReportsPage() {
   }
 
   // Search filtering
+  // Determine if search should be scoped to a specific column (from preset)
+  const activePresetCol = useMemo(() => {
+    if (!sortPreset || !selectedReport) return null;
+    const presets = SORT_PRESETS[selectedReport] || [];
+    const preset = presets.find((p) => p.key === sortPreset);
+    return preset?.col ?? null;
+  }, [sortPreset, selectedReport]);
+
+  const activePresetColLabel = useMemo(() => {
+    if (!activePresetCol || !activeReport) return null;
+    const col = activeReport.columns.find((c) => c.key === activePresetCol);
+    return col?.label ?? null;
+  }, [activePresetCol, activeReport]);
+
   const searchFilteredData = useMemo(() => {
     if (!searchText.trim()) return previewData;
     const query = searchText.toLowerCase().trim();
+
+    // When a sort preset is active, scope search to that column only
+    if (activePresetCol) {
+      return previewData.filter((row) => {
+        const val = row[activePresetCol];
+        if (val === null || val === undefined) return false;
+        return String(val).toLowerCase().includes(query);
+      });
+    }
+
+    // Default: search across all fields
     return previewData.filter((row) =>
       Object.values(row).some((val) => {
         if (val === null || val === undefined) return false;
         return String(val).toLowerCase().includes(query);
       })
     );
-  }, [previewData, searchText]);
+  }, [previewData, searchText, activePresetCol]);
 
   // Sorting
   const sortedData = useMemo(() => {
@@ -852,6 +877,8 @@ export default function ReportsPage() {
 
   function handlePresetChange(presetKey: string) {
     setSortPreset(presetKey);
+    setSearchText(''); // reset search when switching preset scope
+    setVisibleRows(PAGE_SIZE);
     if (!presetKey || !selectedReport) {
       setSortCol(null);
       setSortDir('asc');
@@ -1100,7 +1127,7 @@ export default function ReportsPage() {
                   </svg>
                   <input
                     type="text"
-                    placeholder="Buscar nos dados…"
+                    placeholder={activePresetColLabel ? `Buscar em ${activePresetColLabel}…` : "Buscar nos dados…"}
                     value={searchText}
                     onChange={(e) => { setSearchText(e.target.value); setVisibleRows(PAGE_SIZE); }}
                     className="w-full rounded-lg py-1.5 pl-8 pr-3 text-sm"
