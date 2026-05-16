@@ -521,6 +521,12 @@ export default function QuotesPage() {
       });
 
     if (selectedEntries.length === 0) {
+      setStatusMessage('Selecione pelo menos uma variável.');
+      return;
+    }
+
+    if (groupQuantityWarnings.length > 0) {
+      setStatusMessage('Selecione uma opção de cada grupo.');
       return;
     }
 
