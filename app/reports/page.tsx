@@ -819,12 +819,6 @@ export default function ReportsPage() {
     return preset?.col ?? null;
   }, [sortPreset, selectedReport]);
 
-  const activePresetColLabel = useMemo(() => {
-    if (!activePresetCol || !activeReport) return null;
-    const col = activeReport.columns.find((c) => c.key === activePresetCol);
-    return col?.label ?? null;
-  }, [activePresetCol, activeReport]);
-
   const searchFilteredData = useMemo(() => {
     if (!searchText.trim()) return previewData;
     const query = searchText.toLowerCase().trim();
@@ -895,6 +889,12 @@ export default function ReportsPage() {
   const activeReport = REPORTS.find((r) => r.id === selectedReport);
   const hasDateFilter = selectedReport && dateFieldMap[selectedReport];
   const stats = activeReport ? computeStats(previewData, activeReport.id) : null;
+
+  const activePresetColLabel = useMemo(() => {
+    if (!activePresetCol || !activeReport) return null;
+    const col = activeReport.columns.find((c) => c.key === activePresetCol);
+    return col?.label ?? null;
+  }, [activePresetCol, activeReport]);
 
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
