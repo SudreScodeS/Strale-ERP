@@ -1953,8 +1953,23 @@ export default function SalesPage() {
         </div>
       , document.body) : null}
 
+        {/* Toast de undo para remoção de pedidos */}
+        {undoOrderData && createPortal(
+          <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+            <span>{undoOrderData.message}</span>
+            <button
+              type="button"
+              onClick={() => void handleUndoDeleteOrders(undoOrderData.items)}
+              className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
+            >
+              ↩ Desfazer
+            </button>
+            <button type="button" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
+          </div>
+        , document.body)}
+
         {/* Toast de status — barra fixa embaixo */}
-        {statusMessage && (
+        {statusMessage && createPortal(
           <div
             className="fixed bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-6 py-3"
             style={{
@@ -1968,22 +1983,7 @@ export default function SalesPage() {
             </span>
             <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>✕</button>
           </div>
-        )}
-
-        {/* Toast de undo para remoção de pedidos */}
-        {undoOrderData && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
-            <span>{undoOrderData.message}</span>
-            <button
-              type="button"
-              onClick={() => void handleUndoDeleteOrders(undoOrderData.items)}
-              className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
-            >
-              ↩ Desfazer
-            </button>
-            <button type="button" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
-          </div>
-        )}
+        , document.body)}
 
       </div>
     </ProtectedPage>
