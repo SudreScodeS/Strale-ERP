@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { FormEvent } from 'react';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
@@ -356,28 +357,28 @@ export default function InventoryPage() {
 
         {/* Toast de mensagem */}
         {message ? (
-          <div className="mb-6 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-800">
+          <div className="mb-6 flex items-center justify-between rounded-xl px-5 py-3 text-sm" style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)', color: 'var(--success)' }}>
             <span>{message}</span>
-            <button type="button" onClick={() => setMessage('')} className="ml-3 text-emerald-500 hover:text-emerald-700">✕</button>
+            <button type="button" onClick={() => setMessage('')} className="ml-3 hover:opacity-70" style={{ color: 'var(--success)' }}>✕</button>
           </div>
         ) : null}
 
         {/* Cards de resumo */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Produtos</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{stats.totalProducts}</p>
-            <p className="text-xs text-slate-400">{stats.totalGroups} grupos · {stats.totalVariables} variáveis</p>
+          <div className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Produtos</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.totalProducts}</p>
+            <p className="text-xs" style={{ color: 'var(--text-faint)' }}>{stats.totalGroups} grupos · {stats.totalVariables} variáveis</p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Estoque crítico</p>
-            <p className="mt-1 text-2xl font-bold text-rose-600">{stats.criticalCount}</p>
-            <p className="text-xs text-rose-400">variáveis abaixo do limite</p>
+          <div className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Estoque crítico</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--danger)' }}>{stats.criticalCount}</p>
+            <p className="text-xs" style={{ color: 'var(--danger)', opacity: 0.7 }}>variáveis abaixo do limite</p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Em atenção</p>
-            <p className="mt-1 text-2xl font-bold text-amber-600">{stats.watchCount}</p>
-            <p className="text-xs text-amber-400">variáveis próximas do limite</p>
+          <div className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Em atenção</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--warning)' }}>{stats.watchCount}</p>
+            <p className="text-xs" style={{ color: 'var(--warning)', opacity: 0.7 }}>variáveis próximas do limite</p>
           </div>
         </div>
 
@@ -416,18 +417,19 @@ export default function InventoryPage() {
           <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length}>
             <div className="space-y-4">
               {/* Busca */}
-              <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <div className="rounded-2xl p-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                 <input
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Buscar produto, grupo ou variável..."
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                  className="w-full rounded-lg px-4 py-2.5 text-sm"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               {filteredInventory.length === 0 ? (
-                <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
-                  <p className="text-slate-500">{searchTerm ? 'Nenhum resultado encontrado.' : 'Nenhum produto cadastrado.'}</p>
+                <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                  <p style={{ color: 'var(--text-muted)' }}>{searchTerm ? 'Nenhum resultado encontrado.' : 'Nenhum produto cadastrado.'}</p>
                 </div>
               ) : (
                 filteredInventory.map((product) => {
@@ -436,19 +438,22 @@ export default function InventoryPage() {
                   const productCritical = product.groups.reduce((s, g) => s + g.variables.filter(v => getGroupStockStatus(g, v.stock) === 'critical').length, 0);
 
                   return (
-                    <div key={product.id} className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                    <div key={product.id} className="overflow-hidden rounded-2xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                       {/* Header do produto - clicável para expandir */}
                       <div
-                        className="flex cursor-pointer items-center gap-4 p-5 transition-colors hover:bg-slate-50"
+                        className="flex cursor-pointer items-center gap-4 p-5 transition-colors"
+                        style={{ background: 'var(--card-bg)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-soft)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--card-bg)'; }}
                         onClick={() => setExpandedProduct(isExpanded ? null : product.id)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpandedProduct(isExpanded ? null : product.id); }}
                       >
                         {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="h-14 w-14 rounded-xl object-cover border border-slate-200 flex-shrink-0" />
+                          <img src={product.imageUrl} alt={product.name} className="h-14 w-14 rounded-xl object-cover flex-shrink-0" style={{ border: '1px solid var(--border)' }} />
                         ) : (
-                          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-400">
+                          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl text-xl" style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}>
                             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                             </svg>
@@ -456,15 +461,15 @@ export default function InventoryPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-bold text-slate-900 truncate">{product.name}</h3>
+                            <h3 className="text-lg font-bold truncate" style={{ color: 'var(--text-primary)' }}>{product.name}</h3>
                             {productCritical > 0 && (
-                              <span className="flex-shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                              <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}>
                                 {productCritical} crítico{productCritical > 1 ? 's' : ''}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-slate-500 truncate">{product.description || 'Sem descrição'}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                          <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{product.description || 'Sem descrição'}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--text-faint)' }}>
                             <span>R$ {product.basePrice.toFixed(2)} base</span>
                             <span>·</span>
                             <span>{product.groups.length} grupo{product.groups.length !== 1 ? 's' : ''}</span>
@@ -490,7 +495,8 @@ export default function InventoryPage() {
                             Excluir
                           </button>
                           <svg
-                            className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            style={{ color: 'var(--text-faint)' }}
                             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -500,23 +506,23 @@ export default function InventoryPage() {
 
                       {/* Grupos e variáveis - expansível */}
                       {isExpanded && (
-                        <div className="border-t border-slate-100 px-5 pb-5">
+                        <div className="border-t px-5 pb-5" style={{ borderColor: 'var(--border)' }}>
                           {product.groups.length === 0 ? (
-                            <p className="py-4 text-sm text-slate-400">Nenhum grupo cadastrado.</p>
+                            <p className="py-4 text-sm" style={{ color: 'var(--text-faint)' }}>Nenhum grupo cadastrado.</p>
                           ) : (
                             <div className="mt-4 space-y-3">
                               {product.groups.map((group) => (
-                                <div key={group.id} className="rounded-xl border border-slate-200 overflow-hidden">
+                                <div key={group.id} className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
                                   {/* Header do grupo */}
-                                  <div className="flex items-center justify-between gap-3 bg-slate-50 px-4 py-3">
+                                  <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ background: 'var(--surface-soft)' }}>
                                     <div className="flex items-center gap-3">
-                                      <h4 className="font-semibold text-slate-900">{group.name}</h4>
-                                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">
+                                      <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{group.name}</h4>
+                                      <span className="rounded-full px-2 py-0.5 text-xs" style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
                                         {group.variables.length} variáve{group.variables.length !== 1 ? 'is' : 'l'}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-xs text-slate-400">
+                                      <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
                                         Alerta: {group.watchStockAlert ?? DEFAULT_WATCH_STOCK_ALERT} · Crítico: {group.criticalStockAlert ?? DEFAULT_CRITICAL_STOCK_ALERT}
                                       </span>
                                       <button
@@ -541,36 +547,35 @@ export default function InventoryPage() {
                                   {/* Variáveis */}
                                   <div className="p-4">
                                     {group.variables.length === 0 ? (
-                                      <p className="text-sm text-slate-400">Nenhuma variável cadastrada.</p>
+                                      <p className="text-sm" style={{ color: 'var(--text-faint)' }}>Nenhuma variável cadastrada.</p>
                                     ) : (
                                       <div className="grid gap-2 sm:grid-cols-2">
                                         {group.variables.map((variable) => {
                                           const status = getGroupStockStatus(group, variable.stock);
+                                          const statusStyles = {
+                                            critical: { bg: 'var(--danger-bg)', border: 'var(--danger-border)', text: 'var(--danger)' },
+                                            watch: { bg: 'var(--warning-bg)', border: 'var(--warning-border)', text: 'var(--warning)' },
+                                            ok: { bg: 'var(--card-bg)', border: 'var(--border)', text: 'var(--text-primary)' },
+                                          };
+                                          const s = statusStyles[status];
                                           return (
                                             <div
                                               key={variable.id}
-                                              className={`flex items-center justify-between rounded-lg border p-3 transition-all ${
-                                                status === 'critical'
-                                                  ? 'border-rose-200 bg-rose-50'
-                                                  : status === 'watch'
-                                                  ? 'border-amber-200 bg-amber-50'
-                                                  : 'border-slate-200 bg-white'
-                                              }`}
+                                              className="flex items-center justify-between rounded-lg p-3 transition-all"
+                                              style={{ background: s.bg, border: `1px solid ${s.border}` }}
                                             >
                                               <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2">
-                                                  <p className="font-medium text-slate-900 truncate">{variable.name}</p>
+                                                  <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{variable.name}</p>
                                                   {status === 'critical' && (
-                                                    <span className="flex-shrink-0 rounded-full bg-rose-200 px-1.5 py-0.5 text-[10px] font-bold text-rose-800">!</span>
+                                                    <span className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}>!</span>
                                                   )}
                                                   {status === 'watch' && (
-                                                    <span className="flex-shrink-0 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">!</span>
+                                                    <span className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--warning-bg)', color: 'var(--warning)', border: '1px solid var(--warning-border)' }}>!</span>
                                                   )}
                                                 </div>
-                                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                  <span className={`font-semibold ${
-                                                    status === 'critical' ? 'text-rose-600' : status === 'watch' ? 'text-amber-600' : 'text-slate-700'
-                                                  }`}>
+                                                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                                  <span className="font-semibold" style={{ color: s.text }}>
                                                     {variable.stock} un.
                                                   </span>
                                                   {variable.additionalPrice > 0 && (
@@ -621,7 +626,7 @@ export default function InventoryPage() {
         {/* ============================================ */}
         {pageTab === 'create' && (
           <DraggableSection pagePath={PAGE_PATH} section={sections[1]} index={1} totalSections={sections.length}>
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
               {/* Tabs */}
               <div
                 className="mb-6 inline-flex gap-1 rounded-xl p-1"
@@ -661,21 +666,22 @@ export default function InventoryPage() {
               {activeForm === 'product' && (
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">Novo produto base</h3>
-                    <p className="text-sm text-slate-500">Crie um produto que servirá como base para grupos e variáveis.</p>
+                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Novo produto base</h3>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Crie um produto que servirá como base para grupos e variáveis.</p>
                   </div>
                   <form className="space-y-4" onSubmit={handleCreateProduct}>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Nome do produto *</span>
                       <input
                         value={productName}
                         onChange={(event) => setProductName(event.target.value)}
                         placeholder="Ex: Sacola TNT"
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         required
                       />
                     </label>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Preço base (R$) *</span>
                       <input
                         type="number"
@@ -683,21 +689,23 @@ export default function InventoryPage() {
                         step={0.01}
                         value={productPrice}
                         onChange={(event) => setProductPrice(Number(event.target.value))}
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         required
                       />
                     </label>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Descrição</span>
                       <textarea
                         value={productDescription}
                         onChange={(event) => setProductDescription(event.target.value)}
                         placeholder="Descrição opcional do produto..."
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         rows={2}
                       />
                     </label>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Imagem do produto</span>
                       <input
                         type="file"
@@ -709,9 +717,10 @@ export default function InventoryPage() {
                           reader.onload = () => setProductImage(String(reader.result || ''));
                           reader.readAsDataURL(file);
                         }}
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       />
-                      {productImage && <p className="text-xs text-emerald-600">✓ Imagem carregada</p>}
+                      {productImage && <p className="text-xs" style={{ color: 'var(--success)' }}>✓ Imagem carregada</p>}
                     </label>
                     <button
                       className="inline-flex h-10 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80"
@@ -728,51 +737,55 @@ export default function InventoryPage() {
               {activeForm === 'group' && (
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">Novo grupo</h3>
-                    <p className="text-sm text-slate-500">Grupos organizam variáveis dentro de um produto (ex: Cor, Tamanho).</p>
+                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Novo grupo</h3>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Grupos organizam variáveis dentro de um produto (ex: Cor, Tamanho).</p>
                   </div>
                   <form className="space-y-4" onSubmit={handleCreateGroup}>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Produto vinculado *</span>
                       <select
                         value={groupProductId}
                         onChange={(event) => setGroupProductId(event.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       >
                         {inventory.map((product) => (
                           <option key={product.id} value={product.id}>{product.name}</option>
                         ))}
                       </select>
                     </label>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Nome do grupo *</span>
                       <input
                         value={groupName}
                         onChange={(event) => setGroupName(event.target.value)}
                         placeholder="Ex: Cor, Tamanho, Material"
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         required
                       />
                     </label>
                     <div className="grid grid-cols-2 gap-3">
-                      <label className="block space-y-1.5 text-slate-700">
+                      <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                         <span className="text-sm font-medium">Limite de atenção</span>
                         <input
                           type="number"
                           min={0}
                           value={groupWatchAlert}
                           onChange={(event) => setGroupWatchAlert(Number(event.target.value))}
-                          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                          className="w-full rounded-lg px-4 py-2.5 text-sm"
+                          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         />
                       </label>
-                      <label className="block space-y-1.5 text-slate-700">
+                      <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                         <span className="text-sm font-medium">Limite crítico</span>
                         <input
                           type="number"
                           min={0}
                           value={groupCriticalAlert}
                           onChange={(event) => setGroupCriticalAlert(Number(event.target.value))}
-                          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                          className="w-full rounded-lg px-4 py-2.5 text-sm"
+                          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         />
                       </label>
                     </div>
@@ -791,34 +804,36 @@ export default function InventoryPage() {
               {activeForm === 'variable' && (
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">Nova variável</h3>
-                    <p className="text-sm text-slate-500">Variáveis são as opções dentro de um grupo (ex: Vermelho, Azul).</p>
+                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Nova variável</h3>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Variáveis são as opções dentro de um grupo (ex: Vermelho, Azul).</p>
                   </div>
                   <form className="space-y-4" onSubmit={handleCreateVariable}>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Grupo vinculado *</span>
                       <select
                         value={variableGroupId}
                         onChange={(event) => setVariableGroupId(event.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       >
                         {allGroups.map((group) => (
                           <option key={group.id} value={group.id}>{group.productName} / {group.name}</option>
                         ))}
                       </select>
                     </label>
-                    <label className="block space-y-1.5 text-slate-700">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Nome da variável *</span>
                       <input
                         value={variableName}
                         onChange={(event) => setVariableName(event.target.value)}
                         placeholder="Ex: Vermelho, Grande, Algodão"
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         required
                       />
                     </label>
                     <div className="grid grid-cols-2 gap-3">
-                      <label className="block space-y-1.5 text-slate-700">
+                      <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                         <span className="text-sm font-medium">Preço adicional (R$)</span>
                         <input
                           type="number"
@@ -826,17 +841,19 @@ export default function InventoryPage() {
                           step={0.01}
                           value={variablePrice}
                           onChange={(event) => setVariablePrice(Number(event.target.value))}
-                          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                          className="w-full rounded-lg px-4 py-2.5 text-sm"
+                          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         />
                       </label>
-                      <label className="block space-y-1.5 text-slate-700">
+                      <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                         <span className="text-sm font-medium">Estoque inicial *</span>
                         <input
                           type="number"
                           min={0}
                           value={variableStock}
                           onChange={(event) => setVariableStock(Number(event.target.value))}
-                          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
+                          className="w-full rounded-lg px-4 py-2.5 text-sm"
+                          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                           required
                         />
                       </label>
@@ -858,211 +875,239 @@ export default function InventoryPage() {
         {/* ============================================ */}
         {/* MODAL: Editar Variável */}
         {/* ============================================ */}
-        {editingVariable ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingVariable(null)}>
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Editar variável</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-900">{editingVariable.name}</h3>
+        {editingVariable ? createPortal(
+          <div className="modal-overlay" onClick={() => setEditingVariable(null)}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
+              <div
+                className="modal-content rounded-xl p-6 shadow-2xl"
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--text-muted)' }}>Editar variável</p>
+                    <h3 className="mt-1 text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{editingVariable.name}</h3>
+                  </div>
+                  <button type="button" onClick={() => setEditingVariable(null)}
+                    className="rounded-lg p-2 transition-colors hover:opacity-80"
+                    style={{ color: 'var(--text-muted)' }}>✕</button>
                 </div>
-                <button type="button" onClick={() => setEditingVariable(null)}
-                  className="rounded-lg p-2 transition-colors hover:opacity-80"
-                  style={{ color: 'var(--text-muted)' }}>✕</button>
+                <form className="space-y-4" onSubmit={handleSubmitVariableUpdate}>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Nome</span>
+                    <input
+                      value={editVariableName}
+                      onChange={(event) => setEditVariableName(event.target.value)}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-sm font-medium">Preço adicional</span>
+                      <input
+                        type="number"
+                        step={0.01}
+                        min={0}
+                        value={editVariablePrice}
+                        onChange={(event) => setEditVariablePrice(Number(event.target.value))}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      />
+                    </label>
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-sm font-medium">Estoque</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={editVariableStock}
+                        onChange={(event) => setEditVariableStock(Number(event.target.value))}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingVariable(null)}
+                      className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                      style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--brand)', color: '#fff' }}
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </form>
               </div>
-              <form className="space-y-4" onSubmit={handleSubmitVariableUpdate}>
-                <label className="block space-y-1.5 text-slate-700">
-                  <span className="text-sm font-medium">Nome</span>
-                  <input
-                    value={editVariableName}
-                    onChange={(event) => setEditVariableName(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                  />
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block space-y-1.5 text-slate-700">
-                    <span className="text-sm font-medium">Preço adicional</span>
-                    <input
-                      type="number"
-                      step={0.01}
-                      min={0}
-                      value={editVariablePrice}
-                      onChange={(event) => setEditVariablePrice(Number(event.target.value))}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                    />
-                  </label>
-                  <label className="block space-y-1.5 text-slate-700">
-                    <span className="text-sm font-medium">Estoque</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={editVariableStock}
-                      onChange={(event) => setEditVariableStock(Number(event.target.value))}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                    />
-                  </label>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingVariable(null)}
-                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
-                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
-                    style={{ background: 'var(--brand)', color: '#fff' }}
-                  >
-                    Salvar
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
-        ) : null}
+        , document.body) : null}
 
         {/* ============================================ */}
         {/* MODAL: Editar Produto */}
         {/* ============================================ */}
-        {editingProduct ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingProduct(null)}>
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Editar produto</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-900">{editingProduct.name}</h3>
-                </div>
-                <button type="button" onClick={() => setEditingProduct(null)}
-                  className="rounded-lg p-2 transition-colors hover:opacity-80"
-                  style={{ color: 'var(--text-muted)' }}>✕</button>
-              </div>
-              <form className="space-y-4" onSubmit={handleSubmitProductUpdate}>
-                <label className="block space-y-1.5 text-slate-700">
-                  <span className="text-sm font-medium">Nome</span>
-                  <input
-                    value={editProductName}
-                    onChange={(event) => setEditProductName(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                  />
-                </label>
-                <label className="block space-y-1.5 text-slate-700">
-                  <span className="text-sm font-medium">Preço base (R$)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={editProductPrice}
-                    onChange={(event) => setEditProductPrice(Number(event.target.value))}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                  />
-                </label>
-                <label className="block space-y-1.5 text-slate-700">
-                  <span className="text-sm font-medium">Descrição</span>
-                  <textarea
-                    value={editProductDescription}
-                    onChange={(event) => setEditProductDescription(event.target.value)}
-                    rows={2}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                  />
-                </label>
-                <label className="block space-y-1.5 text-slate-700">
-                  <span className="text-sm font-medium">Imagem do produto</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => setEditProductImage(String(reader.result || ''));
-                      reader.readAsDataURL(file);
-                    }}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                  />
-                  {editProductImage && <p className="text-xs text-emerald-600">✓ Imagem carregada</p>}
-                </label>
-                <div className="flex justify-end gap-2 pt-2">
+        {editingProduct ? createPortal(
+          <div className="modal-overlay" onClick={() => setEditingProduct(null)}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
+              <div
+                className="modal-content rounded-xl p-6 shadow-2xl"
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--text-muted)' }}>Editar produto</p>
+                    <h3 className="mt-1 text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{editingProduct.name}</h3>
+                  </div>
                   <button type="button" onClick={() => setEditingProduct(null)}
-                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
-                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
-                    Cancelar
-                  </button>
-                  <button type="submit"
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
-                    style={{ background: 'var(--brand)', color: '#fff' }}>
-                    Salvar
-                  </button>
+                    className="rounded-lg p-2 transition-colors hover:opacity-80"
+                    style={{ color: 'var(--text-muted)' }}>✕</button>
                 </div>
-              </form>
+                <form className="space-y-4" onSubmit={handleSubmitProductUpdate}>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Nome</span>
+                    <input
+                      value={editProductName}
+                      onChange={(event) => setEditProductName(event.target.value)}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                  </label>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Preço base (R$)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={editProductPrice}
+                      onChange={(event) => setEditProductPrice(Number(event.target.value))}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                  </label>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Descrição</span>
+                    <textarea
+                      value={editProductDescription}
+                      onChange={(event) => setEditProductDescription(event.target.value)}
+                      rows={2}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                  </label>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Imagem do produto</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => setEditProductImage(String(reader.result || ''));
+                        reader.readAsDataURL(file);
+                      }}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                    {editProductImage && <p className="text-xs" style={{ color: 'var(--success)' }}>✓ Imagem carregada</p>}
+                  </label>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingProduct(null)}
+                      className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                      style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
+                      Cancelar
+                    </button>
+                    <button type="submit"
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--brand)', color: '#fff' }}>
+                      Salvar
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        ) : null}
+        , document.body) : null}
 
         {/* ============================================ */}
         {/* MODAL: Editar Grupo */}
         {/* ============================================ */}
-        {editingGroup ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingGroup(null)}>
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Editar grupo</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-900">{editingGroup.name}</h3>
-                </div>
-                <button type="button" onClick={() => setEditingGroup(null)}
-                  className="rounded-lg p-2 transition-colors hover:opacity-80"
-                  style={{ color: 'var(--text-muted)' }}>✕</button>
-              </div>
-              <form className="space-y-4" onSubmit={handleSubmitGroupUpdate}>
-                <label className="block space-y-1.5 text-slate-700">
-                  <span className="text-sm font-medium">Nome</span>
-                  <input
-                    value={editGroupName}
-                    onChange={(event) => setEditGroupName(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                  />
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block space-y-1.5 text-slate-700">
-                    <span className="text-sm font-medium">Limite de atenção</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={editGroupWatchAlert}
-                      onChange={(event) => setEditGroupWatchAlert(Number(event.target.value))}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                    />
-                  </label>
-                  <label className="block space-y-1.5 text-slate-700">
-                    <span className="text-sm font-medium">Limite crítico</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={editGroupCriticalAlert}
-                      onChange={(event) => setEditGroupCriticalAlert(Number(event.target.value))}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm"
-                    />
-                  </label>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
+        {editingGroup ? createPortal(
+          <div className="modal-overlay" onClick={() => setEditingGroup(null)}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
+              <div
+                className="modal-content rounded-xl p-6 shadow-2xl"
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--text-muted)' }}>Editar grupo</p>
+                    <h3 className="mt-1 text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{editingGroup.name}</h3>
+                  </div>
                   <button type="button" onClick={() => setEditingGroup(null)}
-                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
-                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
-                    Cancelar
-                  </button>
-                  <button type="submit"
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
-                    style={{ background: 'var(--brand)', color: '#fff' }}>
-                    Salvar
-                  </button>
+                    className="rounded-lg p-2 transition-colors hover:opacity-80"
+                    style={{ color: 'var(--text-muted)' }}>✕</button>
                 </div>
-              </form>
+                <form className="space-y-4" onSubmit={handleSubmitGroupUpdate}>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Nome</span>
+                    <input
+                      value={editGroupName}
+                      onChange={(event) => setEditGroupName(event.target.value)}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-sm font-medium">Limite de atenção</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={editGroupWatchAlert}
+                        onChange={(event) => setEditGroupWatchAlert(Number(event.target.value))}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      />
+                    </label>
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-sm font-medium">Limite crítico</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={editGroupCriticalAlert}
+                        onChange={(event) => setEditGroupCriticalAlert(Number(event.target.value))}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingGroup(null)}
+                      className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
+                      style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
+                      Cancelar
+                    </button>
+                    <button type="submit"
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--brand)', color: '#fff' }}>
+                      Salvar
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        ) : null}
+        , document.body) : null}
       </div>
     </ProtectedPage>
   );
