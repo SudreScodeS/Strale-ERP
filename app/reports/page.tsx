@@ -245,6 +245,66 @@ const REPORTS: ReportConfig[] = [
 ];
 
 // ==========================================
+// SORT PRESETS PER REPORT TYPE
+// ==========================================
+
+interface SortPreset {
+  key: string;
+  label: string;
+  col: string;
+  dir: 'asc' | 'desc';
+}
+
+const SORT_PRESETS: Record<string, SortPreset[]> = {
+  sales: [
+    { key: 'price-desc', label: '💰 Maior valor', col: 'totalPrice', dir: 'desc' },
+    { key: 'price-asc', label: '💰 Menor valor', col: 'totalPrice', dir: 'asc' },
+    { key: 'date-desc', label: '📅 Mais recente', col: 'createdAt', dir: 'desc' },
+    { key: 'date-asc', label: '📅 Mais antigo', col: 'createdAt', dir: 'asc' },
+    { key: 'status-asc', label: '📋 Status (A-Z)', col: 'status', dir: 'asc' },
+    { key: 'vendor-asc', label: '👤 Vendedor (A-Z)', col: 'createdByName', dir: 'asc' },
+    { key: 'name-asc', label: '🔤 Pedido (A-Z)', col: 'name', dir: 'asc' },
+  ],
+  inventory: [
+    { key: 'stock-desc', label: '📦 Maior estoque', col: 'stock', dir: 'desc' },
+    { key: 'stock-asc', label: '📦 Menor estoque', col: 'stock', dir: 'asc' },
+    { key: 'price-desc', label: '💰 Maior preço', col: 'price', dir: 'desc' },
+    { key: 'price-asc', label: '💰 Menor preço', col: 'price', dir: 'asc' },
+    { key: 'total-desc', label: '💎 Maior valor total', col: 'totalValue', dir: 'desc' },
+    { key: 'total-asc', label: '💎 Menor valor total', col: 'totalValue', dir: 'asc' },
+    { key: 'product-asc', label: '🔤 Produto (A-Z)', col: 'productName', dir: 'asc' },
+    { key: 'group-asc', label: '📂 Grupo (A-Z)', col: 'groupName', dir: 'asc' },
+  ],
+  finance: [
+    { key: 'amount-desc', label: '💰 Maior valor', col: 'amount', dir: 'desc' },
+    { key: 'amount-asc', label: '💰 Menor valor', col: 'amount', dir: 'asc' },
+    { key: 'date-desc', label: '📅 Mais recente', col: 'date', dir: 'desc' },
+    { key: 'date-asc', label: '📅 Mais antigo', col: 'date', dir: 'asc' },
+    { key: 'sale-first', label: '🛒 Vendas primeiro', col: 'type', dir: 'asc' },
+    { key: 'purchase-first', label: '🏷️ Compras primeiro', col: 'type', dir: 'desc' },
+    { key: 'desc-asc', label: '🔤 Descrição (A-Z)', col: 'description', dir: 'asc' },
+  ],
+  quotes: [
+    { key: 'price-desc', label: '💰 Maior valor', col: 'totalPrice', dir: 'desc' },
+    { key: 'price-asc', label: '💰 Menor valor', col: 'totalPrice', dir: 'asc' },
+    { key: 'date-desc', label: '📅 Mais recente', col: 'createdAt', dir: 'desc' },
+    { key: 'date-asc', label: '📅 Mais antigo', col: 'createdAt', dir: 'asc' },
+    { key: 'status-asc', label: '📋 Status (A-Z)', col: 'status', dir: 'asc' },
+    { key: 'client-asc', label: '👤 Cliente (A-Z)', col: 'clientName', dir: 'asc' },
+  ],
+  forecast: [
+    { key: 'stock-desc', label: '📦 Maior estoque', col: 'currentStock', dir: 'desc' },
+    { key: 'stock-asc', label: '📦 Menor estoque', col: 'currentStock', dir: 'asc' },
+    { key: 'weekly-desc', label: '📈 Maior demanda semanal', col: 'avgWeeklyDemand', dir: 'desc' },
+    { key: 'monthly-desc', label: '📈 Maior demanda mensal', col: 'avgMonthlyDemand', dir: 'desc' },
+    { key: 'days-asc', label: '⚠️ Menos dias de estoque', col: 'daysOfStock', dir: 'asc' },
+    { key: 'days-desc', label: '✅ Mais dias de estoque', col: 'daysOfStock', dir: 'desc' },
+    { key: 'product-asc', label: '🔤 Produto (A-Z)', col: 'productName', dir: 'asc' },
+    { key: 'risk-asc', label: '🚨 Risco (A-Z)', col: 'riskLevel', dir: 'asc' },
+  ],
+};
+
+// ==========================================
 // CSV EXPORT
 // ==========================================
 
@@ -659,6 +719,7 @@ export default function ReportsPage() {
   const [searchText, setSearchText] = useState('');
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sortPreset, setSortPreset] = useState<string>('');
   const [visibleRows, setVisibleRows] = useState(PAGE_SIZE);
 
   const dateFieldMap: Record<string, string> = {
@@ -699,6 +760,7 @@ export default function ReportsPage() {
       setSearchText('');
       setSortCol(null);
       setSortDir('asc');
+      setSortPreset('');
       setVisibleRows(PAGE_SIZE);
       setActiveTab('data');
     } catch {
@@ -784,6 +846,22 @@ export default function ReportsPage() {
     } else {
       setSortCol(colKey);
       setSortDir('asc');
+    }
+    setSortPreset('');
+  }
+
+  function handlePresetChange(presetKey: string) {
+    setSortPreset(presetKey);
+    if (!presetKey || !selectedReport) {
+      setSortCol(null);
+      setSortDir('asc');
+      return;
+    }
+    const presets = SORT_PRESETS[selectedReport] || [];
+    const preset = presets.find((p) => p.key === presetKey);
+    if (preset) {
+      setSortCol(preset.col);
+      setSortDir(preset.dir);
     }
   }
 
@@ -956,6 +1034,47 @@ export default function ReportsPage() {
                       <button
                         type="button"
                         onClick={() => { setFromDate(''); setToDate(''); }}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                        style={{
+                          background: 'var(--surface-muted)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        Limpar
+                      </button>
+                    )}
+                    <div className="mx-1 h-8 w-px" style={{ background: 'var(--border)' }} />
+                  </>
+                )}
+
+                {/* Sort presets */}
+                {selectedReport && SORT_PRESETS[selectedReport] && (
+                  <>
+                    <div className="min-w-[180px]">
+                      <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                        Ordenar por
+                      </label>
+                      <select
+                        value={sortPreset}
+                        onChange={(e) => handlePresetChange(e.target.value)}
+                        className="w-full rounded-lg px-3 py-1.5 text-sm"
+                        style={{
+                          background: 'var(--input-bg)',
+                          border: `1px solid ${sortPreset ? 'var(--brand)' : 'var(--input-border)'}`,
+                          color: sortPreset ? 'var(--text-primary)' : 'var(--text-muted)',
+                        }}
+                      >
+                        <option value="">Padrão</option>
+                        {SORT_PRESETS[selectedReport].map((p) => (
+                          <option key={p.key} value={p.key}>{p.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {sortPreset && (
+                      <button
+                        type="button"
+                        onClick={() => handlePresetChange('')}
                         className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
                           background: 'var(--surface-muted)',
