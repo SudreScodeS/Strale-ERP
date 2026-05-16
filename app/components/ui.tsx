@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { globalConfig, applyServerConfig } from '../../config/global';
 import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/authClient';
 
@@ -25,6 +26,97 @@ export function isGlobalDirty() { return globalDirty; }
 
 // Pending navigation target when dirty modal is shown
 let pendingNavigation = '';
+
+// ==========================================
+// TOAST NOTIFICATION SYSTEM
+// ==========================================
+
+interface Toast {
+  id: string;
+  message: string;
+  icon: string;
+  timestamp: number;
+}
+
+let toastListeners: ((toasts: Toast[]) => void)[] = [];
+let toastsState: Toast[] = [];
+
+function notifyToastListeners() {
+  toastListeners.forEach(fn => fn([...toastsState]));
+}
+
+export function showToast(message: string, icon = '🔔') {
+  const id = Math.random().toString(36).slice(2);
+  const toast: Toast = { id, message, icon, timestamp: Date.now() };
+  toastsState = [toast, ...toastsState].slice(0, 5); // max 5
+  notifyToastListeners();
+  // Auto-remove after 6 seconds
+  setTimeout(() => {
+    toastsState = toastsState.filter(t => t.id !== id);
+    notifyToastListeners();
+  }, 6000);
+}
+
+function removeToast(id: string) {
+  toastsState = toastsState.filter(t => t.id !== id);
+  notifyToastListeners();
+}
+
+function ToastContainer() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  useEffect(() => {
+    toastListeners.push(setToasts);
+    return () => {
+      toastListeners = toastListeners.filter(fn => fn !== setToasts);
+    };
+  }, []);
+
+  if (toasts.length === 0) return null;
+
+  return createPortal(
+    <div className="fixed right-4 top-4 z-[100] flex flex-col gap-2 pointer-events-none" style={{ maxWidth: '380px' }}>
+      {toasts.map((toast, i) => (
+        <div
+          key={toast.id}
+          className="pointer-events-auto flex items-start gap-3 rounded-xl px-4 py-3 shadow-lg ring-1 animate-slide-in"
+          style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            ringColor: 'var(--border)',
+            animationDuration: '0.3s',
+            opacity: 1,
+          }}
+        >
+          <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm"
+            style={{ background: 'var(--surface-muted)' }}
+          >
+            {toast.icon}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {toast.message}
+            </p>
+            <p className="mt-0.5 text-xs" style={{ color: 'var(--text-faint)' }}>
+              agora
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => removeToast(toast.id)}
+            className="flex-shrink-0 rounded-md p-1 transition-colors hover:bg-[var(--surface-muted)]"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>,
+    document.body
+  );
+}
 
 // ==========================================
 // SVG ICONS (inline, no dependencies)
@@ -181,6 +273,8 @@ export function Sidebar({ children }: SidebarProps) {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [savingFromModal, setSavingFromModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const lastKnownLogIdRef = useRef<string | null>(null);
+  const initialLoadRef = useRef(true);
 
   // Register modal show function
   useEffect(() => {
@@ -213,25 +307,54 @@ export function Sidebar({ children }: SidebarProps) {
       .catch(() => {});
   }, []);
 
-  // Check for unread notifications
+  // Check for unread notifications + toast for new ones
   useEffect(() => {
     const token = getStoredToken();
     if (!token) return;
-    fetch('/api/activity-logs', { headers: getAuthHeaders() })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.logs) return;
-        const lastRead = window.localStorage.getItem('erp-notifications-last-read');
-        if (!lastRead) {
-          // First visit — if there are logs, show badge
-          setUnreadCount(data.logs.length > 0 ? Math.min(data.logs.length, 99) : 0);
-        } else {
-          const lastReadTime = new Date(lastRead).getTime();
-          const newLogs = data.logs.filter((l: { timestamp: string }) => new Date(l.timestamp).getTime() > lastReadTime);
-          setUnreadCount(Math.min(newLogs.length, 99));
-        }
-      })
-      .catch(() => {});
+
+    function checkNotifications() {
+      fetch('/api/activity-logs', { headers: getAuthHeaders() })
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.logs || data.logs.length === 0) return;
+
+          const lastRead = window.localStorage.getItem('erp-notifications-last-read');
+          if (!lastRead) {
+            setUnreadCount(Math.min(data.logs.length, 99));
+          } else {
+            const lastReadTime = new Date(lastRead).getTime();
+            const newLogs = data.logs.filter((l: { timestamp: string }) => new Date(l.timestamp).getTime() > lastReadTime);
+            setUnreadCount(Math.min(newLogs.length, 99));
+          }
+
+          // Show toasts for new logs since last known
+          const latestLog = data.logs[0];
+          if (lastKnownLogIdRef.current && lastKnownLogIdRef.current !== latestLog.id && !initialLoadRef.current) {
+            const newLogs = data.logs.filter((l: { id: string }) => l.id !== lastKnownLogIdRef.current);
+            if (newLogs.length > 0) {
+              const newest = newLogs[0];
+              const actionLabels: Record<string, string> = {
+                create: '➕', update: '✏️', delete: '🗑️', convert: '🔄',
+                send: '📤', status_change: '🔁', login: '🔑', other: '📌',
+              };
+              showToast(
+                `${newest.username}: ${newest.description}`,
+                actionLabels[newest.action] || '🔔'
+              );
+            }
+          }
+          lastKnownLogIdRef.current = latestLog.id;
+          initialLoadRef.current = false;
+        })
+        .catch(() => {});
+    }
+
+    // Initial check
+    checkNotifications();
+
+    // Poll every 15 seconds for new notifications
+    const interval = setInterval(checkNotifications, 15000);
+    return () => clearInterval(interval);
   }, [pathname]);
 
   // Mark notifications as read when visiting the page
@@ -283,7 +406,7 @@ export function Sidebar({ children }: SidebarProps) {
               style={{
                 color: 'var(--sidebar-text-strong)',
                 fontFamily: 'var(--font-alumni-sans)',
-                letterSpacing: '0.25em',
+                letterSpacing: '0.1em',
               }}
             >
               {globalConfig.systemName}
@@ -293,7 +416,7 @@ export function Sidebar({ children }: SidebarProps) {
               style={{
                 color: 'var(--text-faint)',
                 fontFamily: 'var(--font-alumni-sans)',
-                letterSpacing: '0.35em',
+                letterSpacing: '0.15em',
               }}
             >
               {globalConfig.companyName}
@@ -557,7 +680,14 @@ export function Sidebar({ children }: SidebarProps) {
                       }
                     }}
                   >
-                    {item.icon}
+                    <span className="relative">
+                      {item.icon}
+                      {item.href === '/notifications' && unreadCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-[var(--sidebar-bg)]">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </span>
                   </Link>
                 );
               })}
@@ -701,6 +831,9 @@ export function Sidebar({ children }: SidebarProps) {
           </div>
         </div>
       )}
+
+      {/* Toast notifications */}
+      <ToastContainer />
     </div>
   );
 }
