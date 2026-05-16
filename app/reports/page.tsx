@@ -262,6 +262,140 @@ function exportCSV(report: ReportConfig, data: ReportRow[]) {
 }
 
 // ==========================================
+// STYLED HTML REPORT EXPORT
+// ==========================================
+
+function exportStyledReport(report: ReportConfig, data: ReportRow[], stats: { label: string; value: string }[] | null) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+  const statsHtml = stats && stats.length > 0
+    ? `<div class="stats-grid">${stats.map(s => `
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value">${s.value}</div>
+        </div>`).join('')}
+      </div>`
+    : '';
+
+  const tableHeader = report.columns.map(c => `<th>${c.label}</th>`).join('');
+  const tableRows = data.map((row, i) => {
+    const cells = report.columns.map(c => {
+      const raw = row[c.key];
+      const formatted = c.format ? c.format(raw) : raw;
+      return `<td>${String(formatted ?? '—')}</td>`;
+    }).join('');
+    return `<tr class="${i % 2 === 0 ? 'row-even' : 'row-odd'}">${cells}</tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${report.title} — Elitium ERP</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa; color: #1a1a2e; padding: 2rem;
+      -webkit-font-smoothing: antialiased;
+    }
+    .report-container {
+      max-width: 1100px; margin: 0 auto; background: #fff;
+      border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .report-header {
+      background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+      color: #fff; padding: 2rem 2.5rem;
+    }
+    .report-header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .report-header p { opacity: 0.85; font-size: 0.9rem; }
+    .report-header .meta { margin-top: 0.75rem; display: flex; gap: 2rem; font-size: 0.8rem; opacity: 0.7; }
+    .report-body { padding: 2rem 2.5rem; }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #f8f6fc; border: 1px solid #e8e2f2; border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8478a0; font-weight: 600; }
+    .stat-value { font-size: 1.25rem; font-weight: 700; color: #1a1528; margin-top: 0.25rem; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .data-table th {
+      text-align: left; padding: 0.75rem 1rem; font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #8478a0;
+      border-bottom: 2px solid #e0daf0; font-weight: 600;
+    }
+    .data-table td {
+      padding: 0.6rem 1rem; border-bottom: 1px solid #f0ecf6; color: #1a1528;
+    }
+    .row-even { background: #fff; }
+    .row-odd { background: #faf8ff; }
+    .data-table tr:hover { background: #f5f3ff; }
+    .report-footer {
+      padding: 1.25rem 2.5rem; border-top: 1px solid #e0daf0;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.75rem; color: #a8a0c0;
+    }
+    .report-footer .brand { font-weight: 700; color: #7c3aed; }
+    .summary-row {
+      display: flex; justify-content: space-between; padding: 0.4rem 0;
+      font-size: 0.85rem;
+    }
+    .summary-row .label { color: #8478a0; }
+    .summary-row .value { font-weight: 600; color: #1a1528; }
+    .summary-total {
+      border-top: 2px solid #7c3aed; margin-top: 0.5rem; padding-top: 0.5rem;
+      font-size: 1rem; font-weight: 700;
+    }
+    @media print {
+      body { padding: 0; background: #fff; }
+      .report-container { box-shadow: none; border-radius: 0; }
+      .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .row-even, .row-odd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-container">
+    <div class="report-header">
+      <h1>${report.title}</h1>
+      <p>${report.description}</p>
+      <div class="meta">
+        <span>📅 ${dateStr}</span>
+        <span>🕐 ${timeStr}</span>
+        <span>📊 ${data.length} registro${data.length !== 1 ? 's' : ''}</span>
+      </div>
+    </div>
+    <div class="report-body">
+      ${statsHtml}
+      <table class="data-table">
+        <thead><tr>${tableHeader}</tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <div class="report-footer">
+      <span class="brand">Elitium ERP</span>
+      <span>Gerado em ${dateStr} às ${timeStr}</span>
+    </div>
+  </div>
+  <script>window.onload = () => { window.print(); };</script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  // Revoke after a delay to allow the new window to load
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+// ==========================================
 // HELPERS
 // ==========================================
 
@@ -401,7 +535,7 @@ function CompactReportCard({
               onClick={onExport}
               className="flex h-7 w-7 items-center justify-center rounded-lg transition-all hover:opacity-80"
               style={{ background: 'var(--brand)', color: '#fff' }}
-              title="Exportar CSV"
+              title="Gerar relatório"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -525,7 +659,9 @@ export default function ReportsPage() {
       fetchReport(report);
       return;
     }
-    exportCSV(report, rows);
+    const reportStats = computeStats(rows, report.id);
+    const simpleStats = reportStats ? reportStats.map(s => ({ label: s.label, value: s.value })) : null;
+    exportStyledReport(report, rows, simpleStats);
   }
 
   // Search filtering
@@ -576,7 +712,7 @@ export default function ReportsPage() {
       <div>
         <PageHeader
           title="Relatórios"
-          description="Exporte dados do sistema em formato CSV para análise externa."
+          description="Gere relatórios estilizados para impressão ou exporte dados em CSV para análise externa."
         />
 
         {/* Tabs */}
@@ -785,17 +921,33 @@ export default function ReportsPage() {
                   )}
                 </div>
 
-                {/* Export button */}
+                {/* Export buttons */}
                 <button
                   type="button"
-                  onClick={() => exportCSV(activeReport, sortedData)}
+                  onClick={() => {
+                    const reportStats = computeStats(sortedData, activeReport.id);
+                    const simpleStats = reportStats ? reportStats.map(s => ({ label: s.label, value: s.value })) : null;
+                    exportStyledReport(activeReport, sortedData, simpleStats);
+                  }}
                   className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
                   style={{ background: 'var(--brand)', color: '#fff' }}
                 >
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
-                  Exportar CSV
+                  Gerar Relatório
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportCSV(activeReport, sortedData)}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:opacity-80"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                  title="Exportar como CSV"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  CSV
                 </button>
               </div>
 
@@ -916,11 +1068,15 @@ export default function ReportsPage() {
                   {activeReport && previewData.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => exportCSV(activeReport, sortedData)}
+                      onClick={() => {
+                        const reportStats = computeStats(sortedData, activeReport.id);
+                        const simpleStats = reportStats ? reportStats.map(s => ({ label: s.label, value: s.value })) : null;
+                        exportStyledReport(activeReport, sortedData, simpleStats);
+                      }}
                       className="text-xs font-medium transition-colors hover:underline"
                       style={{ color: 'var(--brand)' }}
                     >
-                      Exportar todos ({sortedData.length}) como CSV
+                      Gerar relatório completo ({sortedData.length} registros)
                     </button>
                   )}
                 </div>
