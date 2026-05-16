@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { PageHeader } from '../../components/ui';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { PageHeader, setGlobalDirty } from '../../components/ui';
 import { ProtectedPage } from '../../components/protected';
 import { getAuthHeaders } from '../../lib/authClient';
 
@@ -127,6 +128,8 @@ export default function NotificationsPage() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
   const [settingsMessageType, setSettingsMessageType] = useState<'success' | 'error'>('success');
+  const [dirty, setDirty] = useState(false);
+  const savedSettingsRef = useRef<string>('');
 
   // ==========================================
   // DATA LOADING
@@ -149,10 +152,40 @@ export default function NotificationsPage() {
       const data = await res.json();
       if (res.ok && data.config?.notifications) {
         setSettings(data.config.notifications);
+        savedSettingsRef.current = JSON.stringify(data.config.notifications);
+        setDirty(false);
+        setGlobalDirty(false);
       }
     } catch { /* ignore */ }
     setSettingsLoading(false);
   }
+
+  // Track dirty state by comparing current settings with last saved
+  useEffect(() => {
+    if (!savedSettingsRef.current) return;
+    const current = JSON.stringify(settings);
+    const isDirty = current !== savedSettingsRef.current;
+    setDirty(isDirty);
+    setGlobalDirty(isDirty, {
+      message: 'Você tem alterações não salvas nas configurações de notificação.',
+      onSave: async () => {
+        await handleSaveSettings();
+      },
+      onDiscard: () => {
+        void loadSettings();
+      },
+    });
+  }, [settings]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
 
   useEffect(() => {
     void loadLogs();
@@ -175,6 +208,9 @@ export default function NotificationsPage() {
       if (res.ok) {
         setSettingsMessage('Configurações de notificação salvas com sucesso!');
         setSettingsMessageType('success');
+        savedSettingsRef.current = JSON.stringify(settings);
+        setDirty(false);
+        setGlobalDirty(false);
       } else {
         setSettingsMessage(data.error || 'Erro ao salvar configurações.');
         setSettingsMessageType('error');
@@ -468,6 +504,50 @@ export default function NotificationsPage() {
               </button>
             </div>
           </div>
+        )}
+        {/* Floating unsaved changes bar — portal to body for true fixed positioning */}
+        {dirty && createPortal(
+          <div
+            className="fixed bottom-0 left-0 right-0 z-[90] flex items-center justify-center gap-4 px-6 py-3"
+            style={{
+              background: 'var(--card-bg)',
+              borderTop: '2px solid var(--warning, #f59e0b)',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: 'var(--warning, #f59e0b)' }} />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: 'var(--warning, #f59e0b)' }} />
+              </span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                ⚠ Você tem alterações não salvas
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void loadSettings()}
+                className="rounded-lg px-4 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  background: 'var(--surface-muted)',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                Descartar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveSettings()}
+                className="rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: 'var(--brand)' }}
+              >
+                Salvar agora
+              </button>
+            </div>
+          </div>,
+          document.body
         )}
       </div>
     </ProtectedPage>
