@@ -733,18 +733,6 @@ export default function AdminPage() {
                   >
                     {dirty ? 'Descartar alterações' : 'Restaurar padrão'}
                   </button>
-                  <a
-                    href="/admin/notifications"
-                    className="inline-flex h-12 items-center justify-center rounded-xl px-6 text-sm font-medium transition-colors"
-                    style={{
-                      background: 'var(--surface-muted)',
-                      color: 'var(--text-secondary)',
-                      border: '1px solid var(--border)',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    🔔 Notificações
-                  </a>
                 </div>
               )}
             </DraggableSection>

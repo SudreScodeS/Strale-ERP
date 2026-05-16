@@ -142,7 +142,7 @@ const navItems: NavItem[] = [
   { href: '/demand-forecast', label: 'Previsao', icon: icons.forecast, roles: ['admin'], section: 'Financeiro' },
   { href: '/assistant', label: 'Assistente', icon: icons.assistant, roles: ['admin', 'seller'], section: 'Ferramentas' },
   { href: '/users', label: 'Usuarios', icon: icons.users, roles: ['admin'], section: 'Configuracoes' },
-  { href: '/admin/notifications', label: 'Notificações', icon: icons.notifications, roles: ['admin'], section: 'Configuracoes' },
+  { href: '/notifications', label: 'Notificações', icon: icons.notifications, roles: ['admin'], section: 'Configuracoes' },
   { href: '/admin', label: 'Configuracoes', icon: icons.admin, roles: ['admin'], section: 'Configuracoes' },
 ];
 

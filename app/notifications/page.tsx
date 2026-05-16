@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PageHeader, setGlobalDirty } from '../../components/ui';
-import { ProtectedPage } from '../../components/protected';
-import { getAuthHeaders } from '../../lib/authClient';
+import { PageHeader, setGlobalDirty } from '../components/ui';
+import { ProtectedPage } from '../components/protected';
+import { getAuthHeaders } from '../lib/authClient';
 
 // ==========================================
 // TYPES
