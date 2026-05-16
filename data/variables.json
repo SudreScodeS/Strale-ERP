@@ -99,7 +99,7 @@
     "id": "variable-garrafa-material-inox-316",
     "groupId": "group-garrafa-material",
     "name": "Inox 316",
-    "additionalPrice": 8,
+    "additionalPrice": 12,
     "stock": 100,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -155,7 +155,7 @@
     "id": "variable-caneca-material-porcelana",
     "groupId": "group-caneca-material",
     "name": "Porcelana",
-    "additionalPrice": 5,
+    "additionalPrice": 8,
     "stock": 150,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -163,7 +163,7 @@
     "id": "variable-caneca-material-inox",
     "groupId": "group-caneca-material",
     "name": "Inox",
-    "additionalPrice": 8,
+    "additionalPrice": 12,
     "stock": 200,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -267,7 +267,7 @@
     "id": "variable-caderno-tamanho-a4-21x30cm",
     "groupId": "group-caderno-tamanho",
     "name": "A4 (21x30cm)",
-    "additionalPrice": 5,
+    "additionalPrice": 8,
     "stock": 150,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -275,7 +275,7 @@
     "id": "variable-caderno-tamanho-executivo-16x23cm",
     "groupId": "group-caderno-tamanho",
     "name": "Executivo (16x23cm)",
-    "additionalPrice": 3,
+    "additionalPrice": 5,
     "stock": 100,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -299,7 +299,7 @@
     "id": "variable-camiseta-cor-azul-royal",
     "groupId": "group-camiseta-cor",
     "name": "Azul Royal",
-    "additionalPrice": 0,
+    "additionalPrice": 2,
     "stock": 200,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -315,7 +315,7 @@
     "id": "variable-camiseta-cor-vermelha",
     "groupId": "group-camiseta-cor",
     "name": "Vermelha",
-    "additionalPrice": 0,
+    "additionalPrice": 2,
     "stock": 100,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -347,7 +347,7 @@
     "id": "variable-camiseta-tamanho-gg",
     "groupId": "group-camiseta-tamanho",
     "name": "GG",
-    "additionalPrice": 0,
+    "additionalPrice": 3,
     "stock": 150,
     "createdAt": "2026-05-16T00:00:00.000Z"
   },
@@ -355,7 +355,7 @@
     "id": "variable-camiseta-tamanho-xg",
     "groupId": "group-camiseta-tamanho",
     "name": "XG",
-    "additionalPrice": 2,
+    "additionalPrice": 5,
     "stock": 80,
     "createdAt": "2026-05-16T00:00:00.000Z"
   }
