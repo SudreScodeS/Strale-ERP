@@ -316,7 +316,7 @@ function exportStyledReport(report: ReportConfig, data: ReportRow[], stats: { la
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f8f9fa; color: #1a1a2e; padding: 2rem;
+      background: #f8fafc; color: #0f172a; padding: 2rem;
       -webkit-font-smoothing: antialiased;
     }
     .report-container {
@@ -325,9 +325,13 @@ function exportStyledReport(report: ReportConfig, data: ReportRow[], stats: { la
       overflow: hidden;
     }
     .report-header {
-      background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       color: #fff; padding: 2rem 2.5rem;
+      display: flex; justify-content: space-between; align-items: center;
     }
+    .report-header-left { flex: 1; }
+    .report-header-right { flex-shrink: 0; margin-left: 2rem; display: flex; align-items: center; }
+    .report-header-right img { height: 64px; width: auto; opacity: 0.9; }
     .report-header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
     .report-header p { opacity: 0.85; font-size: 0.9rem; }
     .report-header .meta { margin-top: 0.75rem; display: flex; gap: 2rem; font-size: 0.8rem; opacity: 0.7; }
@@ -337,37 +341,37 @@ function exportStyledReport(report: ReportConfig, data: ReportRow[], stats: { la
       gap: 1rem; margin-bottom: 2rem;
     }
     .stat-card {
-      background: #f8f6fc; border: 1px solid #e8e2f2; border-radius: 12px;
+      background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px;
       padding: 1rem 1.25rem;
     }
-    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8478a0; font-weight: 600; }
-    .stat-value { font-size: 1.25rem; font-weight: 700; color: #1a1528; margin-top: 0.25rem; }
+    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: 600; }
+    .stat-value { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem; }
     .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     .data-table th {
       text-align: left; padding: 0.75rem 1rem; font-size: 0.7rem;
-      text-transform: uppercase; letter-spacing: 0.06em; color: #8478a0;
-      border-bottom: 2px solid #e0daf0; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #64748b;
+      border-bottom: 2px solid #e2e8f0; font-weight: 600;
     }
     .data-table td {
-      padding: 0.6rem 1rem; border-bottom: 1px solid #f0ecf6; color: #1a1528;
+      padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #0f172a;
     }
     .row-even { background: #fff; }
-    .row-odd { background: #faf8ff; }
-    .data-table tr:hover { background: #f5f3ff; }
+    .row-odd { background: #f8fafc; }
+    .data-table tr:hover { background: #f1f5f9; }
     .report-footer {
-      padding: 1.25rem 2.5rem; border-top: 1px solid #e0daf0;
+      padding: 1.25rem 2.5rem; border-top: 1px solid #e2e8f0;
       display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.75rem; color: #a8a0c0;
+      font-size: 0.75rem; color: #94a3b8;
     }
-    .report-footer .brand { font-weight: 700; color: #7c3aed; }
+    .report-footer .brand { font-weight: 700; color: #334155; }
     .summary-row {
       display: flex; justify-content: space-between; padding: 0.4rem 0;
       font-size: 0.85rem;
     }
-    .summary-row .label { color: #8478a0; }
-    .summary-row .value { font-weight: 600; color: #1a1528; }
+    .summary-row .label { color: #64748b; }
+    .summary-row .value { font-weight: 600; color: #0f172a; }
     .summary-total {
-      border-top: 2px solid #7c3aed; margin-top: 0.5rem; padding-top: 0.5rem;
+      border-top: 2px solid #334155; margin-top: 0.5rem; padding-top: 0.5rem;
       font-size: 1rem; font-weight: 700;
     }
     @media print {
@@ -381,12 +385,17 @@ function exportStyledReport(report: ReportConfig, data: ReportRow[], stats: { la
 <body>
   <div class="report-container">
     <div class="report-header">
-      <h1>${report.title}</h1>
-      <p>${report.description}</p>
-      <div class="meta">
-        <span>📅 ${dateStr}</span>
-        <span>🕐 ${timeStr}</span>
-        <span>📊 ${data.length} registro${data.length !== 1 ? 's' : ''}</span>
+      <div class="report-header-left">
+        <h1>${report.title}</h1>
+        <p>${report.description}</p>
+        <div class="meta">
+          <span>📅 ${dateStr}</span>
+          <span>🕐 ${timeStr}</span>
+          <span>📊 ${data.length} registro${data.length !== 1 ? 's' : ''}</span>
+        </div>
+      </div>
+      <div class="report-header-right">
+        <img src="/LogoE.svg" alt="Elitium" />
       </div>
     </div>
     <div class="report-body">
