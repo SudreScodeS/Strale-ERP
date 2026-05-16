@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "id": "cd5da6de-bf19-4354-b7f0-ba90a4b010a6",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 64,
+    "changedBy": "user-admin",
+    "reason": "Pedido #8 - Pedido Teste 2p",
+    "createdAt": "2026-05-15T15:29:03.515Z"
+  },
+  {
+    "id": "5d3c9a59-3a7f-4e57-b756-b9be9fd97765",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 64,
+    "changedBy": "user-admin",
+    "reason": "Pedido #8 - Pedido Teste 2p",
+    "createdAt": "2026-05-15T15:29:03.517Z"
+  },
+  {
+    "id": "12bd164e-3b66-487d-89b7-234ea0431760",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 64,
+    "changedBy": "user-admin",
+    "reason": "Pedido #8 - Pedido Teste 2p",
+    "createdAt": "2026-05-15T15:29:03.521Z"
+  },
+  {
+    "id": "93adba75-aa26-4d2f-9892-d322127b1e83",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 54,
+    "changedBy": "user-admin",
+    "reason": "Pedido #9 - Bibi",
+    "createdAt": "2026-05-16T00:16:42.163Z"
+  },
+  {
+    "id": "4aa0a308-8aec-402e-88d8-2763be3774d9",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 56,
+    "changedBy": "user-admin",
+    "reason": "Pedido #9 - Bibi",
+    "createdAt": "2026-05-16T00:16:42.165Z"
+  },
+  {
+    "id": "5efa7b2d-fbfb-4fb8-b797-9fd8a37d379e",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 50,
+    "changedBy": "user-admin",
+    "reason": "Pedido #10 - Teste Sudré",
+    "createdAt": "2026-05-16T15:09:19.307Z"
+  }
+]

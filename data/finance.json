@@ -62,5 +62,45 @@
     "description": "Pedido: Orçamento 12/05/2026",
     "date": "2026-05-12T16:35:55.498Z",
     "orderId": "7"
+  },
+  {
+    "id": "cb8f0d4b-80a8-48c5-bc2b-1cf7e4a001a7",
+    "type": "sale",
+    "amount": 4992,
+    "description": "Pedido: Pedido Teste 2p",
+    "date": "2026-05-15T15:29:03.489Z",
+    "orderId": "8"
+  },
+  {
+    "id": "a21fe655-0d32-4c02-afcd-1b9bccc0061a",
+    "type": "purchase",
+    "amount": 4990,
+    "description": "TNT 1000x",
+    "date": "2026-05-15T00:00:00.000Z",
+    "orderId": "po-1778890206374-d3b44eb8"
+  },
+  {
+    "id": "8719b3ba-2889-4dc8-bdfb-726769882b71",
+    "type": "purchase",
+    "amount": 2000,
+    "description": "Vermelho 1000x",
+    "date": "2026-05-15T00:00:00.000Z",
+    "orderId": "po-1778890396492-c78f0818"
+  },
+  {
+    "id": "8e9625d3-ab19-46a0-985c-fc1b1144e819",
+    "type": "sale",
+    "amount": 794.4,
+    "description": "Pedido: Bibi",
+    "date": "2026-05-16T00:16:42.153Z",
+    "orderId": "9"
+  },
+  {
+    "id": "76145d90-6d27-43e1-88d9-b81ea2ce1ce1",
+    "type": "sale",
+    "amount": 6012,
+    "description": "Pedido: Teste Sudré",
+    "date": "2026-05-16T15:09:19.292Z",
+    "orderId": "10"
   }
 ]

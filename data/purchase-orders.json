@@ -11,5 +11,31 @@
     ],
     "status": "ordered",
     "createdAt": "2026-04-28T00:00:00.000Z"
+  },
+  {
+    "id": "po-1778890206374-d3b44eb8",
+    "supplierId": "76aa5501-9111-4f44-8b1d-1951e234ac43",
+    "items": [
+      {
+        "variableId": "variable-tnt",
+        "quantity": 1000,
+        "unitCost": 4.99
+      }
+    ],
+    "status": "ordered",
+    "createdAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "po-1778890396492-c78f0818",
+    "supplierId": "4f8bb389-d168-4c7b-a39f-10f75af37062",
+    "items": [
+      {
+        "variableId": "variable-color-vermelho",
+        "quantity": 1000,
+        "unitCost": 2
+      }
+    ],
+    "status": "ordered",
+    "createdAt": "2026-05-15T00:00:00.000Z"
   }
 ]

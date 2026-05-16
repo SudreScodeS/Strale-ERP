@@ -1,1 +1,33 @@
-[]
+[
+  {
+    "id": "log_1778943433844_41xhsy",
+    "timestamp": "2026-05-16T14:57:13.844Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "2e931bf7-1009-4049-8d37-a1561a3522ed",
+    "description": "Alterou status do orçamento \"Teste Sudré\" para sent"
+  },
+  {
+    "id": "log_1778943676424_u71dlh",
+    "timestamp": "2026-05-16T15:01:16.424Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "2e931bf7-1009-4049-8d37-a1561a3522ed",
+    "description": "Alterou status do orçamento \"Teste Sudré\" para approved"
+  },
+  {
+    "id": "log_1778944159335_8wb4e9",
+    "timestamp": "2026-05-16T15:09:19.335Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "convert",
+    "entity": "quote",
+    "entityId": "2e931bf7-1009-4049-8d37-a1561a3522ed",
+    "description": "Converteu orçamento \"Teste Sudré\" em pedido #10",
+    "details": "Pedido: 10"
+  }
+]

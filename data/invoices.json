@@ -408,5 +408,192 @@
       "issuedAt": "2026-05-12T16:35:55.505Z"
     },
     "createdAt": "2026-05-12T16:35:55.505Z"
+  },
+  {
+    "id": "dae99f9f-7054-4b03-9ad9-7adb2116dc93",
+    "orderId": "8",
+    "number": "NF-1778858943523",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-color-vermelho",
+              "groupId": "group-color",
+              "quantity": 1
+            }
+          ],
+          "quantity": 10,
+          "unitCost": 64,
+          "unitPrice": 76.8,
+          "dimensions": {
+            "width": 30,
+            "height": 40
+          },
+          "printType": "sublimacao",
+          "printPosition": "front",
+          "printSize": "medium"
+        },
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-color-amarelo",
+              "groupId": "group-color",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 1
+            }
+          ],
+          "quantity": 5,
+          "unitCost": 64,
+          "unitPrice": 76.8,
+          "dimensions": {
+            "width": 30,
+            "height": 40
+          },
+          "printType": "sublimacao",
+          "printPosition": "front",
+          "printSize": "medium"
+        },
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-color-preto",
+              "groupId": "group-color",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 1
+            }
+          ],
+          "quantity": 50,
+          "unitCost": 64,
+          "unitPrice": 76.8,
+          "dimensions": {
+            "width": 30,
+            "height": 40
+          },
+          "printType": "sublimacao",
+          "printPosition": "front",
+          "printSize": "medium"
+        }
+      ],
+      "totalPrice": 4992,
+      "issuedAt": "2026-05-15T15:29:03.523Z"
+    },
+    "createdAt": "2026-05-15T15:29:03.524Z"
+  },
+  {
+    "id": "9236da47-ef25-4a0b-905d-11a076a0eeb0",
+    "orderId": "9",
+    "number": "NF-1778890602166",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-color-vermelho",
+              "groupId": "group-color",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 1
+            }
+          ],
+          "quantity": 10,
+          "unitCost": 54,
+          "unitPrice": 64.8,
+          "dimensions": {
+            "width": 30,
+            "height": 40
+          },
+          "printType": "serigrafia",
+          "printPosition": "front",
+          "printSize": "medium"
+        },
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "quantity": 1
+            }
+          ],
+          "quantity": 2,
+          "unitCost": 56,
+          "unitPrice": 67.2,
+          "dimensions": {
+            "width": 30,
+            "height": 40
+          },
+          "printType": "serigrafia",
+          "printPosition": "front",
+          "printSize": "medium"
+        }
+      ],
+      "totalPrice": 794.4,
+      "issuedAt": "2026-05-16T00:16:42.166Z"
+    },
+    "createdAt": "2026-05-16T00:16:42.166Z"
+  },
+  {
+    "id": "c2f1aa2a-5e70-42ab-a456-d64bf9bacabd",
+    "orderId": "10",
+    "number": "NF-1778944159310",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 99
+            },
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 100
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 98
+            }
+          ],
+          "quantity": 100,
+          "unitCost": 50,
+          "unitPrice": 60
+        }
+      ],
+      "totalPrice": 6012,
+      "issuedAt": "2026-05-16T15:09:19.310Z"
+    },
+    "createdAt": "2026-05-16T15:09:19.310Z"
   }
 ]
