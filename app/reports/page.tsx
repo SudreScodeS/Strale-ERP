@@ -860,11 +860,20 @@ export default function ReportsPage() {
   const paginatedData = useMemo(() => sortedData.slice(0, visibleRows), [sortedData, visibleRows]);
 
   function handleSort(colKey: string) {
+    let newDir: 'asc' | 'desc';
     if (sortCol === colKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      newDir = sortDir === 'asc' ? 'desc' : 'asc';
+      setSortDir(newDir);
     } else {
+      newDir = 'asc';
       setSortCol(colKey);
       setSortDir('asc');
+    }
+    // Sync dropdown: find a preset matching this column + direction
+    if (selectedReport) {
+      const presets = SORT_PRESETS[selectedReport] || [];
+      const match = presets.find((p) => p.col === colKey && p.dir === newDir);
+      setSortPreset(match?.key ?? '');
     }
   }
 
