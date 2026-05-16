@@ -12,5 +12,85 @@
     "name": "Cor",
     "productId": "product-1",
     "createdAt": "2026-05-06T06:23:00.000Z"
+  },
+  {
+    "id": "group-garrafa-cor",
+    "name": "Cor",
+    "productId": "product-garrafa",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-garrafa-material",
+    "name": "Material",
+    "productId": "product-garrafa",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-caneca-cor",
+    "name": "Cor",
+    "productId": "product-caneca",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-caneca-material",
+    "name": "Material",
+    "productId": "product-caneca",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-bone-cor",
+    "name": "Cor",
+    "productId": "product-bone",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-bone-tamanho",
+    "name": "Tamanho",
+    "productId": "product-bone",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-caderno-cor",
+    "name": "Cor",
+    "productId": "product-caderno",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-caderno-tamanho",
+    "name": "Tamanho",
+    "productId": "product-caderno",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-camiseta-cor",
+    "name": "Cor",
+    "productId": "product-camiseta",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "group-camiseta-tamanho",
+    "name": "Tamanho",
+    "productId": "product-camiseta",
+    "watchStockAlert": 30,
+    "criticalStockAlert": 10,
+    "createdAt": "2026-05-16T00:00:00.000Z"
   }
 ]

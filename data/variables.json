@@ -46,5 +46,317 @@
     "stock": 999,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-cor-preto",
+    "groupId": "group-garrafa-cor",
+    "name": "Preto",
+    "additionalPrice": 0,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-cor-branco",
+    "groupId": "group-garrafa-cor",
+    "name": "Branco",
+    "additionalPrice": 0,
+    "stock": 120,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-cor-azul-marinho",
+    "groupId": "group-garrafa-cor",
+    "name": "Azul Marinho",
+    "additionalPrice": 0,
+    "stock": 80,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-cor-vermelho",
+    "groupId": "group-garrafa-cor",
+    "name": "Vermelho",
+    "additionalPrice": 0,
+    "stock": 60,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-cor-verde",
+    "groupId": "group-garrafa-cor",
+    "name": "Verde",
+    "additionalPrice": 0,
+    "stock": 50,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-material-inox-304",
+    "groupId": "group-garrafa-material",
+    "name": "Inox 304",
+    "additionalPrice": 0,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-material-inox-316",
+    "groupId": "group-garrafa-material",
+    "name": "Inox 316",
+    "additionalPrice": 8,
+    "stock": 100,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-garrafa-material-pl\u00e1stico-abs",
+    "groupId": "group-garrafa-material",
+    "name": "Pl\u00e1stico ABS",
+    "additionalPrice": -5,
+    "stock": 300,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-cor-branca",
+    "groupId": "group-caneca-cor",
+    "name": "Branca",
+    "additionalPrice": 0,
+    "stock": 500,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-cor-preta",
+    "groupId": "group-caneca-cor",
+    "name": "Preta",
+    "additionalPrice": 2,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-cor-azul",
+    "groupId": "group-caneca-cor",
+    "name": "Azul",
+    "additionalPrice": 2,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-cor-vermelha",
+    "groupId": "group-caneca-cor",
+    "name": "Vermelha",
+    "additionalPrice": 2,
+    "stock": 100,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-material-cer\u00e2mica",
+    "groupId": "group-caneca-material",
+    "name": "Cer\u00e2mica",
+    "additionalPrice": 0,
+    "stock": 400,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-material-porcelana",
+    "groupId": "group-caneca-material",
+    "name": "Porcelana",
+    "additionalPrice": 5,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-material-inox",
+    "groupId": "group-caneca-material",
+    "name": "Inox",
+    "additionalPrice": 8,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caneca-material-pl\u00e1stico",
+    "groupId": "group-caneca-material",
+    "name": "Pl\u00e1stico",
+    "additionalPrice": -3,
+    "stock": 300,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-bone-cor-branco",
+    "groupId": "group-bone-cor",
+    "name": "Branco",
+    "additionalPrice": 0,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-bone-cor-preto",
+    "groupId": "group-bone-cor",
+    "name": "Preto",
+    "additionalPrice": 0,
+    "stock": 300,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-bone-cor-azul-marinho",
+    "groupId": "group-bone-cor",
+    "name": "Azul Marinho",
+    "additionalPrice": 0,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-bone-cor-vermelho",
+    "groupId": "group-bone-cor",
+    "name": "Vermelho",
+    "additionalPrice": 0,
+    "stock": 80,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-bone-cor-bege",
+    "groupId": "group-bone-cor",
+    "name": "Bege",
+    "additionalPrice": 0,
+    "stock": 100,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-bone-tamanho-\u00fanico-ajust\u00e1vel",
+    "groupId": "group-bone-tamanho",
+    "name": "\u00danico (Ajust\u00e1vel)",
+    "additionalPrice": 0,
+    "stock": 500,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-cor-preto",
+    "groupId": "group-caderno-cor",
+    "name": "Preto",
+    "additionalPrice": 0,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-cor-azul-marinho",
+    "groupId": "group-caderno-cor",
+    "name": "Azul Marinho",
+    "additionalPrice": 0,
+    "stock": 120,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-cor-marrom",
+    "groupId": "group-caderno-cor",
+    "name": "Marrom",
+    "additionalPrice": 0,
+    "stock": 80,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-cor-vinho",
+    "groupId": "group-caderno-cor",
+    "name": "Vinho",
+    "additionalPrice": 0,
+    "stock": 60,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-tamanho-a5-14x21cm",
+    "groupId": "group-caderno-tamanho",
+    "name": "A5 (14x21cm)",
+    "additionalPrice": 0,
+    "stock": 250,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-tamanho-a4-21x30cm",
+    "groupId": "group-caderno-tamanho",
+    "name": "A4 (21x30cm)",
+    "additionalPrice": 5,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-caderno-tamanho-executivo-16x23cm",
+    "groupId": "group-caderno-tamanho",
+    "name": "Executivo (16x23cm)",
+    "additionalPrice": 3,
+    "stock": 100,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-cor-branca",
+    "groupId": "group-camiseta-cor",
+    "name": "Branca",
+    "additionalPrice": 0,
+    "stock": 400,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-cor-preta",
+    "groupId": "group-camiseta-cor",
+    "name": "Preta",
+    "additionalPrice": 0,
+    "stock": 350,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-cor-azul-royal",
+    "groupId": "group-camiseta-cor",
+    "name": "Azul Royal",
+    "additionalPrice": 0,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-cor-cinza",
+    "groupId": "group-camiseta-cor",
+    "name": "Cinza",
+    "additionalPrice": 0,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-cor-vermelha",
+    "groupId": "group-camiseta-cor",
+    "name": "Vermelha",
+    "additionalPrice": 0,
+    "stock": 100,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-tamanho-p",
+    "groupId": "group-camiseta-tamanho",
+    "name": "P",
+    "additionalPrice": 0,
+    "stock": 100,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-tamanho-m",
+    "groupId": "group-camiseta-tamanho",
+    "name": "M",
+    "additionalPrice": 0,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-tamanho-g",
+    "groupId": "group-camiseta-tamanho",
+    "name": "G",
+    "additionalPrice": 0,
+    "stock": 200,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-tamanho-gg",
+    "groupId": "group-camiseta-tamanho",
+    "name": "GG",
+    "additionalPrice": 0,
+    "stock": 150,
+    "createdAt": "2026-05-16T00:00:00.000Z"
+  },
+  {
+    "id": "variable-camiseta-tamanho-xg",
+    "groupId": "group-camiseta-tamanho",
+    "name": "XG",
+    "additionalPrice": 2,
+    "stock": 80,
+    "createdAt": "2026-05-16T00:00:00.000Z"
   }
 ]
