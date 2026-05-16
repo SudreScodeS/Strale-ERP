@@ -65,7 +65,7 @@ const REPORTS: ReportConfig[] = [
     endpoint: '/api/orders',
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'name', label: 'Cliente' },
+      { key: 'name', label: 'Pedido' },
       { key: 'totalPrice', label: 'Total (R$)', format: (v) => Number(v).toFixed(2) },
       { key: 'status', label: 'Status' },
       { key: 'createdByName', label: 'Vendedor' },
@@ -73,8 +73,18 @@ const REPORTS: ReportConfig[] = [
     ],
     transform: (json): ReportRow[] => {
       const data = json as Record<string, unknown>;
-      const orders = data.orders || data;
-      return Array.isArray(orders) ? orders as ReportRow[] : [];
+      const orders = (data.orders || data) as Record<string, unknown>[];
+      if (!Array.isArray(orders)) return [];
+      const statusLabels: Record<string, string> = {
+        pending: 'Pendente',
+        completed: 'Concluído',
+        cancelled: 'Cancelado',
+      };
+      return orders.map((o): ReportRow => ({
+        ...o,
+        status: statusLabels[String(o.status)] || String(o.status),
+        createdAt: String(o.createdAt ?? ''),
+      }));
     },
   },
   {
@@ -142,7 +152,7 @@ const REPORTS: ReportConfig[] = [
           type: typeLabels[String(r.type)] || String(r.type),
           description: String(r.description ?? ''),
           amount: Number(r.amount ?? 0),
-          date: String(r.date ?? ''),
+          date: r.date instanceof Date ? r.date.toISOString() : String(r.date ?? ''),
         }));
     },
   },
@@ -163,11 +173,18 @@ const REPORTS: ReportConfig[] = [
       const data = json as Record<string, unknown>;
       const quotes = (data.quotes || data || []) as Record<string, unknown>[];
       if (!Array.isArray(quotes)) return [];
+      const statusLabels: Record<string, string> = {
+        draft: 'Rascunho',
+        sent: 'Enviado',
+        approved: 'Aprovado',
+        rejected: 'Rejeitado',
+        converted: 'Convertido',
+      };
       return quotes.map((q): ReportRow => ({
         id: String(q.id ?? ''),
         clientName: String(q.customerName ?? ''),
         totalPrice: Number(q.totalPrice ?? 0),
-        status: String(q.status ?? ''),
+        status: statusLabels[String(q.status)] || String(q.status),
         createdAt: String(q.createdAt ?? ''),
       }));
     },
@@ -422,7 +439,39 @@ function computeStats(rows: ReportRow[], reportId: string) {
     forecast: 'currentStock',
   };
   const valueField = valueFields[reportId];
-  if (valueField) {
+
+  // Finance: show sales and expenses separately
+  if (reportId === 'finance') {
+    const totalSales = rows.filter(r => r.type === 'Venda').reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+    const totalExpenses = rows.filter(r => r.type !== 'Venda').reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+    stats.push({
+      label: 'Total Vendas',
+      value: `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+        </svg>
+      ),
+    });
+    stats.push({
+      label: 'Total Despesas',
+      value: `R$ ${totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+        </svg>
+      ),
+    });
+    stats.push({
+      label: 'Lucro',
+      value: `R$ ${(totalSales - totalExpenses).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    });
+  } else if (valueField) {
     const sum = rows.reduce((acc, row) => acc + (Number(row[valueField]) || 0), 0);
     const avg = sum / rows.length;
     stats.push({
@@ -447,9 +496,31 @@ function computeStats(rows: ReportRow[], reportId: string) {
     }
   }
 
-  if (reportId === 'sales' || reportId === 'quotes') {
-    const clientField = reportId === 'sales' ? 'name' : 'clientName';
-    const uniqueClients = new Set(rows.map((r) => String(r[clientField] || '')).filter(Boolean));
+  if (reportId === 'sales') {
+    const uniqueVendors = new Set(rows.map((r) => String(r.createdByName || '')).filter(Boolean));
+    const completedCount = rows.filter(r => r.status === 'Concluído').length;
+    stats.push({
+      label: 'Vendedores',
+      value: uniqueVendors.size.toLocaleString('pt-BR'),
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+        </svg>
+      ),
+    });
+    stats.push({
+      label: 'Concluídos',
+      value: completedCount.toLocaleString('pt-BR'),
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    });
+  }
+
+  if (reportId === 'quotes') {
+    const uniqueClients = new Set(rows.map((r) => String(r.clientName || '')).filter(Boolean));
     stats.push({
       label: 'Clientes Únicos',
       value: uniqueClients.size.toLocaleString('pt-BR'),
