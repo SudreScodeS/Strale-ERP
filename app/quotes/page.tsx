@@ -600,6 +600,7 @@ export default function QuotesPage() {
                   <span>Data de entrega</span>
                   <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
+                  <p className="text-xs text-slate-400">Opcional — pode ser definida ao converter em pedido.</p>
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Cores da logo</span>
