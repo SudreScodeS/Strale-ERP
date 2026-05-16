@@ -114,11 +114,12 @@ export async function PATCH(request: Request) {
     const payload = requireRole(request, ['admin', 'seller']);
     const body = await request.json();
 
-    const { quoteId, action, status, deliveryDate } = body as {
+    const { quoteId, action, status, deliveryDate, name } = body as {
       quoteId: string;
       action?: 'clone' | 'convert' | 'update-status';
       status?: Quote['status'];
       deliveryDate?: string;
+      name?: string;
     };
 
     if (!quoteId) {
@@ -149,7 +150,7 @@ export async function PATCH(request: Request) {
       if (!deliveryDate) {
         return NextResponse.json({ error: 'A data de entrega é obrigatória para converter o orçamento em pedido.' }, { status: 400 });
       }
-      const result = converterOrcamentoEmPedido(quoteId, payload.userId, deliveryDate);
+      const result = converterOrcamentoEmPedido(quoteId, payload.userId, deliveryDate, name);
       if ('error' in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }

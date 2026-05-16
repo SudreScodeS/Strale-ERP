@@ -70,6 +70,7 @@ export default function QuotesPage() {
   const [selectedQuote, setSelectedQuote] = useState<QuoteView | null>(null);
   const [convertingQuote, setConvertingQuote] = useState<QuoteView | null>(null);
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
+  const [convertQuoteName, setConvertQuoteName] = useState('');
 
   // Restore form state from sessionStorage
   const savedForm = typeof window !== 'undefined' ? (() => {
@@ -338,11 +339,12 @@ export default function QuotesPage() {
     } catch { setStatusMessage('Erro de conexão.'); }
   }
 
-  async function handleQuoteAction(quoteId: string, action: 'clone' | 'convert' | 'update-status', status?: string, deliveryDate?: string) {
+  async function handleQuoteAction(quoteId: string, action: 'clone' | 'convert' | 'update-status', status?: string, deliveryDate?: string, name?: string) {
     try {
       const body: Record<string, string> = { quoteId, action };
       if (status) body.status = status;
       if (deliveryDate) body.deliveryDate = deliveryDate;
+      if (name) body.name = name;
 
       const response = await fetch('/api/quotes', {
         method: 'PATCH',
@@ -387,6 +389,7 @@ export default function QuotesPage() {
   function handleOpenConvertModal(quote: QuoteView) {
     setConvertingQuote(quote);
     setConvertDeliveryDate(quote.deliveryDate || '');
+    setConvertQuoteName(quote.name);
   }
 
   async function handleConfirmConvert() {
@@ -395,9 +398,10 @@ export default function QuotesPage() {
       setStatusMessage('A data de entrega é obrigatória para converter em pedido.');
       return;
     }
-    await handleQuoteAction(convertingQuote.id, 'convert', undefined, convertDeliveryDate);
+    await handleQuoteAction(convertingQuote.id, 'convert', undefined, convertDeliveryDate, convertQuoteName.trim() || undefined);
     setConvertingQuote(null);
     setConvertDeliveryDate('');
+    setConvertQuoteName('');
   }
 
   const filteredQuotes = useMemo(() => {
@@ -948,20 +952,31 @@ export default function QuotesPage() {
               </div>
 
               <p className="mt-4 text-sm text-slate-600">
-                Para converter este orçamento em pedido, confirme ou altere a data de entrega.
+                Para converter este orçamento em pedido, confirme ou altere os dados abaixo.
               </p>
 
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+              <label className="mt-4 block space-y-2 text-slate-700">
+                <span>Nome do pedido</span>
+                <input
+                  type="text"
+                  value={convertQuoteName}
+                  onChange={e => setConvertQuoteName(e.target.value)}
+                  placeholder="Nome do orçamento/pedido"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                />
+              </label>
+
+              <div className="mt-3 rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">Cliente</p>
                 <p className="mt-1 font-semibold text-slate-900">{convertingQuote.customerName}</p>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+              <div className="mt-3 rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">Total</p>
                 <p className="mt-1 text-lg font-bold text-emerald-700">R$ {convertingQuote.totalPrice.toFixed(2)}</p>
               </div>
 
-              <label className="mt-4 block space-y-2 text-slate-700">
+              <label className="mt-3 block space-y-2 text-slate-700">
                 <span>Data de entrega *</span>
                 <input
                   type="date"

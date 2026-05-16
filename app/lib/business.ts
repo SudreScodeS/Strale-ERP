@@ -294,6 +294,7 @@ export function converterOrcamentoEmPedido(
   quoteId: string,
   userId: string,
   deliveryDate?: string,
+  name?: string,
 ): { order: Order; invoice: Invoice } | { error: string } {
   const quote = quoteData.getById(quoteId);
   if (!quote) return { error: 'Orçamento não encontrado.' };
@@ -312,7 +313,7 @@ export function converterOrcamentoEmPedido(
   const logoColors = quote.logoCost > 0 ? Math.round(quote.logoCost / 10) : 0;
 
   // Cria o pedido usando a função existente
-  const { order, invoice } = finalizarPedido(userId, quote.name, orderItems, logoColors, deliveryDate);
+  const { order, invoice } = finalizarPedido(userId, name || quote.name, orderItems, logoColors, deliveryDate);
 
   // Atualiza o orçamento
   quoteData.update(quoteId, {
