@@ -62,6 +62,173 @@ const PRINT_POSITIONS = [
   { value: 'both', label: 'Frente + Verso' },
 ];
 
+// LogoE base64 for PDF header
+const LOGO_E_BASE64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODQ3IiBoZWlnaHQ9IjM2OSIgdmlld0JveD0iMCAwIDg0NyAzNjkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yNDQuOTc0IDIyNy43MzlMMjkwIDI1Ny45NDdWMTA1LjMxNkwyNDQuOTc0IDEzNi4zMzdWMjI3LjczOVoiIGZpbGw9IiM0ODM3N0MiLz4KPHBhdGggZD0iTTAgOTAuMzMwMUwxNDMuNTM1IDBMMjkwIDkwLjMzMDFDMjc1LjM1NCAxMDAuMDQzIDI0NC45NzQgMTIyLjQ4NyAyNDQuOTc0IDEyMi40ODdDMjQ0Ljk3NCAxMjQuODE4IDE3Ny43MSA4Mi41NTk4IDE0My41MzUgNjEuMTkxNEw0OS43OTggMTIyLjM4M1YxODAuNjZMMCAyMTIuNzEzVjkwLjMzMDFaIiBmaWxsPSIjRjZGOUVBIi8+CjxwYXRoIGQ9Ik0yMTYuNzY4IDE1NC40MzVMMTY0LjA0IDEyMi4zODNMMCAyMjguNzM5VjI4NC4xMDNMMTQzLjUzNSAzNjguNjA1TDI5MCAyNzMuOTA0TDI0NC45NzQgMjQ0LjU5MkwxNDMuNTM1IDMwNS45NTdMNTQuMTkxOSAyNTYuNDIxTDIxNi43NjggMTU0LjQzNVoiIGZpbGw9IiNGNkY5RUEiLz4KPHBhdGggZD0iTTM5NC40NjYgMjIxVjExMy40MzhINDQwLjg3NlYxMjEuNjI4SDQwNi4yOTZWMTYwLjIxMkg0MzMuOTZWMTY5LjMxMkg0MDYuMjk2VjIxMi44MUg0NDAuODc2VjIyMUgzOTQuNDY2Wk00NjUuNzczIDIyMVYxMTMuNDM4SDQ3Ny4wNTdWMjEyLjgxSDUwNy4wODdWMjIxSDQ2NS43NzNaTTUyOC45MDQgMjIxVjExMy40MzhINTQwLjM3VjIyMUg1MjguOTA0Wk01ODAuODYxIDIyMVYxMjEuNjI4SDU2Mi44NDNWMTEzLjQzOEg2MTAuNzA5VjEyMS42MjhINTkyLjMyN1YyMjFINTgwLjg2MVpNNjMzLjMwNSAyMjFWMTEzLjQzOEg2NDQuNzcxVjIyMUg2MzMuMzA1Wk03MDIuOTE2IDIyMy4xODRDNjk5LjE1NSAyMjMuMTg0IDY5NS42MzYgMjIyLjg4MSA2OTIuMzYgMjIyLjI3NEM2ODkuMDg0IDIyMS42NjcgNjg2LjE3MiAyMjAuNTE1IDY4My42MjQgMjE4LjgxNkM2ODEuMTk4IDIxNy4xMTcgNjc5LjI1NiAyMTQuNjMgNjc3LjggMjExLjM1NEM2NzYuNDY2IDIwNy45NTcgNjc1Ljc5OCAyMDMuNDY3IDY3NS43OTggMTk3Ljg4NlYxMTMuNDM4SDY4Ny4yNjRWMjAwLjI1MkM2ODcuMjY0IDIwNC42MiA2ODcuOTkyIDIwNy44OTYgNjg5LjQ0OCAyMTAuMDhDNjkwLjkwNCAyMTIuMjY0IDY5Mi43ODUgMjEzLjc4MSA2OTUuMDkgMjE0LjYzQzY5Ny41MTcgMjE1LjM1OCA3MDAuMTI2IDIxNS43MjIgNzAyLjkxNiAyMTUuNzIyQzcwNS41ODYgMjE1LjcyMiA3MDguMTM0IDIxNS4zNTggNzEwLjU2IDIxNC42M0M3MTIuOTg3IDIxMy43ODEgNzE0LjkyOCAyMTIuMjY0IDcxNi4zODQgMjEwLjA4QzcxNy44NCAyMDcuODk2IDcxOC41NjggMjA0LjYyIDcxOC41NjggMjAwLjI1MlYxMTMuNDM4SDcyOS44NTJWMTk3Ljg4NkM3MjkuODUyIDIwMy40NjcgNzI5LjEyNCAyMDcuOTU3IDcyNy42NjggMjExLjM1NEM3MjYuMzM0IDIxNC42MyA3MjQuNDUzIDIxNy4xMTcgNzIyLjAyNiAyMTguODE2QzcxOS42IDIyMC41MTUgNzE2LjY4OCAyMjEuNjY3IDcxMy4yOSAyMjIuMjc0QzcxMC4wMTQgMjIyLjg4MSA3MDYuNTU2IDIyMy4xODQgNzAyLjkxNiAyMjMuMTg0Wk03NjAuOTkgMjIxVjExMy40MzhINzc0LjQ1OEw3OTcuNzU0IDIwMC45OEw4MjEuNTk2IDExMy40MzhIODM0LjUxOFYyMjFIODI0LjMyNlYxMzQuMDA0TDgwMS45NCAyMjFINzkzLjc1TDc3MS4zNjQgMTM0LjAwNFYyMjFINzYwLjk5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTM5NC43MjUgMjg5VjI0NC42NzVINDEzLjg1VjI0OC4wNUgzOTkuNlYyNjMuOTVINDExVjI2Ny43SDM5OS42VjI4NS42MjVINDEzLjg1VjI4OUgzOTQuNzI1Wk00MjAuMzYgMjg5VjI0NC42NzVINDM0LjMxQzQzNi44MSAyNDQuNjc1IDQzOC44MzUgMjQ1LjI3NSA0NDAuMzg1IDI0Ni40NzVDNDQxLjkzNSAyNDcuNjI1IDQ0Mi43MSAyNDkuNDc1IDQ0Mi43MSAyNTIuMDI1VjI1OS4yMjVDNDQyLjcxIDI2MS43NzUgNDQxLjkzNSAyNjMuNzUgNDQwLjM4NSAyNjUuMTVDNDM4Ljg4NSAyNjYuNTUgNDM2LjgzNSAyNjcuMyA0MzQuMjM1IDI2Ny40VjI2Ny4zMjVDNDM1LjgzNSAyNjcuNDI1IDQzNy4wMzUgMjY4IDQzNy44MzUgMjY5LjA1QzQzOC42MzUgMjcwLjA1IDQzOS4zMzUgMjcxLjYyNSA0MzkuOTM1IDI3My43NzVMNDQ0LjUxIDI4OUg0MzkuMjZMNDM1LjIxIDI3NC4wNzVDNDM0LjgxIDI3Mi42NzUgNDM0LjI4NSAyNzEuNDI1IDQzMy42MzUgMjcwLjMyNUM0MzMuMDM1IDI2OS4xNzUgNDMyLjAzNSAyNjguNiA0MzAuNjM1IDI2OC42SDQyNS4yMzVWMjg5SDQyMC4zNlpNNDI1LjIzNSAyNjUuMjI1SDQzMS44MzVDNDM0LjEzNSAyNjUuMjI1IDQzNS43MzUgMjY0LjcgNDM2LjYzNSAyNjMuNjVDNDM3LjU4NSAyNjIuNTUgNDM4LjA2IDI2MC45NSA0MzguMDYgMjU4Ljg1VjI1Mi44NUM0MzguMDYgMjUxIDQzNy42MSAyNDkuNjUgNDM2LjcxIDI0OC44QzQzNS44NiAyNDcuOSA0MzQuNTM1IDI0Ny40NSA0MzIuNzM1IDI0Ny40NUg0MjUuMjM1VjI2NS4yMjVaTTQ1MS40MTQgMjg5VjI0NC42NzVINDY1LjEzOUM0NjcuNjg5IDI0NC42NzUgNDY5LjczOSAyNDUuMjc1IDQ3MS4yODkgMjQ2LjQ3NUM0NzIuODM5IDI0Ny42MjUgNDczLjYxNCAyNDkuNDc1IDQ3My42MTQgMjUyLjAyNVYyNjAuMkM0NzMuNjE0IDI2MS45IDQ3My4zNjQgMjYzLjUgNDcyLjg2NCAyNjVDNDcyLjM2NCAyNjYuNDUgNDcxLjQzOSAyNjcuNjI1IDQ3MC4wODkgMjY4LjUyNUM0NjguNzM5IDI2OS40MjUgNDY2Ljc4OSAyNjkuODc1IDQ2NC4yMzkgMjY5Ljg3NUg0NTYuMjg5VjI4OUg0NTEuNDE0Wk00NTYuMjg5IDI2Ny4xSDQ2Mi44MTRDNDY0LjgxNCAyNjcuMSA0NjYuMzE0IDI2Ni41IDQ2Ny4zMTQgMjY1LjNDNDY4LjM2NCAyNjQuMDUgNDY4Ljg4OSAyNjIuMTUgNDY4Ljg4OSAyNTkuNlYyNTMuODI1QzQ2OC44ODkgMjUxLjYyNSA0NjguNDE0IDI1MC4wMjUgNDY3LjQ2NCAyNDkuMDI1QzQ2Ni41MTQgMjQ3Ljk3NSA0NjUuMzY0IDI0Ny40NSA0NjQuMDE0IDI0Ny40NUg0NTYuMjg5VjI2Ny4xWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==';
+
+function generateQuotePDF(quote: QuoteView) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const createdStr = new Date(quote.createdAt).toLocaleDateString('pt-BR');
+  const validStr = quote.validUntil ? new Date(quote.validUntil).toLocaleDateString('pt-BR') : 'Sem validade';
+  const deliveryStr = quote.deliveryDate ? new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definida';
+
+  const statusLabels: Record<string, string> = {
+    draft: 'Rascunho', sent: 'Enviado', approved: 'Aprovado',
+    rejected: 'Rejeitado', converted: 'Convertido',
+  };
+
+  const itemsHtml = quote.items.map((item, i) => {
+    const varSummary = item.selectedVariables?.length
+      ? item.selectedVariables.map(sv => (sv as Record<string, unknown>).variableName || sv.variableId).join(', ')
+      : '—';
+    return `
+    <tr class="${i % 2 === 0 ? 'row-even' : 'row-odd'}">
+      <td>${item.productName || 'Produto'}</td>
+      <td>${varSummary}</td>
+      <td style="text-align:center">${item.quantity}</td>
+      <td style="text-align:right">R$ ${item.unitPrice.toFixed(2)}</td>
+      <td style="text-align:right">R$ ${(item.unitPrice * item.quantity).toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orçamento ${quote.name} — Elitium ERP</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc; color: #0f172a; padding: 2rem;
+      -webkit-font-smoothing: antialiased;
+    }
+    .report-container {
+      max-width: 900px; margin: 0 auto; background: #fff;
+      border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .report-header {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: #fff; padding: 2rem 2.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .report-header-left { flex: 1; }
+    .report-header-right { flex-shrink: 0; margin-left: 2rem; display: flex; align-items: center; }
+    .report-header-right img { height: 64px; width: auto; opacity: 0.9; }
+    .report-header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .report-header p { opacity: 0.85; font-size: 0.85rem; }
+    .report-header .meta { margin-top: 0.75rem; display: flex; gap: 2rem; font-size: 0.75rem; opacity: 0.7; }
+    .report-body { padding: 2rem 2.5rem; }
+    .info-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .info-card {
+      background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+    .info-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: 600; }
+    .info-value { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.25rem; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .data-table th {
+      text-align: left; padding: 0.75rem 1rem; font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #64748b;
+      border-bottom: 2px solid #e2e8f0; font-weight: 600;
+    }
+    .data-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #f1f5f9; color: #0f172a; }
+    .row-even { background: #fff; }
+    .row-odd { background: #f8fafc; }
+    .totals { margin-top: 1.5rem; text-align: right; }
+    .totals-row { display: flex; justify-content: flex-end; gap: 3rem; padding: 0.4rem 0; font-size: 0.9rem; }
+    .totals-row .label { color: #64748b; min-width: 120px; text-align: right; }
+    .totals-row .value { font-weight: 600; color: #0f172a; min-width: 120px; text-align: right; }
+    .totals-total { border-top: 2px solid #334155; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 1.1rem; font-weight: 700; }
+    .notes { margin-top: 1.5rem; padding: 1rem 1.25rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; }
+    .notes-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #92400e; font-weight: 600; margin-bottom: 0.5rem; }
+    .notes-text { font-size: 0.85rem; color: #78350f; }
+    .report-footer {
+      padding: 1.25rem 2.5rem; border-top: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.75rem; color: #94a3b8;
+    }
+    .report-footer .brand { font-weight: 700; color: #334155; }
+    @media print {
+      body { padding: 0; background: #fff; }
+      .report-container { box-shadow: none; border-radius: 0; }
+      .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .row-even, .row-odd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-container">
+    <div class="report-header">
+      <div class="report-header-left">
+        <h1>${quote.name}</h1>
+        <p>Orçamento para ${quote.customerName}</p>
+        <div class="meta">
+          <span>📅 ${dateStr}</span>
+          <span>🕐 ${timeStr}</span>
+          <span>📋 ${statusLabels[quote.status] || quote.status}</span>
+        </div>
+      </div>
+      <div class="report-header-right">
+        <img src="${LOGO_E_BASE64}" alt="Elitium" />
+      </div>
+    </div>
+    <div class="report-body">
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-label">Cliente</div>
+          <div class="info-value">${quote.customerName}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Criação</div>
+          <div class="info-value">${createdStr}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Validade</div>
+          <div class="info-value">${validStr}</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Entrega</div>
+          <div class="info-value">${deliveryStr}</div>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead><tr>
+          <th>Produto</th><th>Variáveis</th><th style="text-align:center">Qtd</th><th style="text-align:right">Unit.</th><th style="text-align:right">Total</th>
+        </tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      <div class="totals">
+        <div class="totals-row"><span class="label">Custo:</span><span class="value">R$ ${quote.totalCost.toFixed(2)}</span></div>
+        ${quote.logoCost > 0 ? `<div class="totals-row"><span class="label">Logo:</span><span class="value">R$ ${quote.logoCost.toFixed(2)}</span></div>` : ''}
+        <div class="totals-row totals-total"><span class="label">Total:</span><span class="value">R$ ${quote.totalPrice.toFixed(2)}</span></div>
+      </div>
+
+      ${quote.notes ? `<div class="notes"><div class="notes-title">Observações</div><div class="notes-text">${quote.notes}</div></div>` : ''}
+    </div>
+    <div class="report-footer">
+      <span class="brand">Elitium ERP</span>
+      <span>Gerado em ${dateStr} às ${timeStr}</span>
+    </div>
+  </div>
+  <script>window.onload = () => { window.print(); };</script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 export default function QuotesPage() {
   const [inventory, setInventory] = useState<ProductOption[]>([]);
   const [quotes, setQuotes] = useState<QuoteView[]>([]);
@@ -553,6 +720,12 @@ export default function QuotesPage() {
                             </>
                           )}
 
+                          <button type="button" onClick={() => generateQuotePDF(quote)}
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
+                            style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
+                            📄 PDF
+                          </button>
+
                           {(quote.status === 'draft' || quote.status === 'rejected') && (
                             <button type="button" onClick={() => handleDeleteQuote(quote.id)}
                               className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
@@ -917,6 +1090,11 @@ export default function QuotesPage() {
                     Converter em Pedido
                   </button>
                 )}
+                <button type="button" onClick={() => generateQuotePDF(selectedQuote)}
+                  className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
+                  📄 Baixar PDF
+                </button>
                 <button type="button" onClick={() => setSelectedQuote(null)}
                   className="rounded-lg px-5 py-2 text-sm font-medium transition-all hover:opacity-80"
                   style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>

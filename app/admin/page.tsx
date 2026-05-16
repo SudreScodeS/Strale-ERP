@@ -29,8 +29,7 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'print-types', visible: true, order: 1, colSpan: 2 },
   { id: 'print-pricing', visible: true, order: 2, colSpan: 2 },
   { id: 'preview', visible: true, order: 3, colSpan: 2 },
-  { id: 'notifications', visible: true, order: 4, colSpan: 2 },
-  { id: 'actions', visible: true, order: 5, colSpan: 2 },
+  { id: 'actions', visible: true, order: 4, colSpan: 2 },
 ];
 
 export default function AdminPage() {
@@ -54,10 +53,6 @@ export default function AdminPage() {
   const [scrollOffset, setScrollOffset] = useState(0);
   const savedConfigRef = useRef<string>('');
   const [dirty, setDirty] = useState(false);
-  const [activityLogs, setActivityLogs] = useState<Array<{
-    id: string; timestamp: string; username: string; action: string;
-    entity: string; description: string; details?: string;
-  }>>([]);
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
@@ -119,16 +114,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     void loadConfig();
-    void loadActivityLogs();
   }, []);
-
-  async function loadActivityLogs() {
-    try {
-      const res = await fetch('/api/activity-logs', { headers: getAuthHeaders() });
-      const data = await res.json();
-      if (res.ok && data.logs) setActivityLogs(data.logs);
-    } catch { /* ignore */ }
-  }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -715,78 +701,8 @@ export default function AdminPage() {
                 </section>
               )}
 
-              {section.id === 'notifications' && (
-                <section
-                  className="rounded-2xl p-6 shadow-sm"
-                  style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                        Notificações
-                      </h3>
-                      <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        Histórico de ações realizadas no sistema.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void loadActivityLogs()}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                      style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
-                    >
-                      Atualizar
-                    </button>
-                  </div>
-
-                  {activityLogs.length === 0 ? (
-                    <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
-                      Nenhuma atividade registrada ainda.
-                    </p>
-                  ) : (
-                    <div className="max-h-96 space-y-1 overflow-y-auto rounded-xl" style={{ border: '1px solid var(--border)' }}>
-                      {activityLogs.map((log) => {
-                        const actionIcons: Record<string, string> = {
-                          create: '➕', update: '✏️', delete: '🗑️', convert: '🔄',
-                          send: '📤', status_change: '🔁', login: '🔑', other: '📌',
-                        };
-                        const actionColors: Record<string, string> = {
-                          create: '#10b981', update: '#3b82f6', delete: '#ef4444', convert: '#8b5cf6',
-                          send: '#06b6d4', status_change: '#f59e0b', login: '#6366f1', other: '#6b7280',
-                        };
-                        const dt = new Date(log.timestamp);
-                        const dateStr = dt.toLocaleDateString('pt-BR');
-                        const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                        return (
-                          <div
-                            key={log.id}
-                            className="flex items-start gap-3 px-4 py-3 transition-colors"
-                            style={{ borderBottom: '1px solid var(--border)' }}
-                          >
-                            <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs" style={{ background: `${actionColors[log.action] || '#6b7280'}15`, color: actionColors[log.action] || '#6b7280' }}>
-                              {actionIcons[log.action] || '📌'}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                                <span className="font-semibold">{log.username}</span>
-                                {' · '}
-                                <span>{log.description}</span>
-                              </p>
-                              <div className="mt-0.5 flex items-center gap-3 text-xs" style={{ color: 'var(--text-faint)' }}>
-                                <span>{dateStr} às {timeStr}</span>
-                                {log.details && <span>· {log.details}</span>}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-              )}
-
               {section.id === 'actions' && (
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <button
                     type="submit"
                     disabled={saving}
@@ -817,6 +733,18 @@ export default function AdminPage() {
                   >
                     {dirty ? 'Descartar alterações' : 'Restaurar padrão'}
                   </button>
+                  <a
+                    href="/admin/notifications"
+                    className="inline-flex h-12 items-center justify-center rounded-xl px-6 text-sm font-medium transition-colors"
+                    style={{
+                      background: 'var(--surface-muted)',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border)',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    🔔 Notificações
+                  </a>
                 </div>
               )}
             </DraggableSection>
