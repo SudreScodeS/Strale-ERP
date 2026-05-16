@@ -247,6 +247,8 @@ export default function QuotesPage() {
   const [convertDeliveryDate, setConvertDeliveryDate] = useState('');
   const [convertQuoteName, setConvertQuoteName] = useState('');
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
+  const [showNoOrdersWarning, setShowNoOrdersWarning] = useState(false);
+  const [productsWithoutOrders, setProductsWithoutOrders] = useState<string[]>([]);
 
   // Restore form state from sessionStorage
   const savedForm = typeof window !== 'undefined' ? (() => {
@@ -461,8 +463,37 @@ export default function QuotesPage() {
     } catch { setStatusMessage('Erro ao carregar orçamentos.'); }
   }
 
+  // Verifica produtos que não possuem pedidos em orçamentos
+  function checkProductsWithoutOrders() {
+    if (inventory.length === 0 || quotes.length === 0) return;
+
+    // Coleta IDs de produtos que aparecem em orçamentos (excluindo rascunhos rejeitados e convertidos)
+    const activeQuotes = quotes.filter(q => q.status !== 'rejected' && q.status !== 'converted');
+    const productIdsInQuotes = new Set<string>();
+    activeQuotes.forEach(quote => {
+      quote.items.forEach(item => {
+        productIdsInQuotes.add(item.productId);
+      });
+    });
+
+    // Encontra produtos que não estão em nenhum orçamento ativo
+    const withoutOrders = inventory
+      .filter(product => !productIdsInQuotes.has(product.id))
+      .map(product => product.name);
+
+    if (withoutOrders.length > 0) {
+      setProductsWithoutOrders(withoutOrders);
+      setShowNoOrdersWarning(true);
+    }
+  }
+
   useEffect(() => { void loadInventory(); }, []);
   useEffect(() => { void loadQuotes(); }, [filterStatus]);
+  useEffect(() => {
+    if (inventory.length > 0 && quotes.length > 0) {
+      checkProductsWithoutOrders();
+    }
+  }, [inventory, quotes]);
 
   const selectedProduct = inventory.find(p => p.id === selectedProductId);
 
@@ -1412,6 +1443,57 @@ export default function QuotesPage() {
           </div>
           </div>
         , document.body) : null}
+
+        {/* ============================================ */}
+        {/* MODAL DE AVISO: PRODUTOS SEM PEDIDOS EM ORÇAMENTOS */}
+        {/* ============================================ */}
+        {showNoOrdersWarning && productsWithoutOrders.length > 0 && createPortal(
+          <div
+            className="modal-overlay"
+            onClick={() => setShowNoOrdersWarning(false)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
+              <div
+                className="modal-content rounded-xl bg-white p-8 shadow-2xl"
+                style={{ maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Atenção</p>
+                    <h3 className="mt-1 text-xl font-bold text-slate-900">Atenção</h3>
+                  </div>
+                  <button type="button" onClick={() => setShowNoOrdersWarning(false)}
+                    className="rounded-lg p-2 transition-colors hover:opacity-80"
+                    style={{ color: 'var(--text-muted)' }}>✕</button>
+                </div>
+
+                <div className="mt-4">
+                  <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+                    <p className="text-sm font-semibold text-amber-800">
+                      Esse(s) produto(s) não possuem pedidos em orçamentos
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {productsWithoutOrders.map((productName, index) => (
+                        <li key={index} className="text-sm text-amber-700">
+                          • {productName}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button type="button" onClick={() => setShowNoOrdersWarning(false)}
+                    className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}>
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        , document.body)}
 
         {/* Toast de undo para remoção de orçamentos */}
         {undoData && createPortal(
