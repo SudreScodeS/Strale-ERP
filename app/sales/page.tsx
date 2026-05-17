@@ -1315,7 +1315,7 @@ export default function SalesPage() {
                       return (
                       <div
                         key={variable.id}
-                        className="flex items-center gap-3 rounded-xl border bg-slate-50 p-4 cursor-pointer transition-all"
+                        className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 cursor-pointer transition-all"
                         style={{
                           borderColor: isSelected ? 'var(--brand)' : undefined,
                           background: isSelected ? 'var(--brand-muted)' : undefined,
