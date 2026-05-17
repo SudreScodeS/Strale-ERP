@@ -51,6 +51,7 @@ interface CartItem {
   unitCost: number;
   unitPrice: number;
   profitMargin: number;
+  minMargin: number;
   previewConfig: PreviewConfig;
   dimensions?: { width: number; height: number };
   printType?: string;
@@ -103,6 +104,7 @@ export default function SalesPage() {
     (savedForm?.cartItems || []).map((item: CartItem) => ({
       ...item,
       profitMargin: item.profitMargin ?? 20,
+      minMargin: item.minMargin ?? item.profitMargin ?? 20,
     }))
   );
   const [statusMessage, setStatusMessage] = useState('');
@@ -126,7 +128,7 @@ export default function SalesPage() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [editingOrder, setEditingOrder] = useState(false);
   const [editOrderName, setEditOrderName] = useState('');
-  const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; profitMargin: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
+  const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; profitMargin: number; minMargin: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
   const [editDeliveryDate, setEditDeliveryDate] = useState('');
 
@@ -589,6 +591,7 @@ export default function SalesPage() {
       unitCost: qi.unitCost,
       unitPrice: qi.unitPrice,
       profitMargin: qi.unitCost > 0 ? Math.round(((qi.unitPrice - qi.unitCost) / qi.unitCost) * 100 * 10) / 10 : 20,
+      minMargin: qi.unitCost > 0 ? Math.round(((qi.unitPrice - qi.unitCost) / qi.unitCost) * 100 * 10) / 10 : 20,
       previewConfig: {
         productImageUrl: '',
         productName: qi.productName,
@@ -649,6 +652,7 @@ export default function SalesPage() {
         unitCost: currentItemUnitCost,
         unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
         profitMargin: selectedProduct.profitMargin ?? 20,
+        minMargin: selectedProduct.profitMargin ?? 20,
         previewConfig: { ...previewConfig },
         dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
         printType: printType || undefined,
@@ -755,10 +759,14 @@ export default function SalesPage() {
     if (!selectedOrder) return;
     setEditingOrder(true);
     setEditOrderName(selectedOrder.name);
-    setEditItems(selectedOrder?.items.map(item => ({
-      ...item,
-      profitMargin: item.unitCost > 0 ? Math.round(((item.unitPrice - item.unitCost) / item.unitCost) * 100 * 10) / 10 : 20,
-    })));
+    setEditItems(selectedOrder?.items.map(item => {
+      const derivedMargin = item.unitCost > 0 ? Math.round(((item.unitPrice - item.unitCost) / item.unitCost) * 100 * 10) / 10 : 20;
+      return {
+        ...item,
+        profitMargin: derivedMargin,
+        minMargin: derivedMargin,
+      };
+    }));
     setEditLogoColors(selectedOrder?.logoCost > 0 ? Math.round(selectedOrder?.logoCost / (globalConfig.logoPricePerColor || 10)) : 0);
     setEditDeliveryDate(selectedOrder?.deliveryDate || '');
   }
@@ -1499,11 +1507,11 @@ export default function SalesPage() {
                         <label className="text-xs text-slate-500">Margem %:</label>
                         <input
                           type="number"
-                          min={item.profitMargin}
+                          min={item.minMargin}
                           step={0.5}
                           value={item.profitMargin}
                           onChange={(e) => {
-                            const newMargin = Math.max(item.profitMargin, Number(e.target.value));
+                            const newMargin = Math.max(item.minMargin, Number(e.target.value));
                             setCartItems((prev) => prev.map((ci, ciIdx) => {
                               if (ciIdx !== index) return ci;
                               return {
@@ -1514,9 +1522,9 @@ export default function SalesPage() {
                             }));
                           }}
                           className="w-20 rounded border border-slate-200 px-2 py-0.5 text-xs"
-                          title={`Margem mínima: ${item.profitMargin}%`}
+                          title={`Margem mínima: ${item.minMargin}%`}
                         />
-                        <span className="text-xs text-slate-400">(mín: {item.profitMargin}%)</span>
+                        <span className="text-xs text-slate-400">(mín: {item.minMargin}%)</span>
                       </div>
                       <p className="text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                       <button
@@ -1702,7 +1710,7 @@ export default function SalesPage() {
                   <div className="mt-3 space-y-3">
                     {editItems.map((item, idx) => {
                       const product = inventory.find((p) => p.id === item.productId);
-                      const minMargin = product?.profitMargin ?? 20;
+                      const minMargin = item.minMargin ?? product?.profitMargin ?? 20;
                       return (
                         <div key={idx} className="rounded-xl border border-slate-200 p-4">
                           <div className="flex items-center justify-between gap-3">

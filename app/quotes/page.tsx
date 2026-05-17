@@ -46,6 +46,7 @@ interface CartItem {
   unitCost: number;
   unitPrice: number;
   profitMargin: number;
+  minMargin: number;
   dimensions?: { width: number; height: number };
   printType?: string;
   printPosition?: string;
@@ -283,6 +284,7 @@ export default function QuotesPage() {
     (savedForm?.cartItems || []).map((item: CartItem) => ({
       ...item,
       profitMargin: item.profitMargin ?? 20,
+      minMargin: item.minMargin ?? item.profitMargin ?? 20,
     }))
   );
 
@@ -551,6 +553,7 @@ export default function QuotesPage() {
       unitCost: currentItemUnitCost,
       unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
       profitMargin: selectedProduct.profitMargin ?? 20,
+      minMargin: selectedProduct.profitMargin ?? 20,
       dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
       printType: printType || undefined,
       printPosition: printType ? printPosition : undefined,
@@ -1214,11 +1217,11 @@ export default function QuotesPage() {
                           <label className="text-xs text-slate-500">Margem %:</label>
                           <input
                             type="number"
-                            min={item.profitMargin}
+                            min={item.minMargin}
                             step={0.5}
                             value={item.profitMargin}
                             onChange={(e) => {
-                              const newMargin = Math.max(item.profitMargin, Number(e.target.value));
+                              const newMargin = Math.max(item.minMargin, Number(e.target.value));
                               setCartItems((prev) => prev.map((ci, ciIdx) => {
                                 if (ciIdx !== i) return ci;
                                 return {
@@ -1229,9 +1232,9 @@ export default function QuotesPage() {
                               }));
                             }}
                             className="w-20 rounded border border-slate-200 px-2 py-0.5 text-xs"
-                            title={`Margem mínima: ${item.profitMargin}%`}
+                            title={`Margem mínima: ${item.minMargin}%`}
                           />
-                          <span className="text-xs text-slate-400">(mín: {item.profitMargin}%)</span>
+                          <span className="text-xs text-slate-400">(mín: {item.minMargin}%)</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 ml-4">
