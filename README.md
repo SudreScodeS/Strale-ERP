@@ -244,8 +244,8 @@ export const globalConfig = {
 ### Passos
 
 ```bash
-git clone https://github.com/SudreScodeS/Strale-ERP.git
-cd Strale-ERP
+git clone https://github.com/SudreScodeS/Elitium-ERP.git
+cd Elitium-ERP
 npm install
 npm run dev
 ```

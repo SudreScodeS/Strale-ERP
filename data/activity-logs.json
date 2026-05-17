@@ -493,5 +493,15 @@
     "entityId": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
     "description": "Converteu orçamento \"Kit evento\" em pedido #11",
     "details": "Pedido: 11"
+  },
+  {
+    "id": "log_1779026822222_r2aus1",
+    "timestamp": "2026-05-17T14:07:02.222Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "21ade169-3eb3-4aad-a0aa-cb1817b9bd04",
+    "description": "Alterou status do orçamento \"Teste Sudré (cópia)\" para rejected"
   }
 ]

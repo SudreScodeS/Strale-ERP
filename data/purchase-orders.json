@@ -37,5 +37,18 @@
     ],
     "status": "ordered",
     "createdAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "po-1779002249130-f1275004",
+    "supplierId": "4f8bb389-d168-4c7b-a39f-10f75af37062",
+    "items": [
+      {
+        "variableId": "variable-caderno-cor-vinho",
+        "quantity": 1,
+        "unitCost": 1
+      }
+    ],
+    "status": "ordered",
+    "createdAt": "2026-01-01T00:00:00.000Z"
   }
 ]

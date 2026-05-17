@@ -6,7 +6,7 @@
 ## 1. CONTEXTO INICIAL
 
 ### 1.1 O que foi apresentado
-O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou um vídeo detalhando os problemas do seu fluxo de trabalho. O projeto no GitHub se chama **Strale-ERP** (renomeado para **Elitium** internamente), desenvolvido em Next.js 16 + TypeScript + Tailwind CSS.
+O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou um vídeo detalhando os problemas do seu fluxo de trabalho. O projeto no GitHub se chama **Elitium-ERP** (renomeado para **Elitium** internamente), desenvolvido em Next.js 16 + TypeScript + Tailwind CSS.
 
 ### 1.2 Os 5 problemas do Edson
 
@@ -217,8 +217,8 @@ O Edson, dono da **North Bag** (fabricante de sacolas personalizáveis), gravou 
 
 ### 6.2 Instalar e rodar
 ```bash
-git clone https://github.com/SudreScodeS/Strale-ERP.git
-cd Strale-ERP
+git clone https://github.com/SudreScodeS/Elitium-ERP.git
+cd Elitium-ERP
 npm install
 npm run dev
 ```

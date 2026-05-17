@@ -110,5 +110,13 @@
     "description": "Pedido: Kit evento",
     "date": "2026-05-16T17:28:48.056Z",
     "orderId": "11"
+  },
+  {
+    "id": "c962d579-1530-486d-81b6-673cf29f4f0f",
+    "type": "purchase",
+    "amount": 1,
+    "description": "Vinho 1x",
+    "date": "2026-01-01T00:00:00.000Z",
+    "orderId": "po-1779002249130-f1275004"
   }
 ]
