@@ -559,7 +559,7 @@ export default function SalesPage() {
     printPosition: printType ? printPosition : undefined,
     printSize: printType ? printSize : undefined,
     quantity,
-    unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin) : 0,
+    unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin) : 0,
   }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, selectedVariableNames, printType, printPosition, printSize, quantity, currentItemUnitCost]);
 
   async function loadQuotes() {
@@ -650,9 +650,9 @@ export default function SalesPage() {
         selectedVariables: selectedEntries,
         selectedVariablesLabel,
         unitCost: currentItemUnitCost,
-        unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
-        profitMargin: selectedProduct.profitMargin ?? 20,
-        minMargin: selectedProduct.profitMargin ?? 20,
+        unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin),
+        profitMargin: selectedProduct?.profitMargin ?? 20,
+        minMargin: selectedProduct?.profitMargin ?? 20,
         previewConfig: { ...previewConfig },
         dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
         printType: printType || undefined,

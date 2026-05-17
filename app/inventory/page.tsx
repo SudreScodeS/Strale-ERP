@@ -190,7 +190,7 @@ export default function InventoryPage() {
     setEditingProduct(product);
     setEditProductName(product.name);
     setEditProductPrice(product.basePrice);
-    setEditProductMargin(product.profitMargin ?? 20);
+    setEditProductMargin(product?.profitMargin ?? 20);
     setEditProductDescription(product.description || '');
     setEditProductImage(product.imageUrl || '');
   }
@@ -486,7 +486,7 @@ export default function InventoryPage() {
                           <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--text-faint)' }}>
                             <span>R$ {product.basePrice.toFixed(2)} base</span>
                             <span>·</span>
-                            <span>{product.profitMargin ?? 20}% margem</span>
+                            <span>{product?.profitMargin ?? 20}% margem</span>
                             <span>·</span>
                             <span>{product.groups.length} grupo{product.groups.length !== 1 ? 's' : ''}</span>
                             <span>·</span>

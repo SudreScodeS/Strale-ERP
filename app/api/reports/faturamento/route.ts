@@ -77,7 +77,7 @@ export async function GET(request: Request) {
       totalCost,
       totalProfit,
       averageMargin,
-      productMargin: product.profitMargin ?? 20,
+      productMargin: product?.profitMargin ?? 20,
     };
   });
 

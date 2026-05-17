@@ -515,7 +515,7 @@ export default function QuotesPage() {
     return selectedProduct.basePrice + variableCost + dimensionCost + printCost;
   }, [selectedProduct, selectedVariablesList, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize, logoColors]);
 
-  const currentItemTotalPrice = selectedProduct ? calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin) * quantity : 0;
+  const currentItemTotalPrice = selectedProduct ? calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin) * quantity : 0;
   const cartTotal = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const quoteTotal = cartTotal;
 
@@ -551,9 +551,9 @@ export default function QuotesPage() {
       selectedVariables: selectedEntries,
       selectedVariablesLabel: label,
       unitCost: currentItemUnitCost,
-      unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
-      profitMargin: selectedProduct.profitMargin ?? 20,
-      minMargin: selectedProduct.profitMargin ?? 20,
+      unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin),
+      profitMargin: selectedProduct?.profitMargin ?? 20,
+      minMargin: selectedProduct?.profitMargin ?? 20,
       dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
       printType: printType || undefined,
       printPosition: printType ? printPosition : undefined,

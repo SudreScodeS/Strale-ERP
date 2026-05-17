@@ -98,7 +98,7 @@ export function calculateItemPricing(input: PricingInput): PricingBreakdown {
 
   // 8. Se a faixa alterou o preço, usa ela; senão aplica margem normal (por produto ou global)
   const effectiveUnitCost = tierPrice !== unitCost ? tierPrice : unitCost;
-  const unitPrice = calculateSalePrice(effectiveUnitCost, product.profitMargin);
+  const unitPrice = calculateSalePrice(effectiveUnitCost, product?.profitMargin);
 
   // 9. Totais
   const totalCost = effectiveUnitCost * input.quantity;
