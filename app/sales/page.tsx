@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calculateLogoCost, calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
-import { PageHeader } from '../components/ui';
+import { PageHeader, Select, Checkbox } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -1141,17 +1141,17 @@ export default function SalesPage() {
                       )}
                       {currentUser?.role === 'admin' ? (
                         <>
-                          <select
+                          <Select
                             value={orderStatusUpdates[order.id] || order.status}
                             onChange={(event) => handleStatusChange(order.id, event.target.value as Order['status'])}
-                            aria-label={`Status do pedido ${order.name || order.id}`}
+                            ariaLabel={`Status do pedido ${order.name || order.id}`}
                             title="Status do pedido"
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2"
+                            className="px-4 py-2"
                           >
                             <option value="pending">Pendente</option>
                             <option value="completed">Concluído</option>
                             <option value="cancelled">Cancelado</option>
-                          </select>
+                          </Select>
                           {order.status === 'cancelled' ? (
                             <button
                               type="button"
@@ -1286,19 +1286,19 @@ export default function SalesPage() {
             ) : null}
             <label className="space-y-2 text-slate-700">
               <span>Produto base</span>
-              <select
+              <Select
                 value={selectedProductId}
                 onChange={(event) => setSelectedProductId(event.target.value)}
-                aria-label="Produto base"
+                ariaLabel="Produto base"
                 title="Seleção de produto base"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                className="px-4 py-3"
               >
                 {inventory.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="space-y-2 text-slate-700">
               <span>Quantidade (unidades)</span>
@@ -1376,10 +1376,8 @@ export default function SalesPage() {
 
           {/* CALCULAR POR DIMENSÃO */}
           <div className="rounded-xl border border-slate-200 p-4">
-            <label className="flex items-center gap-2 text-slate-700">
-              <input type="checkbox" checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)} />
-              <span className="font-medium">Calcular por dimensão (largura x altura)</span>
-            </label>
+            <Checkbox checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)}
+              label="Calcular por dimensão (largura x altura)" className="font-medium" />
             {useDimensions && (
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="space-y-1 text-sm text-slate-600">
@@ -1402,26 +1400,23 @@ export default function SalesPage() {
             <div className="grid gap-3 md:grid-cols-3">
               <label className="space-y-1 text-sm text-slate-600">
                 <span>Tipo</span>
-                <select value={printType} onChange={e => setPrintType(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <Select value={printType} onChange={e => setPrintType(e.target.value)}>
                   {printTypesList.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
+                </Select>
               </label>
               {printType && (
                 <>
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Tamanho</span>
-                    <select value={printSize} onChange={e => setPrintSize(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <Select value={printSize} onChange={e => setPrintSize(e.target.value)}>
                       {PRINT_SIZES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                    </select>
+                    </Select>
                   </label>
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Posição</span>
-                    <select value={printPosition} onChange={e => setPrintPosition(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <Select value={printPosition} onChange={e => setPrintPosition(e.target.value)}>
                       {PRINT_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    </select>
+                    </Select>
                   </label>
                 </>
               )}

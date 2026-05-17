@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
-import { PageHeader } from '../components/ui';
+import { PageHeader, Select, Checkbox } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { Quote } from '../../types';
@@ -821,15 +821,15 @@ export default function QuotesPage() {
                 <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Buscar por nome ou cliente"
                   className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm" />
-                <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm">
+                <Select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+                  className="px-4 py-2">
                   <option value="">Todos os status</option>
                   <option value="draft">Rascunho</option>
                   <option value="sent">Enviado</option>
                   <option value="approved">Aprovado</option>
                   <option value="rejected">Rejeitado</option>
                   <option value="converted">Convertido</option>
-                </select>
+                </Select>
               </div>
             </div>
 
@@ -839,15 +839,11 @@ export default function QuotesPage() {
               <div className="space-y-4">
                 {/* Barra de seleção múltipla */}
                 <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuoteIds.size === filteredQuotes.length && filteredQuotes.length > 0}
-                      onChange={toggleAllQuotes}
-                      className="h-4 w-4 rounded border-slate-300"
-                    />
-                    <span>Selecionar todos</span>
-                  </label>
+                  <Checkbox
+                    checked={selectedQuoteIds.size === filteredQuotes.length && filteredQuotes.length > 0}
+                    onChange={toggleAllQuotes}
+                    label="Selecionar todos"
+                  />
                   {selectedQuoteIds.size > 0 && (
                     <>
                       <span className="text-xs text-slate-500">{selectedQuoteIds.size} selecionado(s)</span>
@@ -871,12 +867,11 @@ export default function QuotesPage() {
                       onClick={() => setSelectedQuote(quote)}>
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={selectedQuoteIds.has(quote.id)}
                             onChange={() => toggleQuoteSelection(quote.id)}
                             onClick={e => e.stopPropagation()}
-                            className="mt-1 h-4 w-4 rounded border-slate-300 cursor-pointer"
+                            className="mt-1"
                           />
                           <div>
                           <p className="font-semibold text-slate-900">{quote.name}</p>
@@ -1055,10 +1050,10 @@ export default function QuotesPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="space-y-2 text-slate-700">
                   <span>Produto</span>
-                  <select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); setSelectedVariables({}); }}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                  <Select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); setSelectedVariables({}); }}
+                    className="px-4 py-3">
                     {inventory.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                  </Select>
                 </label>
                 <label className="space-y-2 text-slate-700">
                   <span>Quantidade {(() => {
@@ -1136,10 +1131,8 @@ export default function QuotesPage() {
 
               {/* Dimensões */}
               <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-                <label className="flex items-center gap-2 text-slate-700">
-                  <input type="checkbox" checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)} />
-                  <span className="font-medium">Calcular por dimensão (largura × altura)</span>
-                </label>
+                <Checkbox checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)}
+                  label="Calcular por dimensão (largura × altura)" className="font-medium" />
                 {useDimensions && (
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     <label className="space-y-1 text-sm text-slate-600">
@@ -1162,26 +1155,23 @@ export default function QuotesPage() {
                 <div className="grid gap-3 md:grid-cols-3">
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Tipo</span>
-                    <select value={printType} onChange={e => setPrintType(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <Select value={printType} onChange={e => setPrintType(e.target.value)}>
                       {printTypesList.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
+                    </Select>
                   </label>
                   {printType && (
                     <>
                       <label className="space-y-1 text-sm text-slate-600">
                         <span>Tamanho</span>
-                        <select value={printSize} onChange={e => setPrintSize(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <Select value={printSize} onChange={e => setPrintSize(e.target.value)}>
                           {PRINT_SIZES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                        </select>
+                        </Select>
                       </label>
                       <label className="space-y-1 text-sm text-slate-600">
                         <span>Posição</span>
-                        <select value={printPosition} onChange={e => setPrintPosition(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <Select value={printPosition} onChange={e => setPrintPosition(e.target.value)}>
                           {PRINT_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                        </select>
+                        </Select>
                       </label>
                     </>
                   )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../components/ui';
+import { PageHeader, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -233,15 +233,14 @@ export default function UsersPage() {
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Papel</label>
-                      <select
+                      <Select
                         value={role}
                         onChange={(e) => setRole(e.target.value as 'admin' | 'seller')}
-                        className="w-full rounded-lg px-3 py-2 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        className="px-3 py-2"
                       >
                         <option value="seller">Vendedor</option>
                         <option value="admin">Administrador</option>
-                      </select>
+                      </Select>
                     </div>
                     <div className="flex gap-2 pt-2">
                       <button

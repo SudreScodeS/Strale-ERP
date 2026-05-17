@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { PageHeader } from '../components/ui';
+import { PageHeader, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 
@@ -1184,13 +1184,12 @@ export default function ReportsPage() {
                       <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                         Ordenar por
                       </label>
-                      <select
+                      <Select
                         value={sortPreset}
                         onChange={(e) => handlePresetChange(e.target.value)}
-                        className="w-full rounded-lg px-3 py-1.5 text-sm"
+                        className="px-3 py-1.5"
                         style={{
-                          background: 'var(--input-bg)',
-                          border: `1px solid ${sortPreset ? 'var(--brand)' : 'var(--input-border)'}`,
+                          borderColor: sortPreset ? 'var(--brand)' : undefined,
                           color: sortPreset ? 'var(--text-primary)' : 'var(--text-muted)',
                         }}
                       >
@@ -1198,7 +1197,7 @@ export default function ReportsPage() {
                         {SORT_PRESETS[selectedReport].map((p) => (
                           <option key={p.key} value={p.key}>{p.label}</option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                     {sortPreset && (
                       <button

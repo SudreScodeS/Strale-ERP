@@ -2,19 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { PageHeader } from '../components/ui';
+import { PageHeader, Select, Checkbox, FormField, Input } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
-interface SupplierItem {
+// ==========================================
+// TYPES
+// ==========================================
+
+interface Supplier {
   id: string;
   name: string;
   contact?: string;
 }
 
-interface VariableItem {
+interface Variable {
   id: string;
   name: string;
   stock: number;
@@ -22,42 +26,69 @@ interface VariableItem {
   unitOfMeasure?: string;
 }
 
-interface PurchaseOrderItem {
+interface PurchaseItem {
   variableId: string;
   quantity: number;
   unitCost: number;
 }
 
-interface PurchaseOrderView {
+interface PurchaseOrder {
   id: string;
   supplierId: string;
-  items: PurchaseOrderItem[];
+  items: PurchaseItem[];
   status: 'pending' | 'ordered' | 'received';
   createdAt: string;
 }
 
+/** Form state for creating/editing a purchase */
+interface PurchaseFormState {
+  supplierId: string;
+  variableId: string;
+  quantity: number;
+  unitCost: number;
+  date: string;
+}
+
+const EMPTY_FORM: PurchaseFormState = {
+  supplierId: '',
+  variableId: '',
+  quantity: 1,
+  unitCost: 0,
+  date: '',
+};
+
+// ==========================================
+// PAGE COMPONENT
+// ==========================================
+
 export default function PurchasesPage() {
-  const [suppliers, setSuppliers] = useState<SupplierItem[]>([]);
-  const [lowStockVariables, setLowStockVariables] = useState<VariableItem[]>([]);
-  const [variables, setVariables] = useState<VariableItem[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderView[]>([]);
+  // ── Data lists ──
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [variables, setVariables] = useState<Variable[]>([]);
+  const [lowStockVariables, setLowStockVariables] = useState<Variable[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+
+  // ── Supplier form ──
   const [supplierName, setSupplierName] = useState('');
   const [supplierContact, setSupplierContact] = useState('');
-  const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [selectedVariableId, setSelectedVariableId] = useState('');
-  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
-  const [purchaseUnitCost, setPurchaseUnitCost] = useState(0);
-  const [purchaseDate, setPurchaseDate] = useState('');
+
+  // ── Purchase form (single object instead of 5 separate states) ──
+  const [form, setForm] = useState<PurchaseFormState>(EMPTY_FORM);
+  const updateForm = (patch: Partial<PurchaseFormState>) => setForm((prev) => ({ ...prev, ...patch }));
+
+  // ── Edit mode ──
+  const [editingPurchase, setEditingPurchase] = useState<PurchaseOrder | null>(null);
+  const [editForm, setEditForm] = useState<PurchaseFormState>(EMPTY_FORM);
+  const updateEditForm = (patch: Partial<PurchaseFormState>) => setEditForm((prev) => ({ ...prev, ...patch }));
+
+  // ── Filters ──
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [message, setMessage] = useState('');
-  const [editingPurchase, setEditingPurchase] = useState<PurchaseOrderView | null>(null);
-  const [editSupplierId, setEditSupplierId] = useState('');
-  const [editVariableId, setEditVariableId] = useState('');
-  const [editQuantity, setEditQuantity] = useState(1);
-  const [editUnitCost, setEditUnitCost] = useState(0);
-  const [editDate, setEditDate] = useState('');
 
+  // ── Feedback ──
+  const [message, setMessage] = useState('');
+
+  // ── Layout ──
   const PAGE_PATH = '/purchases';
   const DEFAULT_SECTIONS: SectionConfig[] = [
     { id: 'suppliers', visible: true, order: 0, colSpan: 1 },
@@ -68,6 +99,10 @@ export default function PurchasesPage() {
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
+  // ==========================================
+  // HELPERS
+  // ==========================================
+
   async function safeJson(response: Response) {
     try {
       return await response.json();
@@ -75,6 +110,19 @@ export default function PurchasesPage() {
       return { error: 'Resposta inválida do servidor.' };
     }
   }
+
+  function findSupplierName(id: string): string {
+    return suppliers.find((s) => s.id === id)?.name || id;
+  }
+
+  function findVariableName(id: string): string {
+    const v = variables.find((v) => v.id === id);
+    return v ? `${v.name} (${v.unitOfMeasure || 'un'})` : id;
+  }
+
+  // ==========================================
+  // DATA LOADING
+  // ==========================================
 
   async function loadDashboard() {
     const response = await fetch('/api/purchases', {
@@ -90,9 +138,23 @@ export default function PurchasesPage() {
     setLowStockVariables(data.lowStockVariables || []);
     setVariables(data.variables || []);
     setPurchaseOrders(data.purchaseOrders || []);
-    if ((data.suppliers || []).length > 0) setSelectedSupplierId((prev) => prev || data.suppliers[0].id);
-    if ((data.variables || []).length > 0) setSelectedVariableId((prev) => prev || data.variables[0].id);
+
+    // Auto-select first options if nothing selected
+    if (data.suppliers?.length && !form.supplierId) {
+      updateForm({ supplierId: data.suppliers[0].id });
+    }
+    if (data.variables?.length && !form.variableId) {
+      updateForm({ variableId: data.variables[0].id });
+    }
   }
+
+  useEffect(() => {
+    void loadDashboard();
+  }, []);
+
+  // ==========================================
+  // SUPPLIER ACTIONS
+  // ==========================================
 
   async function handleCreateSupplier(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -112,15 +174,19 @@ export default function PurchasesPage() {
     setSuppliers((prev) => [data.supplier, ...prev]);
   }
 
+  // ==========================================
+  // PURCHASE ACTIONS
+  // ==========================================
+
   async function handleCreatePurchase(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const response = await fetch('/api/purchases', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
-        supplierId: selectedSupplierId,
-        purchasedAt: purchaseDate || undefined,
-        items: [{ variableId: selectedVariableId, quantity: purchaseQuantity, unitCost: purchaseUnitCost }],
+        supplierId: form.supplierId,
+        purchasedAt: form.date || undefined,
+        items: [{ variableId: form.variableId, quantity: form.quantity, unitCost: form.unitCost }],
       }),
     });
     const data = await safeJson(response);
@@ -129,24 +195,25 @@ export default function PurchasesPage() {
       return;
     }
     setMessage(data.message || 'Compra registrada.');
-    setPurchaseQuantity(1);
-    setPurchaseUnitCost(0);
+    setForm((prev) => ({ ...prev, quantity: 1, unitCost: 0, date: '' }));
     await loadDashboard();
   }
 
-  function handleEditPurchase(purchase: PurchaseOrderView) {
+  function handleEditPurchase(purchase: PurchaseOrder) {
     setEditingPurchase(purchase);
-    setEditSupplierId(purchase.supplierId);
-    setEditVariableId(purchase.items[0]?.variableId || '');
-    setEditQuantity(purchase.items[0]?.quantity || 1);
-    setEditUnitCost(purchase.items[0]?.unitCost || 0);
-    setEditDate(new Date(purchase.createdAt).toISOString().slice(0, 10));
+    setEditForm({
+      supplierId: purchase.supplierId,
+      variableId: purchase.items[0]?.variableId || '',
+      quantity: purchase.items[0]?.quantity || 1,
+      unitCost: purchase.items[0]?.unitCost || 0,
+      date: new Date(purchase.createdAt).toISOString().slice(0, 10),
+    });
   }
 
   async function handleSubmitPurchaseUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingPurchase) return;
-    if (!editSupplierId || !editVariableId || editQuantity <= 0 || editUnitCost < 0) {
+    if (!editForm.supplierId || !editForm.variableId || editForm.quantity <= 0 || editForm.unitCost < 0) {
       setMessage('Dados inválidos para editar compra.');
       return;
     }
@@ -156,9 +223,9 @@ export default function PurchasesPage() {
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
         id: editingPurchase.id,
-        supplierId: editSupplierId,
-        purchasedAt: editDate,
-        items: [{ variableId: editVariableId, quantity: editQuantity, unitCost: editUnitCost }],
+        supplierId: editForm.supplierId,
+        purchasedAt: editForm.date,
+        items: [{ variableId: editForm.variableId, quantity: editForm.quantity, unitCost: editForm.unitCost }],
       }),
     });
     const data = await safeJson(response);
@@ -186,6 +253,10 @@ export default function PurchasesPage() {
     await loadDashboard();
   }
 
+  // ==========================================
+  // FILTERED DATA
+  // ==========================================
+
   const filteredPurchases = purchaseOrders.filter((purchase) => {
     const date = new Date(purchase.createdAt);
     if (fromDate && date < new Date(`${fromDate}T00:00:00`)) return false;
@@ -193,9 +264,9 @@ export default function PurchasesPage() {
     return true;
   });
 
-  useEffect(() => {
-    void loadDashboard();
-  }, []);
+  // ==========================================
+  // RENDER
+  // ==========================================
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
@@ -203,7 +274,7 @@ export default function PurchasesPage() {
         <PageHeader title="Pedidos de Compra" description="Gerencie solicitações de compra para fornecedores e atualize o estoque crítico." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
-        {message ? <p className="mb-4 text-sm text-slate-700">{message}</p> : null}
+        {message ? <p className="mb-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{message}</p> : null}
 
         <div className="grid gap-6 lg:grid-cols-2">
           {sections.map((section, index) => (
@@ -215,18 +286,23 @@ export default function PurchasesPage() {
               totalSections={sections.length}
               className={section.colSpan === 2 ? 'lg:col-span-2' : ''}
             >
+              {/* ── LOW STOCK ALERTS ── */}
               {section.id === 'suppliers' && (
-                <div className="rounded-2xl bg-white p-6 shadow-sm">
-                  <h3 className="text-xl font-semibold text-slate-900">Estoque crítico</h3>
+                <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                  <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Estoque crítico</h3>
                   <div className="mt-4 space-y-4">
                     {lowStockVariables.length === 0 ? (
-                      <p className="text-sm text-slate-500">Sem itens em estoque crítico no momento.</p>
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Sem itens em estoque crítico no momento.</p>
                     ) : (
                       lowStockVariables.map((item) => (
-                        <div key={item.id} className="rounded-xl border border-slate-200 p-4">
-                          <p className="font-semibold text-slate-900">{item.name}</p>
-                          <p className="text-sm text-slate-600">Estoque: {item.stock} {item.unitOfMeasure || 'un'}</p>
-                          <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)} / {item.unitOfMeasure || 'un'}</p>
+                        <div key={item.id} className="rounded-xl p-4" style={{ border: '1px solid var(--border)' }}>
+                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            Estoque: {item.stock} {item.unitOfMeasure || 'un'}
+                          </p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            Custo adicional: R$ {item.additionalPrice.toFixed(2)} / {item.unitOfMeasure || 'un'}
+                          </p>
                         </div>
                       ))
                     )}
@@ -234,34 +310,43 @@ export default function PurchasesPage() {
                 </div>
               )}
 
+              {/* ── SUPPLIER FORM ── */}
               {section.id === 'purchase-form' && (
-                <div className="rounded-2xl bg-white p-6 shadow-sm">
-                  <h3 className="text-xl font-semibold text-slate-900">Fornecedores</h3>
-                  <form className="mt-4 grid gap-3 rounded-xl border border-slate-200 p-4" onSubmit={handleCreateSupplier}>
-                    <input
-                      value={supplierName}
-                      onChange={(event) => setSupplierName(event.target.value)}
-                      placeholder="Nome do fornecedor"
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                    />
-                    <input
-                      value={supplierContact}
-                      onChange={(event) => setSupplierContact(event.target.value)}
-                      placeholder="Contato (telefone, email...)"
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                    />
-                    <button className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
+                <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                  <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Fornecedores</h3>
+                  <form className="mt-4 grid gap-3 rounded-xl p-4" style={{ border: '1px solid var(--border)' }} onSubmit={handleCreateSupplier}>
+                    <FormField label="Nome do fornecedor">
+                      <Input
+                        value={supplierName}
+                        onChange={(e) => setSupplierName(e.target.value)}
+                        placeholder="Nome do fornecedor"
+                      />
+                    </FormField>
+                    <FormField label="Contato">
+                      <Input
+                        value={supplierContact}
+                        onChange={(e) => setSupplierContact(e.target.value)}
+                        placeholder="Telefone, email..."
+                      />
+                    </FormField>
+                    <button
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--brand)', color: '#fff' }}
+                      type="submit"
+                    >
                       Adicionar fornecedor
                     </button>
                   </form>
                   <div className="mt-4 space-y-4">
                     {suppliers.length === 0 ? (
-                      <p className="text-sm text-slate-500">Nenhum fornecedor cadastrado ainda.</p>
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nenhum fornecedor cadastrado ainda.</p>
                     ) : (
                       suppliers.map((supplier) => (
-                        <div key={supplier.id} className="rounded-xl border border-slate-200 p-4">
-                          <p className="font-semibold text-slate-900">{supplier.name}</p>
-                          <p className="text-sm text-slate-600">Contato: {supplier.contact || 'Não informado'}</p>
+                        <div key={supplier.id} className="rounded-xl p-4" style={{ border: '1px solid var(--border)' }}>
+                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{supplier.name}</p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            Contato: {supplier.contact || 'Não informado'}
+                          </p>
                         </div>
                       ))
                     )}
@@ -269,70 +354,68 @@ export default function PurchasesPage() {
                 </div>
               )}
 
+              {/* ── PURCHASE FORM ── */}
               {section.id === 'purchase-history' && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                  <h3 className="text-xl font-semibold text-slate-900">Registrar compra</h3>
+                <section className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                  <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Registrar compra</h3>
                   <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreatePurchase}>
-                    <label className="text-slate-700">
-                      Fornecedor
-                      <select
-                        value={selectedSupplierId}
-                        onChange={(event) => setSelectedSupplierId(event.target.value)}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    <FormField label="Fornecedor">
+                      <Select
+                        value={form.supplierId}
+                        onChange={(e) => updateForm({ supplierId: e.target.value })}
                       >
-                        {suppliers.map((supplier) => (
-                          <option key={supplier.id} value={supplier.id}>
-                            {supplier.name}
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </Select>
+                    </FormField>
+
+                    <FormField label="Item do estoque">
+                      <Select
+                        value={form.variableId}
+                        onChange={(e) => updateForm({ variableId: e.target.value })}
+                      >
+                        {variables.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name} ({v.unitOfMeasure || 'un'})
                           </option>
                         ))}
-                      </select>
-                    </label>
-                    <label className="text-slate-700">
-                      Item do estoque
-                      <select
-                        value={selectedVariableId}
-                        onChange={(event) => setSelectedVariableId(event.target.value)}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                      >
-                        {variables.map((variable) => (
-                          <option key={variable.id} value={variable.id}>
-                            {variable.name} ({variable.unitOfMeasure || 'un'})
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-slate-700">
-                      Quantidade comprada
-                      <input
+                      </Select>
+                    </FormField>
+
+                    <FormField label="Quantidade comprada">
+                      <Input
                         type="number"
                         min={1}
-                        value={purchaseQuantity}
-                        onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                        value={form.quantity}
+                        onChange={(e) => updateForm({ quantity: Number(e.target.value) })}
                       />
-                    </label>
-                    <label className="text-slate-700">
-                      Custo unitário
-                      <input
+                    </FormField>
+
+                    <FormField label="Custo unitário (R$)">
+                      <Input
                         type="number"
                         min={0}
                         step={0.01}
-                        value={purchaseUnitCost}
-                        onChange={(event) => setPurchaseUnitCost(Number(event.target.value))}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                        value={form.unitCost}
+                        onChange={(e) => updateForm({ unitCost: Number(e.target.value) })}
                       />
-                    </label>
-                    <label className="text-slate-700">
-                      Data da compra
-                      <input
+                    </FormField>
+
+                    <FormField label="Data da compra">
+                      <Input
                         type="date"
-                        value={purchaseDate}
-                        onChange={(event) => setPurchaseDate(event.target.value)}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                        value={form.date}
+                        onChange={(e) => updateForm({ date: e.target.value })}
                       />
-                    </label>
+                    </FormField>
+
                     <div className="flex items-end">
-                      <button className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
+                      <button
+                        className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                        style={{ background: 'var(--brand)', color: '#fff' }}
+                        type="submit"
+                      >
                         Registrar compra
                       </button>
                     </div>
@@ -340,57 +423,55 @@ export default function PurchasesPage() {
                 </section>
               )}
 
+              {/* ── PURCHASE RECORDS ── */}
               {section.id === 'purchase-records' && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
+                <section className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                   <div className="flex flex-wrap items-end gap-3">
-                    <h3 className="text-xl font-semibold text-slate-900">Compras registradas</h3>
-                    <label className="text-sm text-slate-600">
-                      Data inicial
-                      <input
+                    <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Compras registradas</h3>
+                    <FormField label="Data inicial">
+                      <Input
                         type="date"
                         value={fromDate}
-                        aria-label="Data inicial das compras"
+                        onChange={(e) => setFromDate(e.target.value)}
+                        ariaLabel="Data inicial das compras"
                         title="Data inicial das compras"
-                        onChange={(event) => setFromDate(event.target.value)}
-                        className="mt-1 rounded-lg border border-slate-200 px-3 py-2"
                       />
-                    </label>
-                    <label className="text-sm text-slate-600">
-                      Data final
-                      <input
+                    </FormField>
+                    <FormField label="Data final">
+                      <Input
                         type="date"
                         value={toDate}
-                        aria-label="Data final das compras"
+                        onChange={(e) => setToDate(e.target.value)}
+                        ariaLabel="Data final das compras"
                         title="Data final das compras"
-                        onChange={(event) => setToDate(event.target.value)}
-                        className="mt-1 rounded-lg border border-slate-200 px-3 py-2"
                       />
-                    </label>
+                    </FormField>
                   </div>
                   <div className="mt-4 space-y-3">
                     {filteredPurchases.length === 0 ? (
-                      <p className="text-sm text-slate-500">Nenhuma compra no período selecionado.</p>
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nenhuma compra no período selecionado.</p>
                     ) : (
                       filteredPurchases.map((purchase) => {
-                        const supplierNameView = suppliers.find((supplier) => supplier.id === purchase.supplierId)?.name || purchase.supplierId;
                         const total = purchase.items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
-                        const purchasedItemsLabel = purchase.items
-                          .map((item) => {
-                            const variable = variables.find((entry) => entry.id === item.variableId);
-                            const itemName = variable?.name || item.variableId;
-                            return `${itemName} ${item.quantity}x`;
-                          })
+                        const itemsLabel = purchase.items
+                          .map((item) => `${findVariableName(item.variableId)} ${item.quantity}x`)
                           .join(', ');
                         return (
-                          <div key={purchase.id} className="rounded-xl border border-slate-200 p-4">
-                            <p className="font-semibold text-slate-900">{purchasedItemsLabel || 'Itens da compra'}</p>
-                            <p className="text-sm text-slate-600">Fornecedor: {supplierNameView}</p>
-                            <p className="text-sm text-slate-600">Data: {new Date(purchase.createdAt).toLocaleDateString()}</p>
-                            <p className="text-sm text-slate-600">Total: R$ {total.toFixed(2)}</p>
+                          <div key={purchase.id} className="rounded-xl p-4" style={{ border: '1px solid var(--border)' }}>
+                            <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{itemsLabel || 'Itens da compra'}</p>
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                              Fornecedor: {findSupplierName(purchase.supplierId)}
+                            </p>
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                              Data: {new Date(purchase.createdAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                              Total: R$ {total.toFixed(2)}
+                            </p>
                             <div className="mt-3 flex flex-wrap gap-2">
                               <button
                                 type="button"
-                                onClick={() => void handleEditPurchase(purchase)}
+                                onClick={() => handleEditPurchase(purchase)}
                                 className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
                                 style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                               >
@@ -416,69 +497,57 @@ export default function PurchasesPage() {
           ))}
         </div>
 
-        {editingPurchase ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-              <h3 className="text-xl font-semibold text-slate-900">Atualizar compra</h3>
+        {/* ── EDIT MODAL ── */}
+        {editingPurchase && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center p-4" style={{ background: 'var(--modal-overlay)' }}>
+            <div className="w-full max-w-md rounded-xl p-6 shadow-xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Atualizar compra</h3>
               <form className="mt-4 space-y-4" onSubmit={handleSubmitPurchaseUpdate}>
-                <label className="block text-slate-700">
-                  Fornecedor
-                  <select
-                    value={editSupplierId}
-                    onChange={(event) => setEditSupplierId(event.target.value)}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                  >
-                    {suppliers.map((supplier) => (
-                      <option key={supplier.id} value={supplier.id}>
-                        {supplier.name}
+                <FormField label="Fornecedor">
+                  <Select value={editForm.supplierId} onChange={(e) => updateEditForm({ supplierId: e.target.value })}>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Item comprado">
+                  <Select value={editForm.variableId} onChange={(e) => updateEditForm({ variableId: e.target.value })}>
+                    {variables.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} ({v.unitOfMeasure || 'un'})
                       </option>
                     ))}
-                  </select>
-                </label>
-                <label className="block text-slate-700">
-                  Item comprado
-                  <select
-                    value={editVariableId}
-                    onChange={(event) => setEditVariableId(event.target.value)}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                  >
-                    {variables.map((variable) => (
-                      <option key={variable.id} value={variable.id}>
-                        {variable.name} ({variable.unitOfMeasure || 'un'})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block text-slate-700">
-                  Quantidade
-                  <input
+                  </Select>
+                </FormField>
+
+                <FormField label="Quantidade">
+                  <Input
                     type="number"
                     min={1}
-                    value={editQuantity}
-                    onChange={(event) => setEditQuantity(Number(event.target.value))}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    value={editForm.quantity}
+                    onChange={(e) => updateEditForm({ quantity: Number(e.target.value) })}
                   />
-                </label>
-                <label className="block text-slate-700">
-                  Custo unitário
-                  <input
+                </FormField>
+
+                <FormField label="Custo unitário (R$)">
+                  <Input
                     type="number"
                     min={0}
                     step={0.01}
-                    value={editUnitCost}
-                    onChange={(event) => setEditUnitCost(Number(event.target.value))}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    value={editForm.unitCost}
+                    onChange={(e) => updateEditForm({ unitCost: Number(e.target.value) })}
                   />
-                </label>
-                <label className="block text-slate-700">
-                  Data da compra
-                  <input
+                </FormField>
+
+                <FormField label="Data da compra">
+                  <Input
                     type="date"
-                    value={editDate}
-                    onChange={(event) => setEditDate(event.target.value)}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    value={editForm.date}
+                    onChange={(e) => updateEditForm({ date: e.target.value })}
                   />
-                </label>
+                </FormField>
+
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
@@ -488,14 +557,18 @@ export default function PurchasesPage() {
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }}>
+                  <button
+                    type="submit"
+                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
+                    style={{ background: 'var(--brand)', color: '#fff' }}
+                  >
                     Salvar
                   </button>
                 </div>
               </form>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
     </ProtectedPage>
   );

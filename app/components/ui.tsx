@@ -869,6 +869,112 @@ export function PageHeader({ title, description }: { title: string; description?
 }
 
 // ==========================================
+// STANDARDIZED FORM COMPONENTS
+// ==========================================
+
+/** Styled select/dropdown — consistent across the entire app */
+export function Select({ value, onChange, children, className = '', ariaLabel, title, disabled, style }: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  children: React.ReactNode;
+  className?: string;
+  ariaLabel?: string;
+  title?: string;
+  disabled?: boolean;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      aria-label={ariaLabel}
+      title={title}
+      disabled={disabled}
+      className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--input-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      style={{
+        background: 'var(--input-bg)',
+        borderColor: 'var(--input-border)',
+        color: 'var(--text-primary)',
+        ...style,
+      }}
+    >
+      {children}
+    </select>
+  );
+}
+
+/** Styled checkbox — consistent across the entire app */
+export function Checkbox({ checked, onChange, label, className = '', onClick }: {
+  checked: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  label?: string;
+  className?: string;
+  onClick?: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <label className={`flex items-center gap-2 cursor-pointer text-sm ${className}`} style={{ color: 'var(--text-secondary)' }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        onClick={onClick}
+        className="h-4 w-4 rounded transition-colors"
+        style={{ accentColor: 'var(--brand)' }}
+      />
+      {label && <span>{label}</span>}
+    </label>
+  );
+}
+
+/** Styled form field wrapper with label */
+export function FormField({ label, children, className = '' }: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={`block text-sm font-medium ${className}`} style={{ color: 'var(--text-secondary)' }}>
+      <span className="mb-1.5 block">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+/** Styled text input — consistent across the entire app */
+export function Input({ type = 'text', value, onChange, placeholder, className = '', min, step, ariaLabel, title, disabled }: {
+  type?: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  className?: string;
+  min?: number;
+  step?: number;
+  ariaLabel?: string;
+  title?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      min={min}
+      step={step}
+      aria-label={ariaLabel}
+      title={title}
+      disabled={disabled}
+      className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--input-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      style={{
+        background: 'var(--input-bg)',
+        borderColor: 'var(--input-border)',
+        color: 'var(--text-primary)',
+      }}
+    />
+  );
+}
+
+// ==========================================
 // FOOTER LOGO
 // ==========================================
 

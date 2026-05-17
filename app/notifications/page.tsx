@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PageHeader, setGlobalDirty } from '../components/ui';
+import { PageHeader, setGlobalDirty, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import {
@@ -476,39 +476,36 @@ export default function NotificationsPage() {
 
               {/* Row 2: Selects and actions */}
               <div className="flex flex-wrap items-center gap-3">
-                <select
+                <Select
                   value={filterAction}
                   onChange={e => setFilterAction(e.target.value)}
-                  className="rounded-lg border px-3 py-2 text-sm"
-                  style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  className="px-3 py-2"
                 >
                   <option value="all">Todas as ações</option>
                   {Object.entries(ACTION_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
                   ))}
-                </select>
+                </Select>
 
-                <select
+                <Select
                   value={filterEntity}
                   onChange={e => setFilterEntity(e.target.value)}
-                  className="rounded-lg border px-3 py-2 text-sm"
-                  style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  className="px-3 py-2"
                 >
                   <option value="all">Todos os tipos</option>
                   {Object.entries(ENTITY_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
                   ))}
-                </select>
+                </Select>
 
-                <select
+                <Select
                   value={sortOrder}
                   onChange={e => setSortOrder(e.target.value as 'newest' | 'oldest')}
-                  className="rounded-lg border px-3 py-2 text-sm"
-                  style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  className="px-3 py-2"
                 >
                   <option value="newest">Mais recentes</option>
                   <option value="oldest">Mais antigos</option>
-                </select>
+                </Select>
 
                 {/* Active filter badge */}
                 {hasActiveFilters && (

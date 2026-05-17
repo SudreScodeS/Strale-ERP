@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { FormEvent } from 'react';
-import { PageHeader } from '../components/ui';
+import { PageHeader, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -775,16 +775,15 @@ export default function InventoryPage() {
                   <form className="space-y-4" onSubmit={handleCreateGroup}>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Produto vinculado *</span>
-                      <select
+                      <Select
                         value={groupProductId}
                         onChange={(event) => setGroupProductId(event.target.value)}
-                        className="w-full rounded-lg px-4 py-2.5 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        className="px-4 py-2.5"
                       >
                         {inventory.map((product) => (
                           <option key={product.id} value={product.id}>{product.name}</option>
                         ))}
-                      </select>
+                      </Select>
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Nome do grupo *</span>
@@ -842,16 +841,15 @@ export default function InventoryPage() {
                   <form className="space-y-4" onSubmit={handleCreateVariable}>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Grupo vinculado *</span>
-                      <select
+                      <Select
                         value={variableGroupId}
                         onChange={(event) => setVariableGroupId(event.target.value)}
-                        className="w-full rounded-lg px-4 py-2.5 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        className="px-4 py-2.5"
                       >
                         {allGroups.map((group) => (
                           <option key={group.id} value={group.id}>{group.productName} / {group.name}</option>
                         ))}
-                      </select>
+                      </Select>
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Nome da variável *</span>
@@ -895,11 +893,10 @@ export default function InventoryPage() {
                     </div>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Unidade de medida</span>
-                      <select
+                      <Select
                         value={variableUnit}
                         onChange={(event) => setVariableUnit(event.target.value as UnitOfMeasure)}
-                        className="w-full rounded-lg px-4 py-2.5 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        className="px-4 py-2.5"
                       >
                         <option value="un">Unidade (un)</option>
                         <option value="cm²">Centímetro quadrado (cm²)</option>
@@ -910,7 +907,7 @@ export default function InventoryPage() {
                         <option value="ml">Mililitro (ml)</option>
                         <option value="m">Metro (m)</option>
                         <option value="cm">Centímetro (cm)</option>
-                      </select>
+                      </Select>
                       <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                         Define como o estoque é contado e exibido
                       </p>
@@ -989,11 +986,10 @@ export default function InventoryPage() {
                   </div>
                   <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                     <span className="text-sm font-medium">Unidade de medida</span>
-                    <select
+                    <Select
                       value={editVariableUnit}
                       onChange={(event) => setEditVariableUnit(event.target.value as UnitOfMeasure)}
-                      className="w-full rounded-lg px-4 py-2.5 text-sm"
-                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      className="px-4 py-2.5"
                     >
                       <option value="un">Unidade (un)</option>
                       <option value="cm²">Centímetro quadrado (cm²)</option>
@@ -1004,7 +1000,7 @@ export default function InventoryPage() {
                       <option value="ml">Mililitro (ml)</option>
                       <option value="m">Metro (m)</option>
                       <option value="cm">Centímetro (cm)</option>
-                    </select>
+                    </Select>
                   </label>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
