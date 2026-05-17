@@ -872,7 +872,7 @@ export function PageHeader({ title, description }: { title: string; description?
 // STANDARDIZED FORM COMPONENTS
 // ==========================================
 
-/** Styled select/dropdown — consistent across the entire app */
+/** Styled select/dropdown — polished with project design system */
 export function Select({ value, onChange, children, className = '', ariaLabel, title, disabled, style }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -884,26 +884,46 @@ export function Select({ value, onChange, children, className = '', ariaLabel, t
   style?: React.CSSProperties;
 }) {
   return (
-    <select
-      value={value}
-      onChange={onChange}
-      aria-label={ariaLabel}
-      title={title}
-      disabled={disabled}
-      className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--input-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      style={{
-        background: 'var(--input-bg)',
-        borderColor: 'var(--input-border)',
-        color: 'var(--text-primary)',
-        ...style,
-      }}
-    >
-      {children}
-    </select>
+    <div className={`relative ${className}`}>
+      <select
+        value={value}
+        onChange={onChange}
+        aria-label={ariaLabel}
+        title={title}
+        disabled={disabled}
+        className="w-full appearance-none rounded-xl border px-3 py-2.5 pr-9 text-sm transition-all duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+        style={{
+          background: 'var(--input-bg)',
+          borderColor: value ? 'var(--brand-border)' : 'var(--input-border)',
+          color: 'var(--text-primary)',
+          boxShadow: '0 1px 0 rgba(167, 139, 250, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.08) inset',
+          ...style,
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = 'var(--input-focus)';
+          e.currentTarget.style.boxShadow = '0 0 0 3px var(--input-focus-ring), 0 1px 0 rgba(167, 139, 250, 0.1) inset';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = value ? 'var(--brand-border)' : 'var(--input-border)';
+          e.currentTarget.style.boxShadow = '0 1px 0 rgba(167, 139, 250, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.08) inset';
+        }}
+      >
+        {children}
+      </select>
+      <svg
+        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+      </svg>
+    </div>
   );
 }
 
-/** Styled checkbox — consistent across the entire app */
+/** Styled checkbox — custom design matching project theme */
 export function Checkbox({ checked, onChange, label, className = '', onClick }: {
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -912,16 +932,29 @@ export function Checkbox({ checked, onChange, label, className = '', onClick }: 
   onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
-    <label className={`flex items-center gap-2 cursor-pointer text-sm ${className}`} style={{ color: 'var(--text-secondary)' }}>
+    <label className={`flex items-center gap-2.5 cursor-pointer select-none ${className}`} style={{ color: 'var(--text-secondary)' }}>
+      <span
+        className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200"
+        style={{
+          borderColor: checked ? 'var(--brand)' : 'var(--input-border)',
+          background: checked ? 'var(--brand)' : 'transparent',
+          boxShadow: checked ? '0 0 0 2px var(--input-focus-ring)' : 'none',
+        }}
+      >
+        {checked && (
+          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        )}
+      </span>
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
         onClick={onClick}
-        className="h-4 w-4 rounded transition-colors"
-        style={{ accentColor: 'var(--brand)' }}
+        className="sr-only"
       />
-      {label && <span>{label}</span>}
+      {label && <span className="text-sm">{label}</span>}
     </label>
   );
 }
@@ -940,7 +973,7 @@ export function FormField({ label, children, className = '' }: {
   );
 }
 
-/** Styled text input — consistent across the entire app */
+/** Styled text input — polished with project design system */
 export function Input({ type = 'text', value, onChange, placeholder, className = '', min, step, ariaLabel, title, disabled }: {
   type?: string;
   value: string | number;
@@ -964,11 +997,20 @@ export function Input({ type = 'text', value, onChange, placeholder, className =
       aria-label={ariaLabel}
       title={title}
       disabled={disabled}
-      className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--input-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`w-full rounded-xl border px-3 py-2.5 text-sm transition-all duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       style={{
         background: 'var(--input-bg)',
         borderColor: 'var(--input-border)',
         color: 'var(--text-primary)',
+        boxShadow: '0 1px 0 rgba(167, 139, 250, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.08) inset',
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = 'var(--input-focus)';
+        e.currentTarget.style.boxShadow = '0 0 0 3px var(--input-focus-ring), 0 1px 0 rgba(167, 139, 250, 0.1) inset';
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = 'var(--input-border)';
+        e.currentTarget.style.boxShadow = '0 1px 0 rgba(167, 139, 250, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.08) inset';
       }}
     />
   );

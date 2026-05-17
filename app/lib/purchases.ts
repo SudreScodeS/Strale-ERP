@@ -3,7 +3,7 @@
 // Preparado para gerar solicitações de compra a fornecedores
 
 import { v4 as uuidv4 } from 'uuid';
-import { financeData, supplierData, variableData, purchaseOrderData } from './data';
+import { financeData, supplierData, variableData, purchaseOrderData, productData, groupData } from './data';
 
 function getPurchaseFinanceDescription(orderId: string) {
   const order = purchaseOrderData.getAll().find((item) => item.id === orderId);
@@ -29,8 +29,10 @@ export function getPurchaseDashboard() {
   const lowStockVariables = variableData.getAll().filter((variable) => variable.stock <= 5);
   const purchaseOrders = purchaseOrderData.getAll();
   const variables = variableData.getAll();
+  const products = productData.getAll();
+  const groups = groupData.getAll();
 
-  return { suppliers, lowStockVariables, purchaseOrders, variables };
+  return { suppliers, lowStockVariables, purchaseOrders, variables, products, groups };
 }
 
 export function createPurchaseOrder(
