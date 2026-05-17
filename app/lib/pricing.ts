@@ -91,8 +91,9 @@ export function calculateItemPricing(input: PricingInput): PricingBreakdown {
 
   // 7. Aplica tabela de preços por faixa de quantidade (se configurada)
   const tierPrice = getTierPrice(input.quantity, unitCost);
-  const tierApplied = tierPrice !== unitCost
-    ? `Faixa ${input.quantity} un.`
+  const tierDiscount = unitCost > 0 ? ((unitCost - tierPrice) / unitCost * 100) : 0;
+  const tierApplied = tierDiscount > 0
+    ? `Desconto volume (${tierDiscount.toFixed(0)}%): -R$ ${((unitCost - tierPrice) * input.quantity).toFixed(2)}`
     : null;
 
   // 8. Se a faixa alterou o preço, usa ela; senão aplica margem normal

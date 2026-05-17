@@ -12,11 +12,11 @@ import { GlobalConfig, PriceTier, PrintPricingRule, PrintType } from '../types';
 // O Edson mencionou que o preço varia muito conforme a quantidade
 
 const DEFAULT_PRICE_TIERS: PriceTier[] = [
-  { minQty: 1, maxQty: 99, unitPrice: 0, label: 'Varejo' },
-  { minQty: 100, maxQty: 499, unitPrice: 0, label: 'Atacado mínimo' },
-  { minQty: 500, maxQty: 999, unitPrice: 0, label: 'Atacado' },
-  { minQty: 1000, maxQty: 4999, unitPrice: 0, label: 'Grande volume' },
-  { minQty: 5000, unitPrice: 0, label: 'Mega atacado' },
+  { minQty: 1, maxQty: 99, unitPrice: 0, discountPercent: 0, label: 'Varejo' },
+  { minQty: 100, maxQty: 499, unitPrice: 0, discountPercent: 5, label: 'Atacado mínimo' },
+  { minQty: 500, maxQty: 999, unitPrice: 0, discountPercent: 10, label: 'Atacado' },
+  { minQty: 1000, maxQty: 4999, unitPrice: 0, discountPercent: 15, label: 'Grande volume' },
+  { minQty: 5000, unitPrice: 0, discountPercent: 20, label: 'Mega atacado' },
 ];
 
 // ==========================================
@@ -124,6 +124,9 @@ export function isLowStock(stock: number): boolean {
 /**
  * Calcula preço unitário baseado na tabela de preços por faixa de quantidade.
  * Retorna o preço da faixa correspondente ou o preço base se não houver tabela.
+ * Suporta dois modos:
+ *   - unitPrice > 0: preço fixo unitário (ignora basePrice)
+ *   - unitPrice == 0 + discountPercent: aplica desconto percentual sobre basePrice
  */
 export function getTierPrice(quantity: number, basePrice: number): number {
   if (!globalConfig.priceTiers || globalConfig.priceTiers.length === 0) {
@@ -137,8 +140,14 @@ export function getTierPrice(quantity: number, basePrice: number): number {
     if (quantity >= tier.minQty) {
       // Se maxQty definido e quantidade excede, pula
       if (tier.maxQty && quantity > tier.maxQty) continue;
-      // Se unitPrice é 0, usa o preço base (tabela não configurada para esta faixa)
-      return tier.unitPrice > 0 ? tier.unitPrice : basePrice;
+      // Preço fixo unitário (modo legado)
+      if (tier.unitPrice > 0) return tier.unitPrice;
+      // Desconto percentual sobre o preço base
+      if (tier.discountPercent && tier.discountPercent > 0) {
+        return basePrice * (1 - tier.discountPercent / 100);
+      }
+      // Sem desconto configurado — retorna preço base
+      return basePrice;
     }
   }
 

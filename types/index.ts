@@ -177,7 +177,8 @@ export interface QuoteItem {
 export interface PriceTier {
   minQty: number; // Quantidade mínima desta faixa
   maxQty?: number; // Quantidade máxima (undefined = sem limite)
-  unitPrice: number; // Preço unitário nesta faixa
+  unitPrice: number; // Preço unitário fixo nesta faixa (0 = usar discountPercent)
+  discountPercent?: number; // Desconto percentual sobre o preço base (ex: 10 = 10% de desconto)
   label?: string; // Rótulo (ex: "Atacado", "Varejo")
 }
 

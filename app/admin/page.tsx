@@ -9,7 +9,7 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
-import type { PrintType, PrintPricingRule } from '../../types';
+import type { PrintType, PrintPricingRule, PriceTier } from '../../types';
 
 interface ConfigData {
   profitMargin: number;
@@ -20,16 +20,18 @@ interface ConfigData {
   pricePerCm2: number;
   printTypes: PrintType[];
   printPricingRules: PrintPricingRule[];
+  priceTiers: PriceTier[];
 }
 
 const PAGE_PATH = '/admin';
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'rules', visible: true, order: 0, colSpan: 2 },
-  { id: 'print-types', visible: true, order: 1, colSpan: 2 },
-  { id: 'print-pricing', visible: true, order: 2, colSpan: 2 },
-  { id: 'preview', visible: true, order: 3, colSpan: 2 },
-  { id: 'actions', visible: true, order: 4, colSpan: 2 },
+  { id: 'price-tiers', visible: true, order: 1, colSpan: 2 },
+  { id: 'print-types', visible: true, order: 2, colSpan: 2 },
+  { id: 'print-pricing', visible: true, order: 3, colSpan: 2 },
+  { id: 'preview', visible: true, order: 4, colSpan: 2 },
+  { id: 'actions', visible: true, order: 5, colSpan: 2 },
 ];
 
 export default function AdminPage() {
@@ -42,6 +44,7 @@ export default function AdminPage() {
     pricePerCm2: 0.005,
     printTypes: [],
     printPricingRules: [],
+    priceTiers: [],
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
@@ -289,6 +292,147 @@ export default function AdminPage() {
                       </p>
                     </label>
                   </div>
+                </section>
+              )}
+
+              {section.id === 'price-tiers' && (
+                <section
+                  className="rounded-2xl p-6 shadow-sm"
+                  style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+                >
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Tabela de Preços por Quantidade
+                    </h3>
+                    <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                      Desconto progressivo por volume. O desconto é aplicado sobre o preço base do produto.
+                    </p>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--card-border)' }}>
+                          <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-muted)' }}>Faixa</th>
+                          <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-muted)' }}>Qtd Mín</th>
+                          <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-muted)' }}>Qtd Máx</th>
+                          <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-muted)' }}>Desconto %</th>
+                          <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-muted)' }}>Exemplo (R$20 base)</th>
+                          <th className="px-3 py-2 w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {config.priceTiers.map((tier, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={tier.label || ''}
+                                onChange={(e) => {
+                                  const updated = [...config.priceTiers];
+                                  updated[i] = { ...updated[i], label: e.target.value };
+                                  setConfig((prev) => ({ ...prev, priceTiers: updated }));
+                                }}
+                                placeholder="Ex: Atacado"
+                                className="w-full rounded-lg px-3 py-1.5 text-sm"
+                                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="number"
+                                min={1}
+                                value={tier.minQty}
+                                onChange={(e) => {
+                                  const updated = [...config.priceTiers];
+                                  updated[i] = { ...updated[i], minQty: parseInt(e.target.value) || 1 };
+                                  setConfig((prev) => ({ ...prev, priceTiers: updated }));
+                                }}
+                                className="w-24 rounded-lg px-3 py-1.5 text-sm"
+                                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="number"
+                                min={0}
+                                value={tier.maxQty ?? ''}
+                                onChange={(e) => {
+                                  const updated = [...config.priceTiers];
+                                  updated[i] = { ...updated[i], maxQty: e.target.value ? parseInt(e.target.value) : undefined };
+                                  setConfig((prev) => ({ ...prev, priceTiers: updated }));
+                                }}
+                                placeholder="∞"
+                                className="w-24 rounded-lg px-3 py-1.5 text-sm"
+                                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  step={0.5}
+                                  value={tier.discountPercent ?? 0}
+                                  onChange={(e) => {
+                                    const updated = [...config.priceTiers];
+                                    updated[i] = { ...updated[i], discountPercent: parseFloat(e.target.value) || 0, unitPrice: 0 };
+                                    setConfig((prev) => ({ ...prev, priceTiers: updated }));
+                                  }}
+                                  className="w-20 rounded-lg px-3 py-1.5 text-sm"
+                                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                                />
+                                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>%</span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                              {tier.discountPercent && tier.discountPercent > 0
+                                ? `R$ ${(20 * (1 - tier.discountPercent / 100)).toFixed(2)}`
+                                : 'R$ 20,00'}
+                            </td>
+                            <td className="px-3 py-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = config.priceTiers.filter((_, j) => j !== i);
+                                  setConfig((prev) => ({ ...prev, priceTiers: updated }));
+                                }}
+                                className="rounded-lg p-1.5 transition-colors"
+                                style={{ color: 'var(--text-faint)' }}
+                                title="Remover faixa"
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const lastTier = config.priceTiers[config.priceTiers.length - 1];
+                      const newMinQty = lastTier ? (lastTier.maxQty ? lastTier.maxQty + 1 : lastTier.minQty * 5) : 1;
+                      setConfig((prev) => ({
+                        ...prev,
+                        priceTiers: [
+                          ...prev.priceTiers,
+                          { minQty: newMinQty, maxQty: undefined, unitPrice: 0, discountPercent: 0, label: '' },
+                        ],
+                      }));
+                    }}
+                    className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px dashed var(--card-border)' }}
+                  >
+                    + Adicionar faixa
+                  </button>
+
+                  <p className="mt-3 text-xs" style={{ color: 'var(--text-faint)' }}>
+                    Exemplo: 10% de desconto em 500+ unidades → produto de R$20,00 sai por R$18,00.
+                  </p>
                 </section>
               )}
 

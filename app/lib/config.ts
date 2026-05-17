@@ -9,11 +9,11 @@ import { GlobalConfig, PriceTier, PrintPricingRule, PrintType, NotificationSetti
 const CONFIG_FILE = path.join(process.cwd(), 'data', 'config.json');
 
 const DEFAULT_PRICE_TIERS: PriceTier[] = [
-  { minQty: 1, maxQty: 99, unitPrice: 0, label: 'Varejo' },
-  { minQty: 100, maxQty: 499, unitPrice: 0, label: 'Atacado mínimo' },
-  { minQty: 500, maxQty: 999, unitPrice: 0, label: 'Atacado' },
-  { minQty: 1000, maxQty: 4999, unitPrice: 0, label: 'Grande volume' },
-  { minQty: 5000, unitPrice: 0, label: 'Mega atacado' },
+  { minQty: 1, maxQty: 99, unitPrice: 0, discountPercent: 0, label: 'Varejo' },
+  { minQty: 100, maxQty: 499, unitPrice: 0, discountPercent: 5, label: 'Atacado mínimo' },
+  { minQty: 500, maxQty: 999, unitPrice: 0, discountPercent: 10, label: 'Atacado' },
+  { minQty: 1000, maxQty: 4999, unitPrice: 0, discountPercent: 15, label: 'Grande volume' },
+  { minQty: 5000, unitPrice: 0, discountPercent: 20, label: 'Mega atacado' },
 ];
 
 const DEFAULT_PRINT_PRICING: PrintPricingRule[] = [

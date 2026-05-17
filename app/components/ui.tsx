@@ -83,7 +83,7 @@ function ToastContainer() {
           style={{
             background: 'var(--card-bg)',
             border: '1px solid var(--card-border)',
-            ringColor: 'var(--border)',
+            boxShadow: '0 0 0 1px var(--border)',
             animationDuration: '0.3s',
             opacity: 1,
           }}
