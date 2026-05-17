@@ -486,7 +486,7 @@ export default function ProductPreview({
         {apiImage && imageSource !== 'none' ? (
           <div className="absolute top-2 left-2">
             <span className="text-[9px] bg-[var(--info-bg)] text-[var(--info)] rounded-full px-2 py-0.5 font-medium">
-              🎨 Logo Replacer Pro
+              Logo Replacer Pro
             </span>
           </div>
         ) : !loading && !error && !apiImage ? (
@@ -529,7 +529,7 @@ export default function ProductPreview({
         )}
         {!apiImage && !loading && !error ? (
           <p className="text-[10px] text-[var(--success)] mt-1">
-            🎨 Logo Replacer Pro — composição 100% local
+            Logo Replacer Pro — composição 100% local
           </p>
         ) : null}
       </div>

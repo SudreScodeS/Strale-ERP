@@ -201,7 +201,7 @@ export default function AssistantPage() {
               >
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: ollamaStatus.available ? 'var(--success)' : 'var(--warning)' }} />
                 {ollamaStatus.available
-                  ? (ollamaStatus.error ? `IA: ${ollamaStatus.model || 'Ollama'} ⚠️` : `IA: ${ollamaStatus.model || 'Ollama'}`)
+                  ? (ollamaStatus.error ? `IA: ${ollamaStatus.model || 'Ollama'} (!)` : `IA: ${ollamaStatus.model || 'Ollama'}`)
                   : 'IA: Local (pattern)'}
               </span>
             )}

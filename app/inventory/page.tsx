@@ -744,7 +744,7 @@ export default function InventoryPage() {
                         className="w-full rounded-lg px-4 py-2.5 text-sm"
                         style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       />
-                      {productImage && <p className="text-xs" style={{ color: 'var(--success)' }}>✓ Imagem carregada</p>}
+                      {productImage && <p className="text-xs" style={{ color: 'var(--success)' }}>Imagem carregada</p>}
                     </label>
                     <button
                       className="inline-flex h-10 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80"
@@ -1097,7 +1097,7 @@ export default function InventoryPage() {
                       className="w-full rounded-lg px-4 py-2.5 text-sm"
                       style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                     />
-                    {editProductImage && <p className="text-xs" style={{ color: 'var(--success)' }}>✓ Imagem carregada</p>}
+                    {editProductImage && <p className="text-xs" style={{ color: 'var(--success)' }}>Imagem carregada</p>}
                   </label>
                   <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setEditingProduct(null)}

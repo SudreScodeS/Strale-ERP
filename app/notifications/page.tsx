@@ -5,6 +5,11 @@ import { createPortal } from 'react-dom';
 import { PageHeader, setGlobalDirty } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import {
+  ACTION_ICON_MAP, NOTIFICATION_ICON_MAP,
+  IconSearch, IconTrash, IconRefresh, IconFilter, IconSort,
+  IconOther,
+} from '../components/icons';
 
 // ==========================================
 // TYPES
@@ -39,19 +44,14 @@ interface NotificationSettings {
 // CONSTANTS
 // ==========================================
 
-const ACTION_ICONS: Record<string, string> = {
-  create: '➕', update: '✏️', delete: '🗑️', convert: '🔄',
-  send: '📤', status_change: '🔁', login: '🔑', other: '📌',
-};
-
 const ACTION_COLORS: Record<string, string> = {
   create: '#10b981', update: '#3b82f6', delete: '#ef4444', convert: '#8b5cf6',
-  send: '#06b6d4', status_change: '#f59e0b', login: '#6366f1', other: '#6b7280',
+  send: '#06b6d4', status_change: '#f59e0b', login: '#6366f1', restore: '#8b5cf6', other: '#6b7280',
 };
 
 const ACTION_LABELS: Record<string, string> = {
   create: 'Criação', update: 'Edição', delete: 'Remoção', convert: 'Conversão',
-  send: 'Envio', status_change: 'Status', login: 'Login', other: 'Outro',
+  send: 'Envio', status_change: 'Status', login: 'Login', restore: 'Restauração', other: 'Outro',
 };
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -59,17 +59,17 @@ const ENTITY_LABELS: Record<string, string> = {
   user: 'Usuário', config: 'Configuração', invoice: 'Nota Fiscal', supplier: 'Fornecedor', other: 'Outro',
 };
 
-const NOTIFICATION_ITEMS: { key: keyof NotificationSettings; label: string; description: string; icon: string }[] = [
-  { key: 'orderCreated', label: 'Novo Pedido', description: 'Quando um novo pedido é criado no sistema', icon: '🛒' },
-  { key: 'orderStatusChanged', label: 'Status do Pedido', description: 'Quando o status de um pedido muda (pendente, concluído, cancelado)', icon: '🔁' },
-  { key: 'orderDelivered', label: 'Entrega do Pedido', description: 'Quando um pedido é marcado como entregue', icon: '📦' },
-  { key: 'quoteCreated', label: 'Novo Orçamento', description: 'Quando um novo orçamento é criado', icon: '📋' },
-  { key: 'quoteStatusChanged', label: 'Status do Orçamento', description: 'Quando o status de um orçamento muda (enviado, aprovado, rejeitado)', icon: '📝' },
-  { key: 'stockAlert', label: 'Alerta de Estoque', description: 'Quando o estoque de uma variável atinge nível crítico ou de atenção', icon: '⚠️' },
-  { key: 'purchaseCreated', label: 'Nova Compra', description: 'Quando um pedido de compra é criado para reposição de estoque', icon: '🛍️' },
-  { key: 'purchaseReceived', label: 'Compra Recebida', description: 'Quando um pedido de compra é marcado como recebido', icon: '✅' },
-  { key: 'userLogin', label: 'Login de Usuário', description: 'Quando um usuário faz login no sistema', icon: '🔑' },
-  { key: 'financialRecord', label: 'Registro Financeiro', description: 'Quando uma transação financeira é registrada (venda, despesa, compra)', icon: '💰' },
+const NOTIFICATION_ITEMS: { key: keyof NotificationSettings; label: string; description: string }[] = [
+  { key: 'orderCreated', label: 'Novo Pedido', description: 'Quando um novo pedido é criado no sistema' },
+  { key: 'orderStatusChanged', label: 'Status do Pedido', description: 'Quando o status de um pedido muda (pendente, concluído, cancelado)' },
+  { key: 'orderDelivered', label: 'Entrega do Pedido', description: 'Quando um pedido é marcado como entregue' },
+  { key: 'quoteCreated', label: 'Novo Orçamento', description: 'Quando um novo orçamento é criado' },
+  { key: 'quoteStatusChanged', label: 'Status do Orçamento', description: 'Quando o status de um orçamento muda (enviado, aprovado, rejeitado)' },
+  { key: 'stockAlert', label: 'Alerta de Estoque', description: 'Quando o estoque de uma variável atinge nível crítico ou de atenção' },
+  { key: 'purchaseCreated', label: 'Nova Compra', description: 'Quando um pedido de compra é criado para reposição de estoque' },
+  { key: 'purchaseReceived', label: 'Compra Recebida', description: 'Quando um pedido de compra é marcado como recebido' },
+  { key: 'userLogin', label: 'Login de Usuário', description: 'Quando um usuário faz login no sistema' },
+  { key: 'financialRecord', label: 'Registro Financeiro', description: 'Quando uma transação financeira é registrada (venda, despesa, compra)' },
 ];
 
 // ==========================================
@@ -454,10 +454,10 @@ export default function NotificationsPage() {
               <div className="mb-3">
                 <div className="relative">
                   <span
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
                     style={{ color: 'var(--text-faint)' }}
                   >
-                    🔍
+                    <IconSearch size={14} />
                   </span>
                   <input
                     type="text"
@@ -588,10 +588,10 @@ export default function NotificationsPage() {
                             }}
                           >
                             <span
-                              className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm"
+                              className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
                               style={{ background: `${ACTION_COLORS[log.action] || '#6b7280'}12`, color: ACTION_COLORS[log.action] || '#6b7280' }}
                             >
-                              {ACTION_ICONS[log.action] || '📌'}
+                              {(() => { const Icon = ACTION_ICON_MAP[log.action] || IconOther; return <Icon size={15} />; })()}
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
@@ -613,11 +613,11 @@ export default function NotificationsPage() {
                             <button
                               type="button"
                               onClick={() => confirmDeleteLog(log.id, log.description)}
-                              className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-sm opacity-0 transition-opacity hover:opacity-100 group-hover:opacity-60"
+                              className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg opacity-0 transition-opacity hover:opacity-100 group-hover:opacity-60"
                               style={{ background: 'var(--danger-bg, #fef2f2)', color: 'var(--danger, #ef4444)' }}
                               title="Remover este log"
                             >
-                              🗑️
+                              <IconTrash size={13} />
                             </button>
                           </div>
                         );
@@ -687,7 +687,9 @@ export default function NotificationsPage() {
               className="overflow-hidden rounded-2xl"
               style={{ border: '1px solid var(--card-border)' }}
             >
-              {NOTIFICATION_ITEMS.map((item, i) => (
+              {NOTIFICATION_ITEMS.map((item, i) => {
+                const NotifIcon = NOTIFICATION_ICON_MAP[item.key] || IconOther;
+                return (
                 <div
                   key={item.key}
                   className="flex items-center gap-4 px-5 py-4 transition-colors"
@@ -696,10 +698,10 @@ export default function NotificationsPage() {
                     background: 'var(--card-bg)',
                   }}
                 >
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-base"
-                    style={{ background: 'var(--surface-muted)' }}
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
                   >
-                    {item.icon}
+                    <NotifIcon size={17} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -714,7 +716,8 @@ export default function NotificationsPage() {
                     onChange={() => toggleSetting(item.key)}
                   />
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Save button */}
@@ -754,7 +757,7 @@ export default function NotificationsPage() {
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: 'var(--warning, #f59e0b)' }} />
               </span>
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                ⚠ Você tem alterações não salvas
+                Você tem alterações não salvas
               </span>
             </div>
             <div className="flex items-center gap-2">

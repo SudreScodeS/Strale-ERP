@@ -899,7 +899,7 @@ export default function AdminPage() {
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: 'var(--warning, #f59e0b)' }} />
               </span>
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                ⚠ Você tem alterações não salvas
+                Você tem alterações não salvas
               </span>
             </div>
             <div className="flex items-center gap-2">

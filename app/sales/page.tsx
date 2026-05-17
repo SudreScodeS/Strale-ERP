@@ -996,7 +996,7 @@ export default function SalesPage() {
               {[
                 { value: 'createdAt-desc', label: 'Mais recentes' },
                 { value: 'createdAt-asc', label: 'Mais antigos' },
-                { value: 'urgency', label: '🔴 Urgência' },
+                { value: 'urgency', label: 'Urgência' },
                 { value: 'deliveryDate-asc', label: 'Entrega ↑' },
                 { value: 'deliveryDate-desc', label: 'Entrega ↓' },
                 { value: 'price-desc', label: 'Maior valor' },
@@ -1042,7 +1042,7 @@ export default function SalesPage() {
                       className="ml-auto rounded-lg px-4 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
                       style={{ background: 'var(--danger)', color: '#fff' }}
                     >
-                      🗑 Remover selecionados (cancelados)
+                      Remover selecionados (cancelados)
                     </button>
                   </>
                 )}
@@ -1200,7 +1200,7 @@ export default function SalesPage() {
                 className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
                 style={{ background: 'var(--brand-muted)', color: 'var(--brand)', borderColor: 'var(--brand-muted)' }}
               >
-                📋 Selecionar orçamento
+                Selecionar orçamento
               </button>
             </div>
             {/* Seletor de orçamento */}

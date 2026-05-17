@@ -171,9 +171,9 @@ function generateQuotePDF(quote: QuoteView) {
         <h1>${quote.name}</h1>
         <p>Orçamento para ${quote.customerName}</p>
         <div class="meta">
-          <span>📅 ${dateStr}</span>
-          <span>🕐 ${timeStr}</span>
-          <span>📋 ${statusLabels[quote.status] || quote.status}</span>
+          <span>${dateStr}</span>
+          <span>${timeStr}</span>
+          <span>${statusLabels[quote.status] || quote.status}</span>
         </div>
       </div>
       <div class="report-header-right">
@@ -847,7 +847,7 @@ export default function QuotesPage() {
                         className="ml-auto rounded-lg px-4 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
                         style={{ background: 'var(--danger)', color: '#fff' }}
                       >
-                        🗑 Remover selecionados
+                        Remover selecionados
                       </button>
                     </>
                   )}
@@ -930,7 +930,7 @@ export default function QuotesPage() {
                           <button type="button" onClick={() => generateQuotePDF(quote)}
                             className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80"
                             style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
-                            📄 PDF
+                            PDF
                           </button>
 
                           {(quote.status === 'draft' || quote.status === 'rejected') && (
@@ -1370,7 +1370,7 @@ export default function QuotesPage() {
                 <button type="button" onClick={() => generateQuotePDF(selectedQuote)}
                   className="rounded-lg px-5 py-2 text-sm font-semibold transition-all hover:opacity-80"
                   style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}>
-                  📄 Baixar PDF
+                  Baixar PDF
                 </button>
                 <button type="button" onClick={() => setSelectedQuote(null)}
                   className="rounded-lg px-5 py-2 text-sm font-medium transition-all hover:opacity-80"

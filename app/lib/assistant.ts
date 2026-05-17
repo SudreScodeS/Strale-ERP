@@ -562,7 +562,7 @@ function queryUrgentDeliveries(): AssistantResponse {
   const lines: string[] = [];
 
   if (critical.length > 0) {
-    lines.push('🔴 **URGENTE:**');
+    lines.push('[URGENTE] **URGENTE:**');
     for (const { order: o, urgency: u } of critical) {
       const user = users.find(uu => uu.id === o.userId);
       lines.push(`  • **${o.name}** — ${u?.label} — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`);
@@ -571,7 +571,7 @@ function queryUrgentDeliveries(): AssistantResponse {
   }
 
   if (high.length > 0) {
-    lines.push('🟠 **Próximos (até 3 dias):**');
+    lines.push('[ALTO] **Próximos (até 3 dias):**');
     for (const { order: o, urgency: u } of high) {
       const user = users.find(uu => uu.id === o.userId);
       lines.push(`  • **${o.name}** — ${u?.label} — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`);
@@ -580,7 +580,7 @@ function queryUrgentDeliveries(): AssistantResponse {
   }
 
   if (medium.length > 0) {
-    lines.push('🟡 **Esta semana:**');
+    lines.push('[MEDIO] **Esta semana:**');
     for (const { order: o, urgency: u } of medium) {
       const user = users.find(uu => uu.id === o.userId);
       lines.push(`  • **${o.name}** — ${u?.label} — ${formatCurrency(o.totalPrice)}`);
@@ -588,7 +588,7 @@ function queryUrgentDeliveries(): AssistantResponse {
   }
 
   if (lines.length === 0) {
-    return { answer: 'Nenhum pedido com entrega urgente. Tudo em dia! ✅', type: 'text' };
+    return { answer: 'Nenhum pedido com entrega urgente. Tudo em dia!', type: 'text' };
   }
 
   return {
@@ -621,7 +621,7 @@ function queryOrderDelivery(question: string): AssistantResponse {
       lines.push('**Pendentes de entrega:**');
       for (const o of pending) {
         const u = getUrgencyLabel(o.deliveryDate!, o.delivered);
-        const icon = u?.level === 'critical' ? '🔴' : u?.level === 'high' ? '🟠' : '🟡';
+        const icon = u?.level === 'critical' ? '[URGENTE]' : u?.level === 'high' ? '[ALTO]' : '[MEDIO]';
         lines.push(`  ${icon} **${o.name}** — entrega: ${new Date(o.deliveryDate! + 'T12:00:00').toLocaleDateString('pt-BR')} (${u?.label || '?'})`);
       }
       lines.push('');
@@ -629,7 +629,7 @@ function queryOrderDelivery(question: string): AssistantResponse {
     if (delivered.length > 0) {
       lines.push('**Entregues:**');
       for (const o of delivered) {
-        lines.push(`  ✅ **${o.name}** — entregue${o.deliveredAt ? ` em ${new Date(o.deliveredAt).toLocaleDateString('pt-BR')}` : ''}`);
+        lines.push(`  [OK] **${o.name}** — entregue${o.deliveredAt ? ` em ${new Date(o.deliveredAt).toLocaleDateString('pt-BR')}` : ''}`);
       }
     }
     if (noDate.length > 0) {
@@ -651,11 +651,11 @@ function queryOrderDelivery(question: string): AssistantResponse {
     lines.push(`Data de entrega: ${deliveryFormatted}`);
 
     if (order.delivered) {
-      lines.push(`✅ **ENTREGUE**${order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}`);
+      lines.push(`[OK] **ENTREGUE**${order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}`);
     } else {
       const u = getUrgencyLabel(order.deliveryDate, order.delivered);
       if (u) {
-        const icon = u.level === 'critical' ? '🔴' : u.level === 'high' ? '🟠' : u.level === 'medium' ? '🟡' : '🟢';
+        const icon = u.level === 'critical' ? '[URGENTE]' : u.level === 'high' ? '[ALTO]' : u.level === 'medium' ? '[MEDIO]' : '[OK]';
         lines.push(`${icon} **${u.label}**`);
       }
     }
@@ -685,7 +685,7 @@ function queryTodayDeliveries(): AssistantResponse {
   const users = userData.getAll();
   const lines = todayOrders.map(o => {
     const user = users.find(u => u.id === o.userId);
-    return `  🔴 **${o.name}** — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`;
+    return `  [URGENTE] **${o.name}** — ${formatCurrency(o.totalPrice)} — por ${user?.username || o.userId}`;
   });
 
   return {
@@ -704,7 +704,7 @@ function queryLateDeliveries(): AssistantResponse {
   const lateOrders = orders.filter(o => new Date(o.deliveryDate! + 'T12:00:00') < today);
 
   if (lateOrders.length === 0) {
-    return { answer: 'Nenhum pedido atrasado! Tudo em dia ✅', type: 'text' };
+    return { answer: 'Nenhum pedido atrasado! Tudo em dia!', type: 'text' };
   }
 
   const users = userData.getAll();
@@ -712,7 +712,7 @@ function queryLateDeliveries(): AssistantResponse {
     const user = users.find(u => u.id === o.userId);
     const delivery = new Date(o.deliveryDate! + 'T12:00:00');
     const diffDays = Math.ceil((today.getTime() - delivery.getTime()) / (1000 * 60 * 60 * 24));
-    return `  🔴 **${o.name}** — atrasado ${diffDays} dia(s) — entrega era ${delivery.toLocaleDateString('pt-BR')} — ${formatCurrency(o.totalPrice)}`;
+    return `  [URGENTE] **${o.name}** — atrasado ${diffDays} dia(s) — entrega era ${delivery.toLocaleDateString('pt-BR')} — ${formatCurrency(o.totalPrice)}`;
   });
 
   return {
@@ -763,7 +763,7 @@ function querySystemSummary(): AssistantResponse {
   const lateDeliveries = pendingDelivery.filter(o => new Date(o.deliveryDate! + 'T12:00:00') < today);
 
   const deliveryLine = pendingDelivery.length > 0
-    ? `\n${lateDeliveries.length > 0 ? `🔴 ${lateDeliveries.length} entrega(s) atrasada(s) — ` : ''}${pendingDelivery.length} entrega(s) pendente(s)`
+    ? `\n${lateDeliveries.length > 0 ? `[URGENTE] ${lateDeliveries.length} entrega(s) atrasada(s) — ` : ''}${pendingDelivery.length} entrega(s) pendente(s)`
     : '';
 
   return {

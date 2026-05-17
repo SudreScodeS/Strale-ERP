@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { globalConfig, applyServerConfig } from '../../config/global';
 import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/authClient';
+import { ACTION_ICON_MAP, IconBell, IconOther } from './icons';
 
 // Global dirty state for unsaved changes warning
 // Pages with forms set this to warn before navigation
@@ -34,7 +35,7 @@ let pendingNavigation = '';
 interface Toast {
   id: string;
   message: string;
-  icon: string;
+  icon: React.ReactNode;
   timestamp: number;
 }
 
@@ -45,7 +46,7 @@ function notifyToastListeners() {
   toastListeners.forEach(fn => fn([...toastsState]));
 }
 
-export function showToast(message: string, icon = '🔔') {
+export function showToast(message: string, icon?: React.ReactNode) {
   const id = Math.random().toString(36).slice(2);
   const toast: Toast = { id, message, icon, timestamp: Date.now() };
   toastsState = [toast, ...toastsState].slice(0, 5); // max 5
@@ -88,10 +89,10 @@ function ToastContainer() {
             opacity: 1,
           }}
         >
-          <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm"
-            style={{ background: 'var(--surface-muted)' }}
+          <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+            style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)' }}
           >
-            {toast.icon}
+            {toast.icon || <IconBell size={15} />}
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -333,13 +334,10 @@ export function Sidebar({ children }: SidebarProps) {
             const newLogs = data.logs.filter((l: { id: string }) => l.id !== lastKnownLogIdRef.current);
             if (newLogs.length > 0) {
               const newest = newLogs[0];
-              const actionLabels: Record<string, string> = {
-                create: '➕', update: '✏️', delete: '🗑️', convert: '🔄',
-                send: '📤', status_change: '🔁', login: '🔑', other: '📌',
-              };
+                const ActionIcon = ACTION_ICON_MAP[newest.action] || IconOther;
               showToast(
                 `${newest.username}: ${newest.description}`,
-                actionLabels[newest.action] || '🔔'
+                <ActionIcon size={15} />
               );
             }
           }
