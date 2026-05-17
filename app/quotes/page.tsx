@@ -1213,28 +1213,51 @@ export default function QuotesPage() {
                         <p className="text-sm text-slate-600">Qtd: {item.quantity} | Variáveis: {item.selectedVariablesLabel}</p>
                         {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}×{item.dimensions.height}cm</p>}
                         {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
-                        <div className="mt-1 flex items-center gap-2">
-                          <label className="text-xs text-slate-500">Margem %:</label>
-                          <input
-                            type="number"
-                            min={item.minMargin}
-                            step={0.5}
-                            value={item.profitMargin}
-                            onChange={(e) => {
-                              const newMargin = Math.max(item.minMargin, Number(e.target.value));
-                              setCartItems((prev) => prev.map((ci, ciIdx) => {
-                                if (ciIdx !== i) return ci;
-                                return {
-                                  ...ci,
-                                  profitMargin: newMargin,
-                                  unitPrice: calculateSalePrice(ci.unitCost, newMargin),
-                                };
-                              }));
-                            }}
-                            className="w-20 rounded border border-slate-200 px-2 py-0.5 text-xs"
-                            title={`Margem mínima: ${item.minMargin}%`}
-                          />
-                          <span className="text-xs text-slate-400">(mín: {item.minMargin}%)</span>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-[11px] font-medium text-slate-500">Margem</span>
+                          <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newMargin = Math.max(item.minMargin, item.profitMargin - 0.5);
+                                setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                  if (ciIdx !== i) return ci;
+                                  return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                                }));
+                              }}
+                              className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                            >−</button>
+                            <input
+                              type="number"
+                              min={item.minMargin}
+                              step={0.5}
+                              value={item.profitMargin}
+                              onChange={(e) => {
+                                const newMargin = Math.max(item.minMargin, Number(e.target.value));
+                                setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                  if (ciIdx !== i) return ci;
+                                  return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                                }));
+                              }}
+                              className="w-14 border-x border-slate-200 px-1 py-1 text-center text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none"
+                              style={{ MozAppearance: 'textfield' }}
+                              title={`Margem mínima: ${item.minMargin}%`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newMargin = item.profitMargin + 0.5;
+                                setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                  if (ciIdx !== i) return ci;
+                                  return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                                }));
+                              }}
+                              className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                            >+</button>
+                          </div>
+                          <span className="text-[10px] text-slate-400">mín {item.minMargin}%</span>
+                          <span className="text-[10px] text-slate-300">·</span>
+                          <span className="text-[11px] font-semibold text-emerald-600">R$ {item.unitPrice.toFixed(2)}/un</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 ml-4">

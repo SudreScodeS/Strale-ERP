@@ -1503,30 +1503,53 @@ export default function SalesPage() {
                       <p className="text-sm text-slate-600 truncate">Variáveis: {item.selectedVariablesLabel}</p>
                       {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}x{item.dimensions.height}cm</p>}
                       {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
-                      <div className="mt-1 flex items-center gap-2">
-                        <label className="text-xs text-slate-500">Margem %:</label>
-                        <input
-                          type="number"
-                          min={item.minMargin}
-                          step={0.5}
-                          value={item.profitMargin}
-                          onChange={(e) => {
-                            const newMargin = Math.max(item.minMargin, Number(e.target.value));
-                            setCartItems((prev) => prev.map((ci, ciIdx) => {
-                              if (ciIdx !== index) return ci;
-                              return {
-                                ...ci,
-                                profitMargin: newMargin,
-                                unitPrice: calculateSalePrice(ci.unitCost, newMargin),
-                              };
-                            }));
-                          }}
-                          className="w-20 rounded border border-slate-200 px-2 py-0.5 text-xs"
-                          title={`Margem mínima: ${item.minMargin}%`}
-                        />
-                        <span className="text-xs text-slate-400">(mín: {item.minMargin}%)</span>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-[11px] font-medium text-slate-500">Margem</span>
+                        <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newMargin = Math.max(item.minMargin, item.profitMargin - 0.5);
+                              setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                if (ciIdx !== index) return ci;
+                                return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                              }));
+                            }}
+                            className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                          >−</button>
+                          <input
+                            type="number"
+                            min={item.minMargin}
+                            step={0.5}
+                            value={item.profitMargin}
+                            onChange={(e) => {
+                              const newMargin = Math.max(item.minMargin, Number(e.target.value));
+                              setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                if (ciIdx !== index) return ci;
+                                return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                              }));
+                            }}
+                            className="w-14 border-x border-slate-200 px-1 py-1 text-center text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none"
+                            style={{ MozAppearance: 'textfield' }}
+                            title={`Margem mínima: ${item.minMargin}%`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newMargin = item.profitMargin + 0.5;
+                              setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                if (ciIdx !== index) return ci;
+                                return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                              }));
+                            }}
+                            className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                          >+</button>
+                        </div>
+                        <span className="text-[10px] text-slate-400">mín {item.minMargin}%</span>
+                        <span className="text-[10px] text-slate-300">·</span>
+                        <span className="text-[11px] font-semibold text-emerald-600">R$ {item.unitPrice.toFixed(2)}/un</span>
                       </div>
-                      <p className="text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                       <button
                         type="button"
                         onClick={() => handleRemoveCartItem(index)}
@@ -1739,9 +1762,19 @@ export default function SalesPage() {
                               </button>
                             </div>
                           </div>
-                          <div className="mt-2 flex items-center gap-3">
-                            <label className="flex items-center gap-1.5 text-xs text-slate-500">
-                              <span>Margem %:</span>
+                          <div className="mt-2 flex items-center gap-3 flex-wrap">
+                            <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newMargin = Math.max(minMargin, item.profitMargin - 0.5);
+                                  setEditItems((prev) => prev.map((ci, ciIdx) => {
+                                    if (ciIdx !== idx) return ci;
+                                    return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                                  }));
+                                }}
+                                className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                              >−</button>
                               <input
                                 type="number"
                                 min={minMargin}
@@ -1751,18 +1784,26 @@ export default function SalesPage() {
                                   const newMargin = Math.max(minMargin, Number(e.target.value));
                                   setEditItems((prev) => prev.map((ci, ciIdx) => {
                                     if (ciIdx !== idx) return ci;
-                                    return {
-                                      ...ci,
-                                      profitMargin: newMargin,
-                                      unitPrice: calculateSalePrice(ci.unitCost, newMargin),
-                                    };
+                                    return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                                   }));
                                 }}
-                                className="w-16 rounded border border-slate-200 px-1.5 py-0.5 text-xs"
+                                className="w-14 border-x border-slate-200 px-1 py-1 text-center text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none"
+                                style={{ MozAppearance: 'textfield' }}
                                 title={`Margem mínima: ${minMargin}%`}
                               />
-                              <span className="text-slate-400">(mín: {minMargin}%)</span>
-                            </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newMargin = item.profitMargin + 0.5;
+                                  setEditItems((prev) => prev.map((ci, ciIdx) => {
+                                    if (ciIdx !== idx) return ci;
+                                    return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
+                                  }));
+                                }}
+                                className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                              >+</button>
+                            </div>
+                            <span className="text-[10px] text-slate-400">mín {minMargin}%</span>
                             <span className="text-slate-500 text-xs">Custo un.: R$ {(item.unitCost || 0).toFixed(2)}</span>
                             <span className="font-semibold text-slate-900 text-xs">Subtotal: R$ {((item.unitPrice || item.unitCost || 0) * item.quantity).toFixed(2)}</span>
                           </div>

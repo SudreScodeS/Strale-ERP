@@ -699,3 +699,13 @@ dialog[open]::backdrop {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Hide number input spinners for margin stepper */
+input[type="number"][style*="MozAppearance"]::-webkit-inner-spin-button,
+input[type="number"][style*="MozAppearance"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"][style*="MozAppearance"] {
+  -moz-appearance: textfield;
+}
