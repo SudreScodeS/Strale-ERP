@@ -6,7 +6,7 @@
 import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData, quoteData } from './data';
 import { getFinanceSummary, getStockAlertsByLevel, getOrcamentosStats } from './business';
 import { getDemandForecastSummary } from './demand-forecast';
-import { globalConfig, getVariableUnit, UNIT_STOCK_LABELS } from '../../config/global';
+import { globalConfig } from '../../config/global';
 import { calculateItemPricing, type PricingInput } from './pricing';
 
 // ==========================================
@@ -139,8 +139,8 @@ function queryLowStock(): AssistantResponse {
     lines.push('[CRITICO] Estoque critico:');
     for (const v of alerts.critical) {
       const group = groups.find(g => g.id === v.groupId);
-      const unit = getVariableUnit(v);
-      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} ${UNIT_STOCK_LABELS[unit]} restantes`);
+      const unit = "un";
+      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} ${"un."} restantes`);
     }
   }
 
@@ -149,8 +149,8 @@ function queryLowStock(): AssistantResponse {
     lines.push('[ATENCAO] Estoque em atencao:');
     for (const v of alerts.watch) {
       const group = groups.find(g => g.id === v.groupId);
-      const unit = getVariableUnit(v);
-      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} ${UNIT_STOCK_LABELS[unit]}`);
+      const unit = "un";
+      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} ${"un."}`);
     }
   }
 
@@ -244,12 +244,12 @@ function queryProducts(): AssistantResponse {
     // Group stock by unit type
     const stockByUnit: Record<string, number> = {};
     pVariables.forEach(v => {
-      const unit = getVariableUnit(v);
+      const unit = "un";
       stockByUnit[unit] = (stockByUnit[unit] || 0) + v.stock;
     });
     const stockLabel = Object.entries(stockByUnit)
       .filter(([, qty]) => qty > 0)
-      .map(([unit, qty]) => `${qty} ${UNIT_STOCK_LABELS[unit as keyof typeof UNIT_STOCK_LABELS]}`)
+      .map(([unit, qty]) => `${qty} ${"un."}`)
       .join(', ') || '0';
     return `• **${p.name}** — ${formatCurrency(p.basePrice)} base — ${pGroups.length} grupos, ${pVariables.length} variações — Estoque: ${stockLabel}`;
   });
@@ -415,8 +415,8 @@ function queryHighStock(): AssistantResponse {
 
   const lines = sorted.map(v => {
     const group = groups.find(g => g.id === v.groupId);
-    const unit = getVariableUnit(v);
-    return `• **${v.name}** (${group?.name || '?'}) — ${v.stock} ${UNIT_STOCK_LABELS[unit]}`;
+    const unit = "un";
+    return `• **${v.name}** (${group?.name || '?'}) — ${v.stock} ${"un."}`;
   });
 
   return {

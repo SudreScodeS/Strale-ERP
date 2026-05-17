@@ -2,7 +2,7 @@
 // Motor local de IA de Produtos. Nao usa API externa nem modelo remoto.
 // As recomendacoes sao heuristicas sobre dados locais do ERP.
 
-import { globalConfig, getVariableUnit, UNIT_STOCK_LABELS } from '../../config/global';
+import { globalConfig } from '../../config/global';
 import { Group, Order, Product, Quote, Variable } from '../../types';
 import { groupData, orderData, priceHistoryData, productData, quoteData, variableData } from './data';
 import { forecastVariable, type DemandForecast } from './demand-forecast';
@@ -10,9 +10,8 @@ import { forecastVariable, type DemandForecast } from './demand-forecast';
 export type ProductAIPriority = 'critical' | 'attention' | 'opportunity';
 
 /** Retorna a label da unidade de estoque para uma variável */
-function stockUnit(variable: { unitOfMeasure?: string }): string {
-  const unit = variable.unitOfMeasure || 'un';
-  return unit === 'cento' ? 'ct.' : unit === 'milhar' ? 'ml.' : 'un.';
+function stockUnit(_variable: { unitOfMeasure?: string }): string {
+  return 'un.';
 }
 
 export interface ProductAIMetric {

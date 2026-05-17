@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { calculateSalePrice, globalConfig, applyServerConfig, UNIT_LABELS, UNIT_SHORT_LABELS } from '../../config/global';
+import { calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';

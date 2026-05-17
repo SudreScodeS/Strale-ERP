@@ -199,25 +199,25 @@ export const UNIT_FACTORS: Record<UnitOfMeasure, number> = {
   milhar: 1000,
 };
 
-/** Labels amigáveis para exibição */
+/** Labels amigáveis para exibição (simplificado — apenas 'un') */
 export const UNIT_LABELS: Record<UnitOfMeasure, string> = {
   un: 'Un',
-  cento: 'Cento',
-  milhar: 'Milhar',
+  cento: 'Un',
+  milhar: 'Un',
 };
 
-/** Labels curtos para badges e cards */
+/** Labels curtos para badges e cards (simplificado — apenas 'un') */
 export const UNIT_SHORT_LABELS: Record<UnitOfMeasure, string> = {
   un: 'un',
-  cento: 'ct',
-  milhar: 'ml',
+  cento: 'un',
+  milhar: 'un',
 };
 
-/** Labels para exibição de estoque */
+/** Labels para exibição de estoque (simplificado — apenas 'un.') */
 export const UNIT_STOCK_LABELS: Record<UnitOfMeasure, string> = {
   un: 'un.',
-  cento: 'ct.',
-  milhar: 'ml.',
+  cento: 'un.',
+  milhar: 'un.',
 };
 
 /** Converte quantidade na unidade da medida para unidades base */
@@ -231,6 +231,6 @@ export function fromBaseUnits(baseQty: number, unit: UnitOfMeasure): number {
 }
 
 /** Retorna a unidade de medida de uma variável (default: 'un') */
-export function getVariableUnit(variable: { unitOfMeasure?: UnitOfMeasure }): UnitOfMeasure {
-  return variable.unitOfMeasure || 'un';
+export function getVariableUnit(_variable: { unitOfMeasure?: UnitOfMeasure }): UnitOfMeasure {
+  return 'un';
 }

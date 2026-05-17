@@ -9,7 +9,6 @@ import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure } from '../../types';
-import { UNIT_LABELS, UNIT_SHORT_LABELS, UNIT_STOCK_LABELS, getVariableUnit } from '../../config/global';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
@@ -56,13 +55,11 @@ export default function InventoryPage() {
   const [variableName, setVariableName] = useState('');
   const [variablePrice, setVariablePrice] = useState(0);
   const [variableStock, setVariableStock] = useState(0);
-  const [variableUnit, setVariableUnit] = useState<UnitOfMeasure>('un');
   const [activeForm, setActiveForm] = useState<'product' | 'group' | 'variable'>('product');
   const [editingVariable, setEditingVariable] = useState<VariableOption | null>(null);
   const [editVariableName, setEditVariableName] = useState('');
   const [editVariablePrice, setEditVariablePrice] = useState(0);
   const [editVariableStock, setEditVariableStock] = useState(0);
-  const [editVariableUnit, setEditVariableUnit] = useState<UnitOfMeasure>('un');
   const [editingProduct, setEditingProduct] = useState<ProductOption | null>(null);
   const [editProductName, setEditProductName] = useState('');
   const [editProductPrice, setEditProductPrice] = useState(0);
@@ -168,7 +165,7 @@ export default function InventoryPage() {
     const response = await fetch('/api/inventory/variable', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: variableUnit }),
+      body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: 'un' }),
     });
     const result = await safeJson(response);
     if (response.ok) {
@@ -176,7 +173,6 @@ export default function InventoryPage() {
       setVariableName('');
       setVariablePrice(0);
       setVariableStock(0);
-      setVariableUnit('un');
       await loadInventory();
     } else {
       setMessage(result.error || 'Erro ao criar variável.');
@@ -272,7 +268,6 @@ export default function InventoryPage() {
     setEditVariableName(variable.name);
     setEditVariablePrice(variable.additionalPrice);
     setEditVariableStock(variable.stock);
-    setEditVariableUnit(getVariableUnit(variable));
   }
 
   async function handleSubmitVariableUpdate(event: FormEvent<HTMLFormElement>) {
@@ -286,7 +281,7 @@ export default function InventoryPage() {
         name: editVariableName,
         additionalPrice: editVariablePrice,
         stock: editVariableStock,
-        unitOfMeasure: editVariableUnit,
+        unitOfMeasure: 'un',
       }),
     });
     const result = await safeJson(response);
@@ -442,18 +437,8 @@ export default function InventoryPage() {
               ) : (
                 filteredInventory.map((product) => {
                   const isExpanded = expandedProduct === product.id;
-                  // Group stock by unit type for accurate display
-                  const stockByUnit = product.groups.reduce((acc, g) => {
-                    g.variables.forEach(v => {
-                      const unit = getVariableUnit(v);
-                      acc[unit] = (acc[unit] || 0) + v.stock;
-                    });
-                    return acc;
-                  }, {} as Record<UnitOfMeasure, number>);
-                  const productStockLabel = Object.entries(stockByUnit)
-                    .filter(([, qty]) => qty > 0)
-                    .map(([unit, qty]) => `${qty.toLocaleString('pt-BR')} ${UNIT_STOCK_LABELS[unit as UnitOfMeasure]}`)
-                    .join(' · ') || '0 un.';
+                  const productTotalStock = product.groups.reduce((s, g) => s + g.variables.reduce((vs, v) => vs + v.stock, 0), 0);
+                  const productStockLabel = productTotalStock > 0 ? `${productTotalStock.toLocaleString('pt-BR')} un.` : '0 un.';
                   const productCritical = product.groups.reduce((s, g) => s + g.variables.filter(v => getGroupStockStatus(g, v.stock) === 'critical').length, 0);
 
                   return (
@@ -595,15 +580,10 @@ export default function InventoryPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                                                   <span className="font-semibold" style={{ color: s.text }}>
-                                                    {variable.stock} {UNIT_STOCK_LABELS[getVariableUnit(variable)]}
+                                                    {variable.stock} un.
                                                   </span>
-                                                  {getVariableUnit(variable) !== 'un' && (
-                                                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--brand-bg, #eff6ff)', color: 'var(--brand, #3b82f6)', border: '1px solid var(--brand-border, #bfdbfe)' }}>
-                                                      {UNIT_LABELS[getVariableUnit(variable)]}
-                                                    </span>
-                                                  )}
                                                   {variable.additionalPrice > 0 && (
-                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/{UNIT_SHORT_LABELS[getVariableUnit(variable)]}</span>
+                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/un</span>
                                                   )}
                                                 </div>
                                               </div>
@@ -858,7 +838,7 @@ export default function InventoryPage() {
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="text-sm font-medium">Preço adicional por {UNIT_LABELS[variableUnit].toLowerCase()} (R$)</span>
+                        <span className="text-sm font-medium">Preço adicional por unidade (R$)</span>
                         <input
                           type="number"
                           min={0}
@@ -869,11 +849,11 @@ export default function InventoryPage() {
                           style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         />
                         <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                          Valor somado ao preço base do produto para cada {UNIT_LABELS[variableUnit].toLowerCase()}
+                          Valor somado ao preço base do produto para cada unidade
                         </p>
                       </label>
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="text-sm font-medium">Estoque inicial ({UNIT_STOCK_LABELS[variableUnit]}) *</span>
+                        <span className="text-sm font-medium">Estoque inicial (un.) *</span>
                         <input
                           type="number"
                           min={0}
@@ -885,31 +865,6 @@ export default function InventoryPage() {
                         />
                       </label>
                     </div>
-                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="text-sm font-medium">Unidade de medida</span>
-                      <div className="flex gap-2">
-                        {(['un', 'cento', 'milhar'] as UnitOfMeasure[]).map((unit) => (
-                          <button
-                            key={unit}
-                            type="button"
-                            onClick={() => setVariableUnit(unit)}
-                            className="flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-all"
-                            style={{
-                              background: variableUnit === unit ? 'var(--brand)' : 'var(--input-bg)',
-                              color: variableUnit === unit ? '#fff' : 'var(--text-primary)',
-                              border: `1px solid ${variableUnit === unit ? 'var(--brand)' : 'var(--input-border)'}`,
-                            }}
-                          >
-                            {UNIT_LABELS[unit]}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                        {variableUnit === 'un' && 'Estoque contado por unidades individuais'}
-                        {variableUnit === 'cento' && 'Estoque contado por centenas (1 ct = 100 un)'}
-                        {variableUnit === 'milhar' && 'Estoque contado por milhares (1 ml = 1.000 un)'}
-                      </p>
-                    </label>
                     <button
                       className="inline-flex h-10 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80"
                       style={{ background: 'var(--brand)', color: '#fff' }}
@@ -956,7 +911,7 @@ export default function InventoryPage() {
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="text-sm font-medium">Preço adicional por {UNIT_LABELS[editVariableUnit].toLowerCase()}</span>
+                      <span className="text-sm font-medium">Preço adicional por unidade</span>
                       <input
                         type="number"
                         step={0.01}
@@ -967,11 +922,11 @@ export default function InventoryPage() {
                         style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       />
                       <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                        +R$ {editVariablePrice.toFixed(2)} por {UNIT_LABELS[editVariableUnit].toLowerCase()} sobre o preço base
+                        +R$ {editVariablePrice.toFixed(2)} por unidade sobre o preço base
                       </p>
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="text-sm font-medium">Estoque ({UNIT_STOCK_LABELS[editVariableUnit]})</span>
+                      <span className="text-sm font-medium">Estoque (un.)</span>
                       <input
                         type="number"
                         min={0}
@@ -982,31 +937,6 @@ export default function InventoryPage() {
                       />
                     </label>
                   </div>
-                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                    <span className="text-sm font-medium">Unidade de medida</span>
-                    <div className="flex gap-2">
-                      {(['un', 'cento', 'milhar'] as UnitOfMeasure[]).map((unit) => (
-                        <button
-                          key={unit}
-                          type="button"
-                          onClick={() => setEditVariableUnit(unit)}
-                          className="flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-all"
-                          style={{
-                            background: editVariableUnit === unit ? 'var(--brand)' : 'var(--input-bg)',
-                            color: editVariableUnit === unit ? '#fff' : 'var(--text-primary)',
-                            border: `1px solid ${editVariableUnit === unit ? 'var(--brand)' : 'var(--input-border)'}`,
-                          }}
-                        >
-                          {UNIT_LABELS[unit]}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                      {editVariableUnit === 'un' && 'Estoque contado por unidades individuais'}
-                      {editVariableUnit === 'cento' && 'Estoque contado por centenas (1 ct = 100 un)'}
-                      {editVariableUnit === 'milhar' && 'Estoque contado por milhares (1 ml = 1.000 un)'}
-                    </p>
-                  </label>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"

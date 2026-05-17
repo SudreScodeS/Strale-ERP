@@ -162,7 +162,7 @@ function ForecastTable({ title, forecasts, color }: { title: string; forecasts: 
                 <tr key={f.variableId} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="py-2.5 font-medium" style={{ color: 'var(--text-primary)' }}>{f.variableName}</td>
                   <td className="py-2.5" style={{ color: 'var(--text-muted)' }}>{f.productName}</td>
-                  <td className="py-2.5 text-right font-mono" style={{ color: 'var(--text-primary)' }}>{f.currentStock} {f.unitOfMeasure === 'cento' ? 'ct.' : f.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</td>
+                  <td className="py-2.5 text-right font-mono" style={{ color: 'var(--text-primary)' }}>{f.currentStock} {'un.'}</td>
                   <td className="py-2.5 text-right font-mono" style={{ color: 'var(--text-secondary)' }}>{f.avgWeeklyDemand}</td>
                   <td className="py-2.5 text-right font-mono font-semibold" style={{ color: 'var(--text-primary)' }}>{f.forecastNextWeek}</td>
                   <td className="py-2.5 text-center"><TrendBadge trend={f.trend} percent={f.trendPercent} /></td>
@@ -443,7 +443,7 @@ export default function DemandForecastPage() {
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                           <div className="text-right">
-                            <p className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{f.currentStock} {f.unitOfMeasure === 'cento' ? 'ct.' : f.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
+                            <p className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{f.currentStock} {'un.'}</p>
                             <p className="text-[10px]" style={{ color: f.daysOfStock >= 999 ? 'var(--text-faint)' : 'var(--danger)' }}>
                               {f.daysOfStock >= 999 ? 'sem estoque' : `${f.daysOfStock}d restantes`}
                             </p>
