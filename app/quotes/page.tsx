@@ -1083,26 +1083,37 @@ export default function QuotesPage() {
                     <div key={group.id} className="rounded-2xl border border-slate-200 p-4">
                       <p className="font-semibold text-slate-900">{group.name}</p>
                       <div className="mt-3 grid gap-3 md:grid-cols-2">
-                        {group.variables.map(variable => (
-                          <div key={variable.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        {group.variables.map(variable => {
+                          const isSelected = (selectedVariables[variable.id] || 0) > 0;
+                          return (
+                          <div
+                            key={variable.id}
+                            className="flex items-center gap-3 rounded-2xl border bg-slate-50 p-3 cursor-pointer transition-all"
+                            style={{
+                              borderColor: isSelected ? 'var(--brand)' : undefined,
+                              background: isSelected ? 'var(--brand-muted)' : undefined,
+                            }}
+                            onClick={() => setSelectedVariables(prev => {
+                              const next: Record<string, number> = {};
+                              for (const v of group.variables) next[v.id] = 0;
+                              for (const [k, v] of Object.entries(prev)) {
+                                if (!(group.variables.some(gv => gv.id === k))) next[k] = v;
+                              }
+                              next[variable.id] = 1;
+                              return next;
+                            })}
+                          >
                             <input type="radio" name={`group-${group.id}`}
-                              checked={(selectedVariables[variable.id] || 0) > 0}
-                              onChange={() => setSelectedVariables(prev => {
-                                const next: Record<string, number> = {};
-                                for (const v of group.variables) next[v.id] = 0;
-                                for (const [k, v] of Object.entries(prev)) {
-                                  if (!(group.variables.some(gv => gv.id === k))) next[k] = v;
-                                }
-                                next[variable.id] = 1;
-                                return next;
-                              })}
+                              checked={isSelected}
+                              readOnly
                               aria-label={`Selecionar ${variable.name}`} />
                             <div className="flex-1">
                               <p className="font-medium text-slate-900">{variable.name}</p>
                               <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / {variable.unitOfMeasure || 'un'} | Estoque: {variable.stock} {variable.unitOfMeasure || 'un'}</p>
                             </div>
                           </div>
-                        ))}
+                        );
+                        })}
                       </div>
                     </div>
                   ))}

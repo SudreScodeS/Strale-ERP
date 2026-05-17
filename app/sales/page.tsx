@@ -1310,31 +1310,38 @@ export default function SalesPage() {
                 <div key={group.id} className="rounded-xl border border-slate-200 p-4">
                   <p className="font-semibold text-slate-900">{group.name}</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {group.variables.map((variable) => (
-                      <div key={variable.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    {group.variables.map((variable) => {
+                      const isSelected = (selectedVariables[variable.id] || 0) > 0;
+                      return (
+                      <div
+                        key={variable.id}
+                        className="flex items-center gap-3 rounded-xl border bg-slate-50 p-4 cursor-pointer transition-all"
+                        style={{
+                          borderColor: isSelected ? 'var(--brand)' : undefined,
+                          background: isSelected ? 'var(--brand-muted)' : undefined,
+                        }}
+                        onClick={() => {
+                          setSelectedVariables((state) => {
+                            const next: Record<string, number> = {};
+                            for (const v of group.variables) {
+                              next[v.id] = 0;
+                            }
+                            for (const [k, v] of Object.entries(state)) {
+                              if (!(group.variables.some(gv => gv.id === k))) {
+                                next[k] = v;
+                              }
+                            }
+                            next[variable.id] = 1;
+                            return next;
+                          });
+                        }}
+                      >
                         <input
                           type="radio"
                           name={`group-${group.id}`}
                           aria-label={`Selecionar ${variable.name}`}
-                          checked={(selectedVariables[variable.id] || 0) > 0}
-                          onChange={() => {
-                            setSelectedVariables((state) => {
-                              const next: Record<string, number> = {};
-                              // Clear all variables in this group
-                              for (const v of group.variables) {
-                                next[v.id] = 0;
-                              }
-                              // Keep variables from other groups
-                              for (const [k, v] of Object.entries(state)) {
-                                if (!(group.variables.some(gv => gv.id === k))) {
-                                  next[k] = v;
-                                }
-                              }
-                              // Select this variable
-                              next[variable.id] = 1;
-                              return next;
-                            });
-                          }}
+                          checked={isSelected}
+                          readOnly
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">{variable.name}</p>
@@ -1342,8 +1349,8 @@ export default function SalesPage() {
                           <p className="text-xs text-slate-500">Estoque: {variable.stock} un.</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                    })}
                 </div>
               ))}
             </div>
