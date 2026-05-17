@@ -3,7 +3,7 @@
 // Preparado para gerar solicitações de compra a fornecedores
 
 import { v4 as uuidv4 } from 'uuid';
-import { financeData, supplierData, variableData, purchaseOrderData } from './data';
+import { financeData, supplierData, variableData, purchaseOrderData, groupData } from './data';
 
 function getPurchaseFinanceDescription(orderId: string) {
   const order = purchaseOrderData.getAll().find((item) => item.id === orderId);
@@ -26,9 +26,16 @@ function getLinkedPurchaseFinanceRecords(orderId: string) {
 
 export function getPurchaseDashboard() {
   const suppliers = supplierData.getAll();
-  const lowStockVariables = variableData.getAll().filter((variable) => variable.stock <= 5);
-  const purchaseOrders = purchaseOrderData.getAll();
+  const groups = groupData.getAll();
   const variables = variableData.getAll();
+  const purchaseOrders = purchaseOrderData.getAll();
+
+  const DEFAULT_WATCH_STOCK_ALERT = 30;
+  const lowStockVariables = variables.filter((variable) => {
+    const group = groups.find((g) => g.id === variable.groupId);
+    const watchLimit = group?.watchStockAlert ?? DEFAULT_WATCH_STOCK_ALERT;
+    return variable.stock <= watchLimit;
+  });
 
   return { suppliers, lowStockVariables, purchaseOrders, variables };
 }

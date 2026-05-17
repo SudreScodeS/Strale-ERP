@@ -7,6 +7,8 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
+import { UNIT_STOCK_LABELS, UNIT_LABELS } from '../../config/global';
+import type { UnitOfMeasure } from '../../types';
 
 interface SupplierItem {
   id: string;
@@ -217,18 +219,26 @@ export default function PurchasesPage() {
             >
               {section.id === 'suppliers' && (
                 <div className="rounded-2xl bg-white p-6 shadow-sm">
-                  <h3 className="text-xl font-semibold text-slate-900">Estoque crítico</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">Estoque baixo / crítico</h3>
                   <div className="mt-4 space-y-4">
                     {lowStockVariables.length === 0 ? (
-                      <p className="text-sm text-slate-500">Sem itens em estoque crítico no momento.</p>
+                      <p className="text-sm text-slate-500">Sem itens com estoque baixo no momento.</p>
                     ) : (
-                      lowStockVariables.map((item) => (
-                        <div key={item.id} className="rounded-xl border border-slate-200 p-4">
-                          <p className="font-semibold text-slate-900">{item.name}</p>
-                          <p className="text-sm text-slate-600">Estoque: {item.stock} {item.unitOfMeasure === 'cento' ? 'ct.' : item.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
-                          <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)} / {item.unitOfMeasure === 'cento' ? 'cento' : item.unitOfMeasure === 'milhar' ? 'milhar' : 'unidade'}</p>
-                        </div>
-                      ))
+                      lowStockVariables.map((item) => {
+                        const unit = (item.unitOfMeasure || 'un') as UnitOfMeasure;
+                        return (
+                          <div key={item.id} className="rounded-xl border border-slate-200 p-4">
+                            <p className="font-semibold text-slate-900">{item.name}</p>
+                            <p className="text-sm text-slate-600">
+                              Estoque: <span className="font-bold">{item.stock} {UNIT_STOCK_LABELS[unit]}</span>
+                              {unit !== 'un' && (
+                                <span className="ml-1 text-xs text-slate-400">({UNIT_LABELS[unit]})</span>
+                              )}
+                            </p>
+                            <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)} / {UNIT_LABELS[unit].toLowerCase()}</p>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -294,33 +304,69 @@ export default function PurchasesPage() {
                         onChange={(event) => setSelectedVariableId(event.target.value)}
                         className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       >
-                        {variables.map((variable) => (
-                          <option key={variable.id} value={variable.id}>
-                            {variable.name}
-                          </option>
-                        ))}
+                        {variables.map((variable) => {
+                          const unit = (variable.unitOfMeasure || 'un') as UnitOfMeasure;
+                          return (
+                            <option key={variable.id} value={variable.id}>
+                              {variable.name} ({UNIT_STOCK_LABELS[unit]} — estoque: {variable.stock} {UNIT_STOCK_LABELS[unit]})
+                            </option>
+                          );
+                        })}
                       </select>
                     </label>
                     <label className="text-slate-700">
                       Quantidade comprada
-                      <input
-                        type="number"
-                        min={1}
-                        value={purchaseQuantity}
-                        onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                      />
+                      {(() => {
+                        const selVar = variables.find(v => v.id === selectedVariableId);
+                        const unit = (selVar?.unitOfMeasure || 'un') as UnitOfMeasure;
+                        return (
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={1}
+                              value={purchaseQuantity}
+                              onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
+                              className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-16"
+                            />
+                            <span className="pointer-events-none absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-sm font-medium text-slate-400">
+                              {UNIT_LABELS[unit]}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                      {(() => {
+                        const selVar = variables.find(v => v.id === selectedVariableId);
+                        if (!selVar) return null;
+                        const unit = (selVar.unitOfMeasure || 'un') as UnitOfMeasure;
+                        if (unit === 'un') return null;
+                        return (
+                          <p className="mt-1 text-xs text-slate-400">
+                            1 {UNIT_LABELS[unit].toLowerCase()} = {unit === 'cento' ? '100' : '1.000'} unidades
+                          </p>
+                        );
+                      })()}
                     </label>
                     <label className="text-slate-700">
-                      Custo unitário
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={purchaseUnitCost}
-                        onChange={(event) => setPurchaseUnitCost(Number(event.target.value))}
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                      />
+                      Custo unitário (R$)
+                      {(() => {
+                        const selVar = variables.find(v => v.id === selectedVariableId);
+                        const unit = (selVar?.unitOfMeasure || 'un') as UnitOfMeasure;
+                        return (
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              value={purchaseUnitCost}
+                              onChange={(event) => setPurchaseUnitCost(Number(event.target.value))}
+                              className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-16"
+                            />
+                            <span className="pointer-events-none absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-sm font-medium text-slate-400">
+                              /{UNIT_LABELS[unit].toLowerCase()}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </label>
                     <label className="text-slate-700">
                       Data da compra
@@ -378,7 +424,8 @@ export default function PurchasesPage() {
                           .map((item) => {
                             const variable = variables.find((entry) => entry.id === item.variableId);
                             const itemName = variable?.name || item.variableId;
-                            return `${itemName} ${item.quantity}x`;
+                            const unit = ((variable?.unitOfMeasure || 'un') as UnitOfMeasure);
+                            return `${itemName} ${item.quantity} ${UNIT_LABELS[unit]}`;
                           })
                           .join(', ');
                         return (
@@ -442,33 +489,58 @@ export default function PurchasesPage() {
                     onChange={(event) => setEditVariableId(event.target.value)}
                     className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   >
-                    {variables.map((variable) => (
-                      <option key={variable.id} value={variable.id}>
-                        {variable.name}
-                      </option>
-                    ))}
+                    {variables.map((variable) => {
+                      const unit = (variable.unitOfMeasure || 'un') as UnitOfMeasure;
+                      return (
+                        <option key={variable.id} value={variable.id}>
+                          {variable.name} ({UNIT_LABELS[unit]})
+                        </option>
+                      );
+                    })}
                   </select>
                 </label>
                 <label className="block text-slate-700">
                   Quantidade
-                  <input
-                    type="number"
-                    min={1}
-                    value={editQuantity}
-                    onChange={(event) => setEditQuantity(Number(event.target.value))}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                  />
+                  {(() => {
+                    const selVar = variables.find(v => v.id === editVariableId);
+                    const unit = (selVar?.unitOfMeasure || 'un') as UnitOfMeasure;
+                    return (
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={1}
+                          value={editQuantity}
+                          onChange={(event) => setEditQuantity(Number(event.target.value))}
+                          className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-16"
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-sm font-medium text-slate-400">
+                          {UNIT_LABELS[unit]}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </label>
                 <label className="block text-slate-700">
-                  Custo unitário
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={editUnitCost}
-                    onChange={(event) => setEditUnitCost(Number(event.target.value))}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                  />
+                  Custo unitário (R$)
+                  {(() => {
+                    const selVar = variables.find(v => v.id === editVariableId);
+                    const unit = (selVar?.unitOfMeasure || 'un') as UnitOfMeasure;
+                    return (
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={editUnitCost}
+                          onChange={(event) => setEditUnitCost(Number(event.target.value))}
+                          className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-16"
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-sm font-medium text-slate-400">
+                          /{UNIT_LABELS[unit].toLowerCase()}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </label>
                 <label className="block text-slate-700">
                   Data da compra
