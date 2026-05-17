@@ -5,7 +5,8 @@
     "additionalPrice": 3,
     "stock": 497,
     "groupId": "group-material",
-    "createdAt": "2026-01-01T00:00:00.000Z"
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-tnt",
@@ -13,7 +14,8 @@
     "additionalPrice": 5,
     "stock": 998,
     "groupId": "group-material",
-    "createdAt": "2026-01-01T00:00:00.000Z"
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-color-azul",
@@ -21,7 +23,8 @@
     "additionalPrice": 0,
     "stock": 199,
     "groupId": "group-color",
-    "createdAt": "2026-05-06T06:23:00.000Z"
+    "createdAt": "2026-05-06T06:23:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-color-amarelo",
@@ -29,7 +32,8 @@
     "additionalPrice": 0,
     "stock": 99,
     "groupId": "group-color",
-    "createdAt": "2026-05-06T06:23:00.000Z"
+    "createdAt": "2026-05-06T06:23:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-color-preto",
@@ -37,7 +41,8 @@
     "additionalPrice": 0,
     "stock": 598,
     "groupId": "group-color",
-    "createdAt": "2026-05-06T06:23:00.000Z"
+    "createdAt": "2026-05-06T06:23:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-color-vermelho",
@@ -45,7 +50,8 @@
     "additionalPrice": 0,
     "stock": 999,
     "groupId": "group-color",
-    "createdAt": "2026-05-06T06:23:00.000Z"
+    "createdAt": "2026-05-06T06:23:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-cor-preto",
@@ -53,7 +59,8 @@
     "name": "Preto",
     "additionalPrice": 0,
     "stock": 149,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-cor-branco",
@@ -61,7 +68,8 @@
     "name": "Branco",
     "additionalPrice": 0,
     "stock": 120,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-cor-azul-marinho",
@@ -69,7 +77,8 @@
     "name": "Azul Marinho",
     "additionalPrice": 0,
     "stock": 80,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-cor-vermelho",
@@ -77,7 +86,8 @@
     "name": "Vermelho",
     "additionalPrice": 0,
     "stock": 60,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-cor-verde",
@@ -85,7 +95,8 @@
     "name": "Verde",
     "additionalPrice": 0,
     "stock": 50,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-material-inox-304",
@@ -93,7 +104,8 @@
     "name": "Inox 304",
     "additionalPrice": 4,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-garrafa-material-inox-316",
@@ -101,15 +113,17 @@
     "name": "Inox 316",
     "additionalPrice": 12,
     "stock": 99,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
-    "id": "variable-garrafa-material-plástico-abs",
+    "id": "variable-garrafa-material-pl\u00e1stico-abs",
     "groupId": "group-garrafa-material",
-    "name": "Plástico ABS",
+    "name": "Pl\u00e1stico ABS",
     "additionalPrice": 2,
     "stock": 300,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caneca-cor-branca",
@@ -117,7 +131,8 @@
     "name": "Branca",
     "additionalPrice": 0,
     "stock": 500,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caneca-cor-preta",
@@ -125,7 +140,8 @@
     "name": "Preta",
     "additionalPrice": 2,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caneca-cor-azul",
@@ -133,7 +149,8 @@
     "name": "Azul",
     "additionalPrice": 2,
     "stock": 150,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caneca-cor-vermelha",
@@ -141,15 +158,17 @@
     "name": "Vermelha",
     "additionalPrice": 2,
     "stock": 100,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
-    "id": "variable-caneca-material-cerâmica",
+    "id": "variable-caneca-material-cer\u00e2mica",
     "groupId": "group-caneca-material",
-    "name": "Cerâmica",
+    "name": "Cer\u00e2mica",
     "additionalPrice": 0,
     "stock": 400,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caneca-material-porcelana",
@@ -157,7 +176,8 @@
     "name": "Porcelana",
     "additionalPrice": 8,
     "stock": 150,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caneca-material-inox",
@@ -165,15 +185,17 @@
     "name": "Inox",
     "additionalPrice": 12,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
-    "id": "variable-caneca-material-plástico",
+    "id": "variable-caneca-material-pl\u00e1stico",
     "groupId": "group-caneca-material",
-    "name": "Plástico",
+    "name": "Pl\u00e1stico",
     "additionalPrice": -3,
     "stock": 300,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-bone-cor-branco",
@@ -181,7 +203,8 @@
     "name": "Branco",
     "additionalPrice": 0,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-bone-cor-preto",
@@ -189,7 +212,8 @@
     "name": "Preto",
     "additionalPrice": 0,
     "stock": 299,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-bone-cor-azul-marinho",
@@ -197,7 +221,8 @@
     "name": "Azul Marinho",
     "additionalPrice": 0,
     "stock": 150,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-bone-cor-vermelho",
@@ -205,7 +230,8 @@
     "name": "Vermelho",
     "additionalPrice": 0,
     "stock": 80,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-bone-cor-bege",
@@ -213,15 +239,17 @@
     "name": "Bege",
     "additionalPrice": 0,
     "stock": 100,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
-    "id": "variable-bone-tamanho-único-ajustável",
+    "id": "variable-bone-tamanho-\u00fanico-ajust\u00e1vel",
     "groupId": "group-bone-tamanho",
-    "name": "Único (Ajustável)",
+    "name": "\u00danico (Ajust\u00e1vel)",
     "additionalPrice": 0,
     "stock": 499,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-cor-preto",
@@ -229,7 +257,8 @@
     "name": "Preto",
     "additionalPrice": 0,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-cor-azul-marinho",
@@ -237,7 +266,8 @@
     "name": "Azul Marinho",
     "additionalPrice": 0,
     "stock": 120,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-cor-marrom",
@@ -245,7 +275,8 @@
     "name": "Marrom",
     "additionalPrice": 0,
     "stock": 80,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-cor-vinho",
@@ -253,7 +284,8 @@
     "name": "Vinho",
     "additionalPrice": 0,
     "stock": 61,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-tamanho-a5-14x21cm",
@@ -261,7 +293,8 @@
     "name": "A5 (14x21cm)",
     "additionalPrice": 0,
     "stock": 250,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-tamanho-a4-21x30cm",
@@ -269,7 +302,8 @@
     "name": "A4 (21x30cm)",
     "additionalPrice": 8,
     "stock": 150,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-caderno-tamanho-executivo-16x23cm",
@@ -277,7 +311,8 @@
     "name": "Executivo (16x23cm)",
     "additionalPrice": 5,
     "stock": 100,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-cor-branca",
@@ -285,7 +320,8 @@
     "name": "Branca",
     "additionalPrice": 0,
     "stock": 400,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-cor-preta",
@@ -293,7 +329,8 @@
     "name": "Preta",
     "additionalPrice": 0,
     "stock": 350,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-cor-azul-royal",
@@ -301,7 +338,8 @@
     "name": "Azul Royal",
     "additionalPrice": 2,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-cor-cinza",
@@ -309,7 +347,8 @@
     "name": "Cinza",
     "additionalPrice": 0,
     "stock": 150,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-cor-vermelha",
@@ -317,7 +356,8 @@
     "name": "Vermelha",
     "additionalPrice": 2,
     "stock": 100,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-tamanho-p",
@@ -325,7 +365,8 @@
     "name": "P",
     "additionalPrice": 0,
     "stock": 100,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-tamanho-m",
@@ -333,7 +374,8 @@
     "name": "M",
     "additionalPrice": 0,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-tamanho-g",
@@ -341,7 +383,8 @@
     "name": "G",
     "additionalPrice": 0,
     "stock": 200,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-tamanho-gg",
@@ -349,7 +392,8 @@
     "name": "GG",
     "additionalPrice": 3,
     "stock": 150,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   },
   {
     "id": "variable-camiseta-tamanho-xg",
@@ -357,6 +401,7 @@
     "name": "XG",
     "additionalPrice": 5,
     "stock": 80,
-    "createdAt": "2026-05-16T00:00:00.000Z"
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "unitOfMeasure": "un"
   }
 ]

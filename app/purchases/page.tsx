@@ -225,8 +225,8 @@ export default function PurchasesPage() {
                       lowStockVariables.map((item) => (
                         <div key={item.id} className="rounded-xl border border-slate-200 p-4">
                           <p className="font-semibold text-slate-900">{item.name}</p>
-                          <p className="text-sm text-slate-600">Estoque: {item.stock} un.</p>
-                          <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)} / unidade</p>
+                          <p className="text-sm text-slate-600">Estoque: {item.stock} {item.unitOfMeasure === 'cento' ? 'ct.' : item.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
+                          <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)} / {item.unitOfMeasure === 'cento' ? 'cento' : item.unitOfMeasure === 'milhar' ? 'milhar' : 'unidade'}</p>
                         </div>
                       ))
                     )}
@@ -296,7 +296,7 @@ export default function PurchasesPage() {
                       >
                         {variables.map((variable) => (
                           <option key={variable.id} value={variable.id}>
-                            {variable.name}
+                            {variable.name} {variable.unitOfMeasure === 'cento' ? '(cento)' : variable.unitOfMeasure === 'milhar' ? '(milhar)' : '(un)'}
                           </option>
                         ))}
                       </select>
@@ -444,7 +444,7 @@ export default function PurchasesPage() {
                   >
                     {variables.map((variable) => (
                       <option key={variable.id} value={variable.id}>
-                        {variable.name}
+                        {variable.name} {variable.unitOfMeasure === 'cento' ? '(cento)' : variable.unitOfMeasure === 'milhar' ? '(milhar)' : '(un)'}
                       </option>
                     ))}
                   </select>

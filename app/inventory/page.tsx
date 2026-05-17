@@ -55,11 +55,13 @@ export default function InventoryPage() {
   const [variableName, setVariableName] = useState('');
   const [variablePrice, setVariablePrice] = useState(0);
   const [variableStock, setVariableStock] = useState(0);
+  const [variableUnit, setVariableUnit] = useState<UnitOfMeasure>('un');
   const [activeForm, setActiveForm] = useState<'product' | 'group' | 'variable'>('product');
   const [editingVariable, setEditingVariable] = useState<VariableOption | null>(null);
   const [editVariableName, setEditVariableName] = useState('');
   const [editVariablePrice, setEditVariablePrice] = useState(0);
   const [editVariableStock, setEditVariableStock] = useState(0);
+  const [editVariableUnit, setEditVariableUnit] = useState<UnitOfMeasure>('un');
   const [editingProduct, setEditingProduct] = useState<ProductOption | null>(null);
   const [editProductName, setEditProductName] = useState('');
   const [editProductPrice, setEditProductPrice] = useState(0);
@@ -165,7 +167,7 @@ export default function InventoryPage() {
     const response = await fetch('/api/inventory/variable', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: 'un' }),
+      body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: variableUnit }),
     });
     const result = await safeJson(response);
     if (response.ok) {
@@ -173,6 +175,7 @@ export default function InventoryPage() {
       setVariableName('');
       setVariablePrice(0);
       setVariableStock(0);
+      setVariableUnit('un');
       await loadInventory();
     } else {
       setMessage(result.error || 'Erro ao criar variável.');
@@ -268,6 +271,7 @@ export default function InventoryPage() {
     setEditVariableName(variable.name);
     setEditVariablePrice(variable.additionalPrice);
     setEditVariableStock(variable.stock);
+    setEditVariableUnit(variable.unitOfMeasure || 'un');
   }
 
   async function handleSubmitVariableUpdate(event: FormEvent<HTMLFormElement>) {
@@ -281,7 +285,7 @@ export default function InventoryPage() {
         name: editVariableName,
         additionalPrice: editVariablePrice,
         stock: editVariableStock,
-        unitOfMeasure: 'un',
+        unitOfMeasure: editVariableUnit,
       }),
     });
     const result = await safeJson(response);
@@ -580,10 +584,10 @@ export default function InventoryPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                                                   <span className="font-semibold" style={{ color: s.text }}>
-                                                    {variable.stock} un.
+                                                    {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}
                                                   </span>
                                                   {variable.additionalPrice > 0 && (
-                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/un</span>
+                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/{variable.unitOfMeasure === 'cento' ? 'cento' : variable.unitOfMeasure === 'milhar' ? 'milhar' : 'un'}</span>
                                                   )}
                                                 </div>
                                               </div>
@@ -853,7 +857,7 @@ export default function InventoryPage() {
                         </p>
                       </label>
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="text-sm font-medium">Estoque inicial (un.) *</span>
+                        <span className="text-sm font-medium">Estoque inicial *</span>
                         <input
                           type="number"
                           min={0}
@@ -865,6 +869,22 @@ export default function InventoryPage() {
                         />
                       </label>
                     </div>
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-sm font-medium">Unidade de medida</span>
+                      <select
+                        value={variableUnit}
+                        onChange={(event) => setVariableUnit(event.target.value as UnitOfMeasure)}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      >
+                        <option value="un">Unidade (un)</option>
+                        <option value="cento">Cento (100 un)</option>
+                        <option value="milhar">Milhar (1000 un)</option>
+                      </select>
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        Define como o estoque é contado e exibido
+                      </p>
+                    </label>
                     <button
                       className="inline-flex h-10 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80"
                       style={{ background: 'var(--brand)', color: '#fff' }}
@@ -926,7 +946,7 @@ export default function InventoryPage() {
                       </p>
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="text-sm font-medium">Estoque (un.)</span>
+                      <span className="text-sm font-medium">Estoque</span>
                       <input
                         type="number"
                         min={0}
@@ -937,6 +957,19 @@ export default function InventoryPage() {
                       />
                     </label>
                   </div>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Unidade de medida</span>
+                    <select
+                      value={editVariableUnit}
+                      onChange={(event) => setEditVariableUnit(event.target.value as UnitOfMeasure)}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    >
+                      <option value="un">Unidade (un)</option>
+                      <option value="cento">Cento (100 un)</option>
+                      <option value="milhar">Milhar (1000 un)</option>
+                    </select>
+                  </label>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
