@@ -58,6 +58,38 @@ const reportIcons = {
 
 const REPORTS: ReportConfig[] = [
   {
+    id: 'faturamento',
+    title: 'Faturamento',
+    description: 'Vendas por produto com margem de lucro e quantidade vendida.',
+    icon: reportIcons.finance,
+    endpoint: '/api/reports/faturamento',
+    columns: [
+      { key: 'productName', label: 'Produto' },
+      { key: 'totalSales', label: 'Vendas' },
+      { key: 'totalQuantity', label: 'Qtd. Vendida' },
+      { key: 'totalRevenue', label: 'Receita (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'totalCost', label: 'Custo (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'totalProfit', label: 'Lucro (R$)', format: (v) => Number(v).toFixed(2) },
+      { key: 'averageMargin', label: 'Margem Média (%)', format: (v) => Number(v).toFixed(1) },
+      { key: 'productMargin', label: 'Margem Config. (%)', format: (v) => Number(v).toFixed(1) },
+    ],
+    transform: (json): ReportRow[] => {
+      const data = json as Record<string, unknown>;
+      const products = (data.products || []) as Record<string, unknown>[];
+      if (!Array.isArray(products)) return [];
+      return products.map((p): ReportRow => ({
+        productName: String(p.productName ?? ''),
+        totalSales: Number(p.totalSales ?? 0),
+        totalQuantity: Number(p.totalQuantity ?? 0),
+        totalRevenue: Number(p.totalRevenue ?? 0),
+        totalCost: Number(p.totalCost ?? 0),
+        totalProfit: Number(p.totalProfit ?? 0),
+        averageMargin: Number(p.averageMargin ?? 0),
+        productMargin: Number(p.productMargin ?? 0),
+      }));
+    },
+  },
+  {
     id: 'sales',
     title: 'Vendas',
     description: 'Todos os pedidos com valores, status e responsáveis.',
@@ -260,6 +292,19 @@ interface SortPreset {
 }
 
 const SORT_PRESETS: Record<string, SortPreset[]> = {
+  faturamento: [
+    { key: 'product-asc', label: 'Produto (A-Z)', col: 'productName', dir: 'asc' },
+    { key: 'product-desc', label: 'Produto (Z-A)', col: 'productName', dir: 'desc' },
+    { key: 'sales-desc', label: 'Mais vendido', col: 'totalSales', dir: 'desc' },
+    { key: 'sales-asc', label: 'Menos vendido', col: 'totalSales', dir: 'asc' },
+    { key: 'qty-desc', label: 'Maior quantidade', col: 'totalQuantity', dir: 'desc' },
+    { key: 'revenue-desc', label: 'Maior receita', col: 'totalRevenue', dir: 'desc' },
+    { key: 'revenue-asc', label: 'Menor receita', col: 'totalRevenue', dir: 'asc' },
+    { key: 'profit-desc', label: 'Maior lucro', col: 'totalProfit', dir: 'desc' },
+    { key: 'margin-desc', label: 'Maior margem média', col: 'averageMargin', dir: 'desc' },
+    { key: 'margin-asc', label: 'Menor margem média', col: 'averageMargin', dir: 'asc' },
+    { key: 'config-margin-desc', label: 'Maior margem config.', col: 'productMargin', dir: 'desc' },
+  ],
   sales: [
     { key: 'price-desc', label: 'Maior valor', col: 'totalPrice', dir: 'desc' },
     { key: 'price-asc', label: 'Menor valor', col: 'totalPrice', dir: 'asc' },
@@ -618,6 +663,50 @@ function computeStats(rows: ReportRow[], reportId: string) {
     });
   }
 
+  if (reportId === 'faturamento') {
+    const totalRevenue = rows.reduce((acc, r) => acc + (Number(r.totalRevenue) || 0), 0);
+    const totalProfit = rows.reduce((acc, r) => acc + (Number(r.totalProfit) || 0), 0);
+    const totalSales = rows.reduce((acc, r) => acc + (Number(r.totalSales) || 0), 0);
+    const totalQuantity = rows.reduce((acc, r) => acc + (Number(r.totalQuantity) || 0), 0);
+    const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    stats.push({
+      label: 'Receita Total',
+      value: `R$ ${totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    });
+    stats.push({
+      label: 'Lucro Total',
+      value: `R$ ${totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+        </svg>
+      ),
+    });
+    stats.push({
+      label: 'Vendas Totais',
+      value: `${totalSales} pedidos · ${totalQuantity.toLocaleString('pt-BR')} itens`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+        </svg>
+      ),
+    });
+    stats.push({
+      label: 'Margem Média',
+      value: `${avgMargin.toFixed(1)}%`,
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+        </svg>
+      ),
+    });
+  }
+
   return stats;
 }
 
@@ -727,6 +816,7 @@ export default function ReportsPage() {
   const [visibleRows, setVisibleRows] = useState(PAGE_SIZE);
 
   const dateFieldMap: Record<string, string> = {
+    faturamento: '',
     sales: 'createdAt',
     finance: 'date',
     quotes: 'createdAt',
