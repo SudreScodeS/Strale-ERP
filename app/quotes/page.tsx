@@ -507,7 +507,7 @@ export default function QuotesPage() {
     return selectedProduct.basePrice + variableCost + dimensionCost + printCost;
   }, [selectedProduct, selectedVariablesList, useDimensions, dimWidth, dimHeight, printType, printPosition, printSize, logoColors]);
 
-  const currentItemTotalPrice = calculateSalePrice(currentItemUnitCost) * quantity;
+  const currentItemTotalPrice = selectedProduct ? calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin) * quantity : 0;
   const cartTotal = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const quoteTotal = cartTotal;
 
@@ -543,7 +543,7 @@ export default function QuotesPage() {
       selectedVariables: selectedEntries,
       selectedVariablesLabel: label,
       unitCost: currentItemUnitCost,
-      unitPrice: calculateSalePrice(currentItemUnitCost),
+      unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
       dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
       printType: printType || undefined,
       printPosition: printType ? printPosition : undefined,
@@ -1069,7 +1069,7 @@ export default function QuotesPage() {
                 </label>
                 <div className="flex items-end">
                   <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                    Unitário: R$ {calculateSalePrice(currentItemUnitCost).toFixed(2)} / {(() => {
+                    Unitário: R$ {calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin).toFixed(2)} / {(() => {
                       const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
                       const unit = selectedVars[0]?.unitOfMeasure || 'un';
                       return unit === 'cento' ? 'cento' : unit === 'milhar' ? 'milhar' : 'unidade';

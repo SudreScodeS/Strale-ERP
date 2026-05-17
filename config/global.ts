@@ -106,9 +106,10 @@ export function applyServerConfig(serverConfig: Partial<GlobalConfig>): void {
 // FUNÇÕES DE CÁLCULO BASEADAS NAS CONFIGURAÇÕES
 // ==========================================
 
-/** Aplica margem de lucro sobre o custo */
-export function calculateSalePrice(totalCost: number): number {
-  return totalCost + (totalCost * globalConfig.profitMargin / 100);
+/** Aplica margem de lucro sobre o custo. Se productMargin for fornecida, usa ela; senão usa a global */
+export function calculateSalePrice(totalCost: number, productMargin?: number): number {
+  const margin = typeof productMargin === 'number' ? productMargin : globalConfig.profitMargin;
+  return totalCost + (totalCost * margin / 100);
 }
 
 /** Custo de logo por cor (método legado — mantido para compatibilidade) */

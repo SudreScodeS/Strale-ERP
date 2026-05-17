@@ -20,6 +20,7 @@ export interface Product {
   id: string; // ID único do produto
   name: string; // Nome comercial do produto
   basePrice: number; // Preço base antes de variações
+  profitMargin?: number; // Margem de lucro em % (ex: 20 = 20%). Se não definida, usa a global
   description?: string; // Descrição opcional do produto
   imageUrl?: string; // Imagem principal para preview do produto
   createdAt: Date; // Data de criação do produto

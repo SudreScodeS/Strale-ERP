@@ -14,11 +14,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, basePrice, description, imageUrl } = body as {
+  const { name, basePrice, description, imageUrl, profitMargin } = body as {
     name: string;
     basePrice: number;
     description?: string;
     imageUrl?: string;
+    profitMargin?: number;
   };
 
   if (!name || typeof basePrice !== 'number' || !imageUrl) {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     id: uuidv4(),
     name,
     basePrice,
+    profitMargin: typeof profitMargin === 'number' ? profitMargin : undefined,
     description: description || '',
     imageUrl,
     createdAt: new Date(),
@@ -48,12 +50,13 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const { id, name, basePrice, description, imageUrl } = body as {
+  const { id, name, basePrice, description, imageUrl, profitMargin } = body as {
     id: string;
     name?: string;
     basePrice?: number;
     description?: string;
     imageUrl?: string;
+    profitMargin?: number;
   };
 
   if (!id) {
@@ -65,11 +68,12 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Produto não encontrado.' }, { status: 404 });
   }
 
-  const updates: { name?: string; basePrice?: number; description?: string; imageUrl?: string } = {};
+  const updates: { name?: string; basePrice?: number; description?: string; imageUrl?: string; profitMargin?: number } = {};
   if (name) updates.name = name;
   if (typeof basePrice === 'number') updates.basePrice = basePrice;
   if (typeof description === 'string') updates.description = description;
   if (typeof imageUrl === 'string') updates.imageUrl = imageUrl;
+  if (typeof profitMargin === 'number') updates.profitMargin = profitMargin;
 
   // Registra mudança de preço no histórico
   if (typeof basePrice === 'number' && basePrice !== existing.basePrice) {

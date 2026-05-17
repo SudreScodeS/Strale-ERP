@@ -35,6 +35,7 @@ interface ProductOption {
   id: string;
   name: string;
   basePrice: number;
+  profitMargin?: number;
   description?: string;
   imageUrl?: string;
   groups: GroupOption[];
@@ -45,6 +46,7 @@ export default function InventoryPage() {
   const [message, setMessage] = useState('');
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState(0);
+  const [productMargin, setProductMargin] = useState(20);
   const [productDescription, setProductDescription] = useState('');
   const [productImage, setProductImage] = useState<string>('');
   const [groupProductId, setGroupProductId] = useState('');
@@ -65,6 +67,7 @@ export default function InventoryPage() {
   const [editingProduct, setEditingProduct] = useState<ProductOption | null>(null);
   const [editProductName, setEditProductName] = useState('');
   const [editProductPrice, setEditProductPrice] = useState(0);
+  const [editProductMargin, setEditProductMargin] = useState(20);
   const [editProductDescription, setEditProductDescription] = useState('');
   const [editProductImage, setEditProductImage] = useState('');
   const [editingGroup, setEditingGroup] = useState<GroupOption | null>(null);
@@ -119,13 +122,14 @@ export default function InventoryPage() {
     const response = await fetch('/api/inventory/product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ name: productName, basePrice: productPrice, description: productDescription, imageUrl: productImage }),
+      body: JSON.stringify({ name: productName, basePrice: productPrice, description: productDescription, imageUrl: productImage, profitMargin: productMargin }),
     });
     const result = await safeJson(response);
     if (response.ok) {
       setMessage(result.message);
       setProductName('');
       setProductPrice(0);
+      setProductMargin(20);
       setProductDescription('');
       setProductImage('');
       await loadInventory();
@@ -186,6 +190,7 @@ export default function InventoryPage() {
     setEditingProduct(product);
     setEditProductName(product.name);
     setEditProductPrice(product.basePrice);
+    setEditProductMargin(product.profitMargin ?? 20);
     setEditProductDescription(product.description || '');
     setEditProductImage(product.imageUrl || '');
   }
@@ -200,6 +205,7 @@ export default function InventoryPage() {
         id: editingProduct.id,
         name: editProductName,
         basePrice: editProductPrice,
+        profitMargin: editProductMargin,
         description: editProductDescription,
         imageUrl: editProductImage,
       }),
@@ -480,6 +486,8 @@ export default function InventoryPage() {
                           <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--text-faint)' }}>
                             <span>R$ {product.basePrice.toFixed(2)} base</span>
                             <span>·</span>
+                            <span>{product.profitMargin ?? 20}% margem</span>
+                            <span>·</span>
                             <span>{product.groups.length} grupo{product.groups.length !== 1 ? 's' : ''}</span>
                             <span>·</span>
                             <span>{productStockLabel}</span>
@@ -701,6 +709,22 @@ export default function InventoryPage() {
                         style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         required
                       />
+                    </label>
+                    <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-sm font-medium">Margem de lucro (%)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        value={productMargin}
+                        onChange={(event) => setProductMargin(Number(event.target.value))}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm"
+                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                      />
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        Margem específica para este produto. Padrão: 20%
+                      </p>
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Descrição</span>
@@ -1034,6 +1058,22 @@ export default function InventoryPage() {
                       className="w-full rounded-lg px-4 py-2.5 text-sm"
                       style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                     />
+                  </label>
+                  <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium">Margem de lucro (%)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      value={editProductMargin}
+                      onChange={(event) => setEditProductMargin(Number(event.target.value))}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm"
+                      style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                    />
+                    <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                      {editProductMargin}% — Preço final: R$ {(editProductPrice * (1 + editProductMargin / 100)).toFixed(2)}
+                    </p>
                   </label>
                   <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                     <span className="text-sm font-medium">Descrição</span>

@@ -531,8 +531,9 @@ export default function SalesPage() {
     : 0;
   const currentItemTotalCost = currentItemUnitCost * quantity;
   const cartItemsCost = cartItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
-  const orderCostWithLogo = cartItemsCost + logoCost;
-  const salePrice = calculateSalePrice(orderCostWithLogo);
+  const cartItemsPrice = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const logoCostValue = logoCost;
+  const salePrice = cartItemsPrice + (logoCostValue > 0 ? calculateSalePrice(logoCostValue) : 0);
 
   // Configuração da prévia atual (após cálculos de preço)
   const selectedVariableNames = useMemo(() => {
@@ -550,7 +551,7 @@ export default function SalesPage() {
     printPosition: printType ? printPosition : undefined,
     printSize: printType ? printSize : undefined,
     quantity,
-    unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost) : 0,
+    unitPrice: selectedProduct ? calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin) : 0,
   }), [selectedProduct, logoDataUrl, selectedColorHex, selectedColorName, selectedMaterialName, selectedVariableNames, printType, printPosition, printSize, quantity, currentItemUnitCost]);
 
   async function loadQuotes() {
@@ -639,7 +640,7 @@ export default function SalesPage() {
         selectedVariables: selectedEntries,
         selectedVariablesLabel,
         unitCost: currentItemUnitCost,
-        unitPrice: calculateSalePrice(currentItemUnitCost),
+        unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
         previewConfig: { ...previewConfig },
         dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
         printType: printType || undefined,
@@ -779,8 +780,9 @@ export default function SalesPage() {
     }
 
     const totalCost = editItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+    const itemsPrice = editItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const logoCost = calculateLogoCost(editLogoColors);
-    const totalPrice = calculateSalePrice(totalCost + logoCost);
+    const totalPrice = itemsPrice + (logoCost > 0 ? calculateSalePrice(logoCost) : 0);
 
     const response = await fetch('/api/orders', {
       method: 'PATCH',
@@ -1714,8 +1716,9 @@ export default function SalesPage() {
                 {/* Preview de custo em tempo real */}
                 {(() => {
                   const editTotalCost = editItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+                  const editItemsPrice = editItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
                   const editLogoCost = calculateLogoCost(editLogoColors);
-                  const editTotalPrice = calculateSalePrice(editTotalCost + editLogoCost);
+                  const editTotalPrice = editItemsPrice + (editLogoCost > 0 ? calculateSalePrice(editLogoCost) : 0);
                   return (
                     <div className="rounded-2xl bg-slate-50 p-5">
                       <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Preview de custo</h4>

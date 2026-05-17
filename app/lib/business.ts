@@ -77,10 +77,11 @@ export function calculateItemCost(productId: string, variableIds: string[], quan
 // 5. Baixa estoque das variáveis utilizadas
 // 6. Gera nota fiscal
 export function finalizarPedido(userId: string, name: string, items: OrderItem[], logoColors: number, deliveryDate?: string): { order: Order; invoice: Invoice } {
-  // Cálculo dos custos
+  // Cálculo dos custos — usa os unitPrice já calculados com margem por produto
   const totalCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const logoCost = calculateLogoCost(logoColors);
-  const totalPrice = calculateSalePrice(totalCost + logoCost);
+  const itemsPrice = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const totalPrice = itemsPrice + (logoCost > 0 ? calculateSalePrice(logoCost) : 0);
 
   // Cria objeto do pedido
   const order: Order = {
@@ -261,7 +262,8 @@ export function criarOrcamento(
 ): Quote {
   const totalCost = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
   const logoCost = calculateLogoCost(logoColors);
-  const totalPrice = calculateSalePrice(totalCost + logoCost);
+  const itemsPrice = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const totalPrice = itemsPrice + (logoCost > 0 ? calculateSalePrice(logoCost) : 0);
 
   const validUntil = validDays
     ? new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString()
