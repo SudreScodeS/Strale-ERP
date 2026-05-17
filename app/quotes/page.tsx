@@ -45,6 +45,7 @@ interface CartItem {
   selectedVariablesLabel: string;
   unitCost: number;
   unitPrice: number;
+  profitMargin: number;
   dimensions?: { width: number; height: number };
   printType?: string;
   printPosition?: string;
@@ -278,7 +279,12 @@ export default function QuotesPage() {
   } | null>(null);
   const [logoAnalyzing, setLogoAnalyzing] = useState(false);
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
+  const [cartItems, setCartItems] = useState<CartItem[]>(
+    (savedForm?.cartItems || []).map((item: CartItem) => ({
+      ...item,
+      profitMargin: item.profitMargin ?? 20,
+    }))
+  );
 
   // Dimensões e impressão
   const [useDimensions, setUseDimensions] = useState(savedForm?.useDimensions || false);
@@ -544,6 +550,7 @@ export default function QuotesPage() {
       selectedVariablesLabel: label,
       unitCost: currentItemUnitCost,
       unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
+      profitMargin: selectedProduct.profitMargin ?? 20,
       dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
       printType: printType || undefined,
       printPosition: printType ? printPosition : undefined,
@@ -1187,13 +1194,36 @@ export default function QuotesPage() {
                 <div className="mt-4 space-y-3">
                   {cartItems.map((item, i) => (
                     <div key={i} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-semibold text-slate-900">{item.productName}</p>
                         <p className="text-sm text-slate-600">Qtd: {item.quantity} | Variáveis: {item.selectedVariablesLabel}</p>
                         {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}×{item.dimensions.height}cm</p>}
                         {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
+                        <div className="mt-1 flex items-center gap-2">
+                          <label className="text-xs text-slate-500">Margem %:</label>
+                          <input
+                            type="number"
+                            min={item.profitMargin}
+                            step={0.5}
+                            value={item.profitMargin}
+                            onChange={(e) => {
+                              const newMargin = Math.max(item.profitMargin, Number(e.target.value));
+                              setCartItems((prev) => prev.map((ci, ciIdx) => {
+                                if (ciIdx !== i) return ci;
+                                return {
+                                  ...ci,
+                                  profitMargin: newMargin,
+                                  unitPrice: calculateSalePrice(ci.unitCost, newMargin),
+                                };
+                              }));
+                            }}
+                            className="w-20 rounded border border-slate-200 px-2 py-0.5 text-xs"
+                            title={`Margem mínima: ${item.profitMargin}%`}
+                          />
+                          <span className="text-xs text-slate-400">(mín: {item.profitMargin}%)</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 ml-4">
                         <p className="font-semibold text-emerald-700">R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                         <button type="button" onClick={() => handleRemoveCartItem(i)}
                           className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"

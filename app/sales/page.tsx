@@ -50,6 +50,7 @@ interface CartItem {
   selectedVariablesLabel: string;
   unitCost: number;
   unitPrice: number;
+  profitMargin: number;
   previewConfig: PreviewConfig;
   dimensions?: { width: number; height: number };
   printType?: string;
@@ -98,7 +99,12 @@ export default function SalesPage() {
   } | null>(null);
   const [logoAnalyzing, setLogoAnalyzing] = useState(false);
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>(savedForm?.cartItems || []);
+  const [cartItems, setCartItems] = useState<CartItem[]>(
+    (savedForm?.cartItems || []).map((item: CartItem) => ({
+      ...item,
+      profitMargin: item.profitMargin ?? 20,
+    }))
+  );
   const [statusMessage, setStatusMessage] = useState('');
   const [undoOrderData, setUndoOrderData] = useState<{ message: string; items: OrderView[]; timer: ReturnType<typeof setTimeout> } | null>(null);
 
@@ -120,7 +126,7 @@ export default function SalesPage() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [editingOrder, setEditingOrder] = useState(false);
   const [editOrderName, setEditOrderName] = useState('');
-  const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
+  const [editItems, setEditItems] = useState<{ productId: string; quantity: number; unitCost: number; unitPrice: number; profitMargin: number; selectedVariables: { groupId: string; variableId: string; quantity: number }[] }[]>([]);
   const [editLogoColors, setEditLogoColors] = useState(0);
   const [editDeliveryDate, setEditDeliveryDate] = useState('');
 
@@ -582,6 +588,7 @@ export default function SalesPage() {
       selectedVariablesLabel: qi.selectedVariables.map((sv) => sv.variableId).join(', '),
       unitCost: qi.unitCost,
       unitPrice: qi.unitPrice,
+      profitMargin: qi.unitCost > 0 ? Math.round(((qi.unitPrice - qi.unitCost) / qi.unitCost) * 100 * 10) / 10 : 20,
       previewConfig: {
         productImageUrl: '',
         productName: qi.productName,
@@ -641,6 +648,7 @@ export default function SalesPage() {
         selectedVariablesLabel,
         unitCost: currentItemUnitCost,
         unitPrice: calculateSalePrice(currentItemUnitCost, selectedProduct.profitMargin),
+        profitMargin: selectedProduct.profitMargin ?? 20,
         previewConfig: { ...previewConfig },
         dimensions: useDimensions ? { width: dimWidth, height: dimHeight } : undefined,
         printType: printType || undefined,
@@ -747,7 +755,10 @@ export default function SalesPage() {
     if (!selectedOrder) return;
     setEditingOrder(true);
     setEditOrderName(selectedOrder.name);
-    setEditItems(selectedOrder?.items.map(item => ({ ...item })));
+    setEditItems(selectedOrder?.items.map(item => ({
+      ...item,
+      profitMargin: item.unitCost > 0 ? Math.round(((item.unitPrice - item.unitCost) / item.unitCost) * 100 * 10) / 10 : 20,
+    })));
     setEditLogoColors(selectedOrder?.logoCost > 0 ? Math.round(selectedOrder?.logoCost / (globalConfig.logoPricePerColor || 10)) : 0);
     setEditDeliveryDate(selectedOrder?.deliveryDate || '');
   }
@@ -1476,7 +1487,30 @@ export default function SalesPage() {
                       <p className="text-sm text-slate-600 truncate">Variáveis: {item.selectedVariablesLabel}</p>
                       {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}x{item.dimensions.height}cm</p>}
                       {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
-                      <p className="text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitCost * item.quantity).toFixed(2)}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <label className="text-xs text-slate-500">Margem %:</label>
+                        <input
+                          type="number"
+                          min={item.profitMargin}
+                          step={0.5}
+                          value={item.profitMargin}
+                          onChange={(e) => {
+                            const newMargin = Math.max(item.profitMargin, Number(e.target.value));
+                            setCartItems((prev) => prev.map((ci, ciIdx) => {
+                              if (ciIdx !== index) return ci;
+                              return {
+                                ...ci,
+                                profitMargin: newMargin,
+                                unitPrice: calculateSalePrice(ci.unitCost, newMargin),
+                              };
+                            }));
+                          }}
+                          className="w-20 rounded border border-slate-200 px-2 py-0.5 text-xs"
+                          title={`Margem mínima: ${item.profitMargin}%`}
+                        />
+                        <span className="text-xs text-slate-400">(mín: {item.profitMargin}%)</span>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                       <button
                         type="button"
                         onClick={() => handleRemoveCartItem(index)}
@@ -1660,6 +1694,7 @@ export default function SalesPage() {
                   <div className="mt-3 space-y-3">
                     {editItems.map((item, idx) => {
                       const product = inventory.find((p) => p.id === item.productId);
+                      const minMargin = product?.profitMargin ?? 20;
                       return (
                         <div key={idx} className="rounded-xl border border-slate-200 p-4">
                           <div className="flex items-center justify-between gap-3">
@@ -1688,9 +1723,32 @@ export default function SalesPage() {
                               </button>
                             </div>
                           </div>
-                          <div className="mt-2 flex items-center justify-between text-sm">
-                            <span className="text-slate-500">Custo un.: R$ {(item.unitCost || 0).toFixed(2)}</span>
-                            <span className="font-semibold text-slate-900">Subtotal: R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
+                          <div className="mt-2 flex items-center gap-3">
+                            <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <span>Margem %:</span>
+                              <input
+                                type="number"
+                                min={minMargin}
+                                step={0.5}
+                                value={item.profitMargin}
+                                onChange={(e) => {
+                                  const newMargin = Math.max(minMargin, Number(e.target.value));
+                                  setEditItems((prev) => prev.map((ci, ciIdx) => {
+                                    if (ciIdx !== idx) return ci;
+                                    return {
+                                      ...ci,
+                                      profitMargin: newMargin,
+                                      unitPrice: calculateSalePrice(ci.unitCost, newMargin),
+                                    };
+                                  }));
+                                }}
+                                className="w-16 rounded border border-slate-200 px-1.5 py-0.5 text-xs"
+                                title={`Margem mínima: ${minMargin}%`}
+                              />
+                              <span className="text-slate-400">(mín: {minMargin}%)</span>
+                            </label>
+                            <span className="text-slate-500 text-xs">Custo un.: R$ {(item.unitCost || 0).toFixed(2)}</span>
+                            <span className="font-semibold text-slate-900 text-xs">Subtotal: R$ {((item.unitPrice || item.unitCost || 0) * item.quantity).toFixed(2)}</span>
                           </div>
                         </div>
                       );
