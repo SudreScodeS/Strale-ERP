@@ -190,48 +190,58 @@ export function calculateDimensionCost(widthCm: number, heightCm: number): numbe
 // ==========================================
 // UNIDADES DE MEDIDA
 // ==========================================
-// Sacolas podem ser vendidas por unidade, cento (100) ou milhar (1000)
-// O estoque é armazenado na unidade da variável (não em unidades base)
+// Unidades de medida reais para produtos
 
-/** Fator de conversão: quantas unidades base equivalem a 1 unidade da medida */
-export const UNIT_FACTORS: Record<UnitOfMeasure, number> = {
-  un: 1,
-  cento: 100,
-  milhar: 1000,
-};
-
-/** Labels amigáveis para exibição (simplificado — apenas 'un') */
+/** Labels amigáveis para exibição */
 export const UNIT_LABELS: Record<UnitOfMeasure, string> = {
-  un: 'Un',
-  cento: 'Un',
-  milhar: 'Un',
+  un: 'Unidade',
+  'cm²': 'Centímetro quadrado',
+  'm²': 'Metro quadrado',
+  kg: 'Quilograma',
+  g: 'Grama',
+  l: 'Litro',
+  ml: 'Mililitro',
+  m: 'Metro',
+  cm: 'Centímetro',
 };
 
-/** Labels curtos para badges e cards (simplificado — apenas 'un') */
+/** Labels curtos para badges e cards */
 export const UNIT_SHORT_LABELS: Record<UnitOfMeasure, string> = {
   un: 'un',
-  cento: 'un',
-  milhar: 'un',
+  'cm²': 'cm²',
+  'm²': 'm²',
+  kg: 'kg',
+  g: 'g',
+  l: 'l',
+  ml: 'ml',
+  m: 'm',
+  cm: 'cm',
 };
 
-/** Labels para exibição de estoque (simplificado — apenas 'un.') */
+/** Labels para exibição de estoque */
 export const UNIT_STOCK_LABELS: Record<UnitOfMeasure, string> = {
   un: 'un.',
-  cento: 'un.',
-  milhar: 'un.',
+  'cm²': 'cm²',
+  'm²': 'm²',
+  kg: 'kg',
+  g: 'g',
+  l: 'l',
+  ml: 'ml',
+  m: 'm',
+  cm: 'cm',
 };
 
 /** Converte quantidade na unidade da medida para unidades base */
-export function toBaseUnits(quantity: number, unit: UnitOfMeasure): number {
-  return quantity * UNIT_FACTORS[unit];
+export function toBaseUnits(quantity: number, _unit: UnitOfMeasure): number {
+  return quantity;
 }
 
 /** Converte unidades base para a unidade da medida */
-export function fromBaseUnits(baseQty: number, unit: UnitOfMeasure): number {
-  return baseQty / UNIT_FACTORS[unit];
+export function fromBaseUnits(baseQty: number, _unit: UnitOfMeasure): number {
+  return baseQty;
 }
 
 /** Retorna a unidade de medida de uma variável (default: 'un') */
-export function getVariableUnit(_variable: { unitOfMeasure?: UnitOfMeasure }): UnitOfMeasure {
-  return 'un';
+export function getVariableUnit(variable: { unitOfMeasure?: UnitOfMeasure }): UnitOfMeasure {
+  return variable.unitOfMeasure || 'un';
 }

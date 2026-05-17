@@ -1054,25 +1054,16 @@ export default function QuotesPage() {
                   <span>Quantidade {(() => {
                     const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
                     const unit = selectedVars[0]?.unitOfMeasure || 'un';
-                    const unitName = unit === 'cento' ? 'centos' : unit === 'milhar' ? 'milhares' : 'unidades';
-                    return selectedVars.length > 0 ? `(${unitName})` : '';
+                    return selectedVars.length > 0 ? `(${unit})` : '';
                   })()}</span>
                   <input type="number" min={1} value={quantity} onChange={e => setQuantity(Number(e.target.value))}
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
-                  {(() => {
-                    const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
-                    const unit = selectedVars[0]?.unitOfMeasure || 'un';
-                    if (unit === 'cento') return <p className="text-xs text-slate-400">1 cento = 100 unidades</p>;
-                    if (unit === 'milhar') return <p className="text-xs text-slate-400">1 milhar = 1.000 unidades</p>;
-                    return null;
-                  })()}
                 </label>
                 <div className="flex items-end">
                   <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
                     Unitário: R$ {calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin).toFixed(2)} / {(() => {
                       const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
-                      const unit = selectedVars[0]?.unitOfMeasure || 'un';
-                      return unit === 'cento' ? 'cento' : unit === 'milhar' ? 'milhar' : 'unidade';
+                      return selectedVars[0]?.unitOfMeasure || 'un';
                     })()} | Total: R$ {currentItemTotalPrice.toFixed(2)}
                   </p>
                 </div>
@@ -1101,7 +1092,7 @@ export default function QuotesPage() {
                               aria-label={`Selecionar ${variable.name}`} />
                             <div className="flex-1">
                               <p className="font-medium text-slate-900">{variable.name}</p>
-                              <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / {variable.unitOfMeasure === 'cento' ? 'cento' : variable.unitOfMeasure === 'milhar' ? 'milhar' : 'unidade'} | Estoque: {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
+                              <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / {variable.unitOfMeasure || 'un'} | Estoque: {variable.stock} {variable.unitOfMeasure || 'un'}</p>
                             </div>
                           </div>
                         ))}

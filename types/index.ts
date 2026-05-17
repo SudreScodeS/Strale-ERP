@@ -38,8 +38,8 @@ export interface Group {
 }
 
 // Tipo de unidade de medida
-// Permite vender por unidade, cento (100) ou milhar (1000)
-export type UnitOfMeasure = 'un' | 'cento' | 'milhar';
+// Unidades de medida reais para produtos
+export type UnitOfMeasure = 'un' | 'cm²' | 'm²' | 'kg' | 'g' | 'l' | 'ml' | 'm' | 'cm';
 
 // Interface para variáveis de produto
 // Representa opções específicas dentro de um grupo (ex: "Nylon", "TNT", "Pequeno")
@@ -49,7 +49,7 @@ export interface Variable {
   additionalPrice: number; // Preço adicional sobre o base do produto
   stock: number; // Quantidade em estoque (na unidade definida por unitOfMeasure)
   groupId: string; // Grupo ao qual esta variável pertence
-  unitOfMeasure?: UnitOfMeasure; // Unidade de medida: 'un' (padrão), 'cento' (100), 'milhar' (1000)
+  unitOfMeasure?: UnitOfMeasure; // Unidade de medida: 'un' (padrão), 'cm²', 'm²', etc.
   createdAt: Date; // Data de criação da variável
 }
 

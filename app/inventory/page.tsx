@@ -592,10 +592,10 @@ export default function InventoryPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                                                   <span className="font-semibold" style={{ color: s.text }}>
-                                                    {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}
+                                                    {variable.stock} {variable.unitOfMeasure || 'un'}
                                                   </span>
                                                   {variable.additionalPrice > 0 && (
-                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/{variable.unitOfMeasure === 'cento' ? 'cento' : variable.unitOfMeasure === 'milhar' ? 'milhar' : 'un'}</span>
+                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/{variable.unitOfMeasure || 'un'}</span>
                                                   )}
                                                 </div>
                                               </div>
@@ -902,8 +902,14 @@ export default function InventoryPage() {
                         style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       >
                         <option value="un">Unidade (un)</option>
-                        <option value="cento">Cento (100 un)</option>
-                        <option value="milhar">Milhar (1000 un)</option>
+                        <option value="cm²">Centímetro quadrado (cm²)</option>
+                        <option value="m²">Metro quadrado (m²)</option>
+                        <option value="kg">Quilograma (kg)</option>
+                        <option value="g">Grama (g)</option>
+                        <option value="l">Litro (l)</option>
+                        <option value="ml">Mililitro (ml)</option>
+                        <option value="m">Metro (m)</option>
+                        <option value="cm">Centímetro (cm)</option>
                       </select>
                       <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                         Define como o estoque é contado e exibido
@@ -990,8 +996,14 @@ export default function InventoryPage() {
                       style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                     >
                       <option value="un">Unidade (un)</option>
-                      <option value="cento">Cento (100 un)</option>
-                      <option value="milhar">Milhar (1000 un)</option>
+                      <option value="cm²">Centímetro quadrado (cm²)</option>
+                      <option value="m²">Metro quadrado (m²)</option>
+                      <option value="kg">Quilograma (kg)</option>
+                      <option value="g">Grama (g)</option>
+                      <option value="l">Litro (l)</option>
+                      <option value="ml">Mililitro (ml)</option>
+                      <option value="m">Metro (m)</option>
+                      <option value="cm">Centímetro (cm)</option>
                     </select>
                   </label>
                   <div className="flex justify-end gap-2 pt-2">

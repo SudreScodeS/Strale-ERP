@@ -4,7 +4,7 @@ import { groupData, variableData, priceHistoryData } from '../../../lib/data';
 import { requireRole } from '../../../lib/auth';
 import type { UnitOfMeasure } from '../../../../types';
 
-const VALID_UNITS: UnitOfMeasure[] = ['un', 'cento', 'milhar'];
+const VALID_UNITS: UnitOfMeasure[] = ['un', 'cm²', 'm²', 'kg', 'g', 'l', 'ml', 'm', 'cm'];
 
 export async function POST(request: Request) {
   try {

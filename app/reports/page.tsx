@@ -144,7 +144,7 @@ const REPORTS: ReportConfig[] = [
           const vars = (g.variables || []) as Record<string, unknown>[];
           return vars.map((v): ReportRow => {
             const unit = (v.unitOfMeasure as string) || 'un';
-            const unitLabel = unit === 'cento' ? 'ct.' : unit === 'milhar' ? 'ml.' : 'un.';
+            const unitLabel = unit || 'un';
             return {
               productName: String(p.name ?? ''),
               groupName: String(g.name ?? ''),
