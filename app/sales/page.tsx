@@ -20,6 +20,7 @@ interface VariableOption {
   additionalPrice: number;
   stock: number;
   groupId: string;
+  unitOfMeasure?: string;
 }
 
 interface GroupOption {
@@ -1325,7 +1326,7 @@ export default function SalesPage() {
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">{variable.name}</p>
                           <p className="text-sm text-slate-600">R$ {variable.additionalPrice.toFixed(2)}</p>
-                          <p className="text-xs text-slate-500">Estoque: {variable.stock}</p>
+                          <p className="text-xs text-slate-500">Estoque: {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
                         </div>
                       </div>
                     ))}

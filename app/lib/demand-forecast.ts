@@ -41,6 +41,7 @@ export interface DemandForecast {
   productName: string;
   productId: string;
   currentStock: number;
+  unitOfMeasure?: string;          // Unidade de medida da variável
   // Previsão
   avgWeeklyDemand: number;     // Demanda média semanal
   avgMonthlyDemand: number;    // Demanda média mensal
@@ -303,6 +304,7 @@ export function forecastVariable(
     productName: product?.name || 'Sem produto',
     productId: product?.id || '',
     currentStock: variable.stock,
+    unitOfMeasure: variable.unitOfMeasure || 'un',
     avgWeeklyDemand: Math.round(avgWeekly * 10) / 10,
     avgMonthlyDemand: Math.round(avgMonthly * 10) / 10,
     forecastNextWeek: forecastWeek,

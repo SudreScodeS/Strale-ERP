@@ -2,12 +2,18 @@
 // Motor local de IA de Produtos. Nao usa API externa nem modelo remoto.
 // As recomendacoes sao heuristicas sobre dados locais do ERP.
 
-import { globalConfig } from '../../config/global';
+import { globalConfig, getVariableUnit, UNIT_STOCK_LABELS } from '../../config/global';
 import { Group, Order, Product, Quote, Variable } from '../../types';
 import { groupData, orderData, priceHistoryData, productData, quoteData, variableData } from './data';
 import { forecastVariable, type DemandForecast } from './demand-forecast';
 
 export type ProductAIPriority = 'critical' | 'attention' | 'opportunity';
+
+/** Retorna a label da unidade de estoque para uma variável */
+function stockUnit(variable: { unitOfMeasure?: string }): string {
+  const unit = variable.unitOfMeasure || 'un';
+  return unit === 'cento' ? 'ct.' : unit === 'milhar' ? 'ml.' : 'un.';
+}
 
 export interface ProductAIMetric {
   label: string;
@@ -279,13 +285,13 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
           : 'Revisar estoque e disponibilidade antes de aceitar novos pedidos desta variacao.',
         { label: 'Abrir compras', href: '/purchases' },
         [
-          `Estoque atual: ${stock} un.`,
-          `Limite critico do grupo: ${criticalLimit} un.`,
-          `Demanda media semanal: ${formatNumber(forecast.avgWeeklyDemand)} un.`,
+          `Estoque atual: ${stock} ${stockUnit(stats.variable)}`,
+          `Limite critico do grupo: ${criticalLimit} ${stockUnit(stats.variable)}`,
+          `Demanda media semanal: ${formatNumber(forecast.avgWeeklyDemand)} ${stockUnit(stats.variable)}`,
         ],
         [
-          { label: 'Estoque', value: `${stock} un.`, tone: 'critical' },
-          { label: 'Repor', value: `${forecast.suggestedReplenishment} un.`, tone: forecast.suggestedReplenishment > 0 ? 'critical' : 'neutral' },
+          { label: 'Estoque', value: `${stock} ${stockUnit(stats.variable)}`, tone: 'critical' },
+          { label: 'Repor', value: `${forecast.suggestedReplenishment} ${stockUnit(stats.variable)}`, tone: forecast.suggestedReplenishment > 0 ? 'critical' : 'neutral' },
           { label: 'Pedidos', value: String(stats.orderIds.size), tone: 'neutral' },
         ],
       ));
@@ -300,12 +306,12 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
         { label: 'Ver previsao', href: '/demand-forecast' },
         [
           `Dias estimados de estoque: ${forecast.daysOfStock >= 999 ? 'sem consumo recente' : `${forecast.daysOfStock} dias`}.`,
-          `Previsao para a proxima semana: ${forecast.forecastNextWeek} un.`,
-          `Estoque atual: ${stock} un.`,
+          `Previsao para a proxima semana: ${forecast.forecastNextWeek} ${stockUnit(stats.variable)}`,
+          `Estoque atual: ${stock} ${stockUnit(stats.variable)}`,
         ],
         [
           { label: 'Risco', value: forecast.riskLabel, tone: 'attention' },
-          { label: 'Demanda/sem', value: `${formatNumber(forecast.avgWeeklyDemand)} un.`, tone: 'neutral' },
+          { label: 'Demanda/sem', value: `${formatNumber(forecast.avgWeeklyDemand)} ${stockUnit(stats.variable)}`, tone: 'neutral' },
         ],
       ));
     }
@@ -341,12 +347,12 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
         'Validar se esta variacao deve aparecer nos orcamentos ou se o estoque precisa de acao comercial.',
         { label: 'Abrir orcamentos', href: '/quotes' },
         [
-          `Estoque atual: ${stock} un.`,
+          `Estoque atual: ${stock} ${stockUnit(stats.variable)}`,
           'Nao ha pedidos concluidos com esta variacao atual.',
-          `Limite de atencao do grupo: ${watchLimit} un.`,
+          `Limite de atencao do grupo: ${watchLimit} ${stockUnit(stats.variable)}`,
         ],
         [
-          { label: 'Estoque', value: `${stock} un.`, tone: 'attention' },
+          { label: 'Estoque', value: `${stock} ${stockUnit(stats.variable)}`, tone: 'attention' },
           { label: 'Pedidos', value: '0', tone: 'attention' },
         ],
       ));
@@ -364,11 +370,11 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
         [
           `Estoque cobre aproximadamente ${Math.round(stock / forecast.avgWeeklyDemand)} semanas de demanda.`,
           `Tendencia atual: ${forecast.trend}.`,
-          `Demanda media semanal: ${formatNumber(forecast.avgWeeklyDemand)} un.`,
+          `Demanda media semanal: ${formatNumber(forecast.avgWeeklyDemand)} ${stockUnit(stats.variable)}`,
         ],
         [
           { label: 'Cobertura', value: `${Math.round(stock / forecast.avgWeeklyDemand)} sem.`, tone: 'opportunity' },
-          { label: 'Estoque', value: `${stock} un.`, tone: 'neutral' },
+          { label: 'Estoque', value: `${stock} ${stockUnit(stats.variable)}`, tone: 'neutral' },
         ],
       ));
     }
@@ -386,13 +392,13 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
           : 'Antes de aprovar novos orcamentos, alinhar reposicao ou ajustar prazo de entrega.',
         { label: 'Abrir orcamentos', href: '/quotes' },
         [
-          `Quantidade em orcamentos ativos: ${stats.activeQuoteQuantity} un.`,
-          `Estoque atual: ${stock} un.`,
+          `Quantidade em orcamentos ativos: ${stats.activeQuoteQuantity} ${stockUnit(stats.variable)}`,
+          `Estoque atual: ${stock} ${stockUnit(stats.variable)}`,
           `Orcamentos relacionados: ${stats.quoteIds.size}.`,
         ],
         [
-          { label: 'Em orcamento', value: `${stats.activeQuoteQuantity} un.`, tone: hasEnoughStock ? 'opportunity' : 'attention' },
-          { label: 'Estoque', value: `${stock} un.`, tone: hasEnoughStock ? 'neutral' : 'attention' },
+          { label: 'Em orcamento', value: `${stats.activeQuoteQuantity} ${stockUnit(stats.variable)}`, tone: hasEnoughStock ? 'opportunity' : 'attention' },
+          { label: 'Estoque', value: `${stock} ${stockUnit(stats.variable)}`, tone: hasEnoughStock ? 'neutral' : 'attention' },
         ],
       ));
     }
@@ -408,12 +414,12 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
         { label: 'Abrir pedidos', href: '/sales' },
         [
           `Margem media historica: ${formatPercent(marginPercent)}.`,
-          `Quantidade vendida: ${stats.soldQuantity} un.`,
+          `Quantidade vendida: ${stats.soldQuantity} ${stockUnit(stats.variable)}`,
           `Lucro bruto atribuido: ${formatMoney(stats.grossProfit)}.`,
         ],
         [
           { label: 'Margem', value: formatPercent(marginPercent), tone: 'opportunity' },
-          { label: 'Vendido', value: `${stats.soldQuantity} un.`, tone: 'neutral' },
+          { label: 'Vendido', value: `${stats.soldQuantity} ${stockUnit(stats.variable)}`, tone: 'neutral' },
         ],
       ));
     }
@@ -429,12 +435,12 @@ function buildInsights(statsList: VariableStats[]): ProductAIInsight[] {
         { label: 'Ver estoque', href: '/inventory' },
         [
           `Ultima venda ha ${lastSaleDays} dias.`,
-          `Estoque atual: ${stock} un.`,
-          `Quantidade historica vendida: ${stats.soldQuantity} un.`,
+          `Estoque atual: ${stock} ${stockUnit(stats.variable)}`,
+          `Quantidade historica vendida: ${stats.soldQuantity} ${stockUnit(stats.variable)}`,
         ],
         [
           { label: 'Ultima venda', value: `${lastSaleDays} dias`, tone: 'attention' },
-          { label: 'Estoque', value: `${stock} un.`, tone: 'neutral' },
+          { label: 'Estoque', value: `${stock} ${stockUnit(stats.variable)}`, tone: 'neutral' },
         ],
       ));
     }

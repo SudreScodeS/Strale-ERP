@@ -110,15 +110,19 @@ const REPORTS: ReportConfig[] = [
         const groups = (p.groups || []) as Record<string, unknown>[];
         return groups.flatMap((g) => {
           const vars = (g.variables || []) as Record<string, unknown>[];
-          return vars.map((v): ReportRow => ({
-            productName: String(p.name ?? ''),
-            groupName: String(g.name ?? ''),
-            variableName: String(v.name ?? ''),
-            stock: Number(v.stock ?? 0),
-            price: Number(v.additionalPrice ?? 0),
-            basePrice: Number(p.basePrice ?? 0),
-            totalValue: Number(v.stock ?? 0) * (Number(p.basePrice ?? 0) + Number(v.additionalPrice ?? 0)),
-          }));
+          return vars.map((v): ReportRow => {
+            const unit = (v.unitOfMeasure as string) || 'un';
+            const unitLabel = unit === 'cento' ? 'ct.' : unit === 'milhar' ? 'ml.' : 'un.';
+            return {
+              productName: String(p.name ?? ''),
+              groupName: String(g.name ?? ''),
+              variableName: String(v.name ?? ''),
+              stock: `${Number(v.stock ?? 0)} ${unitLabel}`,
+              price: Number(v.additionalPrice ?? 0),
+              basePrice: Number(p.basePrice ?? 0),
+              totalValue: Number(v.stock ?? 0) * (Number(p.basePrice ?? 0) + Number(v.additionalPrice ?? 0)),
+            };
+          });
         });
       });
     },

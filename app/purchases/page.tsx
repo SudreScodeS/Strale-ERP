@@ -19,6 +19,7 @@ interface VariableItem {
   name: string;
   stock: number;
   additionalPrice: number;
+  unitOfMeasure?: string;
 }
 
 interface PurchaseOrderItem {
@@ -224,7 +225,7 @@ export default function PurchasesPage() {
                       lowStockVariables.map((item) => (
                         <div key={item.id} className="rounded-xl border border-slate-200 p-4">
                           <p className="font-semibold text-slate-900">{item.name}</p>
-                          <p className="text-sm text-slate-600">Estoque: {item.stock}</p>
+                          <p className="text-sm text-slate-600">Estoque: {item.stock} {item.unitOfMeasure === 'cento' ? 'ct.' : item.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
                           <p className="text-sm text-slate-600">Custo adicional: R$ {item.additionalPrice.toFixed(2)}</p>
                         </div>
                       ))

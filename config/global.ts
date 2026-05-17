@@ -3,7 +3,7 @@
 // Todas as regras de negócio configuráveis estão aqui
 // A persistência é feita via API /api/config (server-side)
 
-import { GlobalConfig, PriceTier, PrintPricingRule, PrintType } from '../types';
+import { GlobalConfig, PriceTier, PrintPricingRule, PrintType, UnitOfMeasure } from '../types';
 
 // ==========================================
 // TABELA DE PREÇOS POR FAIXA DE QUANTIDADE
@@ -184,4 +184,53 @@ export function calculatePrintCost(
 export function calculateDimensionCost(widthCm: number, heightCm: number): number {
   if (!globalConfig.pricePerCm2 || globalConfig.pricePerCm2 <= 0) return 0;
   return widthCm * heightCm * globalConfig.pricePerCm2;
+}
+
+// ==========================================
+// UNIDADES DE MEDIDA
+// ==========================================
+// Sacolas podem ser vendidas por unidade, cento (100) ou milhar (1000)
+// O estoque é armazenado na unidade da variável (não em unidades base)
+
+/** Fator de conversão: quantas unidades base equivalem a 1 unidade da medida */
+export const UNIT_FACTORS: Record<UnitOfMeasure, number> = {
+  un: 1,
+  cento: 100,
+  milhar: 1000,
+};
+
+/** Labels amigáveis para exibição */
+export const UNIT_LABELS: Record<UnitOfMeasure, string> = {
+  un: 'Un',
+  cento: 'Cento',
+  milhar: 'Milhar',
+};
+
+/** Labels curtos para badges e cards */
+export const UNIT_SHORT_LABELS: Record<UnitOfMeasure, string> = {
+  un: 'un',
+  cento: 'ct',
+  milhar: 'ml',
+};
+
+/** Labels para exibição de estoque */
+export const UNIT_STOCK_LABELS: Record<UnitOfMeasure, string> = {
+  un: 'un.',
+  cento: 'ct.',
+  milhar: 'ml.',
+};
+
+/** Converte quantidade na unidade da medida para unidades base */
+export function toBaseUnits(quantity: number, unit: UnitOfMeasure): number {
+  return quantity * UNIT_FACTORS[unit];
+}
+
+/** Converte unidades base para a unidade da medida */
+export function fromBaseUnits(baseQty: number, unit: UnitOfMeasure): number {
+  return baseQty / UNIT_FACTORS[unit];
+}
+
+/** Retorna a unidade de medida de uma variável (default: 'un') */
+export function getVariableUnit(variable: { unitOfMeasure?: UnitOfMeasure }): UnitOfMeasure {
+  return variable.unitOfMeasure || 'un';
 }

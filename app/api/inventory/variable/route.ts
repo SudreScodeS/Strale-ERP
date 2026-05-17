@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { groupData, variableData, priceHistoryData } from '../../../lib/data';
 import { requireRole } from '../../../lib/auth';
+import type { UnitOfMeasure } from '../../../../types';
+
+const VALID_UNITS: UnitOfMeasure[] = ['un', 'cento', 'milhar'];
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +17,16 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { groupId, name, additionalPrice, stock } = body as { groupId: string; name: string; additionalPrice: number; stock: number };
+  const { groupId, name, additionalPrice, stock, unitOfMeasure } = body as { groupId: string; name: string; additionalPrice: number; stock: number; unitOfMeasure?: string };
 
   if (!groupId || !name || typeof additionalPrice !== 'number' || typeof stock !== 'number') {
     return NextResponse.json({ error: 'Grupo, nome, preço adicional e estoque são obrigatórios.' }, { status: 400 });
   }
+
+  // Validate unit of measure
+  const unit: UnitOfMeasure = (unitOfMeasure && VALID_UNITS.includes(unitOfMeasure as UnitOfMeasure))
+    ? unitOfMeasure as UnitOfMeasure
+    : 'un';
 
   variableData.create({
     id: uuidv4(),
@@ -26,6 +34,7 @@ export async function POST(request: Request) {
     name,
     additionalPrice,
     stock,
+    unitOfMeasure: unit,
     createdAt: new Date(),
   });
 
@@ -43,12 +52,13 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const { id, groupId, name, additionalPrice, stock } = body as {
+  const { id, groupId, name, additionalPrice, stock, unitOfMeasure } = body as {
     id: string;
     groupId?: string;
     name?: string;
     additionalPrice?: number;
     stock?: number;
+    unitOfMeasure?: string;
   };
 
   if (!id) {
@@ -64,11 +74,14 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Grupo vinculado não encontrado.' }, { status: 404 });
   }
 
-  const updates: { groupId?: string; name?: string; additionalPrice?: number; stock?: number } = {};
+  const updates: { groupId?: string; name?: string; additionalPrice?: number; stock?: number; unitOfMeasure?: UnitOfMeasure } = {};
   if (groupId) updates.groupId = groupId;
   if (name) updates.name = name;
   if (typeof additionalPrice === 'number') updates.additionalPrice = additionalPrice;
   if (typeof stock === 'number') updates.stock = stock;
+  if (unitOfMeasure && VALID_UNITS.includes(unitOfMeasure as UnitOfMeasure)) {
+    updates.unitOfMeasure = unitOfMeasure as UnitOfMeasure;
+  }
 
   // Registra mudança de preço no histórico
   if (typeof additionalPrice === 'number' && additionalPrice !== existing.additionalPrice) {

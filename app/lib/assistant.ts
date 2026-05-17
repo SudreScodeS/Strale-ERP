@@ -6,7 +6,7 @@
 import { productData, variableData, groupData, orderData, financeData, userData, supplierData, purchaseOrderData, quoteData } from './data';
 import { getFinanceSummary, getStockAlertsByLevel, getOrcamentosStats } from './business';
 import { getDemandForecastSummary } from './demand-forecast';
-import { globalConfig } from '../../config/global';
+import { globalConfig, getVariableUnit, UNIT_STOCK_LABELS } from '../../config/global';
 import { calculateItemPricing, type PricingInput } from './pricing';
 
 // ==========================================
@@ -139,7 +139,8 @@ function queryLowStock(): AssistantResponse {
     lines.push('[CRITICO] Estoque critico:');
     for (const v of alerts.critical) {
       const group = groups.find(g => g.id === v.groupId);
-      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} unidades restantes`);
+      const unit = getVariableUnit(v);
+      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} ${UNIT_STOCK_LABELS[unit]} restantes`);
     }
   }
 
@@ -148,7 +149,8 @@ function queryLowStock(): AssistantResponse {
     lines.push('[ATENCAO] Estoque em atencao:');
     for (const v of alerts.watch) {
       const group = groups.find(g => g.id === v.groupId);
-      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} unidades`);
+      const unit = getVariableUnit(v);
+      lines.push(`  • **${v.name}** (${group?.name || 'Sem grupo'}) — ${v.stock} ${UNIT_STOCK_LABELS[unit]}`);
     }
   }
 
@@ -239,8 +241,17 @@ function queryProducts(): AssistantResponse {
   const lines = products.map(p => {
     const pGroups = groups.filter(g => g.productId === p.id);
     const pVariables = variables.filter(v => pGroups.some(g => g.id === v.groupId));
-    const totalStock = pVariables.reduce((sum, v) => sum + v.stock, 0);
-    return `• **${p.name}** — ${formatCurrency(p.basePrice)} base — ${pGroups.length} grupos, ${pVariables.length} variações — Estoque total: ${totalStock}`;
+    // Group stock by unit type
+    const stockByUnit: Record<string, number> = {};
+    pVariables.forEach(v => {
+      const unit = getVariableUnit(v);
+      stockByUnit[unit] = (stockByUnit[unit] || 0) + v.stock;
+    });
+    const stockLabel = Object.entries(stockByUnit)
+      .filter(([, qty]) => qty > 0)
+      .map(([unit, qty]) => `${qty} ${UNIT_STOCK_LABELS[unit as keyof typeof UNIT_STOCK_LABELS]}`)
+      .join(', ') || '0';
+    return `• **${p.name}** — ${formatCurrency(p.basePrice)} base — ${pGroups.length} grupos, ${pVariables.length} variações — Estoque: ${stockLabel}`;
   });
 
   return {
@@ -404,7 +415,8 @@ function queryHighStock(): AssistantResponse {
 
   const lines = sorted.map(v => {
     const group = groups.find(g => g.id === v.groupId);
-    return `• **${v.name}** (${group?.name || '?'}) — ${v.stock} unidades`;
+    const unit = getVariableUnit(v);
+    return `• **${v.name}** (${group?.name || '?'}) — ${v.stock} ${UNIT_STOCK_LABELS[unit]}`;
   });
 
   return {

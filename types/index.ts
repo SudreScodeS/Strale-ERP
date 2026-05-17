@@ -36,14 +36,19 @@ export interface Group {
   createdAt: Date; // Data de criação do grupo
 }
 
+// Tipo de unidade de medida
+// Permite vender por unidade, cento (100) ou milhar (1000)
+export type UnitOfMeasure = 'un' | 'cento' | 'milhar';
+
 // Interface para variáveis de produto
 // Representa opções específicas dentro de um grupo (ex: "Nylon", "TNT", "Pequeno")
 export interface Variable {
   id: string; // ID único da variável
   name: string; // Nome da opção (ex: "Nylon", "Grande")
   additionalPrice: number; // Preço adicional sobre o base do produto
-  stock: number; // Quantidade em estoque desta variável
+  stock: number; // Quantidade em estoque (na unidade definida por unitOfMeasure)
   groupId: string; // Grupo ao qual esta variável pertence
+  unitOfMeasure?: UnitOfMeasure; // Unidade de medida: 'un' (padrão), 'cento' (100), 'milhar' (1000)
   createdAt: Date; // Data de criação da variável
 }
 
