@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
+import { calculateSalePrice, globalConfig, applyServerConfig, UNIT_LABELS, UNIT_SHORT_LABELS } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
@@ -1051,13 +1051,29 @@ export default function QuotesPage() {
                   </select>
                 </label>
                 <label className="space-y-2 text-slate-700">
-                  <span>Quantidade</span>
+                  <span>Quantidade {(() => {
+                    const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
+                    const unit = selectedVars[0]?.unitOfMeasure || 'un';
+                    const unitName = unit === 'cento' ? 'centos' : unit === 'milhar' ? 'milhares' : 'unidades';
+                    return selectedVars.length > 0 ? `(${unitName})` : '';
+                  })()}</span>
                   <input type="number" min={1} value={quantity} onChange={e => setQuantity(Number(e.target.value))}
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
+                  {(() => {
+                    const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
+                    const unit = selectedVars[0]?.unitOfMeasure || 'un';
+                    if (unit === 'cento') return <p className="text-xs text-slate-400">1 cento = 100 unidades</p>;
+                    if (unit === 'milhar') return <p className="text-xs text-slate-400">1 milhar = 1.000 unidades</p>;
+                    return null;
+                  })()}
                 </label>
                 <div className="flex items-end">
                   <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                    Unitário: R$ {calculateSalePrice(currentItemUnitCost).toFixed(2)} | Total: R$ {currentItemTotalPrice.toFixed(2)}
+                    Unitário: R$ {calculateSalePrice(currentItemUnitCost).toFixed(2)} / {(() => {
+                      const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
+                      const unit = selectedVars[0]?.unitOfMeasure || 'un';
+                      return unit === 'cento' ? 'cento' : unit === 'milhar' ? 'milhar' : 'unidade';
+                    })()} | Total: R$ {currentItemTotalPrice.toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -1085,7 +1101,7 @@ export default function QuotesPage() {
                               aria-label={`Selecionar ${variable.name}`} />
                             <div className="flex-1">
                               <p className="font-medium text-slate-900">{variable.name}</p>
-                              <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} | Estoque: {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
+                              <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / {variable.unitOfMeasure === 'cento' ? 'cento' : variable.unitOfMeasure === 'milhar' ? 'milhar' : 'unidade'} | Estoque: {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
                             </div>
                           </div>
                         ))}
@@ -1305,7 +1321,7 @@ export default function QuotesPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-semibold text-slate-900">{item.productName || `Produto ${item.productId}`}</p>
-                          <p className="text-xs text-slate-500">{item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} un.</p>
+                          <p className="text-xs text-slate-500">{item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} / unidade de medida</p>
                         </div>
                         <p className="font-bold text-slate-900">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</p>
                       </div>

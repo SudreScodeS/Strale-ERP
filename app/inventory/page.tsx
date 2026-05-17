@@ -9,7 +9,7 @@ import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure } from '../../types';
-import { UNIT_LABELS, UNIT_STOCK_LABELS, getVariableUnit } from '../../config/global';
+import { UNIT_LABELS, UNIT_SHORT_LABELS, UNIT_STOCK_LABELS, getVariableUnit } from '../../config/global';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
@@ -603,7 +603,7 @@ export default function InventoryPage() {
                                                     </span>
                                                   )}
                                                   {variable.additionalPrice > 0 && (
-                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}</span>
+                                                    <span>+R$ {variable.additionalPrice.toFixed(2)}/{UNIT_SHORT_LABELS[getVariableUnit(variable)]}</span>
                                                   )}
                                                 </div>
                                               </div>
@@ -858,7 +858,7 @@ export default function InventoryPage() {
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="text-sm font-medium">Preço adicional (R$)</span>
+                        <span className="text-sm font-medium">Preço adicional por {UNIT_LABELS[variableUnit].toLowerCase()} (R$)</span>
                         <input
                           type="number"
                           min={0}
@@ -868,9 +868,12 @@ export default function InventoryPage() {
                           className="w-full rounded-lg px-4 py-2.5 text-sm"
                           style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                         />
+                        <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                          Valor somado ao preço base do produto para cada {UNIT_LABELS[variableUnit].toLowerCase()}
+                        </p>
                       </label>
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="text-sm font-medium">Estoque inicial *</span>
+                        <span className="text-sm font-medium">Estoque inicial ({UNIT_STOCK_LABELS[variableUnit]}) *</span>
                         <input
                           type="number"
                           min={0}
@@ -953,7 +956,7 @@ export default function InventoryPage() {
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="text-sm font-medium">Preço adicional</span>
+                      <span className="text-sm font-medium">Preço adicional por {UNIT_LABELS[editVariableUnit].toLowerCase()}</span>
                       <input
                         type="number"
                         step={0.01}
@@ -963,6 +966,9 @@ export default function InventoryPage() {
                         className="w-full rounded-lg px-4 py-2.5 text-sm"
                         style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                       />
+                      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        +R$ {editVariablePrice.toFixed(2)} por {UNIT_LABELS[editVariableUnit].toLowerCase()} sobre o preço base
+                      </p>
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Estoque ({UNIT_STOCK_LABELS[editVariableUnit]})</span>

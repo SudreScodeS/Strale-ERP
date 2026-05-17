@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { calculateLogoCost, calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
+import { calculateLogoCost, calculateSalePrice, globalConfig, applyServerConfig, UNIT_LABELS, UNIT_SHORT_LABELS } from '../../config/global';
 import { PageHeader } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
@@ -1089,7 +1089,7 @@ export default function SalesPage() {
                         <div className="mt-2 space-y-1">
                           {order.items.map((item, idx) => (
                             <p key={idx} className="text-xs text-slate-400">
-                              • {item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} un.
+                              • {item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} / unidade de medida
                             </p>
                           ))}
                         </div>
@@ -1280,7 +1280,12 @@ export default function SalesPage() {
               </select>
             </label>
             <label className="space-y-2 text-slate-700">
-              <span>Quantidade</span>
+              <span>Quantidade {(() => {
+                const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
+                const unit = selectedVars[0]?.unitOfMeasure || 'un';
+                const unitName = unit === 'cento' ? 'centos' : unit === 'milhar' ? 'milhares' : 'unidades';
+                return selectedVars.length > 0 ? `(${unitName})` : '';
+              })()}</span>
               <input
                 type="number"
                 min={1}
@@ -1288,6 +1293,13 @@ export default function SalesPage() {
                 onChange={(event) => setQuantity(Number(event.target.value))}
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
               />
+              {(() => {
+                const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
+                const unit = selectedVars[0]?.unitOfMeasure || 'un';
+                if (unit === 'cento') return <p className="text-xs text-slate-400">1 cento = 100 unidades</p>;
+                if (unit === 'milhar') return <p className="text-xs text-slate-400">1 milhar = 1.000 unidades</p>;
+                return null;
+              })()}
             </label>
           </div>
 
@@ -1325,7 +1337,7 @@ export default function SalesPage() {
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">{variable.name}</p>
-                          <p className="text-sm text-slate-600">R$ {variable.additionalPrice.toFixed(2)}</p>
+                          <p className="text-sm text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / {variable.unitOfMeasure === 'cento' ? 'cento' : variable.unitOfMeasure === 'milhar' ? 'milhar' : 'unidade'}</p>
                           <p className="text-xs text-slate-500">Estoque: {variable.stock} {variable.unitOfMeasure === 'cento' ? 'ct.' : variable.unitOfMeasure === 'milhar' ? 'ml.' : 'un.'}</p>
                         </div>
                       </div>
@@ -1856,6 +1868,7 @@ export default function SalesPage() {
                           name: v?.name || sv.variableId,
                           quantity: sv.quantity,
                           additionalPrice: v?.additionalPrice || 0,
+                          unitOfMeasure: v?.unitOfMeasure || 'un',
                         };
                       });
 
@@ -1882,7 +1895,7 @@ export default function SalesPage() {
                                 >
                                   {v.name}
                                   {v.quantity > 1 ? ` ×${v.quantity}` : ''}
-                                  {v.additionalPrice > 0 ? ` (+R$ ${v.additionalPrice.toFixed(2)})` : ''}
+                                  {v.additionalPrice > 0 ? ` (+R$ ${v.additionalPrice.toFixed(2)}/${v.unitOfMeasure === 'cento' ? 'ct' : v.unitOfMeasure === 'milhar' ? 'ml' : 'un'})` : ''}
                                 </span>
                               ))}
                             </div>
