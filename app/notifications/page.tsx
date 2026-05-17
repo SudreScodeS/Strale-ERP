@@ -100,6 +100,63 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (value: boo
 }
 
 // ==========================================
+// CONFIRM DIALOG COMPONENT
+// ==========================================
+
+function ConfirmDialog({
+  open,
+  title,
+  message,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+      onClick={onCancel}
+    >
+      <div
+        className="mx-4 w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+        style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+        <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{message}</p>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+            style={{ background: 'var(--danger)' }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ==========================================
 // MAIN PAGE
 // ==========================================
 
@@ -111,6 +168,17 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState('all');
   const [filterEntity, setFilterEntity] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Delete confirmation state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
   // Notification settings state
   const [settings, setSettings] = useState<NotificationSettings>({
@@ -193,6 +261,60 @@ export default function NotificationsPage() {
   }, []);
 
   // ==========================================
+  // DELETE HANDLERS
+  // ==========================================
+
+  async function handleDeleteLog(id: string) {
+    try {
+      const res = await fetch(`/api/activity-logs?id=${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        setLogs(prev => prev.filter(l => l.id !== id));
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function handleClearAll() {
+    try {
+      const res = await fetch('/api/activity-logs?deleteAll=true', {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        setLogs([]);
+      }
+    } catch { /* ignore */ }
+  }
+
+  function confirmDeleteLog(id: string, description: string) {
+    setConfirmDialog({
+      open: true,
+      title: 'Remover log',
+      message: `Tem certeza que deseja remover este registro?\n\n"${description}"`,
+      confirmLabel: 'Remover',
+      onConfirm: () => {
+        void handleDeleteLog(id);
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+      },
+    });
+  }
+
+  function confirmClearAll() {
+    setConfirmDialog({
+      open: true,
+      title: 'Limpar todos os logs',
+      message: `Tem certeza que deseja remover todos os ${logs.length} registros? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Limpar tudo',
+      onConfirm: () => {
+        void handleClearAll();
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+      },
+    });
+  }
+
+  // ==========================================
   // SETTINGS SAVE
   // ==========================================
 
@@ -236,14 +358,26 @@ export default function NotificationsPage() {
   }
 
   // ==========================================
-  // FILTERED LOGS
+  // FILTERED & SORTED LOGS
   // ==========================================
 
-  const filteredLogs = logs.filter(log => {
-    if (filterAction !== 'all' && log.action !== filterAction) return false;
-    if (filterEntity !== 'all' && log.entity !== filterEntity) return false;
-    return true;
-  });
+  const query = searchQuery.toLowerCase().trim();
+
+  const filteredLogs = logs
+    .filter(log => {
+      if (filterAction !== 'all' && log.action !== filterAction) return false;
+      if (filterEntity !== 'all' && log.entity !== filterEntity) return false;
+      if (query) {
+        const haystack = `${log.description} ${log.username} ${log.details || ''}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const ta = new Date(a.timestamp).getTime();
+      const tb = new Date(b.timestamp).getTime();
+      return sortOrder === 'newest' ? tb - ta : ta - tb;
+    });
 
   const groupedLogs: Record<string, ActivityLog[]> = {};
   filteredLogs.forEach(log => {
@@ -254,6 +388,21 @@ export default function NotificationsPage() {
 
   const enabledCount = Object.values(settings).filter(Boolean).length;
   const totalCount = Object.values(settings).length;
+
+  // Active filter count
+  const activeFilterCount = [
+    filterAction !== 'all',
+    filterEntity !== 'all',
+    searchQuery.trim() !== '',
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = activeFilterCount > 0;
+
+  function clearAllFilters() {
+    setFilterAction('all');
+    setFilterEntity('all');
+    setSearchQuery('');
+  }
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
@@ -297,42 +446,117 @@ export default function NotificationsPage() {
         {activeTab === 'search' && (
           <div>
             {/* Filters */}
-            <div className="mb-6 flex flex-wrap items-center gap-3">
-              <select
-                value={filterAction}
-                onChange={e => setFilterAction(e.target.value)}
-                className="rounded-lg border px-3 py-2 text-sm"
-                style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-              >
-                <option value="all">Todas as ações</option>
-                {Object.entries(ACTION_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+            <div
+              className="mb-6 rounded-xl p-4"
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}
+            >
+              {/* Row 1: Search input */}
+              <div className="mb-3">
+                <div className="relative">
+                  <span
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm"
+                    style={{ color: 'var(--text-faint)' }}
+                  >
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Buscar por descrição, usuário ou detalhes..."
+                    className="w-full rounded-lg border py-2 pl-9 pr-3 text-sm"
+                    style={{
+                      background: 'var(--surface-muted)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+              </div>
 
-              <select
-                value={filterEntity}
-                onChange={e => setFilterEntity(e.target.value)}
-                className="rounded-lg border px-3 py-2 text-sm"
-                style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-              >
-                <option value="all">Todos os tipos</option>
-                {Object.entries(ENTITY_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+              {/* Row 2: Selects and actions */}
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value={filterAction}
+                  onChange={e => setFilterAction(e.target.value)}
+                  className="rounded-lg border px-3 py-2 text-sm"
+                  style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="all">Todas as ações</option>
+                  {Object.entries(ACTION_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
 
-              <button
-                onClick={() => void loadLogs()}
-                className="rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-                style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
-              >
-                Atualizar
-              </button>
+                <select
+                  value={filterEntity}
+                  onChange={e => setFilterEntity(e.target.value)}
+                  className="rounded-lg border px-3 py-2 text-sm"
+                  style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="all">Todos os tipos</option>
+                  {Object.entries(ENTITY_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
 
-              <span className="ml-auto text-xs" style={{ color: 'var(--text-faint)' }}>
-                {filteredLogs.length} registro{filteredLogs.length !== 1 ? 's' : ''}
-              </span>
+                <select
+                  value={sortOrder}
+                  onChange={e => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                  className="rounded-lg border px-3 py-2 text-sm"
+                  style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="newest">Mais recentes</option>
+                  <option value="oldest">Mais antigos</option>
+                </select>
+
+                {/* Active filter badge */}
+                {hasActiveFilters && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={{ background: 'var(--brand)', color: '#fff' }}
+                  >
+                    {activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''} ativo{activeFilterCount > 1 ? 's' : ''}
+                  </span>
+                )}
+
+                <div className="ml-auto flex items-center gap-2">
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="rounded-lg px-3 py-2 text-xs font-medium transition-colors"
+                      style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                    >
+                      Limpar filtros
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => void loadLogs()}
+                    className="rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                    style={{ background: 'var(--surface-muted)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                  >
+                    Atualizar
+                  </button>
+
+                  <button
+                    onClick={confirmClearAll}
+                    disabled={logs.length === 0}
+                    className="rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40"
+                    style={{ background: 'var(--danger-bg, #fef2f2)', color: 'var(--danger, #ef4444)', border: '1px solid var(--danger, #ef4444)' }}
+                  >
+                    Limpar todos
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 3: Record count */}
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                  {filteredLogs.length} registro{filteredLogs.length !== 1 ? 's' : ''}
+                  {hasActiveFilters && ` de ${logs.length} total`}
+                </span>
+              </div>
             </div>
 
             {/* Logs grouped by date */}
@@ -342,7 +566,7 @@ export default function NotificationsPage() {
               </div>
             ) : filteredLogs.length === 0 ? (
               <div className="py-16 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
-                Nenhuma atividade registrada.
+                {logs.length === 0 ? 'Nenhuma atividade registrada.' : 'Nenhum resultado para os filtros aplicados.'}
               </div>
             ) : (
               <div className="space-y-6">
@@ -357,7 +581,7 @@ export default function NotificationsPage() {
                         return (
                           <div
                             key={log.id}
-                            className="flex items-start gap-4 px-5 py-3.5 transition-colors"
+                            className="group flex items-start gap-4 px-5 py-3.5 transition-colors"
                             style={{
                               borderBottom: i < dateLogs.length - 1 ? '1px solid var(--border)' : 'none',
                               background: 'var(--card-bg)',
@@ -386,6 +610,15 @@ export default function NotificationsPage() {
                                 {log.details && <span>· {log.details}</span>}
                               </div>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => confirmDeleteLog(log.id, log.description)}
+                              className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-sm opacity-0 transition-opacity hover:opacity-100 group-hover:opacity-60"
+                              style={{ background: 'var(--danger-bg, #fef2f2)', color: 'var(--danger, #ef4444)' }}
+                              title="Remover este log"
+                            >
+                              🗑️
+                            </button>
                           </div>
                         );
                       })}
@@ -549,6 +782,16 @@ export default function NotificationsPage() {
           </div>,
           document.body
         )}
+
+        {/* Confirmation Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        />
       </div>
     </ProtectedPage>
   );

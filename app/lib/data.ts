@@ -367,4 +367,16 @@ export const activityLogData = {
     if (logs.length > 500) logs.splice(0, logs.length - 500);
     writeJsonFile('activity-logs.json', logs);
   },
+
+  deleteById: (id: string): boolean => {
+    const logs = readJsonFile<ActivityLog>('activity-logs.json');
+    const filtered = logs.filter(l => l.id !== id);
+    if (filtered.length === logs.length) return false;
+    writeJsonFile('activity-logs.json', filtered);
+    return true;
+  },
+
+  clearAll: () => {
+    writeJsonFile('activity-logs.json', []);
+  },
 };
