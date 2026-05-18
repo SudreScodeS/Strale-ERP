@@ -5,9 +5,28 @@
 import { NextResponse } from 'next/server';
 import { Quote, QuoteItem } from '../../../types';
 import { criarOrcamento, converterOrcamentoEmPedido, clonarOrcamento, atualizarStatusOrcamento } from '../../lib/business';
-import { quoteData, userData } from '../../lib/data';
+import { quoteData, userData, groupData, variableData } from '../../lib/data';
 import { requireRole } from '../../lib/auth';
 import { logActivity } from '../../lib/activity-logger';
+
+// Enriquece itens do orçamento com nomes de grupos e variáveis
+function enrichQuoteItems(items: QuoteItem[]): QuoteItem[] {
+  const groups = groupData.getAll();
+  const variables = variableData.getAll();
+  return items.map(item => ({
+    ...item,
+    selectedVariables: item.selectedVariables.map(sv => {
+      if (sv.variableName && sv.groupName) return sv; // já enriquecido
+      const group = groups.find(g => g.id === sv.groupId);
+      const variable = variables.find(v => v.id === sv.variableId);
+      return {
+        ...sv,
+        groupName: sv.groupName || group?.name || sv.groupId,
+        variableName: sv.variableName || variable?.name || sv.variableId,
+      };
+    }),
+  }));
+}
 
 // ==========================================
 // GET /api/quotes - LISTAR ORÇAMENTOS
@@ -31,7 +50,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
       }
       const creator = userData.getById(quote.userId);
-      return NextResponse.json({ quote: { ...quote, createdByName: creator?.username || quote.userId } });
+      return NextResponse.json({ quote: { ...quote, items: enrichQuoteItems(quote.items), createdByName: creator?.username || quote.userId } });
     }
 
     // Listar orçamentos
@@ -51,6 +70,7 @@ export async function GET(request: Request) {
     const users = userData.getAll();
     const quotesWithCreator = quotes.map(q => ({
       ...q,
+      items: enrichQuoteItems(q.items),
       createdByName: users.find(u => u.id === q.userId)?.username || q.userId,
     }));
 
