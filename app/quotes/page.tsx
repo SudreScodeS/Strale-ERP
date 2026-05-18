@@ -82,17 +82,17 @@ function generateQuotePDF(quote: QuoteView) {
   };
 
   const itemsHtml = quote.items.map((item, i) => {
-    const varLines = item.selectedVariables?.length
+    const varSummary = item.selectedVariables?.length
       ? item.selectedVariables.map(sv => {
           const varName = sv.variableName || sv.variableId;
           const grpName = sv.groupName;
-          return grpName ? `<span style="display:inline-block;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;font-size:0.75rem;color:#334155"><strong style="color:#64748b">${grpName}:</strong> ${varName}</span>` : `<span style="display:inline-block;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 8px;margin:2px;font-size:0.75rem;color:#334155">${varName}</span>`;
-        }).join('')
-      : '<span style="color:#94a3b8;font-size:0.75rem">—</span>';
+          return grpName ? `${grpName}: ${varName}` : varName;
+        }).join(' ; ')
+      : '—';
     return `
     <tr class="${i % 2 === 0 ? 'row-even' : 'row-odd'}">
       <td>${item.productName || 'Produto'}</td>
-      <td style="line-height:1.8">${varLines}</td>
+      <td style="color:#475569;font-size:0.82rem">${varSummary}</td>
       <td style="text-align:center">${item.quantity}</td>
       <td style="text-align:right">R$ ${item.unitPrice.toFixed(2)}</td>
       <td style="text-align:right">R$ ${(item.unitPrice * item.quantity).toFixed(2)}</td>
