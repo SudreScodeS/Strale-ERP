@@ -685,6 +685,22 @@ export default function InventoryPage() {
                     <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Novo produto base</h3>
                     <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Crie um produto que servirá como base para grupos e variáveis.</p>
                   </div>
+                  {/* Explicação com exemplo */}
+                  <div className="mb-5 rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>💡 Como funciona</p>
+                    <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      O <strong>Produto</strong> é o item base do seu estoque. Depois de criado, você pode adicionar <strong>Grupos</strong> (como Cor ou Tamanho) e dentro deles <strong>Variáveis</strong> (como Azul ou Grande).
+                    </p>
+                    <div className="rounded-lg p-3 text-xs" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+                      <p style={{ color: 'var(--text-muted)' }}><strong>Exemplo:</strong></p>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Produto:</strong> "Camiseta Básica" — Preço base: R$ 25,00
+                      </p>
+                      <p style={{ color: 'var(--text-faint)' }}>
+                        Depois você cria o grupo "Cor" com variáveis como "Branca", "Preta", "Azul"...
+                      </p>
+                    </div>
+                  </div>
                   <form className="space-y-4" onSubmit={handleCreateProduct}>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Nome do produto *</span>
@@ -772,6 +788,22 @@ export default function InventoryPage() {
                     <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Novo grupo</h3>
                     <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Grupos organizam variáveis dentro de um produto (ex: Cor, Tamanho).</p>
                   </div>
+                  {/* Explicação com exemplo */}
+                  <div className="mb-5 rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>💡 Como funciona</p>
+                    <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      O <strong>Grupo</strong> é uma categoria dentro de um produto. Ele agrupa as variações disponíveis — como cor, tamanho ou material.
+                    </p>
+                    <div className="rounded-lg p-3 text-xs" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+                      <p style={{ color: 'var(--text-muted)' }}><strong>Exemplo:</strong></p>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Produto:</strong> "Camiseta Básica"
+                      </p>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Grupo:</strong> "Cor" — (dentro dela você cria variáveis como Azul, Branca, Preta...)
+                      </p>
+                    </div>
+                  </div>
                   <form className="space-y-4" onSubmit={handleCreateGroup}>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Produto vinculado *</span>
@@ -837,6 +869,25 @@ export default function InventoryPage() {
                   <div className="mb-4">
                     <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Nova variável</h3>
                     <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Variáveis são as opções dentro de um grupo (ex: Vermelho, Azul).</p>
+                  </div>
+                  {/* Explicação com exemplo */}
+                  <div className="mb-5 rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>💡 Como funciona</p>
+                    <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      A <strong>Variável</strong> é a opção concreta dentro de um grupo. Cada variável tem seu próprio estoque e pode ter um preço adicional.
+                    </p>
+                    <div className="rounded-lg p-3 text-xs" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+                      <p style={{ color: 'var(--text-muted)' }}><strong>Exemplo:</strong></p>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Produto:</strong> "Camiseta Básica"
+                      </p>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Grupo:</strong> "Cor"
+                      </p>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Variável:</strong> "Azul" — Estoque: 50 un · +R$ 0,00 adicional
+                      </p>
+                    </div>
                   </div>
                   <form className="space-y-4" onSubmit={handleCreateVariable}>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
