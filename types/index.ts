@@ -168,7 +168,7 @@ export interface Quote {
 export interface QuoteItem {
   productId: string; // Produto base
   productName: string; // Nome do produto (snapshot)
-  selectedVariables: { groupId: string; variableId: string; quantity: number }[]; // Variáveis
+  selectedVariables: { groupId: string; groupName?: string; variableId: string; variableName?: string; quantity: number }[]; // Variáveis
   quantity: number; // Quantidade
   unitCost: number; // Custo unitário
   unitPrice: number; // Preço unitário com margem

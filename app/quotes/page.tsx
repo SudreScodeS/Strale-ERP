@@ -41,7 +41,7 @@ interface CartItem {
   productId: string;
   productName: string;
   quantity: number;
-  selectedVariables: { groupId: string; variableId: string; quantity: number }[];
+  selectedVariables: { groupId: string; groupName?: string; variableId: string; variableName?: string; quantity: number }[];
   selectedVariablesLabel: string;
   unitCost: number;
   unitPrice: number;
@@ -82,13 +82,17 @@ function generateQuotePDF(quote: QuoteView) {
   };
 
   const itemsHtml = quote.items.map((item, i) => {
-    const varSummary = item.selectedVariables?.length
-      ? item.selectedVariables.map(sv => (sv as Record<string, unknown>).variableName || sv.variableId).join(', ')
-      : '—';
+    const varLines = item.selectedVariables?.length
+      ? item.selectedVariables.map(sv => {
+          const varName = sv.variableName || sv.variableId;
+          const grpName = sv.groupName;
+          return grpName ? `<span style="display:inline-block;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;font-size:0.75rem;color:#334155"><strong style="color:#64748b">${grpName}:</strong> ${varName}</span>` : `<span style="display:inline-block;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 8px;margin:2px;font-size:0.75rem;color:#334155">${varName}</span>`;
+        }).join('')
+      : '<span style="color:#94a3b8;font-size:0.75rem">—</span>';
     return `
     <tr class="${i % 2 === 0 ? 'row-even' : 'row-odd'}">
       <td>${item.productName || 'Produto'}</td>
-      <td>${varSummary}</td>
+      <td style="line-height:1.8">${varLines}</td>
       <td style="text-align:center">${item.quantity}</td>
       <td style="text-align:right">R$ ${item.unitPrice.toFixed(2)}</td>
       <td style="text-align:right">R$ ${(item.unitPrice * item.quantity).toFixed(2)}</td>
@@ -525,8 +529,9 @@ export default function QuotesPage() {
     const selectedEntries = Object.entries(selectedVariables)
       .filter(([, qty]) => qty > 0)
       .map(([variableId, qty]) => {
-        const groupId = selectedProduct.groups.find(g => g.variables.some(v => v.id === variableId))?.id || '';
-        return { variableId, groupId, quantity: qty };
+        const group = selectedProduct.groups.find(g => g.variables.some(v => v.id === variableId));
+        const variable = group?.variables.find(v => v.id === variableId);
+        return { variableId, groupId: group?.id || '', groupName: group?.name || '', variableName: variable?.name || variableId, quantity: qty };
       });
 
     if (selectedEntries.length === 0) {
@@ -539,10 +544,7 @@ export default function QuotesPage() {
       return;
     }
 
-    const label = selectedEntries.map(e => {
-      const v = selectedProduct.groups.flatMap(g => g.variables).find(v => v.id === e.variableId);
-      return v?.name || e.variableId;
-    }).join(', ');
+    const label = selectedEntries.map(e => `${e.groupName}: ${e.variableName}`).join(', ');
 
     setCartItems(prev => [...prev, {
       productId: selectedProduct.id,
