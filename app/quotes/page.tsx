@@ -757,9 +757,26 @@ export default function QuotesPage() {
     setConvertQuoteName('');
   }
 
+  // Enriquece orçamentos com nomes de grupos/variáveis do estoque local
+  const enrichedQuotes = useMemo(() => {
+    if (inventory.length === 0) return quotes;
+    const allGroups = inventory.flatMap(p => p.groups);
+    return quotes.map(q => ({
+      ...q,
+      items: q.items.map(item => ({
+        ...item,
+        selectedVariables: item.selectedVariables.map(sv => ({
+          ...sv,
+          groupName: sv.groupName || allGroups.find(g => g.id === sv.groupId)?.name || sv.groupId,
+          variableName: sv.variableName || allGroups.flatMap(g => g.variables).find(v => v.id === sv.variableId)?.name || sv.variableId,
+        })),
+      })),
+    }));
+  }, [quotes, inventory]);
+
   const filteredQuotes = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    return quotes.filter(q => {
+    return enrichedQuotes.filter(q => {
       if (term && !q.name.toLowerCase().includes(term) && !q.customerName.toLowerCase().includes(term) && !q.id.includes(term)) return false;
       return true;
     });
