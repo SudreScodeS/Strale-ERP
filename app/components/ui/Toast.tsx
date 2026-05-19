@@ -1,11 +1,7 @@
 'use client';
 
-// ── Toast.tsx — Toast notification system ─
-
 import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
-
-// ── Types ──────────────────────────────────────────────────
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -20,14 +16,11 @@ interface ToastContextValue {
   toast: (message: string, type?: ToastType, duration?: number) => void;
 }
 
-// ── Context ────────────────────────────────────────────────
-
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) {
-    // Fallback for when used outside provider
     return {
       toast: (message: string, type: ToastType = 'info') => {
         console.log(`[toast:${type}] ${message}`);
@@ -37,16 +30,44 @@ export function useToast(): ToastContextValue {
   return ctx;
 }
 
-// ── Toast Icons ────────────────────────────────────────────
-
-const TOAST_CONFIG: Record<ToastType, { icon: string; bg: string; border: string; text: string }> = {
-  success: { icon: '✓', bg: 'var(--success-bg)', border: 'var(--success-border)', text: 'var(--success)' },
-  error: { icon: '✗', bg: 'var(--danger-bg)', border: 'var(--danger-border)', text: 'var(--danger)' },
-  warning: { icon: '!', bg: 'var(--warning-bg)', border: 'var(--warning-border)', text: 'var(--warning)' },
-  info: { icon: 'i', bg: 'var(--info-bg)', border: 'var(--info-border)', text: 'var(--info)' },
+const TOAST_CONFIG: Record<ToastType, { icon: React.ReactNode; accent: string; label: string }> = {
+  success: {
+    label: 'Sucesso',
+    accent: 'var(--success, #34d399)',
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  error: {
+    label: 'Erro',
+    accent: 'var(--danger, #f87171)',
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+    ),
+  },
+  warning: {
+    label: 'Atenção',
+    accent: 'var(--warning, #fbbf24)',
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+    ),
+  },
+  info: {
+    label: 'Info',
+    accent: 'var(--info, #818cf8)',
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
 };
-
-// ── Single Toast Component ─────────────────────────────────
 
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) => void }) {
   const [exiting, setExiting] = useState(false);
@@ -57,37 +78,45 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       setExiting(true);
       setTimeout(() => onRemove(toast.id), 300);
     }, toast.duration);
-
     return () => clearTimeout(timer);
   }, [toast.id, toast.duration, onRemove]);
 
   return (
     <div
-      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm shadow-lg transition-all duration-300"
+      className="flex w-full max-w-md items-start gap-3 rounded-xl p-4 shadow-lg transition-all duration-300"
       style={{
-        background: config.bg,
-        border: `1px solid ${config.border}`,
-        color: config.text,
-        transform: exiting ? 'translateX(120%)' : 'translateX(0)',
+        background: 'var(--card-bg, #131316)',
+        border: '1px solid var(--card-border, #232329)',
+        borderLeft: `3px solid ${config.accent}`,
+        transform: exiting ? 'translateY(-120%)' : 'translateY(0)',
         opacity: exiting ? 0 : 1,
       }}
     >
       <span
-        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-        style={{ background: config.text, color: '#fff' }}
+        className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
+        style={{ background: `color-mix(in srgb, ${config.accent} 15%, transparent)`, color: config.accent }}
       >
         {config.icon}
       </span>
-      <span className="flex-1 min-w-0">{toast.message}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary, #ecedf0)' }}>
+          {config.label}
+        </p>
+        <p className="mt-0.5 text-sm" style={{ color: 'var(--text-muted, #71717a)' }}>
+          {toast.message}
+        </p>
+      </div>
       <button
         onClick={() => {
           setExiting(true);
           setTimeout(() => onRemove(toast.id), 300);
         }}
-        className="flex-shrink-0 rounded p-0.5 transition-colors hover:opacity-70"
-        style={{ color: config.text }}
+        className="flex-shrink-0 rounded-md p-1 transition-colors"
+        style={{ color: 'var(--text-faint, #52525b)' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-muted, #1f1f24)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
       >
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -95,21 +124,17 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
   );
 }
 
-// ── Toast Container ────────────────────────────────────────
-
 function ToastContainerInner({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[300] flex flex-col-reverse gap-2 max-w-sm">
+    <div className="fixed top-4 left-1/2 z-[300] flex -translate-x-1/2 flex-col gap-2">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onRemove={onRemove} />
       ))}
     </div>
   );
 }
-
-// ── Provider ───────────────────────────────────────────────
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -122,9 +147,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const addToast = useCallback((message: string, type: ToastType = 'info', duration = 4000) => {
     const id = `toast-${++counterRef.current}`;
     setToasts((prev) => {
-      // Limit to 5 visible toasts
       const next = [...prev, { id, message, type, duration }];
-      if (next.length > 5) next.shift();
+      if (next.length > 3) next.shift();
       return next;
     });
   }, []);
@@ -140,8 +164,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
-
-// ── Standalone toast function (for use outside React) ──────
 
 let standaloneToast: ((message: string, type?: ToastType, duration?: number) => void) | null = null;
 
