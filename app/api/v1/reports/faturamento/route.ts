@@ -1,9 +1,9 @@
 // api/v1/reports/faturamento/route.ts
 // V1 standardized faturamento report endpoint.
 
-import { orderData, productData } from '../../../../../lib/data';
-import { requireRole } from '../../../../../lib/auth';
-import { ok, fromError } from '../../../../../lib/api-response';
+import { orderData, productData, variableData, groupData } from '../../../../lib/data';
+import { requireRole } from '../../../../lib/auth';
+import { ok, fromError } from '../../../../lib/api-response';
 
 interface ProductRevenue {
   productId: string;
@@ -20,6 +20,7 @@ interface ProductRevenue {
 export async function GET(request: Request) {
   try {
     requireRole(request, ['admin']);
+
     const orders = orderData.getAll().filter(o => o.status === 'completed');
     const products = productData.getAll();
 
@@ -64,12 +65,15 @@ export async function GET(request: Request) {
         productName: product.name,
         totalSales: data?.salesOrders.size ?? 0,
         totalQuantity: data?.totalQuantity ?? 0,
-        totalRevenue, totalCost, totalProfit, averageMargin,
+        totalRevenue,
+        totalCost,
+        totalProfit,
+        averageMargin,
         productMargin: product?.profitMargin ?? 20,
       };
     });
 
-    return ok({ products: result });
+    return ok(result);
   } catch (error) {
     return fromError(error);
   }

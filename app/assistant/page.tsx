@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { getAuthHeaders } from '../lib/authClient';
 import { globalConfig } from '../../config/global';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -11,6 +12,9 @@ import { ToolExecution } from '../components/assistant/ToolExecution';
 import { TypingIndicator } from '../components/assistant/TypingIndicator';
 import { ChatInput } from '../components/assistant/ChatInput';
 import { SuggestionChips } from '../components/assistant/SuggestionChips';
+import { RichResponse } from '../components/assistant/RichResponse';
+import { DataCard, DataCardGrid } from '../components/assistant/DataCard';
+import { getContextualSuggestions, type Suggestion } from '../lib/ai/contextual-suggestions';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -24,25 +28,15 @@ interface OllamaStatus {
 interface ToolExecutionState {
   tool: string;
   status: 'running' | 'success' | 'error';
-  result?: { success: boolean; message: string };
+  params?: Record<string, unknown>;
+  result?: { success: boolean; message: string; data?: unknown };
 }
 
-// ── Suggestions ────────────────────────────────────────────────
-
-const SUGGESTIONS = [
-  { label: 'Resumo do sistema', icon: '📊' },
-  { label: 'Produto mais vendido', icon: '🏆' },
-  { label: 'Estoque baixo', icon: '⚠️' },
-  { label: 'Lucro total', icon: '💰' },
-  { label: 'Pedidos recentes', icon: '🛒' },
-  { label: 'Entregas urgentes', icon: '🚚' },
-  { label: 'Previsão de demanda', icon: '📈' },
-  { label: 'Orçamentos pendentes', icon: '📋' },
-  { label: 'Ticket médio', icon: '🎯' },
-  { label: 'Vendas por período', icon: '📅' },
-  { label: 'Quanto custa 500 sacolas TNT?', icon: '💲' },
-  { label: 'Fornecedores', icon: '🏭' },
-];
+// Extend ChatMessageType with structured data
+interface ExtendedChatMessage extends ChatMessageType {
+  structuredData?: unknown;
+  richData?: Array<{ type: string; data: Record<string, unknown> }>;
+}
 
 const PAGE_PATH = '/assistant';
 
@@ -55,7 +49,8 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
 // ── Main Page ──────────────────────────────────────────────────
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<ChatMessageType[]>([
+  const pathname = usePathname();
+  const [messages, setMessages] = useState<ExtendedChatMessage[]>([
     {
       role: 'assistant',
       content: `Olá! Sou o assistente do **${globalConfig.systemName}**. Posso consultar vendas, estoque, financeiro, entregas, calcular preços e **executar ações** como criar orçamentos e produtos. Como posso ajudar?`,
@@ -67,6 +62,9 @@ export default function AssistantPage() {
   const [activeTools, setActiveTools] = useState<ToolExecutionState[]>([]);
   const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Contextual suggestions based on current page
+  const suggestions = getContextualSuggestions(pathname);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
