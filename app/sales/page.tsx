@@ -1217,7 +1217,8 @@ export default function SalesPage() {
                 className="w-full rounded-lg border px-4 py-3"
                 style={{
                   borderColor: orderName.trim() && orderName.trim().length < 2 ? 'var(--danger, #dc2626)' : undefined,
-                  background: '#f8fafc',
+                  background: 'var(--input-bg, #f8fafc)',
+                  color: 'var(--text-primary)',
                 }}
               />
               {orderName.trim() && orderName.trim().length < 2 && (
@@ -1234,7 +1235,7 @@ export default function SalesPage() {
                 value={deliveryDate}
                 onChange={(event) => setDeliveryDate(event.target.value)}
                 className="w-full rounded-lg border px-4 py-3"
-                style={{ background: '#f8fafc' }}
+                style={{ background: 'var(--input-bg, #f8fafc)', color: 'var(--text-primary)' }}
               />
               {!deliveryDate && cartItems.length > 0 && (
                 <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--warning, #f59e0b)' }}>
