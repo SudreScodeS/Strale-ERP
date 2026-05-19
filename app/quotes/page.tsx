@@ -763,7 +763,7 @@ export default function QuotesPage() {
     const map: Record<string, { text: string; color: string }> = {
       draft: { text: 'Rascunho', color: 'bg-slate-100 text-slate-700' },
       sent: { text: 'Enviado', color: 'bg-blue-100 text-blue-700' },
-      approved: { text: 'Aprovado', color: 'bg-emerald-100 text-emerald-700' },
+      approved: { text: 'Aprovado', color: 'bg-emerald-100 text-[var(--success)]' },
       rejected: { text: 'Rejeitado', color: 'bg-rose-100 text-rose-700' },
       converted: { text: 'Convertido', color: 'bg-purple-100 text-purple-700' },
     };
@@ -813,8 +813,8 @@ export default function QuotesPage() {
           <section className="rounded-2xl bg-white p-8 shadow-sm">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Orçamentos</p>
-                <h3 className="text-2xl font-semibold text-slate-900">Seus orçamentos</h3>
+                <p className="text-sm uppercase tracking-[0.3em] text-[var(--text-muted)]">Orçamentos</p>
+                <h3 className="text-2xl font-semibold text-[var(--text-primary)]">Seus orçamentos</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
@@ -835,7 +835,7 @@ export default function QuotesPage() {
             {loadingQuotes ? (
               <SkeletonOrderList count={4} />
             ) : filteredQuotes.length === 0 ? (
-              <p className="text-sm text-slate-500">Nenhum orçamento encontrado.</p>
+              <p className="text-sm text-[var(--text-muted)]">Nenhum orçamento encontrado.</p>
             ) : (
               <div className="space-y-4">
                 {/* Barra de seleção múltipla */}
@@ -847,7 +847,7 @@ export default function QuotesPage() {
                   />
                   {selectedQuoteIds.size > 0 && (
                     <>
-                      <span className="text-xs text-slate-500">{selectedQuoteIds.size} selecionado(s)</span>
+                      <span className="text-xs text-[var(--text-muted)]">{selectedQuoteIds.size} selecionado(s)</span>
                       <button
                         type="button"
                         onClick={() => void handleBulkDeleteQuotes()}
@@ -875,18 +875,18 @@ export default function QuotesPage() {
                             className="mt-1"
                           />
                           <div>
-                          <p className="font-semibold text-slate-900">{quote.name}</p>
-                          <p className="text-sm text-slate-500">Cliente: {quote.customerName}</p>
-                          <p className="text-sm text-slate-500">Criado por: {quote.createdByName || quote.userId}</p>
-                          <p className="text-sm text-slate-500">Data: {new Date(quote.createdAt).toLocaleDateString('pt-BR')}</p>
-                          <p className="text-sm font-semibold text-emerald-700">R$ {quote.totalPrice.toFixed(2)}</p>
+                          <p className="font-semibold text-[var(--text-primary)]">{quote.name}</p>
+                          <p className="text-sm text-[var(--text-muted)]">Cliente: {quote.customerName}</p>
+                          <p className="text-sm text-[var(--text-muted)]">Criado por: {quote.createdByName || quote.userId}</p>
+                          <p className="text-sm text-[var(--text-muted)]">Data: {new Date(quote.createdAt).toLocaleDateString('pt-BR')}</p>
+                          <p className="text-sm font-semibold text-[var(--success)]">R$ {quote.totalPrice.toFixed(2)}</p>
                           {quote.validUntil && (
                             <p className="text-xs text-amber-600">
                               Válido até: {new Date(quote.validUntil).toLocaleDateString('pt-BR')}
                             </p>
                           )}
                           {quote.deliveryDate && (
-                            <p className="text-xs text-blue-600">
+                            <p className="text-xs text-[var(--brand)]">
                               Entrega: {new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                             </p>
                           )}
@@ -963,7 +963,7 @@ export default function QuotesPage() {
           <div className="space-y-6">
             {/* Dados do cliente */}
             <section className="rounded-2xl bg-white p-8 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Dados do orçamento</h3>
+              <h3 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">Dados do orçamento</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2 text-slate-700">
                   <span>Nome do cliente *</span>
@@ -986,7 +986,7 @@ export default function QuotesPage() {
                   <span>Data de entrega</span>
                   <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
-                  <p className="text-xs text-slate-400">Opcional — pode ser definida ao converter em pedido.</p>
+                  <p className="text-xs text-[var(--text-faint)]">Opcional — pode ser definida ao converter em pedido.</p>
                 </label>
                 <div className="space-y-2 text-slate-700">
                   <span>Logo (análise automática de cores)</span>
@@ -1005,14 +1005,14 @@ export default function QuotesPage() {
                       Analisando cores da logo…
                     </div>
                   ) : logoAnalysisError ? (
-                    <p className="text-xs text-red-600">{logoAnalysisError}</p>
+                    <p className="text-xs text-[var(--danger)]">{logoAnalysisError}</p>
                   ) : logoAnalysisResult ? (
                     <div className="space-y-2">
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                        <p className="text-xs font-semibold text-emerald-800">
+                      <div className="rounded-lg border border-[var(--success-border)] bg-[var(--success-bg)] p-3">
+                        <p className="text-xs font-semibold text-[var(--text-primary)]">
                           {logoColors} {logoColors === 1 ? 'cor detectada' : 'cores detectadas'}
                         </p>
-                        <p className="text-xs text-emerald-700">{logoAnalysisResult.description}</p>
+                        <p className="text-xs text-[var(--success)]">{logoAnalysisResult.description}</p>
                       </div>
                       {logoAnalysisResult.colors.length > 0 && (
                         <div className="flex flex-wrap gap-1">
@@ -1031,9 +1031,9 @@ export default function QuotesPage() {
                       )}
                     </div>
                   ) : logoPreviewUrl ? (
-                    <p className="text-xs text-slate-500">Aguardando análise…</p>
+                    <p className="text-xs text-[var(--text-muted)]">Aguardando análise…</p>
                   ) : (
-                    <p className="text-xs text-slate-400">Faça upload da logo para detectar as cores automaticamente.</p>
+                    <p className="text-xs text-[var(--text-faint)]">Faça upload da logo para detectar as cores automaticamente.</p>
                   )}
                 </div>
                 <label className="space-y-2 text-slate-700 md:col-span-2">
@@ -1047,7 +1047,7 @@ export default function QuotesPage() {
 
             {/* Seleção de produto */}
             <section className="rounded-2xl bg-white p-8 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Adicionar item</h3>
+              <h3 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">Adicionar item</h3>
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="space-y-2 text-slate-700">
                   <span>Produto</span>
@@ -1066,7 +1066,7 @@ export default function QuotesPage() {
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3" />
                 </label>
                 <div className="flex items-end">
-                  <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  <p className="rounded-2xl bg-[var(--success-bg)] px-4 py-3 text-sm font-semibold text-[var(--success)]">
                     Unitário: R$ {calculateSalePrice(currentItemUnitCost, selectedProduct?.profitMargin).toFixed(2)} / {(() => {
                       const selectedVars = selectedProduct?.groups.flatMap(g => g.variables).filter(v => (selectedVariables[v.id] || 0) > 0) || [];
                       return selectedVars[0]?.unitOfMeasure || 'un';
@@ -1080,7 +1080,7 @@ export default function QuotesPage() {
                 <div className="mt-4 space-y-4">
                   {selectedProduct.groups.map(group => (
                     <div key={group.id} className="rounded-2xl border border-slate-200 p-4">
-                      <p className="font-semibold text-slate-900">{group.name}</p>
+                      <p className="font-semibold text-[var(--text-primary)]">{group.name}</p>
                       <div className="mt-3 grid gap-3 md:grid-cols-2">
                         {group.variables.map(variable => {
                           const isSelected = (selectedVariables[variable.id] || 0) > 0;
@@ -1107,7 +1107,7 @@ export default function QuotesPage() {
                               readOnly
                               aria-label={`Selecionar ${variable.name}`} />
                             <div className="flex-1">
-                              <p className="font-medium text-slate-900">{variable.name}</p>
+                              <p className="font-medium text-[var(--text-primary)]">{variable.name}</p>
                               <p className="text-xs text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / {variable.unitOfMeasure || 'un'} | Estoque: {variable.stock} {variable.unitOfMeasure || 'un'}</p>
                             </div>
                           </div>
@@ -1152,7 +1152,7 @@ export default function QuotesPage() {
 
               {/* Impressão */}
               <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-                <p className="mb-3 font-medium text-slate-900">Impressão da logo</p>
+                <p className="mb-3 font-medium text-[var(--text-primary)]">Impressão da logo</p>
                 <div className="grid gap-3 md:grid-cols-3">
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Tipo</span>
@@ -1189,23 +1189,23 @@ export default function QuotesPage() {
             {/* Carrinho do orçamento */}
             <section className="rounded-2xl bg-white p-8 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-900">Itens do orçamento</h3>
-                <p className="text-sm text-slate-500">{cartItems.length} item(ns)</p>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Itens do orçamento</h3>
+                <p className="text-sm text-[var(--text-muted)]">{cartItems.length} item(ns)</p>
               </div>
 
               {cartItems.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-500">Nenhum item adicionado.</p>
+                <p className="mt-4 text-sm text-[var(--text-muted)]">Nenhum item adicionado.</p>
               ) : (
                 <div className="mt-4 space-y-3">
                   {cartItems.map((item, i) => (
                     <div key={i} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-slate-900">{item.productName}</p>
+                        <p className="font-semibold text-[var(--text-primary)]">{item.productName}</p>
                         <p className="text-sm text-slate-600">Qtd: {item.quantity} | Variáveis: {item.selectedVariablesLabel}</p>
-                        {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}×{item.dimensions.height}cm</p>}
-                        {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
+                        {item.dimensions && <p className="text-xs text-[var(--text-muted)]">Dimensão: {item.dimensions.width}×{item.dimensions.height}cm</p>}
+                        {item.printType && <p className="text-xs text-[var(--text-muted)]">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
                         <div className="mt-2 flex items-center gap-2">
-                          <span className="text-[11px] font-medium text-slate-500">Margem</span>
+                          <span className="text-[11px] font-medium text-[var(--text-muted)]">Margem</span>
                           <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
                             <button
                               type="button"
@@ -1216,7 +1216,7 @@ export default function QuotesPage() {
                                   return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                                 }));
                               }}
-                              className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="px-2 py-1 text-xs font-bold text-[var(--text-faint)] hover:text-slate-700 hover:bg-slate-50 transition-colors"
                             >−</button>
                             <input
                               type="number"
@@ -1243,16 +1243,16 @@ export default function QuotesPage() {
                                   return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                                 }));
                               }}
-                              className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="px-2 py-1 text-xs font-bold text-[var(--text-faint)] hover:text-slate-700 hover:bg-slate-50 transition-colors"
                             >+</button>
                           </div>
-                          <span className="text-[10px] text-slate-400">mín {item.minMargin}%</span>
+                          <span className="text-[10px] text-[var(--text-faint)]">mín {item.minMargin}%</span>
                           <span className="text-[10px] text-slate-300">·</span>
-                          <span className="text-[11px] font-semibold text-emerald-600">R$ {item.unitPrice.toFixed(2)}/un</span>
+                          <span className="text-[11px] font-semibold text-[var(--success)]">R$ {item.unitPrice.toFixed(2)}/un</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 ml-4">
-                        <p className="font-semibold text-emerald-700">R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
+                        <p className="font-semibold text-[var(--success)]">R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                         <button type="button" onClick={() => handleRemoveCartItem(i)}
                           className="rounded-lg px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
                           style={{ background: 'var(--danger)', color: '#fff' }}>
@@ -1266,9 +1266,9 @@ export default function QuotesPage() {
 
               {/* Total */}
               <div className="mt-6 rounded-2xl bg-slate-50 p-4">
-                <div className="flex items-center justify-between text-lg font-bold text-slate-900">
+                <div className="flex items-center justify-between text-lg font-bold text-[var(--text-primary)]">
                   <span>Total do orçamento</span>
-                  <span className="text-emerald-700">R$ {quoteTotal.toFixed(2)}</span>
+                  <span className="text-[var(--success)]">R$ {quoteTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -1312,8 +1312,8 @@ export default function QuotesPage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Detalhes do orçamento</p>
-                  <h3 className="mt-1 text-2xl font-bold text-slate-900">{selectedQuote.name}</h3>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Detalhes do orçamento</p>
+                  <h3 className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{selectedQuote.name}</h3>
                 </div>
                 <button type="button" onClick={() => setSelectedQuote(null)}
                   className="rounded-lg p-2 transition-colors hover:opacity-80"
@@ -1322,38 +1322,38 @@ export default function QuotesPage() {
 
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Cliente</p>
-                  <p className="mt-1 font-semibold text-slate-900">{selectedQuote.customerName}</p>
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Cliente</p>
+                  <p className="mt-1 font-semibold text-[var(--text-primary)]">{selectedQuote.customerName}</p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Status</p>
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Status</p>
                   <span className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold ${statusLabel(selectedQuote.status).color}`}>
                     {statusLabel(selectedQuote.status).text}
                   </span>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Data</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedQuote.createdAt).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Data</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{new Date(selectedQuote.createdAt).toLocaleDateString('pt-BR')}</p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Validade</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Validade</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                     {selectedQuote.validUntil ? new Date(selectedQuote.validUntil).toLocaleDateString('pt-BR') : 'Sem validade'}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Entrega</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Entrega</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                     {selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definida'}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Custo</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">R$ {selectedQuote.totalCost.toFixed(2)}</p>
+                  <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Custo</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">R$ {selectedQuote.totalCost.toFixed(2)}</p>
                 </div>
-                <div className="rounded-2xl bg-emerald-50 p-4">
-                  <p className="text-xs font-semibold uppercase text-emerald-600">Preço final</p>
-                  <p className="mt-1 text-lg font-bold text-emerald-700">R$ {selectedQuote.totalPrice.toFixed(2)}</p>
+                <div className="rounded-2xl bg-[var(--success-bg)] p-4">
+                  <p className="text-xs font-semibold uppercase text-[var(--success)]">Preço final</p>
+                  <p className="mt-1 text-lg font-bold text-[var(--success)]">R$ {selectedQuote.totalPrice.toFixed(2)}</p>
                 </div>
               </div>
 
@@ -1366,16 +1366,16 @@ export default function QuotesPage() {
 
               {/* Itens */}
               <div className="mt-6">
-                <h4 className="font-bold text-slate-900">Itens do orçamento</h4>
+                <h4 className="font-bold text-[var(--text-primary)]">Itens do orçamento</h4>
                 <div className="mt-3 space-y-3">
                   {selectedQuote.items.map((item, idx) => (
                     <div key={idx} className="rounded-2xl border border-slate-200 p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-slate-900">{item.productName || `Produto ${item.productId}`}</p>
-                          <p className="text-xs text-slate-500">{item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} / unidade de medida</p>
+                          <p className="font-semibold text-[var(--text-primary)]">{item.productName || `Produto ${item.productId}`}</p>
+                          <p className="text-xs text-[var(--text-muted)]">{item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} / unidade de medida</p>
                         </div>
-                        <p className="font-bold text-slate-900">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</p>
+                        <p className="font-bold text-[var(--text-primary)]">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
@@ -1454,8 +1454,8 @@ export default function QuotesPage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Converter em Pedido</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-900">{convertingQuote.name}</h3>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">Converter em Pedido</p>
+                  <h3 className="mt-1 text-xl font-bold text-[var(--text-primary)]">{convertingQuote.name}</h3>
                 </div>
                 <button type="button" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
                   className="rounded-lg p-2 transition-colors hover:opacity-80"
@@ -1478,13 +1478,13 @@ export default function QuotesPage() {
               </label>
 
               <div className="mt-3 rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">Cliente</p>
-                <p className="mt-1 font-semibold text-slate-900">{convertingQuote.customerName}</p>
+                <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Cliente</p>
+                <p className="mt-1 font-semibold text-[var(--text-primary)]">{convertingQuote.customerName}</p>
               </div>
 
               <div className="mt-3 rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">Total</p>
-                <p className="mt-1 text-lg font-bold text-emerald-700">R$ {convertingQuote.totalPrice.toFixed(2)}</p>
+                <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">Total</p>
+                <p className="mt-1 text-lg font-bold text-[var(--success)]">R$ {convertingQuote.totalPrice.toFixed(2)}</p>
               </div>
 
               <label className="mt-3 block space-y-2 text-slate-700">

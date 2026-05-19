@@ -986,8 +986,8 @@ export default function SalesPage() {
         <section className="mb-8 rounded-2xl bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Pedidos</p>
-              <h3 className="text-2xl font-semibold text-slate-900">Últimos pedidos</h3>
+              <p className="text-sm uppercase tracking-[0.3em] text-[var(--text-muted)]">Pedidos</p>
+              <h3 className="text-2xl font-semibold text-[var(--text-primary)]">Últimos pedidos</h3>
             </div>
             <p className="text-sm text-slate-600">Você pode cancelar pedidos ou atualizar o status, dependendo da permissão do seu papel.</p>
           </div>
@@ -1023,7 +1023,7 @@ export default function SalesPage() {
               </label>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Ordenar por:</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Ordenar por:</span>
               {[
                 { value: 'createdAt-desc', label: 'Mais recentes' },
                 { value: 'createdAt-asc', label: 'Mais antigos' },
@@ -1052,7 +1052,7 @@ export default function SalesPage() {
           {loadingOrders ? (
             <SkeletonOrderList count={4} />
           ) : filteredOrders.length === 0 ? (
-            <p className="text-sm text-slate-500">Nenhum pedido registrado ainda.</p>
+            <p className="text-sm text-[var(--text-muted)]">Nenhum pedido registrado ainda.</p>
           ) : (
             <div className="space-y-4">
               {/* Barra de seleção múltipla */}
@@ -1068,7 +1068,7 @@ export default function SalesPage() {
                 </label>
                 {selectedOrderIds.size > 0 && (
                   <>
-                    <span className="text-xs text-slate-500">{selectedOrderIds.size} selecionado(s)</span>
+                    <span className="text-xs text-[var(--text-muted)]">{selectedOrderIds.size} selecionado(s)</span>
                     <button
                       type="button"
                       onClick={() => void handleBulkDeleteOrders()}
@@ -1100,13 +1100,13 @@ export default function SalesPage() {
                         className="mt-1 h-4 w-4 rounded border-slate-300 cursor-pointer"
                       />
                       <div>
-                      <p className="font-semibold text-slate-900">{order.name || `Pedido ${order.id}`}</p>
-                      <p className="text-sm text-slate-500">ID: {order.id}</p>
-                      <p className="text-sm text-slate-500">Criado por: {order.createdByName || order.userId}</p>
-                      <p className="text-sm text-slate-500">Data: {new Date(order.createdAt).toLocaleDateString()}</p>
+                      <p className="font-semibold text-[var(--text-primary)]">{order.name || `Pedido ${order.id}`}</p>
+                      <p className="text-sm text-[var(--text-muted)]">ID: {order.id}</p>
+                      <p className="text-sm text-[var(--text-muted)]">Criado por: {order.createdByName || order.userId}</p>
+                      <p className="text-sm text-[var(--text-muted)]">Data: {new Date(order.createdAt).toLocaleDateString()}</p>
                       {order.deliveryDate && (
                         <div className="flex items-center gap-2">
-                          <p className="text-sm text-blue-600">Entrega: {new Date(order.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                          <p className="text-sm text-[var(--brand)]">Entrega: {new Date(order.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
                           {(() => {
                             const urgency = getDeliveryUrgency(order.deliveryDate, order.delivered);
                             if (!urgency) return null;
@@ -1115,13 +1115,13 @@ export default function SalesPage() {
                         </div>
                       )}
                       {order.delivered && (
-                        <p className="text-sm text-emerald-600 font-medium">✓ Entregue{order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
+                        <p className="text-sm text-[var(--success)] font-medium">✓ Entregue{order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
                       )}
-                      <p className="text-sm text-slate-500">Total: R$ {(order.totalPrice || 0).toFixed(2)}</p>
+                      <p className="text-sm text-[var(--text-muted)]">Total: R$ {(order.totalPrice || 0).toFixed(2)}</p>
                       {order.items && order.items.length > 0 ? (
                         <div className="mt-2 space-y-1">
                           {order.items.map((item, idx) => (
-                            <p key={idx} className="text-xs text-slate-400">
+                            <p key={idx} className="text-xs text-[var(--text-faint)]">
                               • {item.quantity}x — R$ {(item.unitPrice || 0).toFixed(2)} / unidade de medida
                             </p>
                           ))}
@@ -1255,7 +1255,7 @@ export default function SalesPage() {
             </div>
             {/* Seletor de orçamento */}
             {showQuoteSelector ? (
-              <div className="md:col-span-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="md:col-span-2 rounded-2xl border border-[var(--success-border)] bg-[var(--success-bg)] p-4">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <p className="font-semibold text-emerald-900">Selecionar orçamento</p>
                   <button
@@ -1271,14 +1271,14 @@ export default function SalesPage() {
                   value={quoteSearch}
                   onChange={(e) => setQuoteSearch(e.target.value)}
                   placeholder="Buscar orçamento por nome..."
-                  className="mb-3 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm"
+                  className="mb-3 w-full rounded-xl border border-[var(--success-border)] bg-white px-3 py-2 text-sm"
                 />
                 <div className="max-h-60 space-y-2 overflow-y-auto">
                   {quotes
                     .filter((q) => q.status === 'approved' || q.status === 'sent')
                     .filter((q) => !quoteSearch.trim() || q.name.toLowerCase().includes(quoteSearch.toLowerCase()) || q.customerName.toLowerCase().includes(quoteSearch.toLowerCase()))
                     .length === 0 ? (
-                    <p className="text-sm text-emerald-700">Nenhum orçamento disponível.</p>
+                    <p className="text-sm text-[var(--success)]">Nenhum orçamento disponível.</p>
                   ) : (
                     quotes
                       .filter((q) => q.status === 'approved' || q.status === 'sent')
@@ -1286,7 +1286,7 @@ export default function SalesPage() {
                       .map((quote) => (
                         <div
                           key={quote.id}
-                          className="cursor-pointer rounded-xl border border-emerald-200 bg-white p-3 transition hover:border-emerald-400"
+                          className="cursor-pointer rounded-xl border border-[var(--success-border)] bg-white p-3 transition hover:border-emerald-400"
                           onClick={() => handleSelectQuote(quote)}
                           role="button"
                           tabIndex={0}
@@ -1294,15 +1294,15 @@ export default function SalesPage() {
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-semibold text-slate-900">{quote.name}</p>
-                              <p className="text-xs text-slate-500">Cliente: {quote.customerName}</p>
-                              <p className="text-xs text-slate-500">Itens: {quote.items.length} | R$ {(quote.totalPrice || 0).toFixed(2)}</p>
+                              <p className="font-semibold text-[var(--text-primary)]">{quote.name}</p>
+                              <p className="text-xs text-[var(--text-muted)]">Cliente: {quote.customerName}</p>
+                              <p className="text-xs text-[var(--text-muted)]">Itens: {quote.items.length} | R$ {(quote.totalPrice || 0).toFixed(2)}</p>
                               {quote.deliveryDate && (
-                                <p className="text-xs text-blue-600">Entrega: {new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                                <p className="text-xs text-[var(--brand)]">Entrega: {new Date(quote.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
                               )}
                             </div>
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                              quote.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                              quote.status === 'approved' ? 'bg-emerald-100 text-[var(--text-primary)]' : 'bg-blue-100 text-blue-800'
                             }`}>
                               {quote.status === 'approved' ? 'Aprovado' : 'Enviado'}
                             </span>
@@ -1345,7 +1345,7 @@ export default function SalesPage() {
             <div className="space-y-6">
               {selectedProduct.groups.map((group) => (
                 <div key={group.id} className="rounded-xl border border-slate-200 p-4">
-                  <p className="font-semibold text-slate-900">{group.name}</p>
+                  <p className="font-semibold text-[var(--text-primary)]">{group.name}</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {group.variables.map((variable) => {
                       const isSelected = (selectedVariables[variable.id] || 0) > 0;
@@ -1381,9 +1381,9 @@ export default function SalesPage() {
                           readOnly
                         />
                         <div className="flex-1">
-                          <p className="font-semibold text-slate-900">{variable.name}</p>
+                          <p className="font-semibold text-[var(--text-primary)]">{variable.name}</p>
                           <p className="text-sm text-slate-600">+R$ {variable.additionalPrice.toFixed(2)} / unidade</p>
-                          <p className="text-xs text-slate-500">Estoque: {variable.stock} un.</p>
+                          <p className="text-xs text-[var(--text-muted)]">Estoque: {variable.stock} un.</p>
                         </div>
                       </div>
                     );
@@ -1425,7 +1425,7 @@ export default function SalesPage() {
 
           {/* IMPRESSÃO DA LOGO */}
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="mb-3 font-medium text-slate-900">Impressão da logo</p>
+            <p className="mb-3 font-medium text-[var(--text-primary)]">Impressão da logo</p>
             <div className="grid gap-3 md:grid-cols-3">
               <label className="space-y-1 text-sm text-slate-600">
                 <span>Tipo</span>
@@ -1453,7 +1453,7 @@ export default function SalesPage() {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="font-semibold text-slate-900">Upload de logo</p>
+            <p className="font-semibold text-[var(--text-primary)]">Upload de logo</p>
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff"
@@ -1473,14 +1473,14 @@ export default function SalesPage() {
                 Analisando cores da logo…
               </div>
             ) : logoAnalysisError ? (
-              <p className="mt-3 text-xs text-red-600">{logoAnalysisError}</p>
+              <p className="mt-3 text-xs text-[var(--danger)]">{logoAnalysisError}</p>
             ) : logoAnalysisResult ? (
               <div className="mt-3 space-y-2">
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                  <p className="text-xs font-semibold text-emerald-800">
+                <div className="rounded-lg border border-[var(--success-border)] bg-[var(--success-bg)] p-3">
+                  <p className="text-xs font-semibold text-[var(--text-primary)]">
                     {logoColors} {logoColors === 1 ? 'cor detectada' : 'cores detectadas'}
                   </p>
-                  <p className="text-xs text-emerald-700">{logoAnalysisResult.description}</p>
+                  <p className="text-xs text-[var(--success)]">{logoAnalysisResult.description}</p>
                 </div>
                 {logoAnalysisResult.colors.length > 0 && (
                   <div className="flex flex-wrap gap-1">
@@ -1508,11 +1508,11 @@ export default function SalesPage() {
           {/* CARRINHO COM PRÉVIAS */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between gap-4">
-              <p className="font-semibold text-slate-900">Carrinho do pedido</p>
+              <p className="font-semibold text-[var(--text-primary)]">Carrinho do pedido</p>
               <p className="text-sm text-slate-600">{cartItems.length} item(ns)</p>
             </div>
             {cartItems.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">Nenhum item adicionado.</p>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">Nenhum item adicionado.</p>
             ) : (
               <div className="mt-3 space-y-3">
                 {cartItems.map((item, index) => (
@@ -1522,13 +1522,13 @@ export default function SalesPage() {
                       <ProductPreview config={item.previewConfig} compact className="h-24 w-24" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900">{item.productName}</p>
+                      <p className="font-semibold text-[var(--text-primary)]">{item.productName}</p>
                       <p className="text-sm text-slate-600">Qtd: {item.quantity}</p>
                       <p className="text-sm text-slate-600 truncate">Variáveis: {item.selectedVariablesLabel}</p>
-                      {item.dimensions && <p className="text-xs text-slate-500">Dimensão: {item.dimensions.width}x{item.dimensions.height}cm</p>}
-                      {item.printType && <p className="text-xs text-slate-500">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
+                      {item.dimensions && <p className="text-xs text-[var(--text-muted)]">Dimensão: {item.dimensions.width}x{item.dimensions.height}cm</p>}
+                      {item.printType && <p className="text-xs text-[var(--text-muted)]">Impressão: {item.printType} ({item.printSize}, {item.printPosition})</p>}
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-[11px] font-medium text-slate-500">Margem</span>
+                        <span className="text-[11px] font-medium text-[var(--text-muted)]">Margem</span>
                         <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
                           <button
                             type="button"
@@ -1539,7 +1539,7 @@ export default function SalesPage() {
                                 return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                               }));
                             }}
-                            className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                            className="px-2 py-1 text-xs font-bold text-[var(--text-faint)] hover:text-slate-700 hover:bg-slate-50 transition-colors"
                           >−</button>
                           <input
                             type="number"
@@ -1566,12 +1566,12 @@ export default function SalesPage() {
                                 return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                               }));
                             }}
-                            className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                            className="px-2 py-1 text-xs font-bold text-[var(--text-faint)] hover:text-slate-700 hover:bg-slate-50 transition-colors"
                           >+</button>
                         </div>
-                        <span className="text-[10px] text-slate-400">mín {item.minMargin}%</span>
+                        <span className="text-[10px] text-[var(--text-faint)]">mín {item.minMargin}%</span>
                         <span className="text-[10px] text-slate-300">·</span>
-                        <span className="text-[11px] font-semibold text-emerald-600">R$ {item.unitPrice.toFixed(2)}/un</span>
+                        <span className="text-[11px] font-semibold text-[var(--success)]">R$ {item.unitPrice.toFixed(2)}/un</span>
                       </div>
                       <p className="mt-1 text-sm font-semibold text-slate-800">Subtotal: R$ {(item.unitPrice * item.quantity).toFixed(2)}</p>
                       <button
@@ -1612,7 +1612,7 @@ export default function SalesPage() {
                 <span>Custo da logo ({logoColors} {logoColors === 1 ? 'cor' : 'cores'})</span>
                 <span>R$ {logoCost.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between font-semibold text-slate-900">
+              <div className="flex items-center justify-between font-semibold text-[var(--text-primary)]">
                 <span>Preço total</span>
                 <span>R$ {salePrice.toFixed(2)}</span>
               </div>
@@ -1630,7 +1630,7 @@ export default function SalesPage() {
                   Selecione uma variável de cor para aplicar na imagem do produto
                 </p>
               ) : null}
-              <p className="mt-2 text-[10px] text-slate-400">
+              <p className="mt-2 text-[10px] text-[var(--text-faint)]">
                 A prévia mostra exatamente como o produto ficará com as opções selecionadas.
               </p>
             </div>
@@ -1686,10 +1686,10 @@ export default function SalesPage() {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
                   {editingOrder ? 'Editar pedido' : 'Detalhes do pedido'}
                 </p>
-                <h3 className="mt-1 text-2xl font-bold text-slate-900">
+                <h3 className="mt-1 text-2xl font-bold text-[var(--text-primary)]">
                   {editingOrder ? editOrderName : (selectedOrder?.name || `Pedido ${selectedOrder?.id ?? ''}`)}
                 </h3>
               </div>
@@ -1766,7 +1766,7 @@ export default function SalesPage() {
 
                 {/* Itens editáveis */}
                 <div>
-                  <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
+                  <h4 className="text-lg font-bold text-[var(--text-primary)]">Itens do pedido</h4>
                   <div className="mt-3 space-y-3">
                     {editItems.map((item, idx) => {
                       const product = inventory.find((p) => p.id === item.productId);
@@ -1775,8 +1775,8 @@ export default function SalesPage() {
                         <div key={idx} className="rounded-xl border border-slate-200 p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
-                              <p className="text-xs text-slate-500">ID: {item.productId}</p>
+                              <p className="font-semibold text-[var(--text-primary)]">{product?.name || `Produto ${item.productId}`}</p>
+                              <p className="text-xs text-[var(--text-muted)]">ID: {item.productId}</p>
                             </div>
                             <div className="flex items-center gap-3">
                               <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -1810,7 +1810,7 @@ export default function SalesPage() {
                                     return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                                   }));
                                 }}
-                                className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                                className="px-2 py-1 text-xs font-bold text-[var(--text-faint)] hover:text-slate-700 hover:bg-slate-50 transition-colors"
                               >−</button>
                               <input
                                 type="number"
@@ -1837,12 +1837,12 @@ export default function SalesPage() {
                                     return { ...ci, profitMargin: newMargin, unitPrice: calculateSalePrice(ci.unitCost, newMargin) };
                                   }));
                                 }}
-                                className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                                className="px-2 py-1 text-xs font-bold text-[var(--text-faint)] hover:text-slate-700 hover:bg-slate-50 transition-colors"
                               >+</button>
                             </div>
-                            <span className="text-[10px] text-slate-400">mín {minMargin}%</span>
-                            <span className="text-slate-500 text-xs">Custo un.: R$ {(item.unitCost || 0).toFixed(2)}</span>
-                            <span className="font-semibold text-slate-900 text-xs">Subtotal: R$ {((item.unitPrice || item.unitCost || 0) * item.quantity).toFixed(2)}</span>
+                            <span className="text-[10px] text-[var(--text-faint)]">mín {minMargin}%</span>
+                            <span className="text-[var(--text-muted)] text-xs">Custo un.: R$ {(item.unitCost || 0).toFixed(2)}</span>
+                            <span className="font-semibold text-[var(--text-primary)] text-xs">Subtotal: R$ {((item.unitPrice || item.unitCost || 0) * item.quantity).toFixed(2)}</span>
                           </div>
                         </div>
                       );
@@ -1852,7 +1852,7 @@ export default function SalesPage() {
 
                 {/* Cores da logo editável */}
                 <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="font-medium text-slate-900">Cores da logo</p>
+                  <p className="font-medium text-[var(--text-primary)]">Cores da logo</p>
                   <div className="mt-2 flex items-center gap-3">
                     <input
                       type="number"
@@ -1861,7 +1861,7 @@ export default function SalesPage() {
                       onChange={(e) => setEditLogoColors(Number(e.target.value))}
                       className="w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                     />
-                    <span className="text-sm text-slate-500">cores × R$ {globalConfig.logoPricePerColor} = R$ {calculateLogoCost(editLogoColors).toFixed(2)}</span>
+                    <span className="text-sm text-[var(--text-muted)]">cores × R$ {globalConfig.logoPricePerColor} = R$ {calculateLogoCost(editLogoColors).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -1873,26 +1873,26 @@ export default function SalesPage() {
                   const editTotalPrice = editItemsPrice + (editLogoCost > 0 ? calculateSalePrice(editLogoCost) : 0);
                   return (
                     <div className="rounded-2xl bg-slate-50 p-5">
-                      <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Preview de custo</h4>
+                      <h4 className="text-sm font-bold uppercase tracking-wider text-[var(--text-muted)]">Preview de custo</h4>
                       <div className="mt-3 space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600">Custo dos itens</span>
-                          <span className="text-slate-900">R$ {editTotalCost.toFixed(2)}</span>
+                          <span className="text-[var(--text-primary)]">R$ {editTotalCost.toFixed(2)}</span>
                         </div>
                         {editLogoCost > 0 ? (
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-600">Custo da logo</span>
-                            <span className="text-slate-900">R$ {editLogoCost.toFixed(2)}</span>
+                            <span className="text-[var(--text-primary)]">R$ {editLogoCost.toFixed(2)}</span>
                           </div>
                         ) : null}
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600">Custo total</span>
-                          <span className="font-semibold text-slate-900">R$ {(editTotalCost + editLogoCost).toFixed(2)}</span>
+                          <span className="font-semibold text-[var(--text-primary)]">R$ {(editTotalCost + editLogoCost).toFixed(2)}</span>
                         </div>
                         <div className="border-t border-slate-200 pt-2">
                           <div className="flex justify-between">
-                            <span className="text-sm font-bold text-slate-900">Preço de venda</span>
-                            <span className="text-lg font-bold text-emerald-700">R$ {editTotalPrice.toFixed(2)}</span>
+                            <span className="text-sm font-bold text-[var(--text-primary)]">Preço de venda</span>
+                            <span className="text-lg font-bold text-[var(--success)]">R$ {editTotalPrice.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -1926,15 +1926,15 @@ export default function SalesPage() {
                 {/* Info geral */}
                 <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">ID</p>
-                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{selectedOrder?.id}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">ID</p>
+                    <p className="mt-1 font-mono text-sm font-semibold text-[var(--text-primary)]">{selectedOrder?.id}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(selectedOrder?.createdAt).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Data</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{new Date(selectedOrder?.createdAt).toLocaleDateString('pt-BR')}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Entrega</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Entrega</p>
                     {editingOrder ? (
                       <input
                         type="date"
@@ -1944,7 +1944,7 @@ export default function SalesPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-2">
-                        <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder?.deliveryDate ? new Date(selectedOrder.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
+                        <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{selectedOrder?.deliveryDate ? new Date(selectedOrder.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
                         {(() => {
                           const urgency = getDeliveryUrgency(selectedOrder?.deliveryDate, selectedOrder?.delivered);
                           if (!urgency) return null;
@@ -1954,23 +1954,23 @@ export default function SalesPage() {
                     )}
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Situação</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Situação</p>
                     {selectedOrder?.delivered ? (
-                      <p className="mt-1 text-sm font-bold text-emerald-700">✓ Entregue{selectedOrder?.deliveredAt ? ` em ${new Date(selectedOrder.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
+                      <p className="mt-1 text-sm font-bold text-[var(--success)]">✓ Entregue{selectedOrder?.deliveredAt ? ` em ${new Date(selectedOrder.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
                     ) : (
                       <p className="mt-1 text-sm font-semibold text-amber-600">Pendente entrega</p>
                     )}
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Criado por</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{selectedOrder?.createdByName || selectedOrder?.userId}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Criado por</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{selectedOrder?.createdByName || selectedOrder?.userId}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Status</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Status</p>
                     <span
                       className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold ${
                         selectedOrder?.status === 'completed'
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-emerald-100 text-[var(--text-primary)]'
                           : selectedOrder?.status === 'cancelled'
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-amber-100 text-amber-800'
@@ -1980,12 +1980,12 @@ export default function SalesPage() {
                     </span>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Custo total</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">R$ {(selectedOrder?.totalCost || 0).toFixed(2)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Custo total</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">R$ {(selectedOrder?.totalCost || 0).toFixed(2)}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Preço de venda</p>
-                    <p className="mt-1 text-lg font-bold text-emerald-700">R$ {(selectedOrder?.totalPrice || 0).toFixed(2)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Preço de venda</p>
+                    <p className="mt-1 text-lg font-bold text-[var(--success)]">R$ {(selectedOrder?.totalPrice || 0).toFixed(2)}</p>
                   </div>
                 </div>
 
@@ -2000,7 +2000,7 @@ export default function SalesPage() {
 
                 {/* Itens do pedido */}
                 <div className="mt-6">
-                  <h4 className="text-lg font-bold text-slate-900">Itens do pedido</h4>
+                  <h4 className="text-lg font-bold text-[var(--text-primary)]">Itens do pedido</h4>
                   <div className="mt-3 space-y-3">
                     {selectedOrder?.items.map((item, idx) => {
                       const product = inventory.find((p) => p.id === item.productId);
@@ -2019,12 +2019,12 @@ export default function SalesPage() {
                         <div key={idx} className="rounded-xl border border-slate-200 p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="font-semibold text-slate-900">{product?.name || `Produto ${item.productId}`}</p>
-                              <p className="text-xs text-slate-500">ID: {item.productId}</p>
+                              <p className="font-semibold text-[var(--text-primary)]">{product?.name || `Produto ${item.productId}`}</p>
+                              <p className="text-xs text-[var(--text-muted)]">ID: {item.productId}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-semibold text-slate-900">{item.quantity}x</p>
-                              <p className="text-xs text-slate-500">R$ {(item.unitPrice || 0).toFixed(2)} un.</p>
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">{item.quantity}x</p>
+                              <p className="text-xs text-[var(--text-muted)]">R$ {(item.unitPrice || 0).toFixed(2)} un.</p>
                             </div>
                           </div>
 
@@ -2046,12 +2046,12 @@ export default function SalesPage() {
 
                           {/* Subtotal do item */}
                           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                            <span className="text-xs text-slate-500">Custo unitário</span>
+                            <span className="text-xs text-[var(--text-muted)]">Custo unitário</span>
                             <span className="text-sm text-slate-700">R$ {(item.unitCost || 0).toFixed(2)}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-slate-500">Subtotal</span>
-                            <span className="text-sm font-bold text-slate-900">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
+                            <span className="text-xs font-semibold text-[var(--text-muted)]">Subtotal</span>
+                            <span className="text-sm font-bold text-[var(--text-primary)]">R$ {((item.unitCost || 0) * item.quantity).toFixed(2)}</span>
                           </div>
                         </div>
                       );
@@ -2061,30 +2061,30 @@ export default function SalesPage() {
 
                 {/* Resumo financeiro */}
                 <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Resumo financeiro</h4>
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-[var(--text-muted)]">Resumo financeiro</h4>
                   <div className="mt-3 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Custo dos itens</span>
-                      <span className="text-slate-900">R$ {((selectedOrder?.totalCost || 0) - (selectedOrder?.logoCost || 0)).toFixed(2)}</span>
+                      <span className="text-[var(--text-primary)]">R$ {((selectedOrder?.totalCost || 0) - (selectedOrder?.logoCost || 0)).toFixed(2)}</span>
                     </div>
                     {selectedOrder?.logoCost > 0 ? (
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Custo da logo</span>
-                        <span className="text-slate-900">R$ {selectedOrder?.logoCost.toFixed(2)}</span>
+                        <span className="text-[var(--text-primary)]">R$ {selectedOrder?.logoCost.toFixed(2)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Custo total</span>
-                      <span className="font-semibold text-slate-900">R$ {(selectedOrder?.totalCost || 0).toFixed(2)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">R$ {(selectedOrder?.totalCost || 0).toFixed(2)}</span>
                     </div>
                     <div className="border-t border-slate-200 pt-2">
                       <div className="flex justify-between">
-                        <span className="text-sm font-bold text-slate-900">Preço de venda</span>
-                        <span className="text-lg font-bold text-emerald-700">R$ {(selectedOrder?.totalPrice || 0).toFixed(2)}</span>
+                        <span className="text-sm font-bold text-[var(--text-primary)]">Preço de venda</span>
+                        <span className="text-lg font-bold text-[var(--success)]">R$ {(selectedOrder?.totalPrice || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-xs text-slate-500">Margem</span>
-                        <span className="text-xs font-semibold text-emerald-600">
+                        <span className="text-xs text-[var(--text-muted)]">Margem</span>
+                        <span className="text-xs font-semibold text-[var(--success)]">
                           R$ {((selectedOrder?.totalPrice || 0) - (selectedOrder?.totalCost || 0)).toFixed(2)}
                         </span>
                       </div>
