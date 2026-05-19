@@ -13,18 +13,12 @@ import {
 } from '../lib/notifications';
 import { getAuthHeaders } from '../lib/authClient';
 
-// ==========================================
-// NOTIFICATION BELL COMPONENT
-// Dropdown with recent notifications + enable prompt
-// ==========================================
-
 interface NotificationItem {
   id: string;
   title: string;
   body: string;
   timestamp: string;
   url?: string;
-  read: boolean;
 }
 
 export function NotificationBell() {
@@ -34,7 +28,8 @@ export function NotificationBell() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [showPrompt, setShowPrompt] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   // Initialize
   useEffect(() => {
@@ -45,30 +40,27 @@ export function NotificationBell() {
     initNotifications();
   }, []);
 
-  // Fetch recent notifications from activity logs
+  // Fetch notifications — only keep unread ones
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch('/api/activity-logs?limit=10', { headers: getAuthHeaders() });
+      const res = await fetch('/api/activity-logs?limit=20', { headers: getAuthHeaders() });
       const data = await res.json();
       if (res.ok && data.logs) {
-        const items: NotificationItem[] = data.logs.map((log: { id: string; description: string; username: string; timestamp: string; entity?: string }) => ({
-          id: log.id,
-          title: log.username,
-          body: log.description,
-          timestamp: log.timestamp,
-          url: getNotificationUrl(log.entity),
-          read: false,
-        }));
-        setNotifications(items);
-
         const lastRead = localStorage.getItem('erp-notifications-last-read');
-        if (lastRead) {
-          const lastReadTime = new Date(lastRead).getTime();
-          const unread = items.filter(n => new Date(n.timestamp).getTime() > lastReadTime).length;
-          setUnreadCount(unread);
-        } else {
-          setUnreadCount(items.length);
-        }
+        const lastReadTime = lastRead ? new Date(lastRead).getTime() : 0;
+
+        const unread: NotificationItem[] = data.logs
+          .filter((log: { timestamp: string }) => new Date(log.timestamp).getTime() > lastReadTime)
+          .map((log: { id: string; description: string; username: string; timestamp: string; entity?: string }) => ({
+            id: log.id,
+            title: log.username,
+            body: log.description,
+            timestamp: log.timestamp,
+            url: getNotificationUrl(log.entity),
+          }));
+
+        setNotifications(unread);
+        setUnreadCount(unread.length);
       }
     } catch {
       // Silent fail
@@ -77,23 +69,27 @@ export function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click — must click OUTSIDE both bell and dropdown
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      const target = e.target as Node;
+      // Ignore clicks on the bell button itself (toggle handles that)
+      if (bellRef.current?.contains(target)) return;
+      // Ignore clicks inside the dropdown portal
+      if (portalRef.current?.contains(target)) return;
+      // Everything else = outside → close
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [isOpen]);
 
-  // Check if we should show the "enable notifications" prompt
+  // "Enable notifications" prompt
   useEffect(() => {
     if (
       mounted &&
@@ -131,14 +127,20 @@ export function NotificationBell() {
     setShowPrompt(false);
   }
 
-  function handleMarkAsRead() {
+  function handleMarkAllRead() {
     const now = new Date().toISOString();
     localStorage.setItem('erp-notifications-last-read', now);
+    setNotifications([]);
     setUnreadCount(0);
+    setIsOpen(false);
   }
 
   function handleNotificationClick(url?: string) {
-    handleMarkAsRead();
+    // Mark as read
+    const now = new Date().toISOString();
+    localStorage.setItem('erp-notifications-last-read', now);
+    setNotifications([]);
+    setUnreadCount(0);
     setIsOpen(false);
     if (url) {
       window.location.href = url;
@@ -149,7 +151,6 @@ export function NotificationBell() {
     const now = Date.now();
     const then = new Date(timestamp).getTime();
     const diff = now - then;
-
     if (diff < 60000) return 'agora';
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
@@ -159,61 +160,12 @@ export function NotificationBell() {
   if (!mounted) return null;
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Enable Notifications Prompt */}
-      {showPrompt && (
-        <div
-          className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl p-4 shadow-lg"
-          style={{
-            background: 'var(--card-bg)',
-            border: '1px solid var(--brand-border)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <span
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-              style={{ background: 'var(--brand-muted)', color: 'var(--brand)' }}
-            >
-              <IconBell size={14} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Ativar notificações?
-              </p>
-              <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                Receba alertas sobre pedidos, estoque e orçamentos.
-              </p>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleEnableNotifications}
-              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ background: 'var(--brand)' }}
-            >
-              Ativar
-            </button>
-            <button
-              type="button"
-              onClick={handleDismissPrompt}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              Agora não
-            </button>
-          </div>
-        </div>
-      )}
-
+    <>
       {/* Bell Button */}
       <button
+        ref={bellRef}
         type="button"
-        onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) handleMarkAsRead();
-        }}
+        onClick={() => setIsOpen(prev => !prev)}
         className="relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200"
         style={{
           color: 'var(--text-muted)',
@@ -240,9 +192,65 @@ export function NotificationBell() {
         )}
       </button>
 
+      {/* Enable Notifications Prompt */}
+      {showPrompt && createPortal(
+        <div
+          className="fixed inset-0 z-[99] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.3)' }}
+          onClick={handleDismissPrompt}
+        >
+          <div
+            className="w-72 rounded-xl p-4 shadow-lg"
+            style={{
+              background: 'var(--card-bg)',
+              border: '1px solid var(--brand-border)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <span
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+                style={{ background: 'var(--brand-muted)', color: 'var(--brand)' }}
+              >
+                <IconBell size={14} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Ativar notificações?
+                </p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Receba alertas sobre pedidos, estoque e orçamentos.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleEnableNotifications}
+                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ background: 'var(--brand)' }}
+              >
+                Ativar
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissPrompt}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Agora não
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
       {/* Dropdown */}
       {isOpen && createPortal(
         <div
+          ref={portalRef}
           className="fixed right-4 top-14 z-[100] w-80 overflow-hidden rounded-xl shadow-xl"
           style={{
             background: 'var(--card-bg)',
@@ -260,23 +268,31 @@ export function NotificationBell() {
             </h3>
             <button
               type="button"
-              className="text-xs font-medium transition-colors hover:underline"
-              style={{ color: 'var(--brand)' }}
-              onClick={() => {
-                setIsOpen(false);
-                window.location.href = '/notifications';
-              }}
+              onClick={() => setIsOpen(false)}
+              className="flex h-6 w-6 items-center justify-center rounded-md transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-muted)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              aria-label="Fechar"
             >
-              Ver todas
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
 
           {/* Notification list */}
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="py-8 text-center">
+              <div className="flex flex-col items-center gap-3 py-10">
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}
+                >
+                  <IconBell size={18} />
+                </span>
                 <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
-                  Nenhuma notificação
+                  Sem novas notificações
                 </p>
               </div>
             ) : (
@@ -298,10 +314,8 @@ export function NotificationBell() {
                   }}
                 >
                   <span
-                    className="mt-0.5 flex h-2 w-2 flex-shrink-0 items-center justify-center rounded-full"
-                    style={{
-                      background: i < unreadCount ? 'var(--brand)' : 'transparent',
-                    }}
+                    className="mt-1.5 flex h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{ background: 'var(--brand)' }}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -316,7 +330,7 @@ export function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer — only when there are unread notifications */}
           {notifications.length > 0 && (
             <div
               className="px-4 py-2.5 text-center"
@@ -324,11 +338,7 @@ export function NotificationBell() {
             >
               <button
                 type="button"
-                onClick={() => {
-                  handleMarkAsRead();
-                  setIsOpen(false);
-                  window.location.href = '/notifications';
-                }}
+                onClick={handleMarkAllRead}
                 className="text-xs font-medium transition-colors hover:underline"
                 style={{ color: 'var(--brand)' }}
               >
@@ -339,6 +349,6 @@ export function NotificationBell() {
         </div>,
         document.body,
       )}
-    </div>
+    </>
   );
 }
