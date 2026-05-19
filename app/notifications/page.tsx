@@ -206,7 +206,7 @@ export default function NotificationsPage() {
   async function loadLogs() {
     setLoading(true);
     try {
-      const res = await fetch('/api/activity-logs', { headers: getAuthHeaders() });
+      const res = await fetch('/api/v1/activity-logs', { headers: getAuthHeaders() });
       const data = await res.json();
       if (res.ok && data.logs) setLogs(data.logs);
     } catch { /* ignore */ }
@@ -216,7 +216,7 @@ export default function NotificationsPage() {
   async function loadSettings() {
     setSettingsLoading(true);
     try {
-      const res = await fetch('/api/config', { headers: getAuthHeaders() });
+      const res = await fetch('/api/v1/config', { headers: getAuthHeaders() });
       const data = await res.json();
       if (res.ok && data.config?.notifications) {
         setSettings(data.config.notifications);
@@ -278,7 +278,7 @@ export default function NotificationsPage() {
 
   async function handleClearAll() {
     try {
-      const res = await fetch('/api/activity-logs?deleteAll=true', {
+      const res = await fetch('/api/v1/activity-logs?deleteAll=true', {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -321,7 +321,7 @@ export default function NotificationsPage() {
   async function handleSaveSettings() {
     setSettingsMessage('');
     try {
-      const res = await fetch('/api/config', {
+      const res = await fetch('/api/v1/config', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ notifications: settings }),

@@ -96,7 +96,7 @@ export default function AdminPage() {
 
   async function loadConfig() {
     try {
-      const response = await fetch('/api/config', {
+      const response = await fetch('/api/v1/config', {
         headers: getAuthHeaders(),
       });
       const data = await response.json();
@@ -125,7 +125,7 @@ export default function AdminPage() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/config', {
+      const response = await fetch('/api/v1/config', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

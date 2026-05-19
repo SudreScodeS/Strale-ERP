@@ -50,7 +50,7 @@ export default function FinancePage() {
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function loadFinance() {
-    const response = await fetch('/api/finance', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await fetch('/api/v1/finance', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (!response.ok) {
       setError(data.error || 'Falha ao carregar financeiro.');
@@ -64,7 +64,7 @@ export default function FinancePage() {
   }
 
   async function loadFaturamento() {
-    const response = await fetch('/api/reports/faturamento', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await fetch('/api/v1/reports/faturamento', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (response.ok && data.products) {
       setFaturamento(data.products);

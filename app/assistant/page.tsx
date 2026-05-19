@@ -77,7 +77,7 @@ export default function AssistantPage() {
 
   // Check Ollama status
   useEffect(() => {
-    fetch('/api/assistant', { headers: getAuthHeaders() })
+    fetch('/api/v1/assistant', { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data) => setOllamaStatus(data))
       .catch(() => setOllamaStatus({ available: false }));
@@ -128,7 +128,7 @@ export default function AssistantPage() {
     abortRef.current = controller;
 
     try {
-      const res = await fetch('/api/assistant', {
+      const res = await fetch('/api/v1/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ question: q, stream: true }),
@@ -273,7 +273,7 @@ export default function AssistantPage() {
 
   function handleClear() {
     abortRef.current?.abort();
-    fetch('/api/assistant', {
+    fetch('/api/v1/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ clear: true }),

@@ -101,7 +101,7 @@ export default function InventoryPage() {
   }
 
   async function loadInventory() {
-    const response = await fetch('/api/inventory', {
+    const response = await fetch('/api/v1/inventory', {
       headers: getAuthHeaders(),
     });
     const data = await safeJson(response);
@@ -126,7 +126,7 @@ export default function InventoryPage() {
 
   async function handleCreateProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/inventory/product', {
+    const response = await fetch('/api/v1/inventory/product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ name: productName, basePrice: productPrice, description: productDescription, imageUrl: productImage, profitMargin: productMargin }),
@@ -151,7 +151,7 @@ export default function InventoryPage() {
       setMessage('O limite crítico deve ser menor ou igual ao limite de atenção.');
       return;
     }
-    const response = await fetch('/api/inventory/group', {
+    const response = await fetch('/api/v1/inventory/group', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -175,7 +175,7 @@ export default function InventoryPage() {
 
   async function handleCreateVariable(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/inventory/variable', {
+    const response = await fetch('/api/v1/inventory/variable', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: variableUnit }),
@@ -205,7 +205,7 @@ export default function InventoryPage() {
   async function handleSubmitProductUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingProduct) return;
-    const response = await fetch('/api/inventory/product', {
+    const response = await fetch('/api/v1/inventory/product', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -250,7 +250,7 @@ export default function InventoryPage() {
       setMessage('O limite crítico deve ser menor ou igual ao limite de atenção.');
       return;
     }
-    const response = await fetch('/api/inventory/group', {
+    const response = await fetch('/api/v1/inventory/group', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -290,7 +290,7 @@ export default function InventoryPage() {
   async function handleSubmitVariableUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingVariable) return;
-    const response = await fetch('/api/inventory/variable', {
+    const response = await fetch('/api/v1/inventory/variable', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({

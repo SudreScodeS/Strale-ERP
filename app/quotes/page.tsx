@@ -318,7 +318,7 @@ export default function QuotesPage() {
   // Also reload when page becomes visible (user may have changed config in admin)
   useEffect(() => {
     function loadConfig() {
-      fetch('/api/config', { headers: getAuthHeaders() })
+      fetch('/api/v1/config', { headers: getAuthHeaders() })
         .then((r) => r.json())
         .then((data) => {
           if (data.config) {
@@ -358,7 +358,7 @@ export default function QuotesPage() {
         const formData = new FormData();
         formData.append('logo', logoFile);
 
-        const response = await fetch('/api/logo-analysis', {
+        const response = await fetch('/api/v1/logo-analysis', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: formData,
@@ -436,7 +436,7 @@ export default function QuotesPage() {
 
   async function loadInventory() {
     try {
-      const response = await fetch('/api/inventory', { cache: 'no-store', headers: getAuthHeaders() });
+      const response = await fetch('/api/v1/inventory', { cache: 'no-store', headers: getAuthHeaders() });
       const data = await safeJson(response);
       if (response.ok) {
         setInventory(data.inventory || []);
@@ -558,7 +558,7 @@ export default function QuotesPage() {
     if (cartItems.length === 0) { setStatusMessage('Adicione pelo menos um item.'); return; }
 
     try {
-      const response = await fetch('/api/quotes', {
+      const response = await fetch('/api/v1/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
@@ -602,7 +602,7 @@ export default function QuotesPage() {
       if (deliveryDate) body.deliveryDate = deliveryDate;
       if (name) body.name = name;
 
-      const response = await fetch('/api/quotes', {
+      const response = await fetch('/api/v1/quotes', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(body),
@@ -631,7 +631,7 @@ export default function QuotesPage() {
     let restored = 0;
     for (const q of deletedItems) {
       try {
-        const resp = await fetch('/api/quotes', {
+        const resp = await fetch('/api/v1/quotes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           body: JSON.stringify({

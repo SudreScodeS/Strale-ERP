@@ -62,7 +62,7 @@ const REPORTS: ReportConfig[] = [
     title: 'Faturamento',
     description: 'Vendas por produto com margem de lucro e quantidade vendida.',
     icon: reportIcons.finance,
-    endpoint: '/api/reports/faturamento',
+    endpoint: '/api/v1/reports/faturamento',
     columns: [
       { key: 'productName', label: 'Produto' },
       { key: 'totalSales', label: 'Vendas' },
@@ -94,7 +94,7 @@ const REPORTS: ReportConfig[] = [
     title: 'Vendas',
     description: 'Todos os pedidos com valores, status e responsáveis.',
     icon: reportIcons.sales,
-    endpoint: '/api/orders',
+    endpoint: '/api/v1/orders',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'name', label: 'Pedido' },
@@ -124,7 +124,7 @@ const REPORTS: ReportConfig[] = [
     title: 'Estoque',
     description: 'Todos os produtos, grupos, variáveis e níveis de estoque.',
     icon: reportIcons.inventory,
-    endpoint: '/api/inventory',
+    endpoint: '/api/v1/inventory',
     columns: [
       { key: 'productName', label: 'Produto' },
       { key: 'groupName', label: 'Grupo' },
@@ -164,7 +164,7 @@ const REPORTS: ReportConfig[] = [
     title: 'Financeiro',
     description: 'Todas as compras e vendas registradas no sistema.',
     icon: reportIcons.finance,
-    endpoint: '/api/finance',
+    endpoint: '/api/v1/finance',
     columns: [
       { key: 'type', label: 'Tipo' },
       { key: 'description', label: 'Descrição' },
@@ -197,7 +197,7 @@ const REPORTS: ReportConfig[] = [
     title: 'Orçamentos',
     description: 'Orçamentos com status e valores.',
     icon: reportIcons.quotes,
-    endpoint: '/api/quotes',
+    endpoint: '/api/v1/quotes',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'clientName', label: 'Cliente' },
@@ -230,7 +230,7 @@ const REPORTS: ReportConfig[] = [
     title: 'Previsão de Demanda',
     description: 'Tendências, previsões e recomendações de estoque.',
     icon: reportIcons.forecast,
-    endpoint: '/api/demand-forecast',
+    endpoint: '/api/v1/demand-forecast',
     columns: [
       { key: 'productName', label: 'Produto' },
       { key: 'variableName', label: 'Variável' },

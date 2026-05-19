@@ -333,7 +333,7 @@ export default function Home() {
   }, [selectedMetricIds]);
 
   useEffect(() => {
-    fetch('/api/dashboard', { headers: getAuthHeaders() })
+    fetch('/api/v1/dashboard', { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data) => setSummary(data.summary))
       .catch(() => {});

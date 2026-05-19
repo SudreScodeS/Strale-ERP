@@ -184,7 +184,7 @@ export default function PurchasesPage() {
   // ==========================================
 
   async function loadDashboard() {
-    const response = await fetch('/api/purchases', {
+    const response = await fetch('/api/v1/purchases', {
       cache: 'no-store',
       headers: getAuthHeaders(),
     });
@@ -239,7 +239,7 @@ export default function PurchasesPage() {
   // ==========================================
 
   async function handleCreateSupplier(data: SupplierFormData) {
-    const response = await fetch('/api/suppliers', {
+    const response = await fetch('/api/v1/suppliers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(data),
@@ -318,7 +318,7 @@ export default function PurchasesPage() {
       unitCost: item.unitCost,
     }));
 
-    const response = await fetch('/api/purchases', {
+    const response = await fetch('/api/v1/purchases', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -365,7 +365,7 @@ export default function PurchasesPage() {
       return;
     }
 
-    const response = await fetch('/api/purchases', {
+    const response = await fetch('/api/v1/purchases', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
