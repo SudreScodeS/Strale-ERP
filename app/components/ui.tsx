@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { globalConfig, applyServerConfig } from '../../config/global';
 import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/authClient';
 import { ACTION_ICON_MAP, IconBell, IconOther } from './icons';
+import { ErrorBoundary } from './error-boundary';
 
 // Global dirty state for unsaved changes warning
 // Pages with forms set this to warn before navigation
@@ -747,7 +748,9 @@ export function Sidebar({ children }: SidebarProps) {
         }`}
       >
         <div className="px-4 py-6 sm:px-6 lg:px-10 lg:py-8 animate-fade-in">
-          {children}
+          <ErrorBoundary name="Página">
+            {children}
+          </ErrorBoundary>
           <FooterLogo />
         </div>
       </main>

@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode, type DragEvent } from 'react';
 import { useLayout, type SectionConfig } from './layout-context';
+import { ErrorBoundary } from './error-boundary';
 
 interface DraggableSectionProps {
   pagePath: string;
@@ -163,8 +164,10 @@ export function DraggableSection({
         </div>
       )}
 
-      {/* Section content */}
-      {children}
+      {/* Section content — wrapped in ErrorBoundary for isolation */}
+      <ErrorBoundary name={section.id}>
+        {children}
+      </ErrorBoundary>
     </div>
   );
 }

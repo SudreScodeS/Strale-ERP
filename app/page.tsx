@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MetricCard, PageHeader } from './components/ui';
 import { SkeletonPage } from './components/skeleton';
+import { ErrorBoundary } from './components/error-boundary';
 import { ProtectedPage } from './components/protected';
 import { getAuthHeaders, getCurrentUser } from './lib/authClient';
 import { useLayout, type SectionConfig } from './components/layout-context';
@@ -396,7 +397,9 @@ export default function Home() {
               totalSections={sections.length}
               className={section.colSpan === 2 ? 'sm:col-span-2 lg:col-span-4' : ''}
             >
-              {section.id === 'metrics' && (() => {
+              {section.id === 'metrics' && (
+                <ErrorBoundary name="Métricas">
+                {(() => {
                 const count = activeMetrics.length;
                 // Row layout by count:
                 // 1→[1], 2→[2], 3→[3], 4→[4],
@@ -446,8 +449,11 @@ export default function Home() {
                   </div>
                 );
               })()}
+                </ErrorBoundary>
+              )}
 
               {section.id === 'stock-alerts' && (summary.lowStockCount > 0 || summary.watchStockCount > 0) && (
+                <ErrorBoundary name="Alertas de Estoque">
                 <div>
                   <div
                     className="flex items-center gap-4 rounded-2xl p-5"
@@ -481,9 +487,11 @@ export default function Home() {
                     </a>
                   </div>
                 </div>
+                </ErrorBoundary>
               )}
 
               {section.id === 'recent-orders' && (
+                <ErrorBoundary name="Últimos Pedidos">
                 <section
                   className="rounded-2xl p-6"
                   style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
@@ -539,6 +547,7 @@ export default function Home() {
                     )}
                   </div>
                 </section>
+                </ErrorBoundary>
               )}
             </DraggableSection>
           ))}

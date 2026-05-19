@@ -11,8 +11,18 @@ import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import { Order, Quote } from '../../types';
-import ProductPreview from '../components/product-preview';
 import type { PreviewConfig } from '../components/product-preview';
+import dynamic from 'next/dynamic';
+
+const ProductPreview = dynamic(() => import('../components/product-preview'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="h-24 w-24 animate-pulse rounded-xl"
+      style={{ background: 'var(--surface-muted, #e2e8f0)' }}
+    />
+  ),
+});
 
 const SALES_FORM_KEY = 'elitium-sales-form';
 

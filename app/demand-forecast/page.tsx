@@ -6,8 +6,29 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
-import { ProductAIPanel } from '../components/product-ai-panel';
 import type { ProductAIReport } from '../lib/product-ai';
+import dynamic from 'next/dynamic';
+
+const ProductAIPanel = dynamic(
+  () => import('../components/product-ai-panel').then((mod) => ({ default: mod.ProductAIPanel })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex items-center justify-center rounded-2xl p-8"
+        style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+            style={{ borderColor: 'var(--border)', borderTopColor: 'transparent' }}
+          />
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Carregando análise...</p>
+        </div>
+      </div>
+    ),
+  },
+);
 
 interface DemandForecast {
   variableId: string;
