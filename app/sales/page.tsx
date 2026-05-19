@@ -191,6 +191,7 @@ export default function SalesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [showQuoteSelector, setShowQuoteSelector] = useState(false);
   const [quoteSearch, setQuoteSearch] = useState('');
+  const [sourceQuoteId, setSourceQuoteId] = useState<string | null>(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -285,6 +286,7 @@ export default function SalesPage() {
     setSelectedVariables({});
     setQuantity(1);
     setLogoFile(null);
+    setSourceQuoteId(null);
     try { sessionStorage.removeItem(SALES_FORM_KEY); } catch {}
   }
 
@@ -585,6 +587,7 @@ export default function SalesPage() {
   }
 
   function handleSelectQuote(quote: Quote) {
+    setSourceQuoteId(quote.id);
     setOrderName(quote.name || '');
     setDeliveryDate(quote.deliveryDate || '');
     setCartItems(quote.items.map((qi) => ({
@@ -734,6 +737,19 @@ export default function SalesPage() {
       setOrders((prev) => (result.order ? [result.order, ...prev] : prev));
       setOrderStatusUpdates((prev) => ({ ...prev, [result.order.id]: result.order.status }));
       await loadInventory();
+
+      // Atualizar orçamento de origem para "convertido"
+      if (sourceQuoteId) {
+        try {
+          await fetch('/api/quotes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ quoteId: sourceQuoteId, action: 'update-status', status: 'converted' }),
+          });
+          setSourceQuoteId(null);
+          await loadQuotes();
+        } catch { /* silencioso — não bloqueia o fluxo */ }
+      }
     } else {
       setStatusMessage(result.error || 'Erro ao finalizar pedido.');
     }
