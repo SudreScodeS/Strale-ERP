@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Alumni_Sans } from 'next/font/google';
 import { Sidebar } from './components/ui';
 import { LayoutProvider } from './components/layout-context';
-import { SkipLink } from './components/SkipLink';
 import { ServiceWorkerRegistration } from './components/ServiceWorkerRegistration';
 import { NavigationProvider } from './components/NavigationProvider';
 import './globals.css';
@@ -91,7 +90,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full">
-        <SkipLink />
         <ServiceWorkerRegistration />
         <NavigationProvider>
           <LayoutProvider>

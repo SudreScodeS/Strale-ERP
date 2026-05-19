@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     requireRole(request, ['admin']);
     const summary = getDashboardSummary();
-    return ok(summary);
+    return ok({ summary });
   } catch (error) {
     return fromError(error);
   }

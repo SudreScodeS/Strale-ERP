@@ -62,7 +62,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     });
     if (!res.ok) return null;
     const json = await res.json();
-    const newToken = json?.data?.token;
+    const newToken = json?.token;
     if (newToken) {
       setStoredToken(newToken);
       return newToken;

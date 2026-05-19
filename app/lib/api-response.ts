@@ -31,30 +31,35 @@ function withErrorHeaders(response: NextResponse, requestId?: string): NextRespo
 
 // ── Success Responses ──────────────────────────────────────────
 
-/** 200 — Standard success */
+/** 200 — Standard success (data fields spread at top level for frontend compat) */
 export function ok<T>(data: T, message?: string, meta?: Partial<ApiMeta>): NextResponse {
   const requestId = generateRequestId();
-  const response = NextResponse.json({
-    success: true,
-    ...(message && { message }),
-    data,
-    meta: { timestamp: timestamp(), requestId, ...meta },
-  });
+  const payload: Record<string, unknown> = { success: true };
+  if (message) payload.message = message;
+  if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+    Object.assign(payload, data);
+  } else {
+    payload.data = data;
+  }
+  payload.meta = { timestamp: timestamp(), requestId, ...meta };
+  const response = NextResponse.json(payload);
   return withHeaders(response, requestId);
 }
 
-/** 201 — Resource created */
+/** 201 — Resource created (data fields spread at top level for frontend compat) */
 export function created<T>(data: T, message?: string): NextResponse {
   const requestId = generateRequestId();
-  const response = NextResponse.json(
-    {
-      success: true,
-      message: message || 'Recurso criado com sucesso.',
-      data,
-      meta: { timestamp: timestamp(), requestId },
-    },
-    { status: 201 },
-  );
+  const payload: Record<string, unknown> = {
+    success: true,
+    message: message || 'Recurso criado com sucesso.',
+  };
+  if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+    Object.assign(payload, data);
+  } else {
+    payload.data = data;
+  }
+  payload.meta = { timestamp: timestamp(), requestId };
+  const response = NextResponse.json(payload, { status: 201 });
   return withHeaders(response, requestId);
 }
 
@@ -64,7 +69,6 @@ export function success(message: string): NextResponse {
   const response = NextResponse.json({
     success: true,
     message,
-    data: null,
     meta: { timestamp: timestamp(), requestId },
   });
   return withHeaders(response, requestId);

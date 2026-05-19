@@ -67,7 +67,7 @@ export default function LoginPage() {
       });
       const result = await response.json();
       if (response.ok) {
-        const token = result.data?.token;
+        const token = result.token;
         if (!token) {
           setMessage('Resposta inválida do servidor.');
           return;

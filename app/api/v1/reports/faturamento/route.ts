@@ -73,7 +73,7 @@ export async function GET(request: Request) {
       };
     });
 
-    return ok(result);
+    return ok({ products: result });
   } catch (error) {
     return fromError(error);
   }

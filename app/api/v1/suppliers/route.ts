@@ -10,7 +10,7 @@ import { ok, created, badRequest, conflict, fromError } from '../../../lib/api-r
 export async function GET(request: Request) {
   try {
     requireRole(request, ['admin']);
-    return ok(supplierData.getAll());
+    return ok({ suppliers: supplierData.getAll() });
   } catch (error) {
     return fromError(error);
   }

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     requireRole(request, ['admin', 'seller']);
     const config = loadServerConfig();
-    return ok(config);
+    return ok({ config });
   } catch (error) {
     return fromError(error);
   }
@@ -22,7 +22,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { systemName, companyName, ...safeUpdates } = body;
     const updated = updateServerConfig(safeUpdates);
-    return ok(updated, 'Configurações atualizadas com sucesso.');
+    return ok({ config: updated }, 'Configurações atualizadas com sucesso.');
   } catch (error) {
     return fromError(error);
   }

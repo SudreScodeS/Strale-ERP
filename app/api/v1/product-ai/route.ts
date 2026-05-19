@@ -8,7 +8,7 @@ import { ok, fromError } from '../../../lib/api-response';
 export async function GET(request: Request) {
   try {
     requireRole(request, ['admin']);
-    return ok(getProductAIReport());
+    return ok({ report: getProductAIReport() });
   } catch (error) {
     return fromError(error);
   }
