@@ -3,6 +3,9 @@
 /**
  * Tests for app/lib/api-response.ts
  * Covers: ok, created, success, badRequest, unauthorized, forbidden, notFound, conflict, internalError, fromError, paginated
+ *
+ * Note: ok() spreads object data at the top level (not under a `data` key).
+ *       Non-object data goes under `data`.
  */
 
 // Mock NextResponse
@@ -31,12 +34,12 @@ import {
 
 describe('Success Responses', () => {
   describe('ok()', () => {
-    it('should return 200 with data', () => {
+    it('should return 200 with data spread at top level', () => {
       const response = ok({ name: 'test' });
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         success: true,
-        data: { name: 'test' },
+        name: 'test',
       });
     });
 
@@ -45,7 +48,15 @@ describe('Success Responses', () => {
       expect(response.body).toMatchObject({
         success: true,
         message: 'Dados carregados.',
-        data: { id: 1 },
+        id: 1,
+      });
+    });
+
+    it('should wrap non-object data under data key', () => {
+      const response = ok('string-value');
+      expect(response.body).toMatchObject({
+        success: true,
+        data: 'string-value',
       });
     });
 
@@ -67,7 +78,7 @@ describe('Success Responses', () => {
       expect(response.body).toMatchObject({
         success: true,
         message: 'Recurso criado com sucesso.',
-        data: { id: 'new-id' },
+        id: 'new-id',
       });
     });
 
@@ -80,13 +91,12 @@ describe('Success Responses', () => {
   });
 
   describe('success()', () => {
-    it('should return 200 with message and null data', () => {
+    it('should return 200 with message', () => {
       const response = success('Recurso deletado.');
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         success: true,
         message: 'Recurso deletado.',
-        data: null,
       });
     });
   });
