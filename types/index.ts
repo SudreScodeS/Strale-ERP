@@ -1,10 +1,10 @@
 // types/index.ts
 // Arquivo de tipos globais para o sistema ERP
-// Este arquivo define as interfaces e tipos principais usados em todo o sistema
-// Decisão arquitetural: Centralizar tipos para facilitar manutenção e consistência
+// Re-exporta todos os tipos por domínio para manter compatibilidade
 
-// Interface para usuários do sistema
-// Define estrutura completa de dados do usuário incluindo autenticação e permissões
+// ==========================================
+// TIPOS BASE (nucleares do sistema)
+// ==========================================
 export interface User {
   id: string; // ID único gerado por UUID
   username: string; // Nome de usuário para login (único no sistema)
@@ -266,3 +266,39 @@ export interface ActivityLog {
   description: string;
   details?: string;
 }
+
+// ==========================================
+// RE-EXPORTS POR DOMÍNIO
+// ==========================================
+
+export type {
+  VariableOption,
+  GroupOption,
+  ProductOption,
+  CartItem,
+  PurchaseCartItem,
+} from './product.types';
+
+export type {
+  OrderView,
+  DeliveryUrgency,
+} from './order.types';
+
+export type { TokenPayload as AuthTokenPayload } from './auth.types';
+
+export type {
+  DashboardOrder,
+  DashboardSummary,
+} from './dashboard.types';
+
+export type {
+  ChatMessage as AssistantChatMessage,
+  OllamaStatus as AssistantOllamaStatus,
+} from './assistant.types';
+
+export type {
+  ApiSuccess,
+  ApiError,
+  ApiMeta,
+  ApiResponse,
+} from './api.types';
