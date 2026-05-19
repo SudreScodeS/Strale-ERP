@@ -8,6 +8,7 @@ import { setGlobalDirty } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { apiFetch } from '../lib/apiFetch';
+import { toast } from '../components/ui/Toast';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { PrintType, PrintPricingRule, PriceTier } from '../../types';
@@ -138,8 +139,7 @@ export default function AdminPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Configurações salvas com sucesso! As alterações já estão ativas no sistema.');
-        setMessageType('success');
+        toast('Configurações salvas com sucesso!', 'success');
         if (data.config) {
           setConfig(data.config);
           savedConfigRef.current = JSON.stringify(data.config);

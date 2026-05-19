@@ -11,6 +11,7 @@ import { SkeletonProductList, SkeletonOrderList, SkeletonForm } from '../compone
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { apiFetch } from '../lib/apiFetch';
+import { toast } from '../components/ui/Toast';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure, Supplier, PurchaseItem, PurchaseOrder, PurchaseCartItem, VariableOption, GroupOption, ProductOption } from '../../types';
@@ -278,7 +279,7 @@ export default function PurchasesPage() {
       setMessage(result.message || 'Falha ao editar fornecedor.');
       return;
     }
-    setMessage('Fornecedor atualizado com sucesso.');
+    toast('Fornecedor atualizado com sucesso!', 'success');
     setEditingSupplier(null);
     setSuppliers((prev) => prev.map(s => s.id === editingSupplier.id ? { ...s, ...result.supplier } : s));
   }
@@ -291,7 +292,7 @@ export default function PurchasesPage() {
       setMessage(result.message || 'Falha ao excluir fornecedor.');
       return;
     }
-    setMessage('Fornecedor excluído com sucesso.');
+    toast('Fornecedor excluído com sucesso!', 'success');
     setSuppliers((prev) => prev.filter(s => s.id !== supplierId));
   }
 
@@ -370,7 +371,7 @@ export default function PurchasesPage() {
       setMessage(data.message || 'Falha ao registrar compra.');
       return;
     }
-    setMessage(data.message || 'Compra registrada com sucesso.');
+    toast('Compra registrada com sucesso!', 'success');
     setCart([]);
     setPurchaseDate('');
     await loadDashboard();
@@ -415,7 +416,7 @@ export default function PurchasesPage() {
       setMessage(data.message || 'Falha ao editar compra.');
       return;
     }
-    setMessage(data.message || 'Compra atualizada com sucesso.');
+    toast('Compra atualizada com sucesso!', 'success');
     setEditingPurchase(null);
     await loadDashboard();
   }
@@ -431,7 +432,7 @@ export default function PurchasesPage() {
       setMessage(data.message || 'Falha ao excluir compra.');
       return;
     }
-    setMessage(data.message || 'Compra excluída com sucesso.');
+    toast('Compra excluída com sucesso!', 'success');
     await loadDashboard();
   }
 

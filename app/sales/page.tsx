@@ -9,6 +9,7 @@ import { ProgressBar } from '../components/progress-bar';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { apiFetch } from '../lib/apiFetch';
+import { toast } from '../components/ui/Toast';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import { Order, Quote } from '../../types';
@@ -713,7 +714,7 @@ export default function SalesPage() {
 
     const result = await safeJson(response);
     if (response.ok) {
-      setStatusMessage('Pedido finalizado com sucesso. Nota fiscal gerada automaticamente.');
+      toast('Pedido finalizado com sucesso!', 'success');
       setSelectedVariables({});
       setLogoFile(null);
       setQuantity(1);

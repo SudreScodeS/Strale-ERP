@@ -6,6 +6,7 @@ import { PageHeader, setGlobalDirty, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { apiFetch } from '../lib/apiFetch';
+import { toast } from '../components/ui/Toast';
 import {
   ACTION_ICON_MAP, NOTIFICATION_ICON_MAP,
   IconSearch, IconTrash, IconRefresh, IconFilter, IconSort,

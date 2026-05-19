@@ -9,6 +9,7 @@ import { ProtectedPage } from '../components/protected';
 import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { apiFetch } from '../lib/apiFetch';
+import { toast } from '../components/ui/Toast';
 import { Quote, VariableOption, GroupOption, ProductOption } from '../../types';
 
 const QUOTES_FORM_KEY = 'elitium-quotes-form';
@@ -586,7 +587,7 @@ export default function QuotesPage() {
 
       const data = await safeJson(response);
       if (response.ok) {
-        setStatusMessage('Orçamento criado com sucesso!');
+        toast('Orçamento criado com sucesso!', 'success');
         clearFormState();
         setActiveSection('list');
         await loadQuotes();
@@ -611,9 +612,9 @@ export default function QuotesPage() {
         if (action === 'convert') {
           setStatusMessage(`Orçamento convertido em pedido #${data.order?.id}!`);
         } else if (action === 'clone') {
-          setStatusMessage('Orçamento clonado com sucesso!');
+          toast('Orçamento clonado com sucesso!', 'success');
         } else {
-          setStatusMessage('Status atualizado!');
+          toast('Status atualizado!', 'success');
         }
         await loadQuotes();
         setSelectedQuote(null);

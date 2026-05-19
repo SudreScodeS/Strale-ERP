@@ -13,6 +13,7 @@ import { ProtectedPage } from '../components/protected';
 import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders } from '../lib/authClient';
 import { apiFetch } from '../lib/apiFetch';
+import { toast } from '../components/ui/Toast';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure, VariableOption, GroupOption, ProductOption } from '../../types';
@@ -131,7 +132,7 @@ export default function InventoryPage() {
     });
     const result = await safeJson(response);
     if (response.ok) {
-      setMessage(result.message);
+      toast(result.message, 'success');
       setProductName('');
       setProductPrice(0);
       setProductMargin(20);
@@ -158,7 +159,7 @@ export default function InventoryPage() {
     });
     const result = await safeJson(response);
     if (response.ok) {
-      setMessage(result.message);
+      toast(result.message, 'success');
       setGroupName('');
       setGroupWatchAlert(DEFAULT_WATCH_STOCK_ALERT);
       setGroupCriticalAlert(DEFAULT_CRITICAL_STOCK_ALERT);
@@ -174,7 +175,7 @@ export default function InventoryPage() {
     });
     const result = await safeJson(response);
     if (response.ok) {
-      setMessage(result.message);
+      toast(result.message, 'success');
       setVariableName('');
       setVariablePrice(0);
       setVariableStock(0);
