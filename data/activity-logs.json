@@ -608,5 +608,25 @@
     "entityId": "765ff133-8732-45b3-a0cb-73d703de93c3",
     "description": "Converteu orçamento \"cubos mágicos\" em pedido #14",
     "details": "Pedido: 14"
+  },
+  {
+    "id": "log_1779227386979_sfaehh",
+    "timestamp": "2026-05-19T21:49:46.979Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "delete",
+    "entity": "quote",
+    "entityId": "21ade169-3eb3-4aad-a0aa-cb1817b9bd04",
+    "description": "Removeu orçamento \"Teste Sudré (cópia)\""
+  },
+  {
+    "id": "log_1779228515392_812q4q",
+    "timestamp": "2026-05-19T22:08:35.392Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "update",
+    "entity": "order",
+    "entityId": "14",
+    "description": "Marcou pedido \"cubos mágicos\" como entregue"
   }
 ]

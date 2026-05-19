@@ -198,5 +198,17 @@
       "label": "Flexografia"
     }
   ],
-  "pricePerCm2": 0.005
+  "pricePerCm2": 0.005,
+  "notifications": {
+    "orderCreated": true,
+    "orderStatusChanged": true,
+    "orderDelivered": true,
+    "quoteCreated": true,
+    "quoteStatusChanged": true,
+    "stockAlert": true,
+    "purchaseCreated": true,
+    "purchaseReceived": true,
+    "userLogin": false,
+    "financialRecord": true
+  }
 }

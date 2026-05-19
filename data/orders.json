@@ -614,6 +614,8 @@
     "logoCost": 50,
     "status": "completed",
     "deliveryDate": "2026-05-25",
-    "createdAt": "2026-05-19T12:26:51.501Z"
+    "createdAt": "2026-05-19T12:26:51.501Z",
+    "delivered": true,
+    "deliveredAt": "2026-05-19T22:08:35.387Z"
   }
 ]

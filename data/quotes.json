@@ -151,48 +151,6 @@
     "convertedOrderId": "10"
   },
   {
-    "id": "21ade169-3eb3-4aad-a0aa-cb1817b9bd04",
-    "userId": "user-admin",
-    "customerName": "Teste",
-    "name": "Teste Sudré (cópia)",
-    "items": [
-      {
-        "productId": "product-1",
-        "productName": "Sacola Personalizada",
-        "selectedVariables": [
-          {
-            "variableId": "variable-nylon",
-            "groupId": "group-material",
-            "quantity": 99
-          },
-          {
-            "variableId": "variable-color-azul",
-            "groupId": "group-color",
-            "quantity": 100
-          },
-          {
-            "variableId": "variable-medium",
-            "groupId": "group-size",
-            "quantity": 98
-          }
-        ],
-        "quantity": 100,
-        "unitCost": 50,
-        "unitPrice": 60,
-        "printType": "serigrafia",
-        "printPosition": "front",
-        "printSize": "medium"
-      }
-    ],
-    "totalCost": 5010,
-    "totalPrice": 6012,
-    "logoCost": 10,
-    "status": "rejected",
-    "validUntil": "2026-05-18T22:17:33.915Z",
-    "notes": "Isso é um teste",
-    "createdAt": "2026-05-15T14:26:44.620Z"
-  },
-  {
     "id": "949a4577-d86e-447f-92b0-b8d6eca74eb7",
     "userId": "7b735e51-2408-4dab-9b97-505420324cf3",
     "customerName": "Xbox",

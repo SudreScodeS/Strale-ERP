@@ -142,5 +142,13 @@
     "description": "Pedido: cubos mágicos",
     "date": "2026-05-19T12:26:51.501Z",
     "orderId": "14"
+  },
+  {
+    "id": "861a5e79-932b-4c0a-8363-fde6a822829e",
+    "type": "purchase",
+    "amount": 5000,
+    "description": "Azul 1000x",
+    "date": "2026-05-18T00:00:00.000Z",
+    "orderId": "po-1779230112244-1ca982d5"
   }
 ]

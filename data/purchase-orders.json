@@ -50,5 +50,18 @@
     ],
     "status": "ordered",
     "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "po-1779230112244-1ca982d5",
+    "supplierId": "76aa5501-9111-4f44-8b1d-1951e234ac43",
+    "items": [
+      {
+        "variableId": "variable-color-azul",
+        "quantity": 1000,
+        "unitCost": 5
+      }
+    ],
+    "status": "ordered",
+    "createdAt": "2026-05-18T00:00:00.000Z"
   }
 ]
