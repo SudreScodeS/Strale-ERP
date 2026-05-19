@@ -155,7 +155,7 @@ export default function SalesPage() {
       if (selectedOrder?.id === orderId) setSelectedOrder(prev => prev ? { ...prev, delivered, deliveredAt: data.order?.deliveredAt } : null);
       setStatusMessage(delivered ? 'Pedido marcado como entregue!' : 'Entrega desfeita.');
     } else {
-      setStatusMessage(data.error || 'Erro ao atualizar entrega.');
+      setStatusMessage(data.message || 'Erro ao atualizar entrega.');
     }
   }
 
@@ -171,7 +171,7 @@ export default function SalesPage() {
       if (selectedOrder?.id === orderId) setSelectedOrder(prev => prev ? { ...prev, deliveryDate: newDate } : null);
       setStatusMessage('Data de entrega atualizada.');
     } else {
-      setStatusMessage(data.error || 'Erro ao atualizar data.');
+      setStatusMessage(data.message || 'Erro ao atualizar data.');
     }
   }
 
@@ -297,7 +297,7 @@ export default function SalesPage() {
       });
       const data = await safeJson(response);
       if (!response.ok) {
-        setStatusMessage(data.error || 'Falha ao carregar estoque.');
+        setStatusMessage(data.message || 'Falha ao carregar estoque.');
         setLoadingInventory(false);
         return;
       }
@@ -321,7 +321,7 @@ export default function SalesPage() {
       });
       const data = await safeJson(response);
       if (!response.ok) {
-        setStatusMessage(data.error || 'Falha ao carregar pedidos.');
+        setStatusMessage(data.message || 'Falha ao carregar pedidos.');
         setLoadingOrders(false);
         return;
       }
@@ -383,7 +383,7 @@ export default function SalesPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          setLogoAnalysisError(data.error || 'Falha na análise da logo.');
+          setLogoAnalysisError(data.message || 'Falha na análise da logo.');
           return;
         }
 
@@ -574,7 +574,7 @@ export default function SalesPage() {
       });
       const data = await safeJson(response);
       if (!response.ok) {
-        setStatusMessage(data.error || 'Falha ao carregar orçamentos.');
+        setStatusMessage(data.message || 'Falha ao carregar orçamentos.');
         return;
       }
       setQuotes(data.quotes || []);
@@ -749,7 +749,7 @@ export default function SalesPage() {
         } catch { /* silencioso — não bloqueia o fluxo */ }
       }
     } else {
-      setStatusMessage(result.error || 'Erro ao finalizar pedido.');
+      setStatusMessage(result.message || 'Erro ao finalizar pedido.');
     }
     setSubmitting(false);
   }
@@ -771,7 +771,7 @@ export default function SalesPage() {
       setStatusMessage('Status do pedido atualizado.');
       await loadInventory();
     } else {
-      setStatusMessage(data.error || 'Erro ao atualizar o pedido.');
+      setStatusMessage(data.message || 'Erro ao atualizar o pedido.');
     }
   }
 
@@ -847,7 +847,7 @@ export default function SalesPage() {
       setEditingOrder(false);
       setStatusMessage('Pedido atualizado com sucesso.');
     } else {
-      setStatusMessage(data.error || 'Erro ao atualizar pedido.');
+      setStatusMessage(data.message || 'Erro ao atualizar pedido.');
     }
   }
 
@@ -890,7 +890,7 @@ export default function SalesPage() {
       if (orderToDelete) showOrderUndoToast(data.message || 'Pedido removido.', [orderToDelete]);
       else setStatusMessage(data.message || 'Pedido removido com sucesso.');
     } else {
-      setStatusMessage(data.error || 'Erro ao remover pedido.');
+      setStatusMessage(data.message || 'Erro ao remover pedido.');
     }
   }
 

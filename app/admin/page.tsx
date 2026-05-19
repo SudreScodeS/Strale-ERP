@@ -106,7 +106,7 @@ export default function AdminPage() {
         setDirty(false);
         setGlobalDirty(false);
       } else {
-        setMessage(data.error || 'Erro ao carregar configurações.');
+        setMessage(data.message || 'Erro ao carregar configurações.');
         setMessageType('error');
       }
     } catch {
@@ -146,7 +146,7 @@ export default function AdminPage() {
           setGlobalDirty(false);
         }
       } else {
-        setMessage(data.error || 'Erro ao salvar configurações.');
+        setMessage(data.message || 'Erro ao salvar configurações.');
         setMessageType('error');
       }
     } catch {

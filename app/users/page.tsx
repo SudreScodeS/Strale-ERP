@@ -38,7 +38,7 @@ export default function UsersPage() {
     const response = await fetch('/api/v1/users', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (response.ok) setUsers(data.users || []);
-    else setMessage(data.error || 'Falha ao carregar.');
+    else setMessage(data.message || 'Falha ao carregar.');
   }
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function UsersPage() {
       setUsername(''); setEmail(''); setPassword(''); setRole('seller');
       setUsers((prev) => [data.user, ...prev]);
     } else {
-      setMessage(data.error || 'Falha ao criar.');
+      setMessage(data.message || 'Falha ao criar.');
     }
   }
 
@@ -78,7 +78,7 @@ export default function UsersPage() {
       setEditingUserId(null); setUsername(''); setEmail(''); setPassword(''); setRole('seller');
       await loadUsers();
     } else {
-      setMessage(data.error || 'Falha ao atualizar.');
+      setMessage(data.message || 'Falha ao atualizar.');
     }
   }
 
@@ -94,7 +94,7 @@ export default function UsersPage() {
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
       if (editingUserId === user.id) { setEditingUserId(null); setUsername(''); setEmail(''); setPassword(''); }
     } else {
-      setMessage(data.error || 'Falha ao excluir.');
+      setMessage(data.message || 'Falha ao excluir.');
     }
   }
 

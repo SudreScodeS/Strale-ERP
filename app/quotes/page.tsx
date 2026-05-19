@@ -367,7 +367,7 @@ export default function QuotesPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          setLogoAnalysisError(data.error || 'Falha na análise da logo.');
+          setLogoAnalysisError(data.message || 'Falha na análise da logo.');
           return;
         }
 
@@ -590,7 +590,7 @@ export default function QuotesPage() {
         setActiveSection('list');
         await loadQuotes();
       } else {
-        setStatusMessage(data.error || 'Erro ao criar orçamento.');
+        setStatusMessage(data.message || 'Erro ao criar orçamento.');
       }
     } catch { setStatusMessage('Erro de conexão.'); }
   }
@@ -620,7 +620,7 @@ export default function QuotesPage() {
         await loadQuotes();
         setSelectedQuote(null);
       } else {
-        setStatusMessage(data.error || 'Erro na operação.');
+        setStatusMessage(data.message || 'Erro na operação.');
       }
     } catch { setStatusMessage('Erro de conexão.'); }
   }
@@ -670,7 +670,7 @@ export default function QuotesPage() {
         else setStatusMessage('Orçamento removido.');
         await loadQuotes();
       } else {
-        setStatusMessage(data.error || 'Erro ao remover.');
+        setStatusMessage(data.message || 'Erro ao remover.');
       }
     } catch { setStatusMessage('Erro de conexão.'); }
   }

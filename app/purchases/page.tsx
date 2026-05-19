@@ -190,7 +190,7 @@ export default function PurchasesPage() {
     });
     const data = await safeJson(response);
     if (!response.ok) {
-      setMessage(data.error || 'Falha ao carregar dados de compras.');
+      setMessage(data.message || 'Falha ao carregar dados de compras.');
       return;
     }
     setSuppliers(data.suppliers || []);
@@ -246,7 +246,7 @@ export default function PurchasesPage() {
     });
     const result = await safeJson(response);
     if (!response.ok) {
-      setMessage(result.error || 'Falha ao criar fornecedor.');
+      setMessage(result.message || 'Falha ao criar fornecedor.');
       return;
     }
     setMessage(result.message || 'Fornecedor criado com sucesso.');
@@ -329,7 +329,7 @@ export default function PurchasesPage() {
     });
     const data = await safeJson(response);
     if (!response.ok) {
-      setMessage(data.error || 'Falha ao registrar compra.');
+      setMessage(data.message || 'Falha ao registrar compra.');
       return;
     }
     setMessage(data.message || 'Compra registrada com sucesso.');
@@ -377,7 +377,7 @@ export default function PurchasesPage() {
     });
     const data = await safeJson(response);
     if (!response.ok) {
-      setMessage(data.error || 'Falha ao editar compra.');
+      setMessage(data.message || 'Falha ao editar compra.');
       return;
     }
     setMessage(data.message || 'Compra atualizada com sucesso.');
@@ -393,7 +393,7 @@ export default function PurchasesPage() {
     });
     const data = await safeJson(response);
     if (!response.ok) {
-      setMessage(data.error || 'Falha ao excluir compra.');
+      setMessage(data.message || 'Falha ao excluir compra.');
       return;
     }
     setMessage(data.message || 'Compra excluída com sucesso.');

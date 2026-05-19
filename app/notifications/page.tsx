@@ -334,7 +334,7 @@ export default function NotificationsPage() {
         setDirty(false);
         setGlobalDirty(false);
       } else {
-        setSettingsMessage(data.error || 'Erro ao salvar configurações.');
+        setSettingsMessage(data.message || 'Erro ao salvar configurações.');
         setSettingsMessageType('error');
       }
     } catch {

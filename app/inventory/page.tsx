@@ -141,7 +141,7 @@ export default function InventoryPage() {
       setProductImage('');
       await loadInventory();
     } else {
-      setMessage(result.error || 'Erro ao criar produto.');
+      setMessage(result.message || 'Erro ao criar produto.');
     }
   }
 
@@ -169,7 +169,7 @@ export default function InventoryPage() {
       setGroupCriticalAlert(DEFAULT_CRITICAL_STOCK_ALERT);
       await loadInventory();
     } else {
-      setMessage(result.error || 'Erro ao criar grupo.');
+      setMessage(result.message || 'Erro ao criar grupo.');
     }
   }
 
@@ -189,7 +189,7 @@ export default function InventoryPage() {
       setVariableUnit('un');
       await loadInventory();
     } else {
-      setMessage(result.error || 'Erro ao criar variável.');
+      setMessage(result.message || 'Erro ao criar variável.');
     }
   }
 
@@ -218,7 +218,7 @@ export default function InventoryPage() {
       }),
     });
     const result = await safeJson(response);
-    setMessage(result.message || result.error || 'Produto atualizado.');
+    setMessage(result.message || result.message || 'Produto atualizado.');
     if (response.ok) {
       setEditingProduct(null);
       await loadInventory();
@@ -232,7 +232,7 @@ export default function InventoryPage() {
       headers: getAuthHeaders(),
     });
     const result = await safeJson(response);
-    setMessage(result.message || result.error || 'Operação concluída.');
+    setMessage(result.message || result.message || 'Operação concluída.');
     if (response.ok) await loadInventory();
   }
 
@@ -261,7 +261,7 @@ export default function InventoryPage() {
       }),
     });
     const result = await safeJson(response);
-    setMessage(result.message || result.error || 'Grupo atualizado.');
+    setMessage(result.message || result.message || 'Grupo atualizado.');
     if (response.ok) {
       setEditingGroup(null);
       await loadInventory();
@@ -275,7 +275,7 @@ export default function InventoryPage() {
       headers: getAuthHeaders(),
     });
     const result = await safeJson(response);
-    setMessage(result.message || result.error || 'Operação concluída.');
+    setMessage(result.message || result.message || 'Operação concluída.');
     if (response.ok) await loadInventory();
   }
 
@@ -302,7 +302,7 @@ export default function InventoryPage() {
       }),
     });
     const result = await safeJson(response);
-    setMessage(result.message || result.error || 'Variável atualizada.');
+    setMessage(result.message || result.message || 'Variável atualizada.');
     if (response.ok) {
       setEditingVariable(null);
       await loadInventory();
@@ -316,7 +316,7 @@ export default function InventoryPage() {
       headers: getAuthHeaders(),
     });
     const result = await safeJson(response);
-    setMessage(result.message || result.error || 'Operação concluída.');
+    setMessage(result.message || result.message || 'Operação concluída.');
     if (response.ok) await loadInventory();
   }
 

@@ -75,7 +75,7 @@ export default function RegisterPage() {
         setIsSuccess(true);
         reset();
       } else {
-        setMessage(result.error || 'Falha ao registrar.');
+        setMessage(result.message || 'Falha ao registrar.');
         setIsSuccess(false);
       }
     } catch {
