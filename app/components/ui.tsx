@@ -387,7 +387,7 @@ export function Sidebar({ children }: SidebarProps) {
   const sidebarContent = (
     <>
       {/* Logo & header */}
-      <div className="mb-6 flex items-center justify-between gap-3 px-1">
+      <div className="mb-6 flex items-center justify-between gap-3 overflow-visible px-1">
         <div className="flex items-center gap-3">
           <Image
             src={mounted && theme === 'dark' ? '/Logo.svg' : '/LogoC.svg'}
@@ -619,6 +619,7 @@ export function Sidebar({ children }: SidebarProps) {
         style={{
           background: 'var(--sidebar-bg)',
           borderRight: '1px solid var(--sidebar-border)',
+          overflow: 'visible',
         }}
       >
         {isSidebarOpen ? (
@@ -651,7 +652,7 @@ export function Sidebar({ children }: SidebarProps) {
             </div>
 
             {/* Navigation icons */}
-            <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto">
+            <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto overflow-x-visible">
               {filteredItems.map((item) => {
                 const active = isActive(item.href);
                 return (
@@ -714,8 +715,9 @@ export function Sidebar({ children }: SidebarProps) {
               ) : null}
             </nav>
 
-            {/* Bottom: theme toggle + user avatar */}
+            {/* Bottom: notifications + theme toggle + user avatar */}
             <div className="mt-auto flex flex-col items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--sidebar-border)' }}>
+              <NotificationBell />
               <button
                 type="button"
                 onClick={toggleTheme}
