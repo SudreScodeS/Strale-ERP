@@ -1,33 +1,45 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { getAuthHeaders } from '../lib/authClient';
 import { globalConfig } from '../../config/global';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
+import { ErrorBoundary } from '../components/error-boundary';
+
+// ── Types ──────────────────────────────────────────────────────
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  source?: string;
+  toolsUsed?: string[];
+  isStreaming?: boolean;
 }
 
+interface OllamaStatus {
+  available: boolean;
+  model?: string;
+  models?: string[];
+  error?: string;
+}
+
+// ── Suggestions ────────────────────────────────────────────────
+
 const SUGGESTIONS = [
-  'Produto mais vendido',
-  'Estoque baixo',
-  'Lucro total',
-  'Pedidos recentes',
-  'Ticket medio',
-  'Previsao de demanda',
-  'Vendas por periodo',
-  'Orcamentos pendentes',
-  'Taxa de conversao',
-  'Usuarios',
-  'Despesas',
-  'Resumo do sistema',
-  'Quanto custa 500 sacolas TNT azuis?',
-  'Preco de 1000 nylon 30x40 com serigrafia',
-  'Como usar',
+  { label: 'Resumo do sistema', icon: '📊' },
+  { label: 'Produto mais vendido', icon: '🏆' },
+  { label: 'Estoque baixo', icon: '⚠️' },
+  { label: 'Lucro total', icon: '💰' },
+  { label: 'Pedidos recentes', icon: '🛒' },
+  { label: 'Entregas urgentes', icon: '🚚' },
+  { label: 'Previsão de demanda', icon: '📈' },
+  { label: 'Orçamentos pendentes', icon: '📋' },
+  { label: 'Ticket médio', icon: '🎯' },
+  { label: 'Vendas por período', icon: '📅' },
+  { label: 'Quanto custa 500 sacolas TNT?', icon: '💲' },
+  { label: 'Fornecedores', icon: '🏭' },
 ];
 
 const PAGE_PATH = '/assistant';
@@ -38,28 +50,34 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'input', visible: true, order: 2, colSpan: 2 },
 ];
 
+// ── Chat Bubble ────────────────────────────────────────────────
+
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
 
-  const renderFormattedLine = (line: string, lineIndex: number) => {
-    if (!line) return <div key={lineIndex} className="h-2" />;
+  const renderLine = (line: string, idx: number) => {
+    if (!line) return <div key={idx} className="h-2" />;
 
-    const parts = line.split(/(\*\*.*?\*\*|_.*?_)/g).filter(Boolean);
+    // Process bold, italic, and inline code
+    const parts = line.split(/(\*\*.*?\*\*|_.*?_|`.*?`)/g).filter(Boolean);
     return (
-      <div key={lineIndex}>
-        {parts.map((part, partIndex) => {
+      <div key={idx}>
+        {parts.map((part, pi) => {
           if (part.startsWith('**') && part.endsWith('**')) {
-            return (
-              <strong key={partIndex} style={{ color: 'var(--text-primary)' }}>
-                {part.slice(2, -2)}
-              </strong>
-            );
+            return <strong key={pi} style={{ color: 'var(--text-primary)' }}>{part.slice(2, -2)}</strong>;
           }
           if (part.startsWith('_') && part.endsWith('_')) {
+            return <em key={pi} style={{ color: 'var(--text-muted)' }}>{part.slice(1, -1)}</em>;
+          }
+          if (part.startsWith('`') && part.endsWith('`')) {
             return (
-              <em key={partIndex} style={{ color: 'var(--text-muted)' }}>
+              <code
+                key={pi}
+                className="rounded px-1 py-0.5 text-[11px]"
+                style={{ background: 'var(--surface-muted)', color: 'var(--brand)' }}
+              >
                 {part.slice(1, -1)}
-              </em>
+              </code>
             );
           }
           return part;
@@ -71,7 +89,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser ? 'rounded-br-md' : 'rounded-bl-md'
         }`}
         style={
@@ -83,42 +101,89 @@ function ChatBubble({ message }: { message: ChatMessage }) {
         {isUser ? (
           <p>{message.content}</p>
         ) : (
-          <div className="space-y-1 [&_strong]:font-semibold [&_em]:italic">
-            {message.content.split('\n').map(renderFormattedLine)}
+          <div className="space-y-1">
+            {message.content.split('\n').map(renderLine)}
+            {message.isStreaming && (
+              <span className="inline-block h-3 w-1.5 animate-pulse" style={{ background: 'var(--brand)' }} />
+            )}
           </div>
         )}
-        <p className={`mt-1.5 text-[10px] ${isUser ? 'opacity-50' : ''}`} style={isUser ? {} : { color: 'var(--text-faint)' }}>
-          {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-        </p>
+
+        {/* Metadata */}
+        <div className={`mt-1.5 flex items-center gap-2 text-[10px] ${isUser ? 'opacity-50' : ''}`} style={isUser ? {} : { color: 'var(--text-faint)' }}>
+          <span>{message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+          {!isUser && message.source && message.source !== 'pattern' && (
+            <span
+              className="rounded-full px-1.5 py-0.5"
+              style={{ background: 'var(--brand-muted)', color: 'var(--brand)' }}
+            >
+              {message.source === 'cache' ? '⚡ cache' : message.source === 'llm+tools' ? '🧠 IA + dados' : '🧠 IA'}
+            </span>
+          )}
+          {!isUser && message.toolsUsed && message.toolsUsed.length > 0 && (
+            <span style={{ color: 'var(--text-faint)' }}>
+              {message.toolsUsed.length} tool{message.toolsUsed.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
+// ── Source Badge ───────────────────────────────────────────────
+
+function SourceBadge({ source, toolsUsed }: { source?: string; toolsUsed?: string[] }) {
+  if (!source) return null;
+
+  const labels: Record<string, { text: string; color: string }> = {
+    'llm+tools': { text: '🧠 IA com dados reais', color: 'var(--success)' },
+    llm: { text: '🧠 IA', color: 'var(--brand)' },
+    pattern: { text: '⚡ Local', color: 'var(--text-muted)' },
+    cache: { text: '⚡ Cache', color: 'var(--warning)' },
+  };
+
+  const info = labels[source] || { text: source, color: 'var(--text-muted)' };
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+      style={{ background: 'var(--surface-muted)', color: info.color }}
+    >
+      {info.text}
+      {toolsUsed && toolsUsed.length > 0 && (
+        <span className="ml-1 opacity-60">({toolsUsed.join(', ')})</span>
+      )}
+    </span>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────
+
 export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Ola! Sou o assistente do **' + globalConfig.systemName + '**. Pergunte sobre vendas, estoque, financeiro ou previsao de demanda.',
+      content: `Olá! Sou o assistente do **${globalConfig.systemName}**. Posso consultar vendas, estoque, financeiro, entregas e calcular preços. Como posso ajudar?`,
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ollamaStatus, setOllamaStatus] = useState<{ available: boolean; model?: string; error?: string } | null>(null);
-  const [lastSource, setLastSource] = useState<string>('');
+  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const { getPageLayout } = useLayout();
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
-  // Verifica status do Ollama ao carregar
+  // Check Ollama status
   useEffect(() => {
     fetch('/api/assistant', { headers: getAuthHeaders() })
-      .then(r => r.json())
-      .then(data => setOllamaStatus(data))
-      .catch(() => setOllamaStatus({ available: false, error: 'Erro ao verificar' }));
+      .then((r) => r.json())
+      .then((data) => setOllamaStatus(data))
+      .catch(() => setOllamaStatus({ available: false }));
   }, []);
 
   useEffect(() => {
@@ -129,19 +194,40 @@ export default function AssistantPage() {
     inputRef.current?.focus();
   }, []);
 
-  async function handleSend(question?: string) {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const handleSend = useCallback(async (question?: string) => {
     const q = (question || input).trim();
     if (!q || isLoading) return;
+
+    // Abort any previous request
+    abortRef.current?.abort();
 
     setMessages((prev) => [...prev, { role: 'user', content: q, timestamp: new Date() }]);
     setInput('');
     setIsLoading(true);
 
+    // Add placeholder for streaming response
+    const assistantIdx = messages.length + 1; // after user message
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: '', timestamp: new Date(), isStreaming: true },
+    ]);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, stream: true }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -149,29 +235,94 @@ export default function AssistantPage() {
         throw new Error(err.error || 'Erro ao consultar assistente');
       }
 
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, timestamp: new Date() }]);
-      if (data.source) setLastSource(data.source);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `Erro: ${error instanceof Error ? error.message : 'Nao foi possivel processar.'}`,
-          timestamp: new Date(),
-        },
-      ]);
+      // SSE streaming
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No stream');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullContent = '';
+      let source = '';
+      let toolsUsed: string[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const event = JSON.parse(data);
+            if (event.chunk) fullContent += event.chunk;
+            if (event.source) source = event.source;
+            if (event.toolsUsed) toolsUsed = event.toolsUsed;
+
+            // Update streaming message
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === 'assistant') {
+                next[next.length - 1] = {
+                  ...last,
+                  content: fullContent,
+                  isStreaming: !event.done,
+                  source: source || last.source,
+                  toolsUsed: toolsUsed.length > 0 ? toolsUsed : last.toolsUsed,
+                };
+              }
+              return next;
+            });
+          } catch {
+            // skip malformed
+          }
+        }
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+
+      setMessages((prev) => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last?.role === 'assistant') {
+          next[next.length - 1] = {
+            ...last,
+            content: `Erro: ${err instanceof Error ? err.message : 'Não foi possível processar.'}`,
+            isStreaming: false,
+          };
+        }
+        return next;
+      });
     } finally {
       setIsLoading(false);
+      abortRef.current = null;
       inputRef.current?.focus();
     }
-  }
+  }, [input, isLoading, messages.length]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
+  }
+
+  function handleClear() {
+    abortRef.current?.abort();
+    fetch('/api/assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ clear: true }),
+    }).catch(() => {});
+    setMessages([
+      { role: 'assistant', content: 'Conversa limpa. Como posso ajudar?', timestamp: new Date() },
+    ]);
   }
 
   return (
@@ -183,9 +334,9 @@ export default function AssistantPage() {
             {globalConfig.systemName}
           </p>
           <h2 className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Assistente
+            Assistente IA
           </h2>
-          <div className="mt-0.5 flex items-center gap-2">
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Respostas baseadas em dados reais do sistema
             </p>
@@ -197,37 +348,37 @@ export default function AssistantPage() {
                   color: ollamaStatus.available ? 'var(--success)' : 'var(--warning)',
                   border: `1px solid ${ollamaStatus.available ? 'var(--success-border)' : 'var(--warning-border)'}`,
                 }}
-                title={ollamaStatus.error || (ollamaStatus.available ? `Modelo: ${ollamaStatus.model}` : 'Ollama nao detectado')}
+                title={ollamaStatus.error || (ollamaStatus.available ? `Modelo: ${ollamaStatus.model}` : 'Ollama não detectado')}
               >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: ollamaStatus.available ? 'var(--success)' : 'var(--warning)' }} />
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: ollamaStatus.available ? 'var(--success)' : 'var(--warning)' }}
+                />
                 {ollamaStatus.available
-                  ? (ollamaStatus.error ? `IA: ${ollamaStatus.model || 'Ollama'} (!)` : `IA: ${ollamaStatus.model || 'Ollama'}`)
-                  : 'IA: Local (pattern)'}
-              </span>
-            )}
-            {ollamaStatus?.error && (
-              <span className="text-[10px] max-w-xs truncate" style={{ color: 'var(--warning)' }} title={ollamaStatus.error}>
-                {ollamaStatus.error}
-              </span>
-            )}
-            {lastSource && (
-              <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
-                via {lastSource}
+                  ? `IA: ${ollamaStatus.model || 'Ollama'}`
+                  : 'IA: Local (pattern matching)'}
               </span>
             )}
           </div>
         </div>
-        <button
-          onClick={() =>
-            setMessages([
-              { role: 'assistant', content: 'Chat limpo. Faca uma nova pergunta.', timestamp: new Date() },
-            ])
-          }
-          className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-          style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-        >
-          Limpar
-        </button>
+        <div className="flex gap-2">
+          {isLoading && (
+            <button
+              onClick={() => abortRef.current?.abort()}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger)' }}
+            >
+              Parar
+            </button>
+          )}
+          <button
+            onClick={handleClear}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          >
+            Limpar
+          </button>
+        </div>
       </div>
 
       <LayoutToolbar pagePath={PAGE_PATH} />
@@ -241,37 +392,28 @@ export default function AssistantPage() {
           totalSections={sections.length}
         >
           {section.id === 'chat' && (
-            <div
-              className="flex-1 overflow-y-auto rounded-xl p-5"
-              style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', minHeight: '200px' }}
-            >
-              {messages.map((msg, i) => (
-                <ChatBubble key={i} message={msg} />
-              ))}
+            <ErrorBoundary name="Chat">
+              <div
+                className="flex-1 overflow-y-auto rounded-xl p-5"
+                style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', minHeight: '200px' }}
+              >
+                {messages.map((msg, i) => (
+                  <ChatBubble key={i} message={msg} />
+                ))}
 
-              {isLoading && (
-                <div className="mb-3 flex justify-start">
-                  <div className="rounded-xl px-4 py-3" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '0ms' }} />
-                      <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '150ms' }} />
-                      <div className="h-1.5 w-1.5 animate-bounce rounded-full" style={{ background: 'var(--text-faint)', animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
+                <div ref={messagesEndRef} />
+              </div>
+            </ErrorBoundary>
           )}
 
           {section.id === 'suggestions' && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {SUGGESTIONS.map((s) => (
                 <button
-                  key={s}
-                  onClick={() => handleSend(s.toLowerCase())}
-                  className="rounded-full px-3 py-1.5 text-[11px] font-medium transition-all"
+                  key={s.label}
+                  onClick={() => handleSend(s.label.toLowerCase())}
+                  disabled={isLoading}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all disabled:opacity-50"
                   style={{ background: 'var(--surface-muted)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'var(--brand)';
@@ -282,7 +424,8 @@ export default function AssistantPage() {
                     e.currentTarget.style.color = 'var(--text-muted)';
                   }}
                 >
-                  {s}
+                  <span>{s.icon}</span>
+                  {s.label}
                 </button>
               ))}
             </div>
@@ -299,7 +442,11 @@ export default function AssistantPage() {
                 placeholder="Digite sua pergunta..."
                 disabled={isLoading}
                 className="flex-1 rounded-xl px-4 py-3 text-sm transition-all disabled:opacity-50"
-                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                style={{
+                  background: 'var(--input-bg)',
+                  border: '1px solid var(--input-border)',
+                  color: 'var(--text-primary)',
+                }}
               />
               <button
                 onClick={() => handleSend()}
@@ -307,7 +454,15 @@ export default function AssistantPage() {
                 className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: 'var(--brand)' }}
               >
-                Enviar
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Processando...
+                  </span>
+                ) : 'Enviar'}
               </button>
             </div>
           )}
