@@ -240,9 +240,22 @@ export const purchaseOrderData = {
 
 export const supplierData = {
   getAll: () => cachedRead<Supplier>('suppliers.json'),
+  getById: (id: string) => cachedRead<Supplier>('suppliers.json').find(s => s.id === id),
   create: (supplier: Supplier) => {
     const suppliers = readJsonFile<Supplier>('suppliers.json');
     suppliers.push(supplier);
+    writeAndInvalidate('suppliers.json', suppliers);
+  },
+  update: (id: string, updates: Partial<Supplier>) => {
+    const suppliers = readJsonFile<Supplier>('suppliers.json');
+    const index = suppliers.findIndex(s => s.id === id);
+    if (index !== -1) {
+      suppliers[index] = { ...suppliers[index], ...updates };
+      writeAndInvalidate('suppliers.json', suppliers);
+    }
+  },
+  delete: (id: string) => {
+    const suppliers = readJsonFile<Supplier>('suppliers.json').filter(s => s.id !== id);
     writeAndInvalidate('suppliers.json', suppliers);
   },
 };

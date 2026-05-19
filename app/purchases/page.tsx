@@ -61,6 +61,11 @@ export default function PurchasesPage() {
   const [lowStockVariables, setLowStockVariables] = useState<VariableOption[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
 
+  // ── Supplier editing ──
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [editSupplierName, setEditSupplierName] = useState('');
+  const [editSupplierContact, setEditSupplierContact] = useState('');
+
   // ── Supplier form (Zod + React Hook Form) ──
   const {
     register: registerSupplier,
@@ -250,6 +255,44 @@ export default function PurchasesPage() {
     setMessage(result.message || 'Fornecedor criado com sucesso.');
     resetSupplier();
     setSuppliers((prev) => [result.supplier, ...prev]);
+  }
+
+  function handleStartEditSupplier(supplier: Supplier) {
+    setEditingSupplier(supplier);
+    setEditSupplierName(supplier.name);
+    setEditSupplierContact(supplier.contact || '');
+  }
+
+  async function handleUpdateSupplier() {
+    if (!editingSupplier) return;
+    if (!editSupplierName.trim()) {
+      setMessage('Nome do fornecedor é obrigatório.');
+      return;
+    }
+    const response = await apiFetch('/api/v1/suppliers', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: editingSupplier.id, name: editSupplierName, contact: editSupplierContact }),
+    });
+    const result = await safeJson(response);
+    if (!response.ok) {
+      setMessage(result.message || 'Falha ao editar fornecedor.');
+      return;
+    }
+    setMessage('Fornecedor atualizado com sucesso.');
+    setEditingSupplier(null);
+    setSuppliers((prev) => prev.map(s => s.id === editingSupplier.id ? { ...s, ...result.supplier } : s));
+  }
+
+  async function handleDeleteSupplier(supplierId: string) {
+    if (!confirm('Tem certeza que deseja excluir este fornecedor?')) return;
+    const response = await apiFetch(`/api/v1/suppliers?id=${encodeURIComponent(supplierId)}`, { method: 'DELETE' });
+    const result = await safeJson(response);
+    if (!response.ok) {
+      setMessage(result.message || 'Falha ao excluir fornecedor.');
+      return;
+    }
+    setMessage('Fornecedor excluído com sucesso.');
+    setSuppliers((prev) => prev.filter(s => s.id !== supplierId));
   }
 
   // ==========================================
@@ -506,12 +549,75 @@ export default function PurchasesPage() {
                       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nenhum fornecedor cadastrado ainda.</p>
                     ) : (
                       suppliers.map((supplier) => (
-                        <div key={supplier.id} className="rounded-xl p-3" style={{ border: '1px solid var(--border)' }}>
-                          <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{supplier.name}</p>
-                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            Contato: {supplier.contact || 'Não informado'}
-                          </p>
-                        </div>
+                        editingSupplier?.id === supplier.id ? (
+                          <div key={supplier.id} className="rounded-xl p-3 space-y-2" style={{ border: '1px solid var(--brand)', background: 'var(--surface-soft)' }}>
+                            <input
+                              className="w-full rounded-lg px-3 py-2 text-sm"
+                              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                              value={editSupplierName}
+                              onChange={e => setEditSupplierName(e.target.value)}
+                              placeholder="Nome do fornecedor"
+                            />
+                            <input
+                              className="w-full rounded-lg px-3 py-2 text-sm"
+                              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                              value={editSupplierContact}
+                              onChange={e => setEditSupplierContact(e.target.value)}
+                              placeholder="Contato"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleUpdateSupplier}
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-80"
+                                style={{ background: 'var(--brand)' }}
+                              >
+                                Salvar
+                              </button>
+                              <button
+                                onClick={() => setEditingSupplier(null)}
+                                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div key={supplier.id} className="group flex items-center justify-between rounded-xl p-3" style={{ border: '1px solid var(--border)' }}>
+                            <div>
+                              <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{supplier.name}</p>
+                              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                Contato: {supplier.contact || 'Não informado'}
+                              </p>
+                            </div>
+                            <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                              <button
+                                onClick={() => handleStartEditSupplier(supplier)}
+                                className="rounded-lg p-1.5 transition-colors"
+                                style={{ color: 'var(--text-muted)' }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-muted)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                title="Editar"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSupplier(supplier.id)}
+                                className="rounded-lg p-1.5 transition-colors"
+                                style={{ color: 'var(--danger)' }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--danger-bg)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                title="Excluir"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        )
                       ))
                     )}
                   </div>
