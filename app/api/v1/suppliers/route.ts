@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     };
 
     supplierData.create(supplier);
-    return created(supplier, 'Fornecedor criado com sucesso.');
+    return created({ supplier }, 'Fornecedor criado com sucesso.');
   } catch (error) {
     return fromError(error);
   }

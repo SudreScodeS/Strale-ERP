@@ -701,6 +701,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno na geração de imagem.';
     console.error(`[product-image] ERROR: ${message}`);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ message: message }, { status: 500 });
   }
 }

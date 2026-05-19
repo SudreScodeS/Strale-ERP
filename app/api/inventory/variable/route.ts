@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const { groupId, name, additionalPrice, stock, unitOfMeasure } = body as { groupId: string; name: string; additionalPrice: number; stock: number; unitOfMeasure?: string };
 
   if (!groupId || !name || typeof additionalPrice !== 'number' || typeof stock !== 'number') {
-    return NextResponse.json({ error: 'Grupo, nome, preço adicional e estoque são obrigatórios.' }, { status: 400 });
+    return NextResponse.json({ message: 'Grupo, nome, preço adicional e estoque são obrigatórios.' }, { status: 400 });
   }
 
   // Validate unit of measure
@@ -46,7 +46,7 @@ export async function PATCH(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -62,16 +62,16 @@ export async function PATCH(request: Request) {
   };
 
   if (!id) {
-    return NextResponse.json({ error: 'ID da variável é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID da variável é obrigatório.' }, { status: 400 });
   }
 
   const existing = variableData.getAll().find((variable) => variable.id === id);
   if (!existing) {
-    return NextResponse.json({ error: 'Variável não encontrada.' }, { status: 404 });
+    return NextResponse.json({ message: 'Variável não encontrada.' }, { status: 404 });
   }
 
   if (groupId && !groupData.getAll().find((group) => group.id === groupId)) {
-    return NextResponse.json({ error: 'Grupo vinculado não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Grupo vinculado não encontrado.' }, { status: 404 });
   }
 
   const updates: { groupId?: string; name?: string; additionalPrice?: number; stock?: number; unitOfMeasure?: UnitOfMeasure } = {};
@@ -107,7 +107,7 @@ export async function DELETE(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -115,12 +115,12 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) {
-    return NextResponse.json({ error: 'ID da variável é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID da variável é obrigatório.' }, { status: 400 });
   }
 
   const existing = variableData.getAll().find((variable) => variable.id === id);
   if (!existing) {
-    return NextResponse.json({ error: 'Variável não encontrada.' }, { status: 404 });
+    return NextResponse.json({ message: 'Variável não encontrada.' }, { status: 404 });
   }
 
   variableData.delete(id);

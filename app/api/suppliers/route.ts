@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -30,14 +30,14 @@ export async function POST(request: Request) {
   const { name, contact } = body as { name?: string; contact?: string };
 
   if (!name?.trim()) {
-    return NextResponse.json({ error: 'Nome do fornecedor é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'Nome do fornecedor é obrigatório.' }, { status: 400 });
   }
 
   const exists = supplierData
     .getAll()
     .find((supplier) => supplier.name.trim().toLowerCase() === name.trim().toLowerCase());
   if (exists) {
-    return NextResponse.json({ error: 'Fornecedor já cadastrado.' }, { status: 409 });
+    return NextResponse.json({ message: 'Fornecedor já cadastrado.' }, { status: 409 });
   }
 
   const supplier = {

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       {
         status: error instanceof Error && error.message.startsWith('JWT_SECRET')
           ? 500
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
   if (mode === 'history' && variableId) {
     const history = getVariableSalesHistory(variableId);
     if (!history) {
-      return NextResponse.json({ error: 'Variável não encontrada' }, { status: 404 });
+      return NextResponse.json({ message: 'Variável não encontrada' }, { status: 404 });
     }
     return NextResponse.json({ history });
   }

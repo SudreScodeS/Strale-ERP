@@ -110,7 +110,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ orders: ordersWithCreator });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -134,17 +134,17 @@ export async function POST(request: Request) {
 
     // VALIDAÇÃO BÁSICA DOS DADOS
     if (!items || items.length === 0) {
-      return NextResponse.json({ error: 'Dados do pedido inválidos.' }, { status: 400 });
+      return NextResponse.json({ message: 'Dados do pedido inválidos.' }, { status: 400 });
     }
 
     if (!deliveryDate) {
-      return NextResponse.json({ error: 'A data de entrega é obrigatória.' }, { status: 400 });
+      return NextResponse.json({ message: 'A data de entrega é obrigatória.' }, { status: 400 });
     }
 
     for (const item of items) {
       const validation = validateGroupQuantities(item);
       if (!validation.ok) {
-        return NextResponse.json({ error: validation.message || 'Quantidades por grupo inválidas.' }, { status: 400 });
+        return NextResponse.json({ message: validation.message || 'Quantidades por grupo inválidas.' }, { status: 400 });
       }
     }
 
@@ -159,7 +159,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ order, invoice });
   } catch (error) {
     // Erro genérico - em produção, logar erro específico
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao finalizar pedido.' }, { status: 500 });
+    return NextResponse.json({ message: error instanceof Error ? error.message : 'Erro ao finalizar pedido.' }, { status: 500 });
   }
 }
 
@@ -197,7 +197,7 @@ export async function PATCH(request: Request) {
     if (action === 'restore' && restoreData) {
       const existing = orderData.getAll().find((entry) => entry.id === restoreData.id);
       if (existing) {
-        return NextResponse.json({ error: 'Pedido já existe.' }, { status: 409 });
+        return NextResponse.json({ message: 'Pedido já existe.' }, { status: 409 });
       }
       orderData.create(restoreData);
       const restorer = userData.getById(payload.userId);
@@ -207,30 +207,30 @@ export async function PATCH(request: Request) {
 
     // VALIDAÇÃO DOS DADOS
     if (!orderId) {
-      return NextResponse.json({ error: 'Dados de atualização inválidos.' }, { status: 400 });
+      return NextResponse.json({ message: 'Dados de atualização inválidos.' }, { status: 400 });
     }
 
     // Verifica se pedido existe
     const order = orderData.getAll().find((entry) => entry.id === orderId);
     if (!order) {
-      return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 });
+      return NextResponse.json({ message: 'Pedido não encontrado.' }, { status: 404 });
     }
 
     if (payload.role === 'seller' && order.userId !== payload.userId) {
-      return NextResponse.json({ error: 'Você não pode atualizar pedidos de outros usuários.' }, { status: 403 });
+      return NextResponse.json({ message: 'Você não pode atualizar pedidos de outros usuários.' }, { status: 403 });
     }
 
     // MODO EDIÇÃO: atualiza nome, itens, custos e preço
     if (editData) {
       if (payload.role === 'seller') {
-        return NextResponse.json({ error: 'Vendedor não pode editar pedidos.' }, { status: 403 });
+        return NextResponse.json({ message: 'Vendedor não pode editar pedidos.' }, { status: 403 });
       }
 
       if (!editData.name?.trim()) {
-        return NextResponse.json({ error: 'Nome do pedido é obrigatório.' }, { status: 400 });
+        return NextResponse.json({ message: 'Nome do pedido é obrigatório.' }, { status: 400 });
       }
       if (!editData.items || editData.items.length === 0) {
-        return NextResponse.json({ error: 'O pedido deve ter pelo menos um item.' }, { status: 400 });
+        return NextResponse.json({ message: 'O pedido deve ter pelo menos um item.' }, { status: 400 });
       }
 
       orderData.update(orderId, {
@@ -279,13 +279,13 @@ export async function PATCH(request: Request) {
 
     // MODO STATUS: atualiza status do pedido
     if (!status) {
-      return NextResponse.json({ error: 'Dados de atualização inválidos.' }, { status: 400 });
+      return NextResponse.json({ message: 'Dados de atualização inválidos.' }, { status: 400 });
     }
 
     // CONTROLE DE PERMISSÕES POR ROLE
     // Seller só pode cancelar pedidos (não pode alterar status para outros valores)
     if (payload.role === 'seller' && status !== 'cancelled') {
-      return NextResponse.json({ error: 'Vendedor só pode cancelar pedidos.' }, { status: 403 });
+      return NextResponse.json({ message: 'Vendedor só pode cancelar pedidos.' }, { status: 403 });
     }
 
     const previousStatus = order.status;
@@ -338,7 +338,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ order: { ...order, status } });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro interno ao atualizar pedido.' },
+      { message: error instanceof Error ? error.message : 'Erro interno ao atualizar pedido.' },
       { status: 500 },
     );
   }
@@ -350,20 +350,20 @@ export async function DELETE(request: Request) {
     const url = new URL(request.url);
     const orderId = url.searchParams.get('orderId');
     if (!orderId) {
-      return NextResponse.json({ error: 'orderId é obrigatório.' }, { status: 400 });
+      return NextResponse.json({ message: 'orderId é obrigatório.' }, { status: 400 });
     }
 
     const order = orderData.getAll().find((entry) => entry.id === orderId);
     if (!order) {
-      return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 });
+      return NextResponse.json({ message: 'Pedido não encontrado.' }, { status: 404 });
     }
 
     if (payload.role === 'seller' && order.userId !== payload.userId) {
-      return NextResponse.json({ error: 'Você não pode remover pedidos de outros usuários.' }, { status: 403 });
+      return NextResponse.json({ message: 'Você não pode remover pedidos de outros usuários.' }, { status: 403 });
     }
 
     if (order.status !== 'cancelled') {
-      return NextResponse.json({ error: 'Somente pedidos cancelados podem ser removidos.' }, { status: 400 });
+      return NextResponse.json({ message: 'Somente pedidos cancelados podem ser removidos.' }, { status: 400 });
     }
 
     orderData.delete(orderId);
@@ -378,7 +378,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: 'Pedido cancelado removido com sucesso.' });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao remover pedido.' },
+      { message: error instanceof Error ? error.message : 'Erro ao remover pedido.' },
       { status: 500 },
     );
   }

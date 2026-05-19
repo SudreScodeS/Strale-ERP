@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   };
 
   if (!name || typeof basePrice !== 'number' || !imageUrl) {
-    return NextResponse.json({ error: 'Nome, preço base e imagem são obrigatórios.' }, { status: 400 });
+    return NextResponse.json({ message: 'Nome, preço base e imagem são obrigatórios.' }, { status: 400 });
   }
 
   productData.create({
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -60,12 +60,12 @@ export async function PATCH(request: Request) {
   };
 
   if (!id) {
-    return NextResponse.json({ error: 'ID do produto é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID do produto é obrigatório.' }, { status: 400 });
   }
 
   const existing = productData.getById(id);
   if (!existing) {
-    return NextResponse.json({ error: 'Produto não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Produto não encontrado.' }, { status: 404 });
   }
 
   const updates: { name?: string; basePrice?: number; description?: string; imageUrl?: string; profitMargin?: number } = {};
@@ -98,7 +98,7 @@ export async function DELETE(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -106,12 +106,12 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) {
-    return NextResponse.json({ error: 'ID do produto é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID do produto é obrigatório.' }, { status: 400 });
   }
 
   const existing = productData.getById(id);
   if (!existing) {
-    return NextResponse.json({ error: 'Produto não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Produto não encontrado.' }, { status: 404 });
   }
 
   const groups = groupData.getByProductId(id);

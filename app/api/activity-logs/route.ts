@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -23,7 +23,7 @@ export async function DELETE(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -40,13 +40,13 @@ export async function DELETE(request: Request) {
   if (id) {
     const deleted = activityLogData.deleteById(id);
     if (!deleted) {
-      return NextResponse.json({ error: 'Log não encontrado.' }, { status: 404 });
+      return NextResponse.json({ message: 'Log não encontrado.' }, { status: 404 });
     }
     return NextResponse.json({ success: true, message: 'Log removido com sucesso.' });
   }
 
   return NextResponse.json(
-    { error: 'Forneça um id ou deleteAll=true.' },
+    { message: 'Forneça um id ou deleteAll=true.' },
     { status: 400 },
   );
 }

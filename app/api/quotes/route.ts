@@ -43,11 +43,11 @@ export async function GET(request: Request) {
     if (quoteId) {
       const quote = quoteData.getById(quoteId);
       if (!quote) {
-        return NextResponse.json({ error: 'Orçamento não encontrado.' }, { status: 404 });
+        return NextResponse.json({ message: 'Orçamento não encontrado.' }, { status: 404 });
       }
       // Seller só vê os próprios
       if (payload.role === 'seller' && quote.userId !== payload.userId) {
-        return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+        return NextResponse.json({ message: 'Acesso negado.' }, { status: 403 });
       }
       const creator = userData.getById(quote.userId);
       return NextResponse.json({ quote: { ...quote, items: enrichQuoteItems(quote.items), createdByName: creator?.username || quote.userId } });
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ quotes: quotesWithCreator });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao listar orçamentos.' },
+      { message: error instanceof Error ? error.message : 'Erro ao listar orçamentos.' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     };
 
     if (!items || items.length === 0) {
-      return NextResponse.json({ error: 'Adicione pelo menos um item ao orçamento.' }, { status: 400 });
+      return NextResponse.json({ message: 'Adicione pelo menos um item ao orçamento.' }, { status: 400 });
     }
 
     const quote = criarOrcamento(
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ quote });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao criar orçamento.' },
+      { message: error instanceof Error ? error.message : 'Erro ao criar orçamento.' },
       { status: 500 },
     );
   }
@@ -146,24 +146,24 @@ export async function PATCH(request: Request) {
     };
 
     if (!quoteId) {
-      return NextResponse.json({ error: 'ID do orçamento é obrigatório.' }, { status: 400 });
+      return NextResponse.json({ message: 'ID do orçamento é obrigatório.' }, { status: 400 });
     }
 
     const quote = quoteData.getById(quoteId);
     if (!quote) {
-      return NextResponse.json({ error: 'Orçamento não encontrado.' }, { status: 404 });
+      return NextResponse.json({ message: 'Orçamento não encontrado.' }, { status: 404 });
     }
 
     // Verifica permissão
     if (payload.role === 'seller' && quote.userId !== payload.userId) {
-      return NextResponse.json({ error: 'Você não pode modificar orçamentos de outros usuários.' }, { status: 403 });
+      return NextResponse.json({ message: 'Você não pode modificar orçamentos de outros usuários.' }, { status: 403 });
     }
 
     // Clonar orçamento
     if (action === 'clone') {
       const result = clonarOrcamento(quoteId, payload.userId);
       if ('error' in result) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
+        return NextResponse.json({ message: result.error }, { status: 400 });
       }
       return NextResponse.json({ quote: result });
     }
@@ -171,11 +171,11 @@ export async function PATCH(request: Request) {
     // Converter em pedido
     if (action === 'convert') {
       if (!deliveryDate) {
-        return NextResponse.json({ error: 'A data de entrega é obrigatória para converter o orçamento em pedido.' }, { status: 400 });
+        return NextResponse.json({ message: 'A data de entrega é obrigatória para converter o orçamento em pedido.' }, { status: 400 });
       }
       const result = converterOrcamentoEmPedido(quoteId, payload.userId, deliveryDate, name);
       if ('error' in result) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
+        return NextResponse.json({ message: result.error }, { status: 400 });
       }
       const converter = userData.getById(payload.userId);
       logActivity(payload.userId, converter?.username || payload.userId, 'convert', 'quote', `Converteu orçamento "${quote.name}" em pedido #${result.order.id}`, quoteId, `Pedido: ${result.order.id}`);
@@ -186,17 +186,17 @@ export async function PATCH(request: Request) {
     if (action === 'update-status' && status) {
       const result = atualizarStatusOrcamento(quoteId, status);
       if ('error' in result) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
+        return NextResponse.json({ message: result.error }, { status: 400 });
       }
       const updater = userData.getById(payload.userId);
       logActivity(payload.userId, updater?.username || payload.userId, 'status_change', 'quote', `Alterou status do orçamento "${quote.name}" para ${status}`, quoteId);
       return NextResponse.json({ quote: result });
     }
 
-    return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 });
+    return NextResponse.json({ message: 'Ação inválida.' }, { status: 400 });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao atualizar orçamento.' },
+      { message: error instanceof Error ? error.message : 'Erro ao atualizar orçamento.' },
       { status: 500 },
     );
   }
@@ -213,21 +213,21 @@ export async function DELETE(request: Request) {
     const quoteId = url.searchParams.get('quoteId');
 
     if (!quoteId) {
-      return NextResponse.json({ error: 'ID do orçamento é obrigatório.' }, { status: 400 });
+      return NextResponse.json({ message: 'ID do orçamento é obrigatório.' }, { status: 400 });
     }
 
     const quote = quoteData.getById(quoteId);
     if (!quote) {
-      return NextResponse.json({ error: 'Orçamento não encontrado.' }, { status: 404 });
+      return NextResponse.json({ message: 'Orçamento não encontrado.' }, { status: 404 });
     }
 
     if (payload.role === 'seller' && quote.userId !== payload.userId) {
-      return NextResponse.json({ error: 'Você não pode remover orçamentos de outros usuários.' }, { status: 403 });
+      return NextResponse.json({ message: 'Você não pode remover orçamentos de outros usuários.' }, { status: 403 });
     }
 
     // Só permite remover rascunhos ou rejeitados
     if (quote.status !== 'draft' && quote.status !== 'rejected') {
-      return NextResponse.json({ error: 'Apenas orçamentos em rascunho ou rejeitados podem ser removidos.' }, { status: 400 });
+      return NextResponse.json({ message: 'Apenas orçamentos em rascunho ou rejeitados podem ser removidos.' }, { status: 400 });
     }
 
     quoteData.delete(quoteId);
@@ -236,7 +236,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: 'Orçamento removido com sucesso.' });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao remover orçamento.' },
+      { message: error instanceof Error ? error.message : 'Erro ao remover orçamento.' },
       { status: 500 },
     );
   }

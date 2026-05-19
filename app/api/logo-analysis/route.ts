@@ -319,12 +319,12 @@ export async function POST(request: Request) {
     const file = formData.get('logo') as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: 'Nenhum arquivo de imagem enviado.' }, { status: 400 });
+      return NextResponse.json({ message: 'Nenhum arquivo de imagem enviado.' }, { status: 400 });
     }
 
     const validation = validateImage(file);
     if (!validation.valid) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
+      return NextResponse.json({ message: validation.error }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -393,6 +393,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno na análise de logo.';
     console.error(`[logo-analysis] ERROR: ${message}`);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ message: message }, { status: 500 });
   }
 }

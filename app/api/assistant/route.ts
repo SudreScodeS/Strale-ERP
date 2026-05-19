@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     payload = requireRole(request, ['admin', 'seller']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   if (!question?.trim()) {
-    return NextResponse.json({ error: 'Faça uma pergunta.' }, { status: 400 });
+    return NextResponse.json({ message: 'Faça uma pergunta.' }, { status: 400 });
   }
 
   const q = question.trim();
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
   } catch (err) {
     clearTimeout(timeout);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Erro no assistente.' },
+      { message: err instanceof Error ? err.message : 'Erro no assistente.' },
       { status: 500 },
     );
   }
@@ -117,7 +117,7 @@ export async function GET(request: Request) {
     requireRole(request, ['admin', 'seller']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: 401 },
     );
   }

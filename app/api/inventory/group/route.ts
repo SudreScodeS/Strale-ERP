@@ -11,7 +11,7 @@ function normalizeAlertLimits(watchStockAlert?: number, criticalStockAlert?: num
   const critical = Number.isFinite(criticalStockAlert) ? Math.max(0, Number(criticalStockAlert)) : DEFAULT_CRITICAL_STOCK_ALERT;
 
   if (critical > watch) {
-    return { error: 'O limite crítico deve ser menor ou igual ao limite de atenção.' as const };
+    return { message: 'O limite crítico deve ser menor ou igual ao limite de atenção.' as const };
   }
 
   return { watchStockAlert: watch, criticalStockAlert: critical };
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -36,12 +36,12 @@ export async function POST(request: Request) {
   };
 
   if (!productId || !name) {
-    return NextResponse.json({ error: 'Produto e nome do grupo são obrigatórios.' }, { status: 400 });
+    return NextResponse.json({ message: 'Produto e nome do grupo são obrigatórios.' }, { status: 400 });
   }
 
   const limits = normalizeAlertLimits(watchStockAlert, criticalStockAlert);
   if ('error' in limits) {
-    return NextResponse.json({ error: limits.error }, { status: 400 });
+    return NextResponse.json({ message: limits.error }, { status: 400 });
   }
 
   groupData.create({
@@ -61,7 +61,7 @@ export async function PATCH(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -76,16 +76,16 @@ export async function PATCH(request: Request) {
   };
 
   if (!id) {
-    return NextResponse.json({ error: 'ID do grupo é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID do grupo é obrigatório.' }, { status: 400 });
   }
 
   const existing = groupData.getAll().find((group) => group.id === id);
   if (!existing) {
-    return NextResponse.json({ error: 'Grupo não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Grupo não encontrado.' }, { status: 404 });
   }
 
   if (productId && !productData.getById(productId)) {
-    return NextResponse.json({ error: 'Produto vinculado não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Produto vinculado não encontrado.' }, { status: 404 });
   }
 
   const updates: { productId?: string; name?: string; watchStockAlert?: number; criticalStockAlert?: number } = {};
@@ -97,7 +97,7 @@ export async function PATCH(request: Request) {
       criticalStockAlert ?? existing.criticalStockAlert,
     );
     if ('error' in limits) {
-      return NextResponse.json({ error: limits.error }, { status: 400 });
+      return NextResponse.json({ message: limits.error }, { status: 400 });
     }
     updates.watchStockAlert = limits.watchStockAlert;
     updates.criticalStockAlert = limits.criticalStockAlert;
@@ -112,7 +112,7 @@ export async function DELETE(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -120,12 +120,12 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) {
-    return NextResponse.json({ error: 'ID do grupo é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID do grupo é obrigatório.' }, { status: 400 });
   }
 
   const existing = groupData.getAll().find((group) => group.id === id);
   if (!existing) {
-    return NextResponse.json({ error: 'Grupo não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Grupo não encontrado.' }, { status: 404 });
   }
 
   const variables = variableData.getByGroupId(id);

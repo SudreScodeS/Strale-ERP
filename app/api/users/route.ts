@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -36,16 +36,16 @@ export async function POST(request: Request) {
   };
 
   if (!username || !email || !password) {
-    return NextResponse.json({ error: 'Nome, e-mail e senha são obrigatórios.' }, { status: 400 });
+    return NextResponse.json({ message: 'Nome, e-mail e senha são obrigatórios.' }, { status: 400 });
   }
 
   if (role && role !== 'admin' && role !== 'seller') {
-    return NextResponse.json({ error: 'Papel inválido.' }, { status: 400 });
+    return NextResponse.json({ message: 'Papel inválido.' }, { status: 400 });
   }
 
   const existing = userData.getByUsername(username);
   if (existing) {
-    return NextResponse.json({ error: 'Usuário já existe.' }, { status: 409 });
+    return NextResponse.json({ message: 'Usuário já existe.' }, { status: 409 });
   }
 
   const hashedPassword = await hashPassword(password);
@@ -68,7 +68,7 @@ export async function PATCH(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -83,22 +83,22 @@ export async function PATCH(request: Request) {
   };
 
   if (!id) {
-    return NextResponse.json({ error: 'ID do usuário é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID do usuário é obrigatório.' }, { status: 400 });
   }
 
   const existing = userData.getById(id);
   if (!existing) {
-    return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });
   }
 
   if (role && role !== 'admin' && role !== 'seller') {
-    return NextResponse.json({ error: 'Papel inválido.' }, { status: 400 });
+    return NextResponse.json({ message: 'Papel inválido.' }, { status: 400 });
   }
 
   if (username && username !== existing.username) {
     const userWithSameName = userData.getByUsername(username);
     if (userWithSameName && userWithSameName.id !== id) {
-      return NextResponse.json({ error: 'Nome de usuário já existe.' }, { status: 409 });
+      return NextResponse.json({ message: 'Nome de usuário já existe.' }, { status: 409 });
     }
   }
 
@@ -113,7 +113,7 @@ export async function PATCH(request: Request) {
   userData.update(id, updates);
   const updated = userData.getById(id);
   if (!updated) {
-    return NextResponse.json({ error: 'Falha ao atualizar usuário.' }, { status: 500 });
+    return NextResponse.json({ message: 'Falha ao atualizar usuário.' }, { status: 500 });
   }
   const { password: _, ...userWithoutPassword } = updated;
   return NextResponse.json({ message: 'Usuário atualizado com sucesso.', user: userWithoutPassword });
@@ -124,7 +124,7 @@ export async function DELETE(request: Request) {
     requireRole(request, ['admin']);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unauthorized' },
+      { message: error instanceof Error ? error.message : 'Unauthorized' },
       { status: error instanceof Error && error.message === 'Forbidden' ? 403 : 401 },
     );
   }
@@ -132,12 +132,12 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) {
-    return NextResponse.json({ error: 'ID do usuário é obrigatório.' }, { status: 400 });
+    return NextResponse.json({ message: 'ID do usuário é obrigatório.' }, { status: 400 });
   }
 
   const existing = userData.getById(id);
   if (!existing) {
-    return NextResponse.json({ error: 'Usuario nao encontrado.' }, { status: 404 });
+    return NextResponse.json({ message: 'Usuario nao encontrado.' }, { status: 404 });
   }
 
   // Prevent deleting the last admin
@@ -145,7 +145,7 @@ export async function DELETE(request: Request) {
     const allUsers = userData.getAll();
     const adminCount = allUsers.filter(u => u.role === 'admin').length;
     if (adminCount <= 1) {
-      return NextResponse.json({ error: 'Nao e possivel excluir o ultimo administrador. Crie outro admin antes.' }, { status: 400 });
+      return NextResponse.json({ message: 'Nao e possivel excluir o ultimo administrador. Crie outro admin antes.' }, { status: 400 });
     }
   }
 
