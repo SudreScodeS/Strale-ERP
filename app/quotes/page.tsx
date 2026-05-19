@@ -6,40 +6,17 @@ import { calculateSalePrice, globalConfig, applyServerConfig } from '../../confi
 import { PageHeader, Select, Checkbox } from '../components/ui';
 import { SkeletonOrderList } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
+import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
-import { Quote } from '../../types';
+import { Quote, VariableOption, GroupOption, ProductOption } from '../../types';
 
 const QUOTES_FORM_KEY = 'elitium-quotes-form';
-
-interface VariableOption {
-  id: string;
-  name: string;
-  additionalPrice: number;
-  stock: number;
-  groupId: string;
-  unitOfMeasure?: string;
-}
-
-interface GroupOption {
-  id: string;
-  name: string;
-  variables: VariableOption[];
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  basePrice: number;
-  profitMargin?: number;
-  description?: string;
-  groups: GroupOption[];
-}
 
 interface QuoteView extends Quote {
   createdByName?: string;
 }
 
-interface CartItem {
+interface QuoteCartItem {
   productId: string;
   productName: string;
   quantity: number;
@@ -289,8 +266,8 @@ export default function QuotesPage() {
   } | null>(null);
   const [logoAnalyzing, setLogoAnalyzing] = useState(false);
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>(
-    (savedForm?.cartItems || []).map((item: CartItem) => ({
+  const [cartItems, setCartItems] = useState<QuoteCartItem[]>(
+    (savedForm?.cartItems || []).map((item: QuoteCartItem) => ({
       ...item,
       profitMargin: item.profitMargin ?? 20,
       minMargin: item.minMargin ?? item.profitMargin ?? 20,
@@ -341,7 +318,7 @@ export default function QuotesPage() {
   // Also reload when page becomes visible (user may have changed config in admin)
   useEffect(() => {
     function loadConfig() {
-      fetch('/api/config', { headers: getAuthHeaders() })
+      fetch('/api/v1/config', { headers: getAuthHeaders() })
         .then((r) => r.json())
         .then((data) => {
           if (data.config) {
@@ -381,7 +358,7 @@ export default function QuotesPage() {
         const formData = new FormData();
         formData.append('logo', logoFile);
 
-        const response = await fetch('/api/logo-analysis', {
+        const response = await fetch('/api/v1/logo-analysis', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: formData,
@@ -459,7 +436,7 @@ export default function QuotesPage() {
 
   async function loadInventory() {
     try {
-      const response = await fetch('/api/inventory', { cache: 'no-store', headers: getAuthHeaders() });
+      const response = await fetch('/api/v1/inventory', { cache: 'no-store', headers: getAuthHeaders() });
       const data = await safeJson(response);
       if (response.ok) {
         setInventory(data.inventory || []);
@@ -581,7 +558,7 @@ export default function QuotesPage() {
     if (cartItems.length === 0) { setStatusMessage('Adicione pelo menos um item.'); return; }
 
     try {
-      const response = await fetch('/api/quotes', {
+      const response = await fetch('/api/v1/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
@@ -625,7 +602,7 @@ export default function QuotesPage() {
       if (deliveryDate) body.deliveryDate = deliveryDate;
       if (name) body.name = name;
 
-      const response = await fetch('/api/quotes', {
+      const response = await fetch('/api/v1/quotes', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(body),
@@ -654,7 +631,7 @@ export default function QuotesPage() {
     let restored = 0;
     for (const q of deletedItems) {
       try {
-        const resp = await fetch('/api/quotes', {
+        const resp = await fetch('/api/v1/quotes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           body: JSON.stringify({
@@ -800,6 +777,7 @@ export default function QuotesPage() {
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
       <div>
+        <PageTitle title="Orçamentos" />
         <PageHeader title="Orçamentos" description="Crie orçamentos profissionais para seus clientes. Calcule preços automaticamente com tabelas por volume, dimensões e impressão detalhada." />
 
         <div
@@ -1329,6 +1307,9 @@ export default function QuotesPage() {
           >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Detalhes do orçamento ${selectedQuote.name}`}
               className="modal-content rounded-xl bg-white p-8 shadow-2xl"
               style={{ maxHeight: '90vh', width: '100%', maxWidth: '42rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
               onClick={e => e.stopPropagation()}
@@ -1468,6 +1449,9 @@ export default function QuotesPage() {
           >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Converter orçamento ${convertingQuote.name} em pedido`}
               className="modal-content rounded-xl bg-white p-8 shadow-2xl"
               style={{ maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
               onClick={e => e.stopPropagation()}
@@ -1555,6 +1539,7 @@ export default function QuotesPage() {
         {/* Toast de status — barra fixa embaixo */}
         {statusMessage && createPortal(
           <div
+            aria-live="polite"
             className="fixed bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-6 py-3"
             style={{
               background: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-bg, #fef2f2)' : 'var(--success-bg, #f0fdf4)',

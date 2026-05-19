@@ -8,7 +8,8 @@ import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
-interface FinancialRecord {
+/** Local view type — API returns dates as strings */
+interface FinancialRecordView {
   id: string;
   type: 'sale' | 'purchase' | 'expense';
   amount: number;
@@ -29,7 +30,7 @@ interface ProductRevenue {
 }
 
 export default function FinancePage() {
-  const [records, setRecords] = useState<FinancialRecord[]>([]);
+  const [records, setRecords] = useState<FinancialRecordView[]>([]);
   const [totalSales, setTotalSales] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [profit, setProfit] = useState(0);
@@ -49,7 +50,7 @@ export default function FinancePage() {
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function loadFinance() {
-    const response = await fetch('/api/finance', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await fetch('/api/v1/finance', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (!response.ok) {
       setError(data.error || 'Falha ao carregar financeiro.');
@@ -63,7 +64,7 @@ export default function FinancePage() {
   }
 
   async function loadFaturamento() {
-    const response = await fetch('/api/reports/faturamento', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await fetch('/api/v1/reports/faturamento', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (response.ok && data.products) {
       setFaturamento(data.products);

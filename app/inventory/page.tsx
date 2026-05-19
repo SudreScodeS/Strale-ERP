@@ -10,10 +10,11 @@ import { PageHeader, Select } from '../components/ui';
 import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../components/validated-field';
 import { SkeletonProductList, SkeletonMetrics } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
+import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
-import type { UnitOfMeasure } from '../../types';
+import type { UnitOfMeasure, VariableOption, GroupOption, ProductOption } from '../../types';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
@@ -44,34 +45,6 @@ const variableSchema = z.object({
 type ProductFormData = z.infer<typeof productSchema>;
 type GroupFormData = z.infer<typeof groupSchema>;
 type VariableFormData = z.infer<typeof variableSchema>;
-
-interface VariableOption {
-  id: string;
-  name: string;
-  additionalPrice: number;
-  stock: number;
-  groupId: string;
-  unitOfMeasure?: UnitOfMeasure;
-}
-
-interface GroupOption {
-  id: string;
-  name: string;
-  productId: string;
-  watchStockAlert?: number;
-  criticalStockAlert?: number;
-  variables: VariableOption[];
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  basePrice: number;
-  profitMargin?: number;
-  description?: string;
-  imageUrl?: string;
-  groups: GroupOption[];
-}
 
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<ProductOption[]>([]);
@@ -128,7 +101,7 @@ export default function InventoryPage() {
   }
 
   async function loadInventory() {
-    const response = await fetch('/api/inventory', {
+    const response = await fetch('/api/v1/inventory', {
       headers: getAuthHeaders(),
     });
     const data = await safeJson(response);
@@ -153,7 +126,7 @@ export default function InventoryPage() {
 
   async function handleCreateProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/inventory/product', {
+    const response = await fetch('/api/v1/inventory/product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ name: productName, basePrice: productPrice, description: productDescription, imageUrl: productImage, profitMargin: productMargin }),
@@ -178,7 +151,7 @@ export default function InventoryPage() {
       setMessage('O limite crítico deve ser menor ou igual ao limite de atenção.');
       return;
     }
-    const response = await fetch('/api/inventory/group', {
+    const response = await fetch('/api/v1/inventory/group', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -202,7 +175,7 @@ export default function InventoryPage() {
 
   async function handleCreateVariable(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/inventory/variable', {
+    const response = await fetch('/api/v1/inventory/variable', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: variableUnit }),
@@ -232,7 +205,7 @@ export default function InventoryPage() {
   async function handleSubmitProductUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingProduct) return;
-    const response = await fetch('/api/inventory/product', {
+    const response = await fetch('/api/v1/inventory/product', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -277,7 +250,7 @@ export default function InventoryPage() {
       setMessage('O limite crítico deve ser menor ou igual ao limite de atenção.');
       return;
     }
-    const response = await fetch('/api/inventory/group', {
+    const response = await fetch('/api/v1/inventory/group', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -317,7 +290,7 @@ export default function InventoryPage() {
   async function handleSubmitVariableUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingVariable) return;
-    const response = await fetch('/api/inventory/variable', {
+    const response = await fetch('/api/v1/inventory/variable', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -399,6 +372,7 @@ export default function InventoryPage() {
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
+        <PageTitle title="Estoque" />
         <PageHeader title="Estoque" description="Gestão de estoque com grupos e variáveis configuráveis dinamicamente." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
@@ -483,6 +457,7 @@ export default function InventoryPage() {
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Buscar produto, grupo ou variável..."
+                  aria-label="Buscar produto, grupo ou variável"
                   className="w-full rounded-lg px-4 py-2.5 text-sm"
                   style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                 />

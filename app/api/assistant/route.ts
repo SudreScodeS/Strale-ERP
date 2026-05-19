@@ -1,9 +1,18 @@
 // app/api/assistant/route.ts
-// AI Assistant API — streaming + tool calling + pattern matching fallback.
+// AI Assistant API — streaming + tool calling + action execution.
+// v2: Structured SSE events, permission-aware tool execution.
 
 import { NextResponse } from 'next/server';
 import { processWithAI, streamResponse, clearConversation, checkStatus } from '../../lib/ai';
 import { requireRole } from '../../lib/auth';
+
+// ── SSE Event Types ────────────────────────────────────────────
+//
+// { type: "token", content: "..." }           — LLM text token
+// { type: "tool_start", tool: "create_quote", params: {...} }  — tool execution starting
+// { type: "tool_result", tool: "create_quote", result: {...} } — tool execution result
+// { type: "done", source: "llm+tools", toolsUsed: [...] }     — stream complete
+// { type: "error", message: "..." }           — error occurred
 
 // ── POST — Process question (streaming or JSON) ───────────────
 
@@ -38,38 +47,41 @@ export async function POST(request: Request) {
   const q = question.trim();
   const controller = new AbortController();
   const signal = controller.signal;
+  const userRole = (payload.role as 'admin' | 'seller') || 'admin';
 
   // Handle client disconnect
   request.signal.addEventListener('abort', () => controller.abort());
+
+  // Timeout handling (2 minutes max)
+  const timeout = setTimeout(() => controller.abort(), 120_000);
 
   // ── Streaming mode ───────────────────────────────────────────
   if (wantsStream) {
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
-      async start(controller) {
+      async start(streamController) {
         try {
-          for await (const event of streamResponse(payload.userId, q, signal)) {
+          for await (const event of streamResponse(payload.userId, q, signal, userRole)) {
             if (signal.aborted) break;
 
             const data = JSON.stringify(event);
-            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            streamController.enqueue(encoder.encode(`data: ${data}\n\n`));
 
-            if (event.done) {
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            if (event.type === 'done') {
+              streamController.enqueue(encoder.encode('data: [DONE]\n\n'));
             }
           }
         } catch (err) {
-          const errorData = JSON.stringify({
-            chunk: `Erro: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
-            done: true,
-            source: 'error',
-            toolsUsed: [],
+          const errorEvent = JSON.stringify({
+            type: 'error',
+            message: err instanceof Error ? err.message : 'Erro desconhecido',
           });
-          controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          streamController.enqueue(encoder.encode(`data: ${errorEvent}\n\n`));
+          streamController.enqueue(encoder.encode('data: [DONE]\n\n'));
         } finally {
-          controller.close();
+          clearTimeout(timeout);
+          streamController.close();
         }
       },
     });
@@ -79,15 +91,18 @@ export async function POST(request: Request) {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
       },
     });
   }
 
   // ── Non-streaming mode ───────────────────────────────────────
   try {
-    const result = await processWithAI(payload.userId, q, signal);
+    const result = await processWithAI(payload.userId, q, signal, userRole);
+    clearTimeout(timeout);
     return NextResponse.json(result);
   } catch (err) {
+    clearTimeout(timeout);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Erro no assistente.' },
       { status: 500 },

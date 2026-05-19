@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elitium ERP — API Reference</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #1a1a2e; line-height: 1.6; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #1a1a2e; }
+    .subtitle { color: #6b7280; margin-bottom: 2rem; }
+    h2 { font-size: 1.4rem; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb; color: #374151; }
+    h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: #1a1a2e; }
+    .endpoint { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .method { display: inline-block; padding: 2px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; margin-right: 0.5rem; }
+    .method-get { background: #dbeafe; color: #1d4ed8; }
+    .method-post { background: #dcfce7; color: #15803d; }
+    .method-put { background: #fef3c7; color: #b45309; }
+    .method-delete { background: #fee2e2; color: #b91c1c; }
+    .path { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.95rem; color: #374151; }
+    .desc { color: #6b7280; margin: 0.5rem 0; font-size: 0.95rem; }
+    .auth-badge { display: inline-block; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
+    pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin: 0.75rem 0; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; }
+    .inline-code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
+    th { background: #f8f9fa; font-weight: 600; color: #374151; }
+    .section-intro { color: #6b7280; margin-bottom: 1rem; }
+    .nav { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+    .nav a { color: #6366f1; text-decoration: none; display: block; padding: 4px 0; font-size: 0.95rem; }
+    .nav a:hover { text-decoration: underline; }
+    .error-table td:first-child { font-family: monospace; font-weight: 600; }
+    .badge-admin { background: #ede9fe; color: #6d28d9; }
+    .badge-seller { background: #e0f2fe; color: #0369a1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📡 Elitium ERP — API Reference</h1>
+    <p class="subtitle">Documentação interativa dos endpoints da API v1</p>
+
+    <div class="nav">
+      <strong>📋 Navegação Rápida</strong>
+      <a href="#auth">🔐 Autenticação</a>
+      <a href="#dashboard">📊 Dashboard</a>
+      <a href="#orders">🛒 Pedidos</a>
+      <a href="#quotes">📄 Orçamentos</a>
+      <a href="#inventory">📦 Estoque</a>
+      <a href="#purchases">🛍️ Compras</a>
+      <a href="#suppliers">🏭 Fornecedores</a>
+      <a href="#finance">💰 Financeiro</a>
+      <a href="#reports">📈 Relatórios</a>
+      <a href="#assistant">🤖 Assistente IA</a>
+      <a href="#errors">⚠️ Códigos de Erro</a>
+    </div>
+
+    <!-- AUTH -->
+    <h2 id="auth">🔐 Autenticação</h2>
+    <p class="section-intro">Todas as rotas protegidas requerem header <code class="inline-code">Authorization: Bearer &lt;token&gt;</code></p>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/auth/login</span></h3>
+      <p class="desc">Realiza login e retorna JWT.</p>
+      <p><strong>Request:</strong></p>
+      <pre><code>curl -X POST /api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "senha123"}'</code></pre>
+      <p><strong>Response (200):</strong></p>
+      <pre><code>{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": { "id": "uuid", "username": "admin", "role": "admin" }
+  }
+}</code></pre>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/auth/register</span> <span class="auth-badge">🔒 Admin</span></h3>
+      <p class="desc">Cria novo usuário.</p>
+      <p><strong>Request:</strong></p>
+      <pre><code>curl -X POST /api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;admin-token&gt;" \
+  -d '{"username": "vendedor1", "email": "v1@email.com", "password": "senha123", "role": "seller"}'</code></pre>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/auth/refresh</span></h3>
+      <p class="desc">Renova token de acesso.</p>
+    </div>
+
+    <!-- DASHBOARD -->
+    <h2 id="dashboard">📊 Dashboard</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/dashboard</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Resumo do negócio: total de pedidos, receita, pedidos pendentes, estoque baixo.</p>
+      <p><strong>Response (200):</strong></p>
+      <pre><code>{
+  "success": true,
+  "data": {
+    "totalOrders": 42,
+    "totalRevenue": 15000.00,
+    "pendingOrders": 5,
+    "lowStockProducts": 3
+  }
+}</code></pre>
+    </div>
+
+    <!-- ORDERS -->
+    <h2 id="orders">🛒 Pedidos</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/orders</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Lista todos os pedidos. Suporta paginação: <code class="inline-code">?page=1&pageSize=20</code></p>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/orders</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Cria um novo pedido de venda.</p>
+      <p><strong>Request Body:</strong></p>
+      <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th></tr>
+        <tr><td>name</td><td>string</td><td>✅</td></tr>
+        <tr><td>items</td><td>OrderItem[]</td><td>✅</td></tr>
+        <tr><td>deliveryDate</td><td>string (ISO)</td><td>❌</td></tr>
+      </table>
+    </div>
+
+    <!-- QUOTES -->
+    <h2 id="quotes">📄 Orçamentos</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/quotes</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Lista todos os orçamentos.</p>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/quotes</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Cria um novo orçamento.</p>
+    </div>
+
+    <!-- INVENTORY -->
+    <h2 id="inventory">📦 Estoque</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/inventory</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Lista produtos com grupos e variáveis.</p>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/inventory</span> <span class="auth-badge">🔒 Admin</span></h3>
+      <p class="desc">Cria um novo produto.</p>
+    </div>
+
+    <!-- PURCHASES -->
+    <h2 id="purchases">🛍️ Compras</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/purchases</span> <span class="auth-badge">🔒 Admin</span></h3>
+      <p class="desc">Lista pedidos de compra.</p>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/purchases</span> <span class="auth-badge">🔒 Admin</span></h3>
+      <p class="desc">Cria pedido de compra para fornecedor.</p>
+    </div>
+
+    <!-- SUPPLIERS -->
+    <h2 id="suppliers">🏭 Fornecedores</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/suppliers</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Lista fornecedores cadastrados.</p>
+    </div>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/suppliers</span> <span class="auth-badge">🔒 Admin</span></h3>
+      <p class="desc">Cadastra novo fornecedor.</p>
+    </div>
+
+    <!-- FINANCE -->
+    <h2 id="finance">💰 Financeiro</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/finance</span> <span class="auth-badge">🔒 Admin</span></h3>
+      <p class="desc">Lista registros financeiros (receitas, despesas, compras).</p>
+    </div>
+
+    <!-- REPORTS -->
+    <h2 id="reports">📈 Relatórios</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-get">GET</span> <span class="path">/api/v1/reports/faturamento</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Relatório de faturamento por produto.</p>
+    </div>
+
+    <!-- ASSISTANT -->
+    <h2 id="assistant">🤖 Assistente IA</h2>
+
+    <div class="endpoint">
+      <h3><span class="method method-post">POST</span> <span class="path">/api/v1/assistant</span> <span class="auth-badge">🔒 Auth</span></h3>
+      <p class="desc">Envia mensagem para o assistente IA (Ollama).</p>
+      <p><strong>Request:</strong></p>
+      <pre><code>curl -X POST /api/v1/assistant \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -d '{"message": "Qual o produto mais vendido?"}'</code></pre>
+    </div>
+
+    <!-- ERRORS -->
+    <h2 id="errors">⚠️ Códigos de Erro</h2>
+    <table class="error-table">
+      <tr><th>HTTP</th><th>errorCode</th><th>Descrição</th></tr>
+      <tr><td>400</td><td>BAD_REQUEST</td><td>Dados inválidos ou validação falhou</td></tr>
+      <tr><td>401</td><td>UNAUTHORIZED</td><td>Token ausente, inválido ou expirado</td></tr>
+      <tr><td>403</td><td>FORBIDDEN</td><td>Sem permissão para esta ação</td></tr>
+      <tr><td>404</td><td>NOT_FOUND</td><td>Recurso não encontrado</td></tr>
+      <tr><td>409</td><td>CONFLICT</td><td>Conflito (ex: username duplicado)</td></tr>
+      <tr><td>500</td><td>INTERNAL_ERROR</td><td>Erro interno do servidor</td></tr>
+    </table>
+
+    <p style="margin-top: 2rem; color: #9ca3af; font-size: 0.85rem; text-align: center;">
+      Elitium ERP API v1 — Documentação auto-gerada
+    </p>
+  </div>
+</body>
+</html>

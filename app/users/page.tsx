@@ -35,7 +35,7 @@ export default function UsersPage() {
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function loadUsers() {
-    const response = await fetch('/api/users', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await fetch('/api/v1/users', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (response.ok) setUsers(data.users || []);
     else setMessage(data.error || 'Falha ao carregar.');
@@ -47,7 +47,7 @@ export default function UsersPage() {
 
   async function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/users', {
+    const response = await fetch('/api/v1/users', {
       method: 'POST',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -66,7 +66,7 @@ export default function UsersPage() {
   async function handleUpdateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingUserId) return;
-    const response = await fetch('/api/users', {
+    const response = await fetch('/api/v1/users', {
       method: 'PATCH',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },

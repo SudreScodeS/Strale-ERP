@@ -8,29 +8,7 @@ import { ProtectedPage } from './components/protected';
 import { getAuthHeaders, getCurrentUser } from './lib/authClient';
 import { useLayout, type SectionConfig } from './components/layout-context';
 import { DraggableSection, LayoutToolbar } from './components/draggable-section';
-
-interface DashboardOrder {
-  id: string;
-  name: string;
-  totalPrice: number;
-  status: string;
-  createdByName: string;
-  createdAt: string;
-}
-
-interface DashboardSummary {
-  productsCount: number;
-  variablesCount: number;
-  ordersCount: number;
-  totalSales: number;
-  profit: number;
-  lowStockCount: number;
-  watchStockCount: number;
-  recentOrders: DashboardOrder[];
-  quotesPending?: number;
-  quotesConverted?: number;
-  quoteConversionRate?: number;
-}
+import type { DashboardOrder, DashboardSummary } from '../types';
 
 // ==========================================
 // AVAILABLE METRIC CARDS
@@ -355,7 +333,7 @@ export default function Home() {
   }, [selectedMetricIds]);
 
   useEffect(() => {
-    fetch('/api/dashboard', { headers: getAuthHeaders() })
+    fetch('/api/v1/dashboard', { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data) => setSummary(data.summary))
       .catch(() => {});

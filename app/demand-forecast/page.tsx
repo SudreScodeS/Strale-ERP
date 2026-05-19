@@ -228,15 +228,15 @@ export default function DemandForecastPage() {
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   useEffect(() => {
-    fetch('/api/demand-forecast', { headers: getAuthHeaders() })
+    fetch('/api/v1/demand-forecast', { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((d) => setSummary(d.summary))
       .catch(() => {});
-    fetch('/api/demand-forecast?mode=weekly', { headers: getAuthHeaders() })
+    fetch('/api/v1/demand-forecast?mode=weekly', { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((d) => setWeeklyData(d.weeklyData))
       .catch(() => {});
-    fetch('/api/product-ai', { headers: getAuthHeaders() })
+    fetch('/api/v1/product-ai', { headers: getAuthHeaders() })
       .then(async (r) => {
         if (!r.ok) {
           const body = await r.json().catch(() => null);
