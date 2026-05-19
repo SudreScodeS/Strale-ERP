@@ -3,9 +3,9 @@
 
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { requireRole } from '../../../../lib/auth';
-import { supplierData } from '../../../../lib/data';
-import { ok, created, badRequest, conflict, fromError } from '../../../../lib/api-response';
+import { requireRole } from '../../../lib/auth';
+import { supplierData } from '../../../lib/data';
+import { ok, created, badRequest, conflict, fromError } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

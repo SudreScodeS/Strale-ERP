@@ -2,11 +2,11 @@
 // V1 standardized quotes endpoint.
 
 import { Quote, QuoteItem } from '../../../../types';
-import { criarOrcamento, converterOrcamentoEmPedido, clonarOrcamento, atualizarStatusOrcamento } from '../../../../lib/business';
-import { quoteData, userData, groupData, variableData } from '../../../../lib/data';
-import { requireRole } from '../../../../lib/auth';
-import { logActivity } from '../../../../lib/activity-logger';
-import { ok, created, badRequest, forbidden, notFound, fromError } from '../../../../lib/api-response';
+import { criarOrcamento, converterOrcamentoEmPedido, clonarOrcamento, atualizarStatusOrcamento } from '../../../lib/business';
+import { quoteData, userData, groupData, variableData } from '../../../lib/data';
+import { requireRole } from '../../../lib/auth';
+import { logActivity } from '../../../lib/activity-logger';
+import { ok, created, badRequest, forbidden, notFound, fromError } from '../../../lib/api-response';
 
 function enrichQuoteItems(items: QuoteItem[]): QuoteItem[] {
   const groups = groupData.getAll();

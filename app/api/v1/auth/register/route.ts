@@ -2,9 +2,9 @@
 // V1 standardized register endpoint.
 
 import { v4 as uuidv4 } from 'uuid';
-import { userData } from '../../../../../lib/data';
-import { hashPassword, requireRole } from '../../../../../lib/auth';
-import { created, badRequest, conflict, forbidden, unauthorized, fromError } from '../../../../../lib/api-response';
+import { userData } from '../../../../lib/data';
+import { hashPassword, requireRole } from '../../../../lib/auth';
+import { created, badRequest, conflict, forbidden, unauthorized, fromError } from '../../../../lib/api-response';
 
 export async function POST(request: Request) {
   try {

@@ -1,9 +1,9 @@
 // api/v1/finance/route.ts
 // V1 standardized finance endpoint.
 
-import { requireRole } from '../../../../lib/auth';
-import { getFinancialRecords } from '../../../../lib/finance';
-import { ok, fromError } from '../../../../lib/api-response';
+import { requireRole } from '../../../lib/auth';
+import { getFinancialRecords } from '../../../lib/finance';
+import { ok, fromError } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

@@ -3,7 +3,7 @@
 // Ensures consistent structure: { success, message?, data?, errorCode?, meta }
 
 import { NextResponse } from 'next/server';
-import type { ApiSuccess, ApiError, ApiMeta } from '../../types/api.types';
+import type { ApiMeta } from '../../types/api.types';
 
 // ── ID generation ──────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ function timestamp(): string {
 
 // ── Header helpers ─────────────────────────────────────────────
 
-function withHeaders(response: NextResponse, requestId?: string): NextResponse {
+function withHeaders<T>(response: NextResponse<T>, requestId?: string): NextResponse<T> {
   response.headers.set('X-API-Version', '1.0');
   if (requestId) response.headers.set('X-Request-Id', requestId);
   return response;
@@ -32,7 +32,7 @@ function withErrorHeaders(response: NextResponse, requestId?: string): NextRespo
 // ── Success Responses ──────────────────────────────────────────
 
 /** 200 — Standard success */
-export function ok<T>(data: T, message?: string, meta?: Partial<ApiMeta>): NextResponse<ApiSuccess<T>> {
+export function ok<T>(data: T, message?: string, meta?: Partial<ApiMeta>): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json({
     success: true,
@@ -44,7 +44,7 @@ export function ok<T>(data: T, message?: string, meta?: Partial<ApiMeta>): NextR
 }
 
 /** 201 — Resource created */
-export function created<T>(data: T, message?: string): NextResponse<ApiSuccess<T>> {
+export function created<T>(data: T, message?: string): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -59,7 +59,7 @@ export function created<T>(data: T, message?: string): NextResponse<ApiSuccess<T
 }
 
 /** 200 — Success with no data payload (actions, deletes) */
-export function success(message: string): NextResponse<ApiSuccess<null>> {
+export function success(message: string): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json({
     success: true,
@@ -73,7 +73,7 @@ export function success(message: string): NextResponse<ApiSuccess<null>> {
 // ── Error Responses ────────────────────────────────────────────
 
 /** 400 — Bad request / validation error */
-export function badRequest(message: string, details?: Record<string, string[]>): NextResponse<ApiError> {
+export function badRequest(message: string, details?: Record<string, string[]>): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -89,7 +89,7 @@ export function badRequest(message: string, details?: Record<string, string[]>):
 }
 
 /** 401 — Unauthorized */
-export function unauthorized(message = 'Não autenticado.'): NextResponse<ApiError> {
+export function unauthorized(message = 'Não autenticado.'): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -104,7 +104,7 @@ export function unauthorized(message = 'Não autenticado.'): NextResponse<ApiErr
 }
 
 /** 403 — Forbidden */
-export function forbidden(message = 'Acesso negado.'): NextResponse<ApiError> {
+export function forbidden(message = 'Acesso negado.'): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -119,7 +119,7 @@ export function forbidden(message = 'Acesso negado.'): NextResponse<ApiError> {
 }
 
 /** 404 — Not found */
-export function notFound(message = 'Recurso não encontrado.'): NextResponse<ApiError> {
+export function notFound(message = 'Recurso não encontrado.'): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -134,7 +134,7 @@ export function notFound(message = 'Recurso não encontrado.'): NextResponse<Api
 }
 
 /** 409 — Conflict */
-export function conflict(message: string): NextResponse<ApiError> {
+export function conflict(message: string): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -149,7 +149,7 @@ export function conflict(message: string): NextResponse<ApiError> {
 }
 
 /** 500 — Internal server error */
-export function internalError(message = 'Erro interno do servidor.'): NextResponse<ApiError> {
+export function internalError(message = 'Erro interno do servidor.'): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json(
     {
@@ -164,7 +164,7 @@ export function internalError(message = 'Erro interno do servidor.'): NextRespon
 }
 
 /** Convert an unknown catch error into an appropriate API response */
-export function fromError(error: unknown): NextResponse<ApiError> {
+export function fromError(error: unknown): NextResponse {
   if (error instanceof Error) {
     if (error.message === 'Forbidden') return forbidden();
     if (error.message === 'Unauthorized') return unauthorized();
@@ -181,7 +181,7 @@ export function paginated<T>(
   total: number,
   page: number,
   pageSize: number,
-): NextResponse<ApiSuccess<T[]>> {
+): NextResponse {
   const requestId = generateRequestId();
   const response = NextResponse.json({
     success: true,

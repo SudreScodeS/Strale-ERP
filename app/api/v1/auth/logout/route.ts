@@ -1,5 +1,5 @@
-import { revokeRefreshToken } from '../../../../../lib/auth';
-import { ok, unauthorized, fromError } from '../../../../../lib/api-response';
+import { revokeRefreshToken } from '../../../../lib/auth';
+import { ok, unauthorized, fromError } from '../../../../lib/api-response';
 
 export async function POST(request: Request) {
   try {

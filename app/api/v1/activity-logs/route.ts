@@ -1,9 +1,9 @@
 // api/v1/activity-logs/route.ts
 // V1 standardized activity logs endpoint.
 
-import { requireRole } from '../../../../lib/auth';
-import { activityLogData } from '../../../../lib/data';
-import { ok, badRequest, notFound, fromError } from '../../../../lib/api-response';
+import { requireRole } from '../../../lib/auth';
+import { activityLogData } from '../../../lib/data';
+import { ok, badRequest, notFound, fromError } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

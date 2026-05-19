@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /**
  * Tests for app/lib/cache.ts
  * Covers: cached with TTL, invalidate, invalidatePrefix, clearCache

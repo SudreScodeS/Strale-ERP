@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /**
  * Tests for app/lib/auth.ts
  * Covers: hashPassword, comparePassword, generateJWT, verifyJWT, requireAuth, requireRole

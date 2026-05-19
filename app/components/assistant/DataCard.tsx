@@ -6,7 +6,8 @@ import { StatusBadge, fmtCurrency } from './RichResponse';
 
 interface DataCardProps {
   type: 'order' | 'product' | 'quote' | 'supplier' | 'user' | 'generic';
-  data: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: Record<string, any>;
   onClick?: () => void;
 }
 
@@ -19,7 +20,7 @@ const TYPE_CONFIG: Record<string, { icon: string; label: string; color: string }
   generic: { icon: '📄', label: 'Item', color: 'var(--text-muted)' },
 };
 
-function OrderCard({ data }: { data: Record<string, unknown> }) {
+function OrderCard({ data }: { data: Record<string, any> }) {
   return (
     <>
       <div className="flex items-start justify-between">
@@ -27,7 +28,7 @@ function OrderCard({ data }: { data: Record<string, unknown> }) {
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             {String(data.name || data.id || 'Pedido')}
           </p>
-          {data.customerName && (
+          {(typeof data.customerName === "string" ? data.customerName : null) && (
             <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
               Cliente: {String(data.customerName)}
             </p>
@@ -56,7 +57,7 @@ function OrderCard({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function ProductCard({ data }: { data: Record<string, unknown> }) {
+function ProductCard({ data }: { data: Record<string, any> }) {
   const stock = typeof data.totalStock === 'number' ? data.totalStock : undefined;
   const stockColor = stock !== undefined ? (stock < 10 ? 'var(--danger)' : stock < 30 ? 'var(--warning)' : 'var(--success)') : 'var(--text-muted)';
 
@@ -67,7 +68,7 @@ function ProductCard({ data }: { data: Record<string, unknown> }) {
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             {String(data.name || 'Produto')}
           </p>
-          {data.description && (
+          {(typeof data.description === "string" ? data.description : null) && (
             <p className="text-[11px] line-clamp-1" style={{ color: 'var(--text-muted)' }}>
               {String(data.description)}
             </p>
@@ -105,7 +106,7 @@ function ProductCard({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function QuoteCard({ data }: { data: Record<string, unknown> }) {
+function QuoteCard({ data }: { data: Record<string, any> }) {
   return (
     <>
       <div className="flex items-start justify-between">
@@ -137,18 +138,18 @@ function QuoteCard({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function SupplierCard({ data }: { data: Record<string, unknown> }) {
+function SupplierCard({ data }: { data: Record<string, any> }) {
   return (
     <>
       <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
         {String(data.name || 'Fornecedor')}
       </p>
-      {data.contact && (
+      {(typeof data.contact === "string" ? data.contact : null) && (
         <p className="mt-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
           📞 {String(data.contact)}
         </p>
       )}
-      {data.notes && (
+      {(typeof data.notes === "string" ? data.notes : null) && (
         <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>
           {String(data.notes)}
         </p>
@@ -157,7 +158,7 @@ function SupplierCard({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function UserCard({ data }: { data: Record<string, unknown> }) {
+function UserCard({ data }: { data: Record<string, any> }) {
   const username = String(data.username || 'Usuário');
   return (
     <>
@@ -170,7 +171,7 @@ function UserCard({ data }: { data: Record<string, unknown> }) {
         </div>
         <div>
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{username}</p>
-          {data.role && (
+          {(typeof data.role === "string" ? data.role : null) && (
             <p className="text-[10px] capitalize" style={{ color: 'var(--text-muted)' }}>{String(data.role)}</p>
           )}
         </div>
@@ -191,7 +192,7 @@ function UserCard({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function GenericCard({ data }: { data: Record<string, unknown> }) {
+function GenericCard({ data }: { data: Record<string, any> }) {
   const displayKeys = Object.entries(data).filter(([, v]) =>
     v !== null && v !== undefined && typeof v !== 'object'
   ).slice(0, 6);
@@ -212,7 +213,7 @@ function GenericCard({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-const CARD_RENDERERS: Record<string, React.FC<{ data: Record<string, unknown> }>> = {
+const CARD_RENDERERS: Record<string, React.FC<{ data: Record<string, any> }>> = {
   order: OrderCard,
   product: ProductCard,
   quote: QuoteCard,
@@ -266,7 +267,7 @@ export function DataCardGrid({
   maxItems = 6,
 }: {
   type: DataCardProps['type'];
-  items: Array<Record<string, unknown>>;
+  items: Array<Record<string, any>>;
   maxItems?: number;
 }) {
   if (items.length === 0) return null;

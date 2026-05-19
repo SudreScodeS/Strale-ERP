@@ -2,9 +2,9 @@
 // V1 standardized inventory product endpoint.
 
 import { v4 as uuidv4 } from 'uuid';
-import { groupData, productData, variableData, priceHistoryData } from '../../../../../lib/data';
-import { requireRole } from '../../../../../lib/auth';
-import { ok, created, badRequest, notFound, fromError } from '../../../../../lib/api-response';
+import { groupData, productData, variableData, priceHistoryData } from '../../../../lib/data';
+import { requireRole } from '../../../../lib/auth';
+import { ok, created, badRequest, notFound, fromError } from '../../../../lib/api-response';
 
 export async function POST(request: Request) {
   try {

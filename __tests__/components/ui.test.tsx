@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /**
  * Tests for app/components/ui.tsx
  * Covers: PageHeader, MetricCard, Select

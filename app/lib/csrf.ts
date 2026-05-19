@@ -1,17 +1,22 @@
-import crypto from 'crypto';
+// CSRF Token Management — Edge-compatible (uses Web Crypto API)
+
 const tokens = new Map<string, number>(); // token → expiry timestamp
 const CSRF_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 // Cleanup expired every 10 min
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, expiry] of tokens) {
-    if (now > expiry) tokens.delete(token);
-  }
-}, 10 * 60 * 1000);
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [token, expiry] of tokens) {
+      if (now > expiry) tokens.delete(token);
+    }
+  }, 10 * 60 * 1000);
+}
 
 export function generateCsrfToken(): string {
-  const token = crypto.randomBytes(32).toString('hex');
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const token = Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('');
   tokens.set(token, Date.now() + CSRF_EXPIRY_MS);
   return token;
 }

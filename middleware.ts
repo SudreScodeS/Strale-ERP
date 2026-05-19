@@ -4,10 +4,15 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import crypto from 'crypto';
 import { checkRateLimit } from './app/lib/rate-limit';
 import { validateCsrfToken } from './app/lib/csrf';
 import { logSecurityEvent } from './app/lib/security-logger';
+
+function generateRequestId(): string {
+  const arr = new Uint8Array(8);
+  crypto.getRandomValues(arr);
+  return 'req_' + Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 // ── Rate limit configs ─────────────────────────────────────────
 
@@ -47,7 +52,7 @@ export function middleware(request: NextRequest) {
 
   const ip = getClientIp(request);
   const method = request.method;
-  const requestId = `req_${crypto.randomBytes(8).toString('hex')}`;
+  const requestId = generateRequestId();
 
   // ── Rate limiting ──────────────────────────────────────────
   // Find matching rate limit config (longest prefix match)

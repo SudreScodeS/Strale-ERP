@@ -101,8 +101,10 @@ const actions: ActionDefinition[] = [
         let totalPrice = 0;
         const quoteItems: Array<{
           productId: string;
+          productName: string;
           selectedVariables: { groupId: string; variableId: string; quantity: number }[];
           quantity: number;
+          unitCost: number;
           unitPrice: number;
         }> = [];
 
@@ -148,8 +150,10 @@ const actions: ActionDefinition[] = [
 
           quoteItems.push({
             productId: item.productId,
+            productName: product.name || 'Produto',
             selectedVariables,
             quantity: item.quantity,
+            unitCost: pricing.unitCost ?? pricing.unitPrice * 0.8,
             unitPrice: pricing.unitPrice,
           });
         }
@@ -158,13 +162,18 @@ const actions: ActionDefinition[] = [
         const validUntil = new Date();
         validUntil.setDate(validUntil.getDate() + validDays);
 
+        const totalCost = quoteItems.reduce((sum: number, item: { unitCost?: number; quantity: number }) => sum + (item.unitCost || 0) * item.quantity, 0);
+        const logoCost = (params.logoColors as number || 0) * 10; // default logoPricePerColor
+
         const quote = {
           id: uuidv4(),
           userId: context.userId,
           customerName: params.customerName as string,
           name: (params.name as string) || `Orçamento para ${params.customerName}`,
           items: quoteItems,
+          totalCost,
           totalPrice,
+          logoCost,
           status: 'draft' as const,
           validUntil: validUntil.toISOString(),
           createdAt: new Date(),

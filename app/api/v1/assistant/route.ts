@@ -1,9 +1,9 @@
 // api/v1/assistant/route.ts
 // V1 standardized assistant endpoint.
 
-import { processWithAI, streamResponse, clearConversation, checkStatus } from '../../../../lib/ai';
-import { requireRole } from '../../../../lib/auth';
-import { ok, badRequest, fromError } from '../../../../lib/api-response';
+import { processWithAI, streamResponse, clearConversation, checkStatus } from '../../../lib/ai';
+import { requireRole } from '../../../lib/auth';
+import { ok, badRequest, fromError } from '../../../lib/api-response';
 
 export async function POST(request: Request) {
   let payload: { userId: string; role: string };

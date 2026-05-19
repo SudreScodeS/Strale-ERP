@@ -1,9 +1,9 @@
 // api/v1/demand-forecast/route.ts
 // V1 standardized demand forecast endpoint.
 
-import { getDemandForecastSummary, getVariableSalesHistory, getWeeklySalesData } from '../../../../lib/demand-forecast';
-import { requireRole } from '../../../../lib/auth';
-import { ok, notFound, fromError } from '../../../../lib/api-response';
+import { getDemandForecastSummary, getVariableSalesHistory, getWeeklySalesData } from '../../../lib/demand-forecast';
+import { requireRole } from '../../../lib/auth';
+import { ok, notFound, fromError } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

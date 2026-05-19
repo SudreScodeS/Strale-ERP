@@ -2,9 +2,9 @@
 // V1 standardized purchases endpoint.
 
 import { PurchaseItem } from '../../../../types';
-import { createPurchaseOrder, deletePurchaseOrder, getPurchaseDashboard, updatePurchaseOrder } from '../../../../lib/purchases';
-import { requireRole } from '../../../../lib/auth';
-import { ok, created, badRequest, notFound, fromError } from '../../../../lib/api-response';
+import { createPurchaseOrder, deletePurchaseOrder, getPurchaseDashboard, updatePurchaseOrder } from '../../../lib/purchases';
+import { requireRole } from '../../../lib/auth';
+import { ok, created, badRequest, notFound, fromError } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

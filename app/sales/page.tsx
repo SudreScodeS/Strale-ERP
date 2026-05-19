@@ -11,8 +11,7 @@ import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import { Order, Quote } from '../../types';
-import type { ProductOption, GroupOption, VariableOption, CartItem } from '../../types/product.types';
-import type { OrderView } from '../../types/order.types';
+import type { ProductOption, GroupOption, VariableOption } from '../../types/product.types';
 import type { PreviewConfig } from '../components/product-preview';
 import dynamic from 'next/dynamic';
 
@@ -25,30 +24,7 @@ const ProductPreview = dynamic(() => import('../components/product-preview'), {
 
 const SALES_FORM_KEY = 'elitium-sales-form';
 
-interface VariableOption {
-  id: string;
-  name: string;
-  additionalPrice: number;
-  stock: number;
-  groupId: string;
-  unitOfMeasure?: string;
-}
-
-interface GroupOption {
-  id: string;
-  name: string;
-  variables: VariableOption[];
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  basePrice: number;
-  profitMargin?: number;
-  description?: string;
-  imageUrl?: string;
-  groups: GroupOption[];
-}
+// VariableOption, GroupOption, ProductOption imported from ../../types/product.types
 
 interface OrderView extends Order {
   createdByName?: string;

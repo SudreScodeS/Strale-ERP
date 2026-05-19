@@ -2,10 +2,10 @@
 // V1 standardized inventory variable endpoint.
 
 import { v4 as uuidv4 } from 'uuid';
-import { groupData, variableData, priceHistoryData } from '../../../../../lib/data';
-import { requireRole } from '../../../../../lib/auth';
-import type { UnitOfMeasure } from '../../../../../../types';
-import { ok, created, badRequest, notFound, fromError } from '../../../../../lib/api-response';
+import { groupData, variableData, priceHistoryData } from '../../../../lib/data';
+import { requireRole } from '../../../../lib/auth';
+import type { UnitOfMeasure } from '../../../../../types';
+import { ok, created, badRequest, notFound, fromError } from '../../../../lib/api-response';
 
 const VALID_UNITS: UnitOfMeasure[] = ['un', 'cm²', 'm²', 'kg', 'g', 'l', 'ml', 'm', 'cm'];
 

@@ -1,5 +1,5 @@
-import { refreshAccessToken } from '../../../../../lib/auth';
-import { ok, unauthorized, fromError } from '../../../../../lib/api-response';
+import { refreshAccessToken } from '../../../../lib/auth';
+import { ok, unauthorized, fromError } from '../../../../lib/api-response';
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     if (!refreshToken) {
       try {
         const body = await request.json();
-        refreshToken = (body as { refreshToken?: string }).refreshToken;
+        refreshToken = (body as { refreshToken?: string }).refreshToken ?? null;
       } catch {
         // No body
       }

@@ -3,11 +3,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import { productData, variableData, groupData, orderData } from '../../../../lib/data';
-import { getFinanceSummary, getStockAlertsByLevel } from '../../../../lib/business';
-import { getDemandForecastSummary } from '../../../../lib/demand-forecast';
-import { processQuestion } from '../../../../lib/assistant';
-import { ok, fromError } from '../../../../lib/api-response';
+import { productData, variableData, groupData, orderData } from '../../../lib/data';
+import { getFinanceSummary, getStockAlertsByLevel } from '../../../lib/business';
+import { getDemandForecastSummary } from '../../../lib/demand-forecast';
+import { processQuestion } from '../../../lib/assistant';
+import { ok, fromError } from '../../../lib/api-response';
 
 interface ModuleCheck {
   name: string;

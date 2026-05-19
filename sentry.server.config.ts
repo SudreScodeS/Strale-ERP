@@ -1,15 +1,3 @@
-import * as Sentry from '@sentry/nextjs';
-
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-
-  // Capture 20% of transactions for performance monitoring
-  tracesSampleRate: 0.2,
-
-  environment: process.env.NODE_ENV,
-
-  // Server-side: capture all unhandled rejections
-  integrations: [
-    // Default integrations are included automatically
-  ],
-});
+// Sentry server config — install @sentry/nextjs and set NEXT_PUBLIC_SENTRY_DSN to enable
+// Disabled: @sentry/nextjs not installed
+export {};

@@ -1,8 +1,8 @@
 // api/v1/auth/login/route.ts
 // V1 standardized login endpoint.
 
-import { authenticate } from '../../../../../lib/auth';
-import { ok, badRequest, unauthorized, fromError } from '../../../../../lib/api-response';
+import { authenticate } from '../../../../lib/auth';
+import { ok, badRequest, unauthorized, fromError } from '../../../../lib/api-response';
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 

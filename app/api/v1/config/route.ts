@@ -1,9 +1,9 @@
 // api/v1/config/route.ts
 // V1 standardized config endpoint.
 
-import { loadServerConfig, updateServerConfig } from '../../../../lib/config';
-import { requireRole } from '../../../../lib/auth';
-import { ok, fromError, success } from '../../../../lib/api-response';
+import { loadServerConfig, updateServerConfig } from '../../../lib/config';
+import { requireRole } from '../../../lib/auth';
+import { ok, fromError, success } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

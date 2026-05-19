@@ -2,10 +2,10 @@
 // V1 standardized logo analysis endpoint.
 // Uses api-response helpers for consistent responses.
 
-import { analyzeColorsLocally, LocalAnalysisResult } from '../../../../lib/color-analyzer';
-import { validateImage } from '../../../../lib/vision';
-import { requireRole } from '../../../../lib/auth';
-import { ok, badRequest, fromError } from '../../../../lib/api-response';
+import { analyzeColorsLocally, LocalAnalysisResult } from '../../../lib/color-analyzer';
+import { validateImage } from '../../../lib/vision';
+import { requireRole } from '../../../lib/auth';
+import { ok, badRequest, fromError } from '../../../lib/api-response';
 
 interface AIAnalysisResult {
   totalColors: number;

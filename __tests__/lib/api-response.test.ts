@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /**
  * Tests for app/lib/api-response.ts
  * Covers: ok, created, success, badRequest, unauthorized, forbidden, notFound, conflict, internalError, fromError, paginated

@@ -2,9 +2,9 @@
 // V1 standardized users endpoint.
 
 import { v4 as uuidv4 } from 'uuid';
-import { userData } from '../../../../lib/data';
-import { hashPassword, requireRole } from '../../../../lib/auth';
-import { ok, created, badRequest, notFound, conflict, forbidden, fromError } from '../../../../lib/api-response';
+import { userData } from '../../../lib/data';
+import { hashPassword, requireRole } from '../../../lib/auth';
+import { ok, created, badRequest, notFound, conflict, forbidden, fromError } from '../../../lib/api-response';
 
 export async function GET(request: Request) {
   try {

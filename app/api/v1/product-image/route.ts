@@ -4,8 +4,8 @@
 // Versioning headers added via middleware.
 
 import { NextResponse } from 'next/server';
-import { requireRole } from '../../../../lib/auth';
-import { badRequest, fromError } from '../../../../lib/api-response';
+import { requireRole } from '../../../lib/auth';
+import { badRequest, fromError } from '../../../lib/api-response';
 import sharp from 'sharp';
 
 const imageCache = new Map<string, { buffer: Buffer; timestamp: number }>();

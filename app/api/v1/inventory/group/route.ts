@@ -2,9 +2,9 @@
 // V1 standardized inventory group endpoint.
 
 import { v4 as uuidv4 } from 'uuid';
-import { groupData, productData, variableData } from '../../../../../lib/data';
-import { requireRole } from '../../../../../lib/auth';
-import { ok, created, badRequest, notFound, fromError } from '../../../../../lib/api-response';
+import { groupData, productData, variableData } from '../../../../lib/data';
+import { requireRole } from '../../../../lib/auth';
+import { ok, created, badRequest, notFound, fromError } from '../../../../lib/api-response';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     if (!productId || !name) return badRequest('Produto e nome do grupo são obrigatórios.');
     const limits = normalizeAlertLimits(watchStockAlert, criticalStockAlert);
-    if ('error' in limits) return badRequest(limits.error);
+    if ('error' in limits) return badRequest(limits.error as string);
 
     groupData.create({
       id: uuidv4(), productId, name,
@@ -59,7 +59,7 @@ export async function PATCH(request: Request) {
     if (name) updates.name = name;
     if (watchStockAlert !== undefined || criticalStockAlert !== undefined) {
       const limits = normalizeAlertLimits(watchStockAlert ?? existing.watchStockAlert, criticalStockAlert ?? existing.criticalStockAlert);
-      if ('error' in limits) return badRequest(limits.error);
+      if ('error' in limits) return badRequest(limits.error as string);
       updates.watchStockAlert = limits.watchStockAlert;
       updates.criticalStockAlert = limits.criticalStockAlert;
     }
