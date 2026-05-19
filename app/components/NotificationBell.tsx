@@ -258,14 +258,17 @@ export function NotificationBell() {
             <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
               Notificações
             </h3>
-            <a
-              href="/notifications"
+            <button
+              type="button"
               className="text-xs font-medium transition-colors hover:underline"
               style={{ color: 'var(--brand)' }}
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false);
+                window.location.href = '/notifications';
+              }}
             >
               Ver todas
-            </a>
+            </button>
           </div>
 
           {/* Notification list */}
