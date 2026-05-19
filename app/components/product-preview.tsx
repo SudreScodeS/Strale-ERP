@@ -41,16 +41,16 @@ const DEFAULT_PRODUCT_COLORS: Record<string, string> = {
   default: '#2563eb',
 };
 
-function getDefaultColor(productName: string): string {
-  const lower = productName.toLowerCase();
+function getDefaultColor(productName?: string): string {
+  const lower = (productName || '').toLowerCase();
   for (const [key, color] of Object.entries(DEFAULT_PRODUCT_COLORS)) {
     if (lower.includes(key)) return color;
   }
   return DEFAULT_PRODUCT_COLORS.default;
 }
 
-function getProductStyle(productName: string): string {
-  const lower = productName.toLowerCase();
+function getProductStyle(productName?: string): string {
+  const lower = (productName || '').toLowerCase();
   if (lower.includes('camiseta') || lower.includes('camisa')) return 'camiseta';
   if (lower.includes('caneca') || lower.includes('mug')) return 'caneca';
   return 'sacola';

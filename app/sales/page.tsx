@@ -103,8 +103,13 @@ export default function SalesPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>(
     (savedForm?.cartItems || []).map((item: CartItem) => ({
       ...item,
+      productName: item.productName || 'Produto',
       profitMargin: item.profitMargin ?? 20,
       minMargin: item.minMargin ?? item.profitMargin ?? 20,
+      previewConfig: {
+        ...item.previewConfig,
+        productName: item.previewConfig?.productName || item.productName || 'Produto',
+      },
     }))
   );
   const [statusMessage, setStatusMessage] = useState('');
@@ -584,7 +589,7 @@ export default function SalesPage() {
     setDeliveryDate(quote.deliveryDate || '');
     setCartItems(quote.items.map((qi) => ({
       productId: qi.productId,
-      productName: qi.productName,
+      productName: qi.productName || 'Produto',
       quantity: qi.quantity,
       selectedVariables: qi.selectedVariables,
       selectedVariablesLabel: qi.selectedVariables.map((sv) => sv.variableId).join(', '),
@@ -594,7 +599,7 @@ export default function SalesPage() {
       minMargin: qi.unitCost > 0 ? Math.round(((qi.unitPrice - qi.unitCost) / qi.unitCost) * 100 * 10) / 10 : 20,
       previewConfig: {
         productImageUrl: '',
-        productName: qi.productName,
+        productName: qi.productName || 'Produto',
         logoDataUrl: null,
         selectedColorHex: undefined,
         selectedColorName: undefined,

@@ -249,33 +249,30 @@ interface SidebarProps {
 
 export function Sidebar({ children }: SidebarProps) {
   const pathname = usePathname();
-  const [role] = useState<'admin' | 'seller' | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const token = getStoredToken();
-    const user = token ? getCurrentUser() : null;
-    return user?.role || null;
-  });
-  const [username] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const token = getStoredToken();
-    const user = token ? getCurrentUser() : null;
-    return user?.username || null;
-  });
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    return (window.localStorage.getItem('erp-theme') as 'light' | 'dark' | null) || 'light';
-  });
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const stored = window.localStorage.getItem('erp-sidebar-open');
-    return stored === null ? true : stored === 'true';
-  });
+  const [role, setRole] = useState<'admin' | 'seller' | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [savingFromModal, setSavingFromModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const lastKnownLogIdRef = useRef<string | null>(null);
   const initialLoadRef = useRef(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Read client-only state after mount to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    const token = getStoredToken();
+    const user = token ? getCurrentUser() : null;
+    setRole(user?.role || null);
+    setUsername(user?.username || null);
+    const storedTheme = (window.localStorage.getItem('erp-theme') as 'light' | 'dark' | null) || 'light';
+    setTheme(storedTheme);
+    const storedSidebar = window.localStorage.getItem('erp-sidebar-open');
+    setIsSidebarOpen(storedSidebar === null ? true : storedSidebar === 'true');
+  }, []);
 
   // Register modal show function
   useEffect(() => {
@@ -391,7 +388,7 @@ export function Sidebar({ children }: SidebarProps) {
       <div className="mb-6 flex items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-3">
           <Image
-            src={theme === 'light' ? '/LogoC.svg' : '/Logo.svg'}
+            src={mounted && theme === 'dark' ? '/Logo.svg' : '/LogoC.svg'}
             alt="Logo"
             width={36}
             height={36}
@@ -497,7 +494,7 @@ export function Sidebar({ children }: SidebarProps) {
           </div>
         ))}
 
-        {!role ? (
+        {mounted && !role ? (
           <Link
             href="/login"
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
@@ -627,7 +624,7 @@ export function Sidebar({ children }: SidebarProps) {
             {/* Logo + expand button */}
             <div className="mb-5 flex flex-col items-center gap-2">
               <Image
-                src={theme === 'light' ? '/LogoC.svg' : '/Logo.svg'}
+                src={mounted && theme === 'dark' ? '/Logo.svg' : '/LogoC.svg'}
                 alt="Logo"
                 width={28}
                 height={28}
@@ -690,7 +687,7 @@ export function Sidebar({ children }: SidebarProps) {
                 );
               })}
 
-              {!role ? (
+              {mounted && !role ? (
                 <Link
                   href="/login"
                   title="Login"
