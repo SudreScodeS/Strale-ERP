@@ -2,12 +2,28 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { PageHeader, Select, Checkbox, FormField, Input } from '../components/ui';
+import { ValidatedInput } from '../components/validated-field';
+import { SkeletonProductList, SkeletonOrderList, SkeletonForm } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure } from '../../types';
+
+// ==========================================
+// VALIDATION SCHEMAS
+// ==========================================
+
+const supplierSchema = z.object({
+  name: z.string().min(1, 'Informe o nome do fornecedor').min(2, 'Mínimo de 2 caracteres'),
+  contact: z.string().optional(),
+});
+
+type SupplierFormData = z.infer<typeof supplierSchema>;
 
 // ==========================================
 // TYPES
@@ -105,9 +121,16 @@ export default function PurchasesPage() {
   const [lowStockVariables, setLowStockVariables] = useState<Variable[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
 
-  // ── Supplier form ──
-  const [supplierName, setSupplierName] = useState('');
-  const [supplierContact, setSupplierContact] = useState('');
+  // ── Supplier form (Zod + React Hook Form) ──
+  const {
+    register: registerSupplier,
+    handleSubmit: handleSupplierSubmit,
+    formState: { errors: supplierErrors },
+    reset: resetSupplier,
+  } = useForm<SupplierFormData>({
+    resolver: zodResolver(supplierSchema),
+    mode: 'onBlur',
+  });
 
   // ── Cascading selection ──
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
@@ -133,6 +156,7 @@ export default function PurchasesPage() {
 
   // ── Feedback ──
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
 
   // ── Layout ──
   const PAGE_PATH = '/purchases';
@@ -257,7 +281,8 @@ export default function PurchasesPage() {
   }
 
   useEffect(() => {
-    void loadDashboard();
+    setLoading(true);
+    void loadDashboard().finally(() => setLoading(false));
   }, []);
 
   // Reset cascading selections when parent changes
@@ -274,22 +299,20 @@ export default function PurchasesPage() {
   // SUPPLIER ACTIONS
   // ==========================================
 
-  async function handleCreateSupplier(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleCreateSupplier(data: SupplierFormData) {
     const response = await fetch('/api/suppliers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ name: supplierName, contact: supplierContact }),
+      body: JSON.stringify(data),
     });
-    const data = await safeJson(response);
+    const result = await safeJson(response);
     if (!response.ok) {
-      setMessage(data.error || 'Falha ao criar fornecedor.');
+      setMessage(result.error || 'Falha ao criar fornecedor.');
       return;
     }
-    setMessage(data.message || 'Fornecedor criado com sucesso.');
-    setSupplierName('');
-    setSupplierContact('');
-    setSuppliers((prev) => [data.supplier, ...prev]);
+    setMessage(result.message || 'Fornecedor criado com sucesso.');
+    resetSupplier();
+    setSuppliers((prev) => [result.supplier, ...prev]);
   }
 
   // ==========================================
@@ -465,7 +488,23 @@ export default function PurchasesPage() {
           </p>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                <SkeletonForm fields={3} />
+              </div>
+              <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                <SkeletonForm fields={5} />
+              </div>
+            </div>
+            <SkeletonOrderList count={3} />
+          </div>
+        )}
+
+        {!loading && (
+          <div className="grid gap-6 lg:grid-cols-2">
           {sections.map((section, index) => (
             <DraggableSection
               key={`${section.id}-${section.order}`}
@@ -510,13 +549,19 @@ export default function PurchasesPage() {
               {section.id === 'purchase-form' && (
                 <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                   <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Fornecedores</h3>
-                  <form className="mt-4 grid gap-3 rounded-xl p-4" style={{ border: '1px solid var(--border)' }} onSubmit={handleCreateSupplier}>
-                    <FormField label="Nome do fornecedor">
-                      <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="Nome do fornecedor" />
-                    </FormField>
-                    <FormField label="Contato">
-                      <Input value={supplierContact} onChange={(e) => setSupplierContact(e.target.value)} placeholder="Telefone, email..." />
-                    </FormField>
+                  <form className="mt-4 grid gap-3 rounded-xl p-4" style={{ border: '1px solid var(--border)' }} onSubmit={handleSupplierSubmit(handleCreateSupplier)} noValidate>
+                    <ValidatedInput
+                      label="Nome do fornecedor"
+                      {...registerSupplier('name')}
+                      error={supplierErrors.name}
+                      placeholder="Nome do fornecedor"
+                    />
+                    <ValidatedInput
+                      label="Contato"
+                      {...registerSupplier('contact')}
+                      error={supplierErrors.contact}
+                      placeholder="Telefone, email..."
+                    />
                     <button
                       className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-all hover:opacity-80"
                       style={{ background: 'var(--brand)', color: '#fff' }}
@@ -781,7 +826,8 @@ export default function PurchasesPage() {
               )}
             </DraggableSection>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* ── EDIT MODAL ── */}
         {editingPurchase && (

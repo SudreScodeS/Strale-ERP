@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, MetricCard } from '../components/ui';
+import { SkeletonMetrics, SkeletonTable } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -37,6 +38,7 @@ export default function FinancePage() {
   const [sortCol, setSortCol] = useState<string>('totalRevenue');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [activeTab, setActiveTab] = useState<'financeiro' | 'faturamento'>('financeiro');
+  const [loading, setLoading] = useState(true);
 
   const PAGE_PATH = '/finance';
   const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -69,8 +71,8 @@ export default function FinancePage() {
   }
 
   useEffect(() => {
-    void loadFinance();
-    void loadFaturamento();
+    setLoading(true);
+    Promise.all([loadFinance(), loadFaturamento()]).finally(() => setLoading(false));
   }, []);
 
   const sortedFaturamento = useMemo(() => {
@@ -154,8 +156,16 @@ export default function FinancePage() {
           </div>
         )}
 
+        {/* ==================== LOADING STATE ==================== */}
+        {loading && (
+          <div className="space-y-6 animate-fade-in">
+            <SkeletonMetrics count={3} />
+            <SkeletonTable rows={6} columns={4} />
+          </div>
+        )}
+
         {/* ==================== TAB: FINANCEIRO ==================== */}
-        {activeTab === 'financeiro' && (
+        {!loading && activeTab === 'financeiro' && (
           <>
             <DraggableSection pagePath={PAGE_PATH} section={sections[0]} index={0} totalSections={sections.length} className="sm:col-span-3">
               <div className="grid gap-4 sm:grid-cols-3">
@@ -208,7 +218,7 @@ export default function FinancePage() {
         )}
 
         {/* ==================== TAB: FATURAMENTO ==================== */}
-        {activeTab === 'faturamento' && (
+        {!loading && activeTab === 'faturamento' && (
           <section
             className="rounded-xl p-5"
             style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
