@@ -1,5 +1,6 @@
 import { refreshAccessToken } from '../../../../lib/auth';
 import { ok, unauthorized, fromError } from '../../../../lib/api-response';
+import { getRefreshCookieFlags } from '../../../../lib/cookie-flag';
 
 export async function POST(request: Request) {
   try {
@@ -23,11 +24,11 @@ export async function POST(request: Request) {
     const result = refreshAccessToken(refreshToken);
     if (!result) return unauthorized('Refresh token inválido ou expirado.');
 
-    // Set new refresh token as HttpOnly cookie
+    // Set new refresh token as HttpOnly cookie (Secure only on HTTPS)
     const headers = new Headers({ 'Content-Type': 'application/json' });
     headers.append(
       'Set-Cookie',
-      `refresh_token=${result.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}`,
+      `refresh_token=${result.refreshToken}; ${getRefreshCookieFlags(request, 7 * 24 * 60 * 60)}`,
     );
 
     return new Response(

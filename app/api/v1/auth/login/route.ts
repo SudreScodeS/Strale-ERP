@@ -3,6 +3,7 @@
 
 import { authenticate } from '../../../../lib/auth';
 import { ok, badRequest, unauthorized, fromError } from '../../../../lib/api-response';
+import { getRefreshCookieFlags } from '../../../../lib/cookie-flag';
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
@@ -16,11 +17,11 @@ export async function POST(request: Request) {
     const result = await authenticate(username, password);
     if (!result) return unauthorized('Usuário ou senha incorretos.');
 
-    // Set refresh token as HttpOnly, Secure, SameSite cookie
+    // Set refresh token as HttpOnly cookie (Secure only on HTTPS)
     const response = ok({ token: result.accessToken });
     response.headers.append(
       'Set-Cookie',
-      `refresh_token=${result.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${SEVEN_DAYS}`,
+      `refresh_token=${result.refreshToken}; ${getRefreshCookieFlags(request, SEVEN_DAYS)}`,
     );
     return response;
   } catch (error) {
