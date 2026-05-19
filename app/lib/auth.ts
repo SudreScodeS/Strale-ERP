@@ -26,6 +26,21 @@ function getJwtSecret(): string {
 // TEMPO DE EXPIRAÇÃO DOS TOKENS
 // Define quanto tempo um usuário fica logado sem precisar renovar
 const TOKEN_EXPIRATION = '1h';
+const REFRESH_TOKEN_EXPIRATION = '7d';
+
+// ==========================================
+// REFRESH TOKEN MANAGEMENT
+// ==========================================
+
+const refreshTokens = new Map<string, { token: string; userId: string; expiresAt: number }>();
+
+// Auto-cleanup expired refresh tokens every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of refreshTokens) {
+    if (now > entry.expiresAt) refreshTokens.delete(key);
+  }
+}, 10 * 60 * 1000);
 
 // ==========================================
 // UTILITÁRIOS DE SENHA
@@ -72,20 +87,73 @@ export function verifyJWT(token: string): { id: string; username: string; role: 
 }
 
 // ==========================================
+// REFRESH TOKEN FUNCTIONS
+// ==========================================
+
+export function generateRefreshToken(user: User): string {
+  const token = jwt.sign({ id: user.id, type: 'refresh' }, getJwtSecret(), {
+    expiresIn: REFRESH_TOKEN_EXPIRATION,
+  });
+  const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+  refreshTokens.set(token, { token, userId: user.id, expiresAt });
+  return token;
+}
+
+export function verifyRefreshToken(token: string): { userId: string } | null {
+  try {
+    const payload = jwt.verify(token, getJwtSecret()) as { id: string; type?: string };
+    if (payload.type !== 'refresh') return null;
+    const entry = refreshTokens.get(token);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      refreshTokens.delete(token);
+      return null;
+    }
+    return { userId: payload.id };
+  } catch {
+    return null;
+  }
+}
+
+export function refreshAccessToken(refreshToken: string): { accessToken: string; refreshToken: string } | null {
+  const payload = verifyRefreshToken(refreshToken);
+  if (!payload) return null;
+
+  const user = userData.getById(payload.userId);
+  if (!user) return null;
+
+  // Revoke old refresh token (token rotation)
+  refreshTokens.delete(refreshToken);
+
+  // Generate new pair
+  const accessToken = generateJWT(user);
+  const newRefreshToken = generateRefreshToken(user);
+  return { accessToken, refreshToken: newRefreshToken };
+}
+
+export function revokeRefreshToken(userId: string): void {
+  for (const [key, entry] of refreshTokens) {
+    if (entry.userId === userId) refreshTokens.delete(key);
+  }
+}
+
+// ==========================================
 // FUNÇÕES DE AUTENTICAÇÃO
 // ==========================================
 
 // PROCESSO COMPLETO DE LOGIN
 // 1. Busca usuário por username
 // 2. Verifica senha
-// 3. Retorna token JWT se válido
+// 3. Retorna access + refresh token se válido
 // Retorna null se usuário não existe ou senha incorreta
-export async function authenticate(username: string, password: string): Promise<string | null> {
+export async function authenticate(username: string, password: string): Promise<{ accessToken: string; refreshToken: string } | null> {
   const user = userData.getByUsername(username);
   if (!user) return null;
   const valid = await comparePassword(password, user.password);
   if (!valid) return null;
-  return generateJWT(user);
+  const accessToken = generateJWT(user);
+  const refreshToken = generateRefreshToken(user);
+  return { accessToken, refreshToken };
 }
 
 // ==========================================

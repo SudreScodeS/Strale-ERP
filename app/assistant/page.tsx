@@ -354,7 +354,35 @@ export default function AssistantPage() {
                 style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', minHeight: '200px' }}
               >
                 {messages.map((msg, i) => (
-                  <ChatMessage key={i} message={msg} />
+                  <div key={i}>
+                    <ChatMessage message={msg} />
+                    {/* Rich data rendering for assistant messages */}
+                    {msg.role === 'assistant' && msg.richData && msg.richData.length > 0 && (
+                      <div className="ml-0 mb-3 max-w-[85%]">
+                        {msg.richData.map((rd, ri) => {
+                          // Detect if data is a list of items
+                          const data = rd.data;
+                          const arrayKey = Object.keys(data).find(k => Array.isArray(data[k]) && data[k].length > 0 && typeof data[k][0] === 'object');
+                          if (arrayKey) {
+                            const items = data[arrayKey] as Array<Record<string, unknown>>;
+                            const cardType = rd.type.includes('order') ? 'order'
+                              : rd.type.includes('quote') ? 'quote'
+                              : rd.type.includes('product') ? 'product'
+                              : rd.type.includes('supplier') ? 'supplier'
+                              : rd.type.includes('user') ? 'user'
+                              : 'generic';
+                            return (
+                              <div key={ri}>
+                                <DataCardGrid type={cardType} items={items} />
+                                <RichResponse data={data} compact />
+                              </div>
+                            );
+                          }
+                          return <RichResponse key={ri} data={data} compact />;
+                        })}
+                      </div>
+                    )}
+                  </div>
                 ))}
 
                 {/* Typing indicator when loading and no content yet */}
@@ -378,8 +406,11 @@ export default function AssistantPage() {
 
           {section.id === 'suggestions' && (
             <SuggestionChips
-              suggestions={SUGGESTIONS}
-              onSelect={(label) => handleSend(label)}
+              suggestions={suggestions.map(s => ({ label: s.label, icon: s.icon }))}
+              onSelect={(label) => {
+                const suggestion = suggestions.find(s => s.label.toLowerCase() === label.toLowerCase());
+                handleSend(suggestion?.query || label);
+              }}
               disabled={isLoading}
             />
           )}
