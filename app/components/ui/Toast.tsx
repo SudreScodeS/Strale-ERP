@@ -211,6 +211,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Connect standalone toast to this provider
+  useEffect(() => {
+    setStandaloneToast(addToast);
+    return () => setStandaloneToast(null);
+  }, [addToast]);
+
   return (
     <ToastContext.Provider value={{ toast: addToast }}>
       {children}
