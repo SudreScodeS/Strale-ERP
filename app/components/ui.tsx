@@ -9,6 +9,7 @@ import { globalConfig, applyServerConfig } from '../../config/global';
 import { getCurrentUser, getStoredToken, getAuthHeaders, logout } from '../lib/authClient';
 import { ACTION_ICON_MAP, IconBell, IconOther } from './icons';
 import { ErrorBoundary } from './error-boundary';
+import { NotificationBell } from './NotificationBell';
 
 // Global dirty state for unsaved changes warning
 // Pages with forms set this to warn before navigation

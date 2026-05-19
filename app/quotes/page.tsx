@@ -6,6 +6,7 @@ import { calculateSalePrice, globalConfig, applyServerConfig } from '../../confi
 import { PageHeader, Select, Checkbox } from '../components/ui';
 import { SkeletonOrderList } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
+import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { Quote, VariableOption, GroupOption, ProductOption } from '../../types';
 

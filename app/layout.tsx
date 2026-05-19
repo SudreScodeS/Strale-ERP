@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Alumni_Sans } from 'next/font/google';
 import { Sidebar } from './components/ui';
 import { LayoutProvider } from './components/layout-context';
 import { SkipLink } from './components/SkipLink';
+import { ServiceWorkerRegistration } from './components/ServiceWorkerRegistration';
 import './globals.css';
 
 const geistSans = Geist({
@@ -61,6 +62,7 @@ export const metadata: Metadata = {
     shortcut: '/Logo.svg',
     apple: '/Logo.svg',
   },
+  manifest: '/manifest.json',
 };
 
 // Inline script to apply theme before React hydrates — avoids FOUC
@@ -89,6 +91,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full">
         <SkipLink />
+        <ServiceWorkerRegistration />
         <LayoutProvider>
           <Sidebar>
             <div id="main-content">{children}</div>
