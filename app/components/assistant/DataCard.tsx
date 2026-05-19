@@ -12,12 +12,12 @@ interface DataCardProps {
 }
 
 const TYPE_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
-  order: { icon: '🛒', label: 'Pedido', color: 'var(--info)' },
-  product: { icon: '📦', label: 'Produto', color: 'var(--success)' },
-  quote: { icon: '📋', label: 'Orçamento', color: 'var(--warning)' },
-  supplier: { icon: '🏭', label: 'Fornecedor', color: 'var(--brand)' },
-  user: { icon: '👤', label: 'Usuário', color: 'var(--brand)' },
-  generic: { icon: '📄', label: 'Item', color: 'var(--text-muted)' },
+  order: { icon: 'cart', label: 'Pedido', color: 'var(--info)' },
+  product: { icon: 'pkg', label: 'Produto', color: 'var(--success)' },
+  quote: { icon: 'list', label: 'Orçamento', color: 'var(--warning)' },
+  supplier: { icon: 'factory', label: 'Fornecedor', color: 'var(--brand)' },
+  user: { icon: 'user', label: 'Usuário', color: 'var(--brand)' },
+  generic: { icon: 'file', label: 'Item', color: 'var(--text-muted)' },
 };
 
 function OrderCard({ data }: { data: Record<string, any> }) {
@@ -44,7 +44,7 @@ function OrderCard({ data }: { data: Record<string, any> }) {
         )}
         {data.delivered !== undefined && (
           <span className="text-[10px]" style={{ color: data.delivered ? 'var(--success)' : 'var(--warning)' }}>
-            {data.delivered ? '✅ Entregue' : '⏳ Pendente'}
+            {data.delivered ? 'Entregue' : 'Pendente'}
           </span>
         )}
       </div>
@@ -146,7 +146,7 @@ function SupplierCard({ data }: { data: Record<string, any> }) {
       </p>
       {(typeof data.contact === "string" ? data.contact : null) && (
         <p className="mt-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
-          📞 {String(data.contact)}
+          {String(data.contact)}
         </p>
       )}
       {(typeof data.notes === "string" ? data.notes : null) && (

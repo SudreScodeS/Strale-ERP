@@ -2,8 +2,10 @@
 
 // ── SuggestionChips.tsx — Clickable suggestion chips ─
 
+import React from 'react';
+
 interface SuggestionChipsProps {
-  suggestions: Array<{ label: string; icon: string }>;
+  suggestions: Array<{ label: string; icon: React.ReactNode }>;
   onSelect: (label: string) => void;
   disabled?: boolean;
 }
@@ -31,7 +33,7 @@ export function SuggestionChips({ suggestions, onSelect, disabled }: SuggestionC
             e.currentTarget.style.color = 'var(--text-muted)';
           }}
         >
-          <span>{s.icon}</span>
+          <span className="flex-shrink-0">{s.icon}</span>
           {s.label}
         </button>
       ))}

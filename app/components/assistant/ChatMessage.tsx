@@ -135,7 +135,7 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
                   color: ar.success ? 'var(--success)' : 'var(--danger)',
                 }}
               >
-                <span className="flex-shrink-0">{ar.success ? '✅' : '❌'}</span>
+                <span className="flex-shrink-0">{ar.success ? true : false}</span>
                 <span>{ar.message}</span>
               </div>
             ))}
@@ -153,7 +153,7 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
               className="rounded-full px-1.5 py-0.5"
               style={{ background: 'var(--brand-muted)', color: 'var(--brand)' }}
             >
-              {message.source === 'cache' ? '⚡ cache' : message.source === 'llm+tools' ? '🧠 IA + dados' : '🧠 IA'}
+              {message.source === 'cache' ? 'cache' : message.source === 'llm+tools' ? 'IA + dados' : 'IA'}
             </span>
           )}
           {!isUser && message.toolsUsed && message.toolsUsed.length > 0 && (
@@ -161,7 +161,7 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
               className="rounded-full px-1.5 py-0.5"
               style={{ background: 'var(--info-bg)', color: 'var(--info)' }}
             >
-              🔧 {message.toolsUsed.length} ação{message.toolsUsed.length > 1 ? 'ões' : ''}
+              {message.toolsUsed.length} ação{message.toolsUsed.length > 1 ? 'ões' : ''}
             </span>
           )}
         </div>

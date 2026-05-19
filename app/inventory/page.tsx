@@ -364,7 +364,7 @@ export default function InventoryPage() {
         {message ? (
           <div className="mb-6 flex items-center justify-between rounded-xl px-5 py-3 text-sm" style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)', color: 'var(--success)' }}>
             <span>{message}</span>
-            <button type="button" onClick={() => setMessage('')} className="ml-3 hover:opacity-70" style={{ color: 'var(--success)' }}>✕</button>
+            <button type="button" onClick={() => setMessage('')} className="ml-3 hover:opacity-70" style={{ color: 'var(--success)' }}>×</button>
           </div>
         ) : null}
 
@@ -696,7 +696,7 @@ export default function InventoryPage() {
                   </div>
                   {/* Explicação com exemplo */}
                   <div className="mb-5 rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>💡 Como funciona</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Como funciona</p>
                     <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                       O <strong>Produto</strong> é o item base do seu estoque. Depois de criado, você pode adicionar <strong>Grupos</strong> (como Cor ou Tamanho) e dentro deles <strong>Variáveis</strong> (como Azul ou Grande).
                     </p>
@@ -811,7 +811,7 @@ export default function InventoryPage() {
                   </div>
                   {/* Explicação com exemplo */}
                   <div className="mb-5 rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>💡 Como funciona</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Como funciona</p>
                     <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                       O <strong>Grupo</strong> é uma categoria dentro de um produto. Ele agrupa as variações disponíveis — como cor, tamanho ou material.
                     </p>
@@ -893,7 +893,7 @@ export default function InventoryPage() {
                   </div>
                   {/* Explicação com exemplo */}
                   <div className="mb-5 rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>💡 Como funciona</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Como funciona</p>
                     <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                       A <strong>Variável</strong> é a opção concreta dentro de um grupo. Cada variável tem seu próprio estoque e pode ter um preço adicional.
                     </p>
@@ -1035,7 +1035,7 @@ export default function InventoryPage() {
                   </div>
                   <button type="button" onClick={() => setEditingVariable(null)}
                     className="rounded-lg p-2 transition-colors hover:opacity-80"
-                    style={{ color: 'var(--text-muted)' }}>✕</button>
+                    style={{ color: 'var(--text-muted)' }}>×</button>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmitVariableUpdate}>
                   <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
@@ -1134,7 +1134,7 @@ export default function InventoryPage() {
                   </div>
                   <button type="button" onClick={() => setEditingProduct(null)}
                     className="rounded-lg p-2 transition-colors hover:opacity-80"
-                    style={{ color: 'var(--text-muted)' }}>✕</button>
+                    style={{ color: 'var(--text-muted)' }}>×</button>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmitProductUpdate}>
                   <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
@@ -1237,7 +1237,7 @@ export default function InventoryPage() {
                   </div>
                   <button type="button" onClick={() => setEditingGroup(null)}
                     className="rounded-lg p-2 transition-colors hover:opacity-80"
-                    style={{ color: 'var(--text-muted)' }}>✕</button>
+                    style={{ color: 'var(--text-muted)' }}>×</button>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmitGroupUpdate}>
                   <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>

@@ -281,13 +281,13 @@ function detectAndRender(data: unknown, compact?: boolean): React.ReactNode {
       <div className="space-y-3">
         {critical && critical.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--danger)' }}>🔴 Crítico ({critical.length})</p>
+            <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--danger)' }}>Crítico ({critical.length})</p>
             <DataTable items={critical} compact />
           </div>
         )}
         {watch && watch.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--warning)' }}>🟡 Atenção ({watch.length})</p>
+            <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--warning)' }}>Atenção ({watch.length})</p>
             <DataTable items={watch} compact />
           </div>
         )}
@@ -302,7 +302,7 @@ function detectAndRender(data: unknown, compact?: boolean): React.ReactNode {
         {(['late', 'today', 'pending'] as const).map(key => {
           const items = obj[key] as Array<Record<string, unknown>> | undefined;
           if (!items || items.length === 0) return null;
-          const labels = { late: '🔴 Atrasados', today: '📦 Hoje', pending: '⏳ Pendentes' };
+          const labels = { late: 'Atrasados', today: 'Hoje', pending: 'Pendentes' };
           return (
             <div key={key}>
               <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>

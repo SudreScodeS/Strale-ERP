@@ -209,7 +209,7 @@ export default function AssistantPage() {
                 break;
 
               case 'error':
-                fullContent += `\n\n⚠️ ${event.message}`;
+                fullContent += `\n\n${event.message}`;
                 break;
             }
           } catch {
@@ -243,7 +243,7 @@ export default function AssistantPage() {
           if (last?.role === 'assistant' && !last.content) {
             next[next.length - 1] = {
               ...last,
-              content: '⏸️ Geração interrompida.',
+              content: 'Geração interrompida.',
               isStreaming: false,
             };
           }

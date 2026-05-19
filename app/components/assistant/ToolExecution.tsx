@@ -10,31 +10,31 @@ interface ToolExecutionProps {
 }
 
 const TOOL_LABELS: Record<string, { label: string; icon: string }> = {
-  create_quote: { label: 'Criando orçamento', icon: '📝' },
-  update_order_status: { label: 'Atualizando pedido', icon: '📋' },
-  create_product: { label: 'Criando produto', icon: '📦' },
-  create_supplier: { label: 'Criando fornecedor', icon: '🏭' },
-  generate_pdf_quote: { label: 'Gerando PDF', icon: '📄' },
-  search_orders: { label: 'Buscando pedidos', icon: '🔍' },
-  search_quotes: { label: 'Buscando orçamentos', icon: '🔍' },
-  get_low_stock: { label: 'Verificando estoque', icon: '📊' },
-  get_financial_summary: { label: 'Consultando financeiro', icon: '💰' },
-  get_sales_report: { label: 'Gerando relatório', icon: '📈' },
-  get_sales_summary: { label: 'Resumo de vendas', icon: '📊' },
-  get_stock_alerts: { label: 'Alertas de estoque', icon: '⚠️' },
-  get_recent_orders: { label: 'Pedidos recentes', icon: '🛒' },
-  get_products: { label: 'Listando produtos', icon: '📦' },
-  get_delivery_status: { label: 'Status de entregas', icon: '🚚' },
-  get_quotes: { label: 'Consultando orçamentos', icon: '📋' },
-  get_users: { label: 'Listando usuários', icon: '👥' },
-  get_demand_forecast: { label: 'Previsão de demanda', icon: '📈' },
-  get_suppliers: { label: 'Listando fornecedores', icon: '🏭' },
-  calculate_price: { label: 'Calculando preço', icon: '💲' },
-  get_system_summary: { label: 'Resumo do sistema', icon: '🖥️' },
+  create_quote: { label: 'Criando orçamento', icon: 'doc' },
+  update_order_status: { label: 'Atualizando pedido', icon: 'list' },
+  create_product: { label: 'Criando produto', icon: 'pkg' },
+  create_supplier: { label: 'Criando fornecedor', icon: 'factory' },
+  generate_pdf_quote: { label: 'Gerando PDF', icon: 'file' },
+  search_orders: { label: 'Buscando pedidos', icon: 'search' },
+  search_quotes: { label: 'Buscando orçamentos', icon: 'search' },
+  get_low_stock: { label: 'Verificando estoque', icon: 'chart' },
+  get_financial_summary: { label: 'Consultando financeiro', icon: 'money' },
+  get_sales_report: { label: 'Gerando relatório', icon: 'trend' },
+  get_sales_summary: { label: 'Resumo de vendas', icon: 'chart' },
+  get_stock_alerts: { label: 'Alertas de estoque', icon: 'alert' },
+  get_recent_orders: { label: 'Pedidos recentes', icon: 'cart' },
+  get_products: { label: 'Listando produtos', icon: 'pkg' },
+  get_delivery_status: { label: 'Status de entregas', icon: 'truck' },
+  get_quotes: { label: 'Consultando orçamentos', icon: 'list' },
+  get_users: { label: 'Listando usuários', icon: 'users' },
+  get_demand_forecast: { label: 'Previsão de demanda', icon: 'trend' },
+  get_suppliers: { label: 'Listando fornecedores', icon: 'factory' },
+  calculate_price: { label: 'Calculando preço', icon: 'dollar' },
+  get_system_summary: { label: 'Resumo do sistema', icon: 'monitor' },
 };
 
 export function ToolExecution({ tool, status, result }: ToolExecutionProps) {
-  const info = TOOL_LABELS[tool] || { label: tool, icon: '🔧' };
+  const info = TOOL_LABELS[tool] || { label: tool, icon: 'tool' };
 
   const statusColors = {
     running: { bg: 'var(--info-bg)', border: 'var(--info-border)', text: 'var(--info)' },
@@ -65,7 +65,7 @@ export function ToolExecution({ tool, status, result }: ToolExecutionProps) {
             </span>
           )}
           {status === 'success' && <span>✓</span>}
-          {status === 'error' && <span>✗</span>}
+          {status === 'error' && <span>×</span>}
         </div>
         {result && !result.success && (
           <p className="mt-0.5 opacity-80 truncate">{result.message}</p>

@@ -1115,7 +1115,7 @@ export default function SalesPage() {
                         </div>
                       )}
                       {order.delivered && (
-                        <p className="text-sm text-[var(--success)] font-medium">✓ Entregue{order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
+                        <p className="text-sm text-[var(--success)] font-medium">Entregue{order.deliveredAt ? ` em ${new Date(order.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
                       )}
                       <p className="text-sm text-[var(--text-muted)]">Total: R$ {(order.totalPrice || 0).toFixed(2)}</p>
                       {order.items && order.items.length > 0 ? (
@@ -1138,7 +1138,7 @@ export default function SalesPage() {
                           className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:opacity-80"
                           style={{ background: 'var(--brand)', color: '#fff' }}
                         >
-                          ✓ Entregue
+                          Entregue
                         </button>
                       )}
                       {order.delivered && (
@@ -1714,7 +1714,7 @@ export default function SalesPage() {
                     className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:opacity-80"
                     style={{ background: 'var(--brand)', color: '#fff' }}
                   >
-                    ✓ Entregue
+                    Entregue
                   </button>
                 )}
                 {!editingOrder && selectedOrder?.delivered && (
@@ -1957,7 +1957,7 @@ export default function SalesPage() {
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Situação</p>
                     {selectedOrder?.delivered ? (
-                      <p className="mt-1 text-sm font-bold text-[var(--success)]">✓ Entregue{selectedOrder?.deliveredAt ? ` em ${new Date(selectedOrder.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
+                      <p className="mt-1 text-sm font-bold text-[var(--success)]">Entregue{selectedOrder?.deliveredAt ? ` em ${new Date(selectedOrder.deliveredAt).toLocaleDateString('pt-BR')}` : ''}</p>
                     ) : (
                       <p className="mt-1 text-sm font-semibold text-amber-600">Pendente entrega</p>
                     )}
@@ -2120,9 +2120,9 @@ export default function SalesPage() {
               onClick={() => void handleUndoDeleteOrders(undoOrderData.items)}
               className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
             >
-              ↩ Desfazer
+              Desfazer
             </button>
-            <button type="button" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
+            <button type="button" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">×</button>
           </div>
         , document.body)}
 
@@ -2137,9 +2137,9 @@ export default function SalesPage() {
             }}
           >
             <span className="text-sm font-semibold" style={{ color: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)' }}>
-              {statusMessage.includes('Erro') || statusMessage.includes('erro') ? '✕' : '✓'} {statusMessage}
+              {statusMessage.includes('Erro') || statusMessage.includes('erro') ? '×' : '✓'} {statusMessage}
             </span>
-            <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>✕</button>
+            <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>×</button>
           </div>
         , document.body)}
 

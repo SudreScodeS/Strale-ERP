@@ -1317,7 +1317,7 @@ export default function QuotesPage() {
                 </div>
                 <button type="button" onClick={() => setSelectedQuote(null)}
                   className="rounded-lg p-2 transition-colors hover:opacity-80"
-                  style={{ color: 'var(--text-muted)' }}>✕</button>
+                  style={{ color: 'var(--text-muted)' }}>×</button>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -1459,7 +1459,7 @@ export default function QuotesPage() {
                 </div>
                 <button type="button" onClick={() => { setConvertingQuote(null); setConvertDeliveryDate(''); }}
                   className="rounded-lg p-2 transition-colors hover:opacity-80"
-                  style={{ color: 'var(--text-muted)' }}>✕</button>
+                  style={{ color: 'var(--text-muted)' }}>×</button>
               </div>
 
               <p className="mt-4 text-sm text-slate-600">
@@ -1526,9 +1526,9 @@ export default function QuotesPage() {
               onClick={() => void handleUndoDeleteQuotes(undoData.items)}
               className="rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
             >
-              ↩ Desfazer
+              Desfazer
             </button>
-            <button type="button" onClick={() => { if (undoData.timer) clearTimeout(undoData.timer); setUndoData(null); }} className="ml-1 text-white/60 hover:text-white">✕</button>
+            <button type="button" onClick={() => { if (undoData.timer) clearTimeout(undoData.timer); setUndoData(null); }} className="ml-1 text-white/60 hover:text-white">×</button>
           </div>
         , document.body)}
 
@@ -1544,9 +1544,9 @@ export default function QuotesPage() {
             }}
           >
             <span className="text-sm font-semibold" style={{ color: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)' }}>
-              {statusMessage.includes('Erro') || statusMessage.includes('erro') ? '✕' : '✓'} {statusMessage}
+              {statusMessage.includes('Erro') || statusMessage.includes('erro') ? '×' : '✓'} {statusMessage}
             </span>
-            <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>✕</button>
+            <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>×</button>
           </div>
         , document.body)}
       </div>

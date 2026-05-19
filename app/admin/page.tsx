@@ -403,7 +403,7 @@ export default function AdminPage() {
                                 style={{ color: 'var(--text-faint)' }}
                                 title="Remover faixa"
                               >
-                                ✕
+                                ×
                               </button>
                             </td>
                           </tr>

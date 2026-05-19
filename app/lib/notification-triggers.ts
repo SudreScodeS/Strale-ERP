@@ -60,7 +60,7 @@ export function notifyNewOrder(order: OrderLike): void {
     : '';
 
   sendLocalNotification({
-    title: '🛒 Novo Pedido',
+    title: 'Novo Pedido',
     body: `Pedido #${order.id.slice(0, 8)} de ${clientName}${total}`,
     url: `/sales?id=${order.id}`,
     tag: `order-${order.id}`,
@@ -74,7 +74,7 @@ export function notifyOrderStatusChanged(order: OrderLike, oldStatus: string, ne
   if (!shouldNotify('orderStatusChanged')) return;
 
   sendLocalNotification({
-    title: '📋 Status do Pedido Atualizado',
+    title: 'Status do Pedido Atualizado',
     body: `Pedido #${order.id.slice(0, 8)}: ${oldStatus} → ${newStatus}`,
     url: `/sales?id=${order.id}`,
     tag: `order-status-${order.id}`,
@@ -88,7 +88,7 @@ export function notifyOrderDelivered(order: OrderLike): void {
   if (!shouldNotify('orderDelivered')) return;
 
   sendLocalNotification({
-    title: '📦 Pedido Entregue',
+    title: 'Pedido Entregue',
     body: `Pedido #${order.id.slice(0, 8)} foi marcado como entregue!`,
     url: `/sales?id=${order.id}`,
     tag: `order-delivered-${order.id}`,
@@ -105,7 +105,7 @@ export function notifyLowStock(variable: VariableLike): void {
   const minimum = variable.minimumStock ?? 0;
 
   sendLocalNotification({
-    title: '⚠️ Estoque Baixo',
+    title: 'Estoque Baixo',
     body: `${variable.name}: ${current} unidades (mínimo: ${minimum})`,
     url: '/inventory',
     tag: `stock-${variable.id}`,
@@ -124,7 +124,7 @@ export function notifyQuoteApproved(quote: QuoteLike): void {
     : '';
 
   sendLocalNotification({
-    title: '✅ Orçamento Aprovado',
+    title: 'Orçamento Aprovado',
     body: `Orçamento #${quote.id.slice(0, 8)} de ${clientName}${total}`,
     url: `/quotes?id=${quote.id}`,
     tag: `quote-approved-${quote.id}`,
@@ -140,7 +140,7 @@ export function notifyNewQuote(quote: QuoteLike): void {
   const clientName = quote.clientName || 'Cliente';
 
   sendLocalNotification({
-    title: '📝 Novo Orçamento',
+    title: 'Novo Orçamento',
     body: `Orçamento #${quote.id.slice(0, 8)} para ${clientName}`,
     url: `/quotes?id=${quote.id}`,
     tag: `quote-${quote.id}`,
@@ -156,7 +156,7 @@ export function notifyNewPurchase(purchase: { id: string; supplierName?: string;
   const supplier = purchase.supplierName || 'Fornecedor';
 
   sendLocalNotification({
-    title: '🛍️ Nova Compra Registrada',
+    title: 'Nova Compra Registrada',
     body: `Compra #${purchase.id.slice(0, 8)} — ${supplier}`,
     url: `/purchases?id=${purchase.id}`,
     tag: `purchase-${purchase.id}`,
@@ -170,7 +170,7 @@ export function notifyPurchaseReceived(purchase: { id: string; supplierName?: st
   if (!shouldNotify('purchaseReceived')) return;
 
   sendLocalNotification({
-    title: '✅ Compra Recebida',
+    title: 'Compra Recebida',
     body: `Compra #${purchase.id.slice(0, 8)} de ${purchase.supplierName || 'Fornecedor'} foi recebida`,
     url: `/purchases?id=${purchase.id}`,
     tag: `purchase-received-${purchase.id}`,

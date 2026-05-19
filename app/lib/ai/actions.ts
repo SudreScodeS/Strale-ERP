@@ -183,7 +183,7 @@ const actions: ActionDefinition[] = [
 
         return {
           success: true,
-          message: `✅ Orçamento criado para ${params.customerName} — Total: ${fmtCurrency(totalPrice)} — Válido até ${fmtDate(validUntil)}`,
+          message: `Orçamento criado para ${params.customerName} — Total: ${fmtCurrency(totalPrice)} — Válido até ${fmtDate(validUntil)}`,
           data: { quoteId: quote.id, totalPrice, customerName: params.customerName },
         };
       } catch (err) {
@@ -227,7 +227,7 @@ const actions: ActionDefinition[] = [
 
         return {
           success: true,
-          message: `✅ Pedido #${order.id} atualizado para "${statusLabels[params.status as string] || params.status}"${params.delivered ? ' — marcado como entregue' : ''}`,
+          message: `Pedido #${order.id} atualizado para "${statusLabels[params.status as string] || params.status}"${params.delivered ? ' — marcado como entregue' : ''}`,
           data: { orderId: order.id, newStatus: params.status },
         };
       } catch (err) {
@@ -264,7 +264,7 @@ const actions: ActionDefinition[] = [
 
         return {
           success: true,
-          message: `✅ Produto "${product.name}" criado com preço base ${fmtCurrency(product.basePrice)}`,
+          message: `Produto "${product.name}" criado com preço base ${fmtCurrency(product.basePrice)}`,
           data: { productId: product.id, name: product.name },
         };
       } catch (err) {
@@ -382,7 +382,7 @@ const actions: ActionDefinition[] = [
         // For now, return a structured data response that the frontend can use
         return {
           success: true,
-          message: `📄 Dados do orçamento "${quote.name}" preparados para geração de PDF. Acesse Orçamentos > ${quote.name} para baixar.`,
+          message: `Dados do orçamento "${quote.name}" preparados para geração de PDF. Acesse Orçamentos > ${quote.name} para baixar.`,
           data: {
             quoteId: quote.id,
             name: quote.name,
@@ -542,7 +542,7 @@ const actions: ActionDefinition[] = [
 
         return {
           success: true,
-          message: `✅ Fornecedor "${supplier.name}" criado com sucesso`,
+          message: `Fornecedor "${supplier.name}" criado com sucesso`,
           data: { supplierId: supplier.id, name: supplier.name },
         };
       } catch (err) {

@@ -31,24 +31,24 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   // Define all command items
   const items: CommandItem[] = [
     // Pages
-    { id: 'dashboard', label: 'Dashboard', icon: '📊', shortcut: 'Alt+1', section: 'Páginas', keywords: ['home', 'inicio', 'painel'], action: () => { router.push('/'); onClose(); } },
-    { id: 'sales', label: 'Pedidos', icon: '🛒', shortcut: 'Alt+2', section: 'Páginas', keywords: ['vendas', 'orders', 'pedidos'], action: () => { router.push('/sales'); onClose(); } },
-    { id: 'quotes', label: 'Orçamentos', icon: '📋', shortcut: 'Alt+3', section: 'Páginas', keywords: ['quotes', 'orcamentos', 'proposta'], action: () => { router.push('/quotes'); onClose(); } },
-    { id: 'inventory', label: 'Estoque', icon: '📦', shortcut: 'Alt+4', section: 'Páginas', keywords: ['stock', 'products', 'inventario'], action: () => { router.push('/inventory'); onClose(); } },
-    { id: 'finance', label: 'Financeiro', icon: '💰', shortcut: 'Alt+5', section: 'Páginas', keywords: ['financeiro', 'receita', 'despesa', 'lucro'], action: () => { router.push('/finance'); onClose(); } },
-    { id: 'assistant', label: 'Assistente IA', icon: '🤖', shortcut: 'Alt+6', section: 'Páginas', keywords: ['ai', 'chat', 'assistente', 'ajuda'], action: () => { router.push('/assistant'); onClose(); } },
-    { id: 'purchases', label: 'Compras', icon: '🛍️', section: 'Páginas', keywords: ['compras', 'fornecedor', 'purchase'], action: () => { router.push('/purchases'); onClose(); } },
-    { id: 'reports', label: 'Relatórios', icon: '📈', section: 'Páginas', keywords: ['relatorio', 'report', 'analise'], action: () => { router.push('/reports'); onClose(); } },
-    { id: 'demand', label: 'Previsão de Demanda', icon: '🔮', section: 'Páginas', keywords: ['previsao', 'demanda', 'forecast'], action: () => { router.push('/demand-forecast'); onClose(); } },
-    { id: 'users', label: 'Usuários', icon: '👥', section: 'Páginas', keywords: ['usuarios', 'users', 'equipe'], action: () => { router.push('/users'); onClose(); } },
-    { id: 'notifications', label: 'Notificações', icon: '🔔', section: 'Páginas', keywords: ['notificacao', 'alerta', 'notification'], action: () => { router.push('/notifications'); onClose(); } },
-    { id: 'settings', label: 'Configurações', icon: '⚙️', section: 'Páginas', keywords: ['configuracao', 'settings', 'admin'], action: () => { router.push('/admin'); onClose(); } },
+    { id: 'dashboard', label: 'Dashboard', icon: 'chart', shortcut: 'Alt+1', section: 'Páginas', keywords: ['home', 'inicio', 'painel'], action: () => { router.push('/'); onClose(); } },
+    { id: 'sales', label: 'Pedidos', icon: 'cart', shortcut: 'Alt+2', section: 'Páginas', keywords: ['vendas', 'orders', 'pedidos'], action: () => { router.push('/sales'); onClose(); } },
+    { id: 'quotes', label: 'Orçamentos', icon: 'list', shortcut: 'Alt+3', section: 'Páginas', keywords: ['quotes', 'orcamentos', 'proposta'], action: () => { router.push('/quotes'); onClose(); } },
+    { id: 'inventory', label: 'Estoque', icon: 'pkg', shortcut: 'Alt+4', section: 'Páginas', keywords: ['stock', 'products', 'inventario'], action: () => { router.push('/inventory'); onClose(); } },
+    { id: 'finance', label: 'Financeiro', icon: 'money', shortcut: 'Alt+5', section: 'Páginas', keywords: ['financeiro', 'receita', 'despesa', 'lucro'], action: () => { router.push('/finance'); onClose(); } },
+    { id: 'assistant', label: 'Assistente IA', icon: 'bot', shortcut: 'Alt+6', section: 'Páginas', keywords: ['ai', 'chat', 'assistente', 'ajuda'], action: () => { router.push('/assistant'); onClose(); } },
+    { id: 'purchases', label: 'Compras', icon: 'bag', section: 'Páginas', keywords: ['compras', 'fornecedor', 'purchase'], action: () => { router.push('/purchases'); onClose(); } },
+    { id: 'reports', label: 'Relatórios', icon: 'trend', section: 'Páginas', keywords: ['relatorio', 'report', 'analise'], action: () => { router.push('/reports'); onClose(); } },
+    { id: 'demand', label: 'Previsão de Demanda', icon: 'forecast', section: 'Páginas', keywords: ['previsao', 'demanda', 'forecast'], action: () => { router.push('/demand-forecast'); onClose(); } },
+    { id: 'users', label: 'Usuários', icon: 'users', section: 'Páginas', keywords: ['usuarios', 'users', 'equipe'], action: () => { router.push('/users'); onClose(); } },
+    { id: 'notifications', label: 'Notificações', icon: 'bell', section: 'Páginas', keywords: ['notificacao', 'alerta', 'notification'], action: () => { router.push('/notifications'); onClose(); } },
+    { id: 'settings', label: 'Configurações', icon: 'settings', section: 'Páginas', keywords: ['configuracao', 'settings', 'admin'], action: () => { router.push('/admin'); onClose(); } },
 
     // Quick actions
-    { id: 'new-order', label: 'Novo Pedido', icon: '➕', section: 'Ações Rápidas', keywords: ['criar', 'novo', 'pedido', 'venda'], action: () => { router.push('/sales'); onClose(); } },
-    { id: 'new-quote', label: 'Novo Orçamento', icon: '📝', section: 'Ações Rápidas', keywords: ['criar', 'novo', 'orcamento', 'proposta'], action: () => { router.push('/quotes'); onClose(); } },
-    { id: 'ask-ai', label: 'Perguntar ao Assistente', icon: '💬', section: 'Ações Rápidas', keywords: ['perguntar', 'ajuda', 'duvida', 'ai'], action: () => { router.push('/assistant'); onClose(); } },
-    { id: 'low-stock', label: 'Ver Estoque Baixo', icon: '⚠️', section: 'Ações Rápidas', keywords: ['estoque', 'baixo', 'critico', 'alerta'], action: () => { router.push('/inventory'); onClose(); } },
+    { id: 'new-order', label: 'Novo Pedido', icon: 'plus', section: 'Ações Rápidas', keywords: ['criar', 'novo', 'pedido', 'venda'], action: () => { router.push('/sales'); onClose(); } },
+    { id: 'new-quote', label: 'Novo Orçamento', icon: 'doc', section: 'Ações Rápidas', keywords: ['criar', 'novo', 'orcamento', 'proposta'], action: () => { router.push('/quotes'); onClose(); } },
+    { id: 'ask-ai', label: 'Perguntar ao Assistente', icon: 'chat', section: 'Ações Rápidas', keywords: ['perguntar', 'ajuda', 'duvida', 'ai'], action: () => { router.push('/assistant'); onClose(); } },
+    { id: 'low-stock', label: 'Ver Estoque Baixo', icon: 'alert', section: 'Ações Rápidas', keywords: ['estoque', 'baixo', 'critico', 'alerta'], action: () => { router.push('/inventory'); onClose(); } },
   ];
 
   // Fuzzy search
