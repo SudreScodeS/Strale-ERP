@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Alumni_Sans } from 'next/font/google';
 import { Sidebar } from './components/ui';
 import { LayoutProvider } from './components/layout-context';
+import { SkipLink } from './components/SkipLink';
 import './globals.css';
 
 const geistSans = Geist({
@@ -21,8 +22,40 @@ const alumniSans = Alumni_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Elitium',
-  description: 'Premium ERP — Gestão empresarial de nova geração.',
+  title: {
+    template: '%s | Elitium ERP',
+    default: 'Elitium ERP — Sistema de Gestão Empresarial',
+  },
+  description:
+    'Sistema ERP completo para gestão de vendas, estoque, financeiro e orçamentos.',
+  openGraph: {
+    title: 'Elitium ERP',
+    description: 'Sistema ERP completo para gestão empresarial',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://elitium.com.br',
+    siteName: 'Elitium ERP',
+    locale: 'pt_BR',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Elitium ERP',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Elitium ERP',
+    description: 'Sistema ERP completo para gestão empresarial',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 'https://elitium.com.br',
+  ),
   icons: {
     icon: '/Logo.svg',
     shortcut: '/Logo.svg',
@@ -30,16 +63,36 @@ export const metadata: Metadata = {
   },
 };
 
+// Inline script to apply theme before React hydrates — avoids FOUC
+const themeInitScript = `
+(function(){
+  try {
+    var t = localStorage.getItem('erp-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch(e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} ${alumniSans.variable} h-full antialiased`}>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} ${alumniSans.variable} h-full antialiased`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full">
+        <SkipLink />
         <LayoutProvider>
-          <Sidebar>{children}</Sidebar>
+          <Sidebar>
+            <div id="main-content">{children}</div>
+          </Sidebar>
         </LayoutProvider>
       </body>
     </html>

@@ -7,39 +7,15 @@ import { PageHeader, Select, Checkbox } from '../components/ui';
 import { SkeletonOrderList } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
-import { Quote } from '../../types';
+import { Quote, VariableOption, GroupOption, ProductOption } from '../../types';
 
 const QUOTES_FORM_KEY = 'elitium-quotes-form';
-
-interface VariableOption {
-  id: string;
-  name: string;
-  additionalPrice: number;
-  stock: number;
-  groupId: string;
-  unitOfMeasure?: string;
-}
-
-interface GroupOption {
-  id: string;
-  name: string;
-  variables: VariableOption[];
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  basePrice: number;
-  profitMargin?: number;
-  description?: string;
-  groups: GroupOption[];
-}
 
 interface QuoteView extends Quote {
   createdByName?: string;
 }
 
-interface CartItem {
+interface QuoteCartItem {
   productId: string;
   productName: string;
   quantity: number;
@@ -289,8 +265,8 @@ export default function QuotesPage() {
   } | null>(null);
   const [logoAnalyzing, setLogoAnalyzing] = useState(false);
   const [logoAnalysisError, setLogoAnalysisError] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>(
-    (savedForm?.cartItems || []).map((item: CartItem) => ({
+  const [cartItems, setCartItems] = useState<QuoteCartItem[]>(
+    (savedForm?.cartItems || []).map((item: QuoteCartItem) => ({
       ...item,
       profitMargin: item.profitMargin ?? 20,
       minMargin: item.minMargin ?? item.profitMargin ?? 20,

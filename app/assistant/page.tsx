@@ -7,23 +7,7 @@ import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import { ErrorBoundary } from '../components/error-boundary';
 
-// ── Types ──────────────────────────────────────────────────────
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  source?: string;
-  toolsUsed?: string[];
-  isStreaming?: boolean;
-}
-
-interface OllamaStatus {
-  available: boolean;
-  model?: string;
-  models?: string[];
-  error?: string;
-}
+import type { ChatMessage as AssistantChatMessage, OllamaStatus as AssistantOllamaStatus } from '../../types';
 
 // ── Suggestions ────────────────────────────────────────────────
 
@@ -52,7 +36,7 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
 
 // ── Chat Bubble ────────────────────────────────────────────────
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+function ChatBubble({ message }: { message: AssistantChatMessage }) {
   const isUser = message.role === 'user';
 
   const renderLine = (line: string, idx: number) => {
@@ -161,7 +145,7 @@ function SourceBadge({ source, toolsUsed }: { source?: string; toolsUsed?: strin
 // ── Main Page ──────────────────────────────────────────────────
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<AssistantChatMessage[]>([
     {
       role: 'assistant',
       content: `Olá! Sou o assistente do **${globalConfig.systemName}**. Posso consultar vendas, estoque, financeiro, entregas e calcular preços. Como posso ajudar?`,
@@ -170,7 +154,7 @@ export default function AssistantPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
+  const [ollamaStatus, setOllamaStatus] = useState<AssistantOllamaStatus | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -182,8 +166,8 @@ export default function AssistantPage() {
   useEffect(() => {
     fetch('/api/assistant', { headers: getAuthHeaders() })
       .then((r) => r.json())
-      .then((data) => setOllamaStatus(data))
-      .catch(() => setOllamaStatus({ available: false }));
+      .then((data: AssistantOllamaStatus) => setOllamaStatus(data))
+      .catch(() => setOllamaStatus({ available: false } as AssistantOllamaStatus));
   }, []);
 
   useEffect(() => {

@@ -8,7 +8,8 @@ import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
-interface FinancialRecord {
+/** Local view type — API returns dates as strings */
+interface FinancialRecordView {
   id: string;
   type: 'sale' | 'purchase' | 'expense';
   amount: number;
@@ -29,7 +30,7 @@ interface ProductRevenue {
 }
 
 export default function FinancePage() {
-  const [records, setRecords] = useState<FinancialRecord[]>([]);
+  const [records, setRecords] = useState<FinancialRecordView[]>([]);
   const [totalSales, setTotalSales] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [profit, setProfit] = useState(0);

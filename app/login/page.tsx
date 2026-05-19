@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { globalConfig } from '../../config/global';
 import { parseJwt } from '../lib/authClient';
 import { ValidatedInput } from '../components/validated-field';
+import { PageTitle } from '../components/PageTitle';
 
 // ==========================================
 // VALIDATION SCHEMA
@@ -86,6 +87,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
+      <PageTitle title="Login" />
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-4">
           <Image
@@ -101,7 +103,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate aria-label="Formulário de login">
           <ValidatedInput
             label="Usuário"
             {...register('username')}
@@ -134,7 +136,7 @@ export default function LoginPage() {
             ) : 'Entrar'}
           </button>
           {message && (
-            <p className="rounded-lg px-3 py-2 text-center text-xs" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}>
+            <p role="alert" className="rounded-lg px-3 py-2 text-center text-xs" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}>
               {message}
             </p>
           )}

@@ -1,11 +1,8 @@
 "use client";
 
-export interface TokenPayload {
-  id: string;
-  username: string;
-  role: 'admin' | 'seller';
-  exp?: number;
-}
+import type { TokenPayload } from '../../types/auth.types';
+
+export type { TokenPayload };
 
 export function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;

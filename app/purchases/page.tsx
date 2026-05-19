@@ -12,7 +12,7 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
-import type { UnitOfMeasure } from '../../types';
+import type { UnitOfMeasure, Supplier, PurchaseItem, PurchaseOrder, PurchaseCartItem, VariableOption, GroupOption, ProductOption } from '../../types';
 
 // ==========================================
 // VALIDATION SCHEMAS
@@ -24,67 +24,6 @@ const supplierSchema = z.object({
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
-
-// ==========================================
-// TYPES
-// ==========================================
-
-interface Supplier {
-  id: string;
-  name: string;
-  contact?: string;
-}
-
-interface Variable {
-  id: string;
-  name: string;
-  stock: number;
-  additionalPrice: number;
-  unitOfMeasure?: UnitOfMeasure;
-  groupId: string;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  productId: string;
-  variables: Variable[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  basePrice: number;
-  groups: Group[];
-}
-
-interface PurchaseItem {
-  variableId: string;
-  quantity: number;
-  unitCost: number;
-}
-
-interface PurchaseOrder {
-  id: string;
-  supplierId: string;
-  items: PurchaseItem[];
-  status: 'pending' | 'ordered' | 'received';
-  createdAt: string;
-}
-
-/** Item no carrinho antes de enviar */
-interface CartItem {
-  id: string; // local id for removal
-  productId: string;
-  productName: string;
-  groupId: string;
-  groupName: string;
-  variableId: string;
-  variableName: string;
-  unitOfMeasure: UnitOfMeasure;
-  quantity: number;
-  unitCost: number;
-}
 
 // ==========================================
 // UNIT LABELS
@@ -117,8 +56,8 @@ function unitPriceLabel(unit: UnitOfMeasure): string {
 export default function PurchasesPage() {
   // ── Data lists ──
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [lowStockVariables, setLowStockVariables] = useState<Variable[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [lowStockVariables, setLowStockVariables] = useState<VariableOption[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
 
   // ── Supplier form (Zod + React Hook Form) ──
@@ -142,7 +81,7 @@ export default function PurchasesPage() {
   const [purchaseDate, setPurchaseDate] = useState('');
 
   // ── Cart ──
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<PurchaseCartItem[]>([]);
 
   // ── Edit mode ──
   const [editingPurchase, setEditingPurchase] = useState<PurchaseOrder | null>(null);
@@ -263,7 +202,7 @@ export default function PurchasesPage() {
     const rawGroups = data.groups || [];
     const rawVariables = data.variables || [];
 
-    const productTree: Product[] = rawProducts.map((product: { id: string; name: string; basePrice: number }) => ({
+    const productTree: ProductOption[] = rawProducts.map((product: { id: string; name: string; basePrice: number }) => ({
       ...product,
       groups: rawGroups
         .filter((g: { productId: string }) => g.productId === product.id)
@@ -326,7 +265,7 @@ export default function PurchasesPage() {
       return;
     }
 
-    const newItem: CartItem = {
+    const newItem: PurchaseCartItem = {
       id: `cart-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       productId: selectedProduct.id,
       productName: selectedProduct.name,

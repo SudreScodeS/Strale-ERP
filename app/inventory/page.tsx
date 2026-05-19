@@ -13,7 +13,7 @@ import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
-import type { UnitOfMeasure } from '../../types';
+import type { UnitOfMeasure, VariableOption, GroupOption, ProductOption } from '../../types';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
@@ -44,34 +44,6 @@ const variableSchema = z.object({
 type ProductFormData = z.infer<typeof productSchema>;
 type GroupFormData = z.infer<typeof groupSchema>;
 type VariableFormData = z.infer<typeof variableSchema>;
-
-interface VariableOption {
-  id: string;
-  name: string;
-  additionalPrice: number;
-  stock: number;
-  groupId: string;
-  unitOfMeasure?: UnitOfMeasure;
-}
-
-interface GroupOption {
-  id: string;
-  name: string;
-  productId: string;
-  watchStockAlert?: number;
-  criticalStockAlert?: number;
-  variables: VariableOption[];
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  basePrice: number;
-  profitMargin?: number;
-  description?: string;
-  imageUrl?: string;
-  groups: GroupOption[];
-}
 
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<ProductOption[]>([]);
