@@ -148,6 +148,7 @@ export default function AssistantPage() {
       let source = '';
       let toolsUsed: string[] = [];
       const actionResults: Array<{ success: boolean; message: string; tool: string }> = [];
+      const richDataItems: Array<{ type: string; data: Record<string, unknown> }> = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -181,7 +182,7 @@ export default function AssistantPage() {
               case 'tool_start':
                 setActiveTools((prev) => [
                   ...prev,
-                  { tool: event.tool, status: 'running' },
+                  { tool: event.tool, status: 'running', params: event.params },
                 ]);
                 break;
 
@@ -195,6 +196,10 @@ export default function AssistantPage() {
                 );
                 if (event.result) {
                   actionResults.push({ ...event.result, tool: event.tool });
+                  // Collect structured data for rich rendering
+                  if (event.result.data) {
+                    richDataItems.push({ type: event.tool, data: event.result.data as Record<string, unknown> });
+                  }
                 }
                 break;
 
@@ -225,6 +230,7 @@ export default function AssistantPage() {
             source: source || last.source,
             toolsUsed: toolsUsed.length > 0 ? toolsUsed : last.toolsUsed,
             actionResults: actionResults.length > 0 ? actionResults : undefined,
+            richData: richDataItems.length > 0 ? richDataItems : undefined,
           };
         }
         return next;
