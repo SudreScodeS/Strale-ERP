@@ -128,7 +128,11 @@ function ToastContainerInner({ toasts, onRemove }: { toasts: Toast[]; onRemove: 
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 z-[300] flex -translate-x-1/2 flex-col gap-2">
+    <div
+      className="fixed top-4 left-1/2 z-[300] flex -translate-x-1/2 flex-col gap-2"
+      data-theme={typeof document !== 'undefined' ? document.documentElement.getAttribute('data-theme') || 'dark' : 'dark'}
+      style={{ colorScheme: 'dark' }}
+    >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onRemove={onRemove} />
       ))}
