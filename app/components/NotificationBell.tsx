@@ -252,26 +252,28 @@ export function NotificationBell() {
         <div
           ref={portalRef}
           className="fixed right-4 top-14 z-[100] w-80 overflow-hidden rounded-xl shadow-xl"
+          data-theme={document.documentElement.getAttribute('data-theme') || 'dark'}
           style={{
-            background: 'var(--card-bg)',
-            border: '1px solid var(--card-border)',
+            background: 'var(--card-bg, #131316)',
+            border: '1px solid var(--card-border, #232329)',
             boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+            colorScheme: 'dark',
           }}
         >
           {/* Header */}
           <div
             className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid var(--border)' }}
+            style={{ borderBottom: '1px solid var(--border, #232329)' }}
           >
-            <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary, #ecedf0)' }}>
               Notificações
             </h3>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
               className="flex h-6 w-6 items-center justify-center rounded-md transition-colors"
-              style={{ color: 'var(--text-muted)' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-muted)'; }}
+              style={{ color: 'var(--text-muted, #71717a)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-muted, #1f1f24)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               aria-label="Fechar"
             >
@@ -287,11 +289,11 @@ export function NotificationBell() {
               <div className="flex flex-col items-center gap-3 py-10">
                 <span
                   className="flex h-10 w-10 items-center justify-center rounded-full"
-                  style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}
+                  style={{ background: 'var(--surface-muted, #1f1f24)', color: 'var(--text-faint, #52525b)' }}
                 >
                   <IconBell size={18} />
                 </span>
-                <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted, #71717a)' }}>
                   Sem novas notificações
                 </p>
               </div>
@@ -303,11 +305,11 @@ export function NotificationBell() {
                   onClick={() => handleNotificationClick(notification.url)}
                   className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors"
                   style={{
-                    borderBottom: i < notifications.length - 1 ? '1px solid var(--border)' : 'none',
+                    borderBottom: i < notifications.length - 1 ? '1px solid var(--border, #232329)' : 'none',
                     background: 'transparent',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--surface-muted)';
+                    e.currentTarget.style.background = 'var(--surface-muted, #1f1f24)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
@@ -315,13 +317,13 @@ export function NotificationBell() {
                 >
                   <span
                     className="mt-1.5 flex h-2 w-2 flex-shrink-0 rounded-full"
-                    style={{ background: 'var(--brand)' }}
+                    style={{ background: 'var(--brand, #a78bfa)' }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary, #ecedf0)' }}>
                       {notification.body}
                     </p>
-                    <p className="mt-0.5 text-xs" style={{ color: 'var(--text-faint)' }}>
+                    <p className="mt-0.5 text-xs" style={{ color: 'var(--text-faint, #52525b)' }}>
                       {formatTime(notification.timestamp)}
                     </p>
                   </div>
@@ -334,13 +336,13 @@ export function NotificationBell() {
           {notifications.length > 0 && (
             <div
               className="px-4 py-2.5 text-center"
-              style={{ borderTop: '1px solid var(--border)', background: 'var(--surface-muted)' }}
+              style={{ borderTop: '1px solid var(--border, #232329)', background: 'var(--surface-muted, #1f1f24)' }}
             >
               <button
                 type="button"
                 onClick={handleMarkAllRead}
                 className="text-xs font-medium transition-colors hover:underline"
-                style={{ color: 'var(--brand)' }}
+                style={{ color: 'var(--brand, #a78bfa)' }}
               >
                 Marcar todas como lidas
               </button>
