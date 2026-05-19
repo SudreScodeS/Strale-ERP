@@ -8,6 +8,7 @@ import { SkeletonOrderList, SkeletonForm } from '../components/skeleton';
 import { ProgressBar } from '../components/progress-bar';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import { Order, Quote } from '../../types';

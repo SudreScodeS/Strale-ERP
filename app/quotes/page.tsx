@@ -8,6 +8,7 @@ import { SkeletonOrderList } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { Quote, VariableOption, GroupOption, ProductOption } from '../../types';
 
 const QUOTES_FORM_KEY = 'elitium-quotes-form';
