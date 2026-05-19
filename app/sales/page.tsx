@@ -1408,6 +1408,9 @@ export default function SalesPage() {
           <div className="rounded-xl border border-slate-200 p-4">
             <Checkbox checked={useDimensions} onChange={e => setUseDimensions(e.target.checked)}
               label="Calcular por dimensão (largura x altura)" className="font-medium" />
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-faint)' }}>
+              Para produtos planos (sacolas, banners, lonas). Para produtos cilíndricos (garrafas, canecas), use o grupo de variáveis com tamanho.
+            </p>
             {useDimensions && (
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="space-y-1 text-sm text-slate-600">
