@@ -1,8 +1,14 @@
+/**
+ * @jest-environment node
+ */
+
 // @ts-nocheck
 
 /**
  * Tests for app/lib/auth.ts
  * Covers: hashPassword, comparePassword, generateJWT, verifyJWT, requireAuth, requireRole
+ *
+ * Uses node environment because requireAuth/requireRole need Request/Headers globals.
  */
 
 // Mock dependencies
