@@ -67,8 +67,13 @@ export default function LoginPage() {
       });
       const result = await response.json();
       if (response.ok) {
-        window.localStorage.setItem('erp-token', result.token);
-        const user = parseJwt(result.token);
+        const token = result.data?.token;
+        if (!token) {
+          setMessage('Resposta inválida do servidor.');
+          return;
+        }
+        window.localStorage.setItem('erp-token', token);
+        const user = parseJwt(token);
         if (!user) {
           window.localStorage.removeItem('erp-token');
           setMessage('Sessão inválida. Tente novamente.');
@@ -76,7 +81,7 @@ export default function LoginPage() {
         }
         window.location.href = user.role === 'admin' ? '/' : '/sales';
       } else {
-        setMessage(result.error || 'Falha ao autenticar.');
+        setMessage(result.message || 'Falha ao autenticar.');
       }
     } catch {
       setMessage('Erro de conexão. Tente novamente.');
