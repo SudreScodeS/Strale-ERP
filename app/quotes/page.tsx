@@ -777,6 +777,7 @@ export default function QuotesPage() {
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
       <div>
+        <PageTitle title="Orçamentos" />
         <PageHeader title="Orçamentos" description="Crie orçamentos profissionais para seus clientes. Calcule preços automaticamente com tabelas por volume, dimensões e impressão detalhada." />
 
         <div
@@ -1306,6 +1307,9 @@ export default function QuotesPage() {
           >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Detalhes do orçamento ${selectedQuote.name}`}
               className="modal-content rounded-xl bg-white p-8 shadow-2xl"
               style={{ maxHeight: '90vh', width: '100%', maxWidth: '42rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
               onClick={e => e.stopPropagation()}
@@ -1445,6 +1449,9 @@ export default function QuotesPage() {
           >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Converter orçamento ${convertingQuote.name} em pedido`}
               className="modal-content rounded-xl bg-white p-8 shadow-2xl"
               style={{ maxHeight: '90vh', width: '100%', maxWidth: '28rem', overflowY: 'auto', overscrollBehavior: 'contain' }}
               onClick={e => e.stopPropagation()}
@@ -1532,6 +1539,7 @@ export default function QuotesPage() {
         {/* Toast de status — barra fixa embaixo */}
         {statusMessage && createPortal(
           <div
+            aria-live="polite"
             className="fixed bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-6 py-3"
             style={{
               background: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-bg, #fef2f2)' : 'var(--success-bg, #f0fdf4)',

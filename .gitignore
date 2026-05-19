@@ -3,3 +3,9 @@ node_modules
 .env 
 tsconfig.tsbuildinfo
 .env.local
+
+# Uploaded files (local storage — use S3/R2 in production)
+public/uploads/
+
+# Sentry
+.sentryclirc

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     requireRole(request, ['admin', 'seller']);
     const inventory = getInventoryState();
-    return ok(inventory);
+    return ok({ inventory });
   } catch (error) {
     return fromError(error);
   }

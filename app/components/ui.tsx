@@ -420,15 +420,18 @@ export function Sidebar({ children }: SidebarProps) {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(false)}
-          className="rounded-lg p-1.5 transition-colors hover:bg-[var(--sidebar-hover)] lg:block hidden"
-          style={{ color: 'var(--text-muted)' }}
-          aria-label="Fechar sidebar"
-        >
-          {icons.close}
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="rounded-lg p-1.5 transition-colors hover:bg-[var(--sidebar-hover)] lg:block hidden"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label="Fechar sidebar"
+          >
+            {icons.close}
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}

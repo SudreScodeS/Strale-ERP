@@ -10,6 +10,7 @@ import { PageHeader, Select } from '../components/ui';
 import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../components/validated-field';
 import { SkeletonProductList, SkeletonMetrics } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
+import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
@@ -371,6 +372,7 @@ export default function InventoryPage() {
   return (
     <ProtectedPage allowedRoles={['admin']}>
       <div>
+        <PageTitle title="Estoque" />
         <PageHeader title="Estoque" description="Gestão de estoque com grupos e variáveis configuráveis dinamicamente." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 
@@ -455,6 +457,7 @@ export default function InventoryPage() {
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Buscar produto, grupo ou variável..."
+                  aria-label="Buscar produto, grupo ou variável"
                   className="w-full rounded-lg px-4 py-2.5 text-sm"
                   style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
                 />
