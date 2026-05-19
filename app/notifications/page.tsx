@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { PageHeader, setGlobalDirty, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import {
   ACTION_ICON_MAP, NOTIFICATION_ICON_MAP,
   IconSearch, IconTrash, IconRefresh, IconFilter, IconSort,
@@ -206,7 +207,7 @@ export default function NotificationsPage() {
   async function loadLogs() {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/activity-logs', { headers: getAuthHeaders() });
+      const res = await apiFetch('/api/v1/activity-logs');
       const data = await res.json();
       if (res.ok && data.logs) setLogs(data.logs);
     } catch { /* ignore */ }
@@ -216,7 +217,7 @@ export default function NotificationsPage() {
   async function loadSettings() {
     setSettingsLoading(true);
     try {
-      const res = await fetch('/api/v1/config', { headers: getAuthHeaders() });
+      const res = await apiFetch('/api/v1/config');
       const data = await res.json();
       if (res.ok && data.config?.notifications) {
         setSettings(data.config.notifications);
@@ -321,10 +322,7 @@ export default function NotificationsPage() {
   async function handleSaveSettings() {
     setSettingsMessage('');
     try {
-      const res = await fetch('/api/v1/config', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ notifications: settings }),
+      const res = await apiFetch('/api/v1/config', { method: 'PATCH', body: JSON.stringify({ notifications: settings  }),
       });
       const data = await res.json();
       if (res.ok) {

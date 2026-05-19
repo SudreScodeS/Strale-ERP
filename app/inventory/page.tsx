@@ -12,6 +12,7 @@ import { SkeletonProductList, SkeletonMetrics } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { PageTitle } from '../components/PageTitle';
 import { getAuthHeaders } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure, VariableOption, GroupOption, ProductOption } from '../../types';
@@ -101,7 +102,7 @@ export default function InventoryPage() {
   }
 
   async function loadInventory() {
-    const response = await fetch('/api/v1/inventory', {
+    const response = await apiFetch('/api/v1/inventory', {
       headers: getAuthHeaders(),
     });
     const data = await safeJson(response);
@@ -126,10 +127,7 @@ export default function InventoryPage() {
 
   async function handleCreateProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/v1/inventory/product', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ name: productName, basePrice: productPrice, description: productDescription, imageUrl: productImage, profitMargin: productMargin }),
+    const response = await apiFetch('/api/v1/inventory/product', { method: 'POST', body: JSON.stringify({ name: productName, basePrice: productPrice, description: productDescription, imageUrl: productImage, profitMargin: productMargin  }),
     });
     const result = await safeJson(response);
     if (response.ok) {
@@ -151,15 +149,12 @@ export default function InventoryPage() {
       setMessage('O limite crítico deve ser menor ou igual ao limite de atenção.');
       return;
     }
-    const response = await fetch('/api/v1/inventory/group', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
+    const response = await apiFetch('/api/v1/inventory/group', { method: 'POST', body: JSON.stringify({
         productId: groupProductId,
         name: groupName,
         watchStockAlert: groupWatchAlert,
         criticalStockAlert: groupCriticalAlert,
-      }),
+       }),
     });
     const result = await safeJson(response);
     if (response.ok) {
@@ -175,10 +170,7 @@ export default function InventoryPage() {
 
   async function handleCreateVariable(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/v1/inventory/variable', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: variableUnit }),
+    const response = await apiFetch('/api/v1/inventory/variable', { method: 'POST', body: JSON.stringify({ groupId: variableGroupId, name: variableName, additionalPrice: variablePrice, stock: variableStock, unitOfMeasure: variableUnit  }),
     });
     const result = await safeJson(response);
     if (response.ok) {
@@ -205,17 +197,14 @@ export default function InventoryPage() {
   async function handleSubmitProductUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingProduct) return;
-    const response = await fetch('/api/v1/inventory/product', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
+    const response = await apiFetch('/api/v1/inventory/product', { method: 'PATCH', body: JSON.stringify({
         id: editingProduct.id,
         name: editProductName,
         basePrice: editProductPrice,
         profitMargin: editProductMargin,
         description: editProductDescription,
         imageUrl: editProductImage,
-      }),
+       }),
     });
     const result = await safeJson(response);
     setMessage(result.message || result.message || 'Produto atualizado.');
@@ -227,7 +216,7 @@ export default function InventoryPage() {
 
   async function handleDeleteProduct(product: ProductOption) {
     if (!confirm(`Excluir produto "${product.name}" com grupos e variáveis?`)) return;
-    const response = await fetch(`/api/inventory/product?id=${encodeURIComponent(product.id)}`, {
+    const response = await apiFetch(`/api/inventory/product?id=${encodeURIComponent(product.id)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -250,15 +239,12 @@ export default function InventoryPage() {
       setMessage('O limite crítico deve ser menor ou igual ao limite de atenção.');
       return;
     }
-    const response = await fetch('/api/v1/inventory/group', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
+    const response = await apiFetch('/api/v1/inventory/group', { method: 'PATCH', body: JSON.stringify({
         id: editingGroup.id,
         name: editGroupName,
         watchStockAlert: editGroupWatchAlert,
         criticalStockAlert: editGroupCriticalAlert,
-      }),
+       }),
     });
     const result = await safeJson(response);
     setMessage(result.message || result.message || 'Grupo atualizado.');
@@ -270,7 +256,7 @@ export default function InventoryPage() {
 
   async function handleDeleteGroup(group: GroupOption) {
     if (!confirm(`Excluir grupo "${group.name}" e todas as variáveis?`)) return;
-    const response = await fetch(`/api/inventory/group?id=${encodeURIComponent(group.id)}`, {
+    const response = await apiFetch(`/api/inventory/group?id=${encodeURIComponent(group.id)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -290,16 +276,13 @@ export default function InventoryPage() {
   async function handleSubmitVariableUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingVariable) return;
-    const response = await fetch('/api/v1/inventory/variable', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
+    const response = await apiFetch('/api/v1/inventory/variable', { method: 'PATCH', body: JSON.stringify({
         id: editingVariable.id,
         name: editVariableName,
         additionalPrice: editVariablePrice,
         stock: editVariableStock,
         unitOfMeasure: editVariableUnit,
-      }),
+       }),
     });
     const result = await safeJson(response);
     setMessage(result.message || result.message || 'Variável atualizada.');
@@ -311,7 +294,7 @@ export default function InventoryPage() {
 
   async function handleDeleteVariable(variable: VariableOption) {
     if (!confirm(`Excluir variável "${variable.name}"?`)) return;
-    const response = await fetch(`/api/inventory/variable?id=${encodeURIComponent(variable.id)}`, {
+    const response = await apiFetch(`/api/inventory/variable?id=${encodeURIComponent(variable.id)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });

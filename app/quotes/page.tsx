@@ -318,7 +318,7 @@ export default function QuotesPage() {
   // Also reload when page becomes visible (user may have changed config in admin)
   useEffect(() => {
     function loadConfig() {
-      fetch('/api/v1/config', { headers: getAuthHeaders() })
+      apiFetch('/api/v1/config')
         .then((r) => r.json())
         .then((data) => {
           if (data.config) {
@@ -358,7 +358,7 @@ export default function QuotesPage() {
         const formData = new FormData();
         formData.append('logo', logoFile);
 
-        const response = await fetch('/api/v1/logo-analysis', {
+        const response = await apiFetch('/api/v1/logo-analysis', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: formData,
@@ -436,7 +436,7 @@ export default function QuotesPage() {
 
   async function loadInventory() {
     try {
-      const response = await fetch('/api/v1/inventory', { cache: 'no-store', headers: getAuthHeaders() });
+      const response = await apiFetch('/api/v1/inventory');
       const data = await safeJson(response);
       if (response.ok) {
         setInventory(data.inventory || []);
@@ -450,7 +450,7 @@ export default function QuotesPage() {
   async function loadQuotes() {
     try {
       const params = filterStatus ? `?status=${filterStatus}` : '';
-      const response = await fetch(`/api/quotes${params}`, { cache: 'no-store', headers: getAuthHeaders() });
+      const response = await apiFetch(`/api/quotes${params}`);
       const data = await safeJson(response);
       if (response.ok) setQuotes(data.quotes || []);
     } catch { setStatusMessage('Erro ao carregar orçamentos.'); }
@@ -558,7 +558,7 @@ export default function QuotesPage() {
     if (cartItems.length === 0) { setStatusMessage('Adicione pelo menos um item.'); return; }
 
     try {
-      const response = await fetch('/api/v1/quotes', {
+      const response = await apiFetch('/api/v1/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
@@ -602,11 +602,8 @@ export default function QuotesPage() {
       if (deliveryDate) body.deliveryDate = deliveryDate;
       if (name) body.name = name;
 
-      const response = await fetch('/api/v1/quotes', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify(body),
-      });
+      const response = await apiFetch('/api/v1/quotes', { method: 'PATCH', body: JSON.stringify(body),
+       });
 
       const data = await safeJson(response);
       if (response.ok) {
@@ -631,17 +628,14 @@ export default function QuotesPage() {
     let restored = 0;
     for (const q of deletedItems) {
       try {
-        const resp = await fetch('/api/v1/quotes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const resp = await apiFetch('/api/v1/quotes', { method: 'POST', body: JSON.stringify({
             customerName: q.customerName,
             name: q.name,
             items: q.items,
             logoColors: q.logoCost > 0 ? Math.round(q.logoCost / (globalConfig.logoPricePerColor || 10)) : 0,
             notes: q.notes,
             deliveryDate: q.deliveryDate,
-          }),
+           }),
         });
         if (resp.ok) restored++;
       } catch { /* skip */ }
@@ -660,7 +654,7 @@ export default function QuotesPage() {
     if (!confirm('Tem certeza que deseja remover este orçamento?')) return;
     const quoteToDelete = quotes.find(q => q.id === quoteId);
     try {
-      const response = await fetch(`/api/quotes?quoteId=${quoteId}`, {
+      const response = await apiFetch(`/api/quotes?quoteId=${quoteId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -686,7 +680,7 @@ export default function QuotesPage() {
     for (const id of selectedQuoteIds) {
       const quoteToDelete = quotes.find(q => q.id === id);
       try {
-        const response = await fetch(`/api/quotes?quoteId=${id}`, {
+        const response = await apiFetch(`/api/quotes?quoteId=${id}`, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });

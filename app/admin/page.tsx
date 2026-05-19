@@ -7,6 +7,7 @@ import { PageHeader } from '../components/ui';
 import { setGlobalDirty } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { PrintType, PrintPricingRule, PriceTier } from '../../types';
@@ -96,7 +97,7 @@ export default function AdminPage() {
 
   async function loadConfig() {
     try {
-      const response = await fetch('/api/v1/config', {
+      const response = await apiFetch('/api/v1/config', {
         headers: getAuthHeaders(),
       });
       const data = await response.json();
@@ -125,7 +126,7 @@ export default function AdminPage() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/v1/config', {
+      const response = await apiFetch('/api/v1/config', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

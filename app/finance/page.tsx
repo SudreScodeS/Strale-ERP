@@ -5,6 +5,7 @@ import { PageHeader, MetricCard } from '../components/ui';
 import { SkeletonMetrics, SkeletonTable } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
@@ -50,7 +51,7 @@ export default function FinancePage() {
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function loadFinance() {
-    const response = await fetch('/api/v1/finance', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await apiFetch('/api/v1/finance', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (!response.ok) {
       setError(data.error || 'Falha ao carregar financeiro.');

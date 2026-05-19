@@ -4,6 +4,7 @@ import { Sidebar } from './components/ui';
 import { LayoutProvider } from './components/layout-context';
 import { ServiceWorkerRegistration } from './components/ServiceWorkerRegistration';
 import { NavigationProvider } from './components/NavigationProvider';
+import { ToastProvider } from './components/ui/Toast';
 import './globals.css';
 
 const geistSans = Geist({
@@ -91,13 +92,15 @@ export default function RootLayout({
       </head>
       <body className="min-h-full">
         <ServiceWorkerRegistration />
-        <NavigationProvider>
-          <LayoutProvider>
-            <Sidebar>
-              <div id="main-content">{children}</div>
-            </Sidebar>
-          </LayoutProvider>
-        </NavigationProvider>
+        <ToastProvider>
+          <NavigationProvider>
+            <LayoutProvider>
+              <Sidebar>
+                <div id="main-content">{children}</div>
+              </Sidebar>
+            </LayoutProvider>
+          </NavigationProvider>
+        </ToastProvider>
       </body>
     </html>
   );

@@ -144,10 +144,7 @@ export default function SalesPage() {
   }
 
   async function handleMarkDelivered(orderId: string, delivered: boolean) {
-    const response = await fetch('/api/v1/orders', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ orderId, delivered }),
+    const response = await apiFetch('/api/v1/orders', { method: 'PATCH', body: JSON.stringify({ orderId, delivered  }),
     });
     const data = await safeJson(response);
     if (response.ok) {
@@ -160,10 +157,7 @@ export default function SalesPage() {
   }
 
   async function handleUpdateDeliveryDate(orderId: string, newDate: string) {
-    const response = await fetch('/api/v1/orders', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ orderId, deliveryDate: newDate }),
+    const response = await apiFetch('/api/v1/orders', { method: 'PATCH', body: JSON.stringify({ orderId, deliveryDate: newDate  }),
     });
     const data = await safeJson(response);
     if (response.ok) {
@@ -225,7 +219,7 @@ export default function SalesPage() {
   // Also reload when page becomes visible (user may have changed config in admin)
   useEffect(() => {
     function loadConfig() {
-      fetch('/api/v1/config', { headers: getAuthHeaders() })
+      apiFetch('/api/v1/config')
         .then((r) => r.json())
         .then((data) => {
           if (data.config) {
@@ -291,7 +285,7 @@ export default function SalesPage() {
 
   async function loadInventory() {
     try {
-      const response = await fetch('/api/v1/inventory', {
+      const response = await apiFetch('/api/v1/inventory', {
         cache: 'no-store',
         headers: getAuthHeaders(),
       });
@@ -315,7 +309,7 @@ export default function SalesPage() {
 
   async function loadOrders() {
     try {
-      const response = await fetch('/api/v1/orders', {
+      const response = await apiFetch('/api/v1/orders', {
         cache: 'no-store',
         headers: getAuthHeaders(),
       });
@@ -374,7 +368,7 @@ export default function SalesPage() {
         const formData = new FormData();
         formData.append('logo', logoFile);
 
-        const response = await fetch('/api/v1/logo-analysis', {
+        const response = await apiFetch('/api/v1/logo-analysis', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: formData,
@@ -568,7 +562,7 @@ export default function SalesPage() {
 
   async function loadQuotes() {
     try {
-      const response = await fetch('/api/v1/quotes', {
+      const response = await apiFetch('/api/v1/quotes', {
         cache: 'no-store',
         headers: getAuthHeaders(),
       });
@@ -692,7 +686,7 @@ export default function SalesPage() {
     }
 
     setSubmitting(true);
-    const response = await fetch('/api/v1/orders', {
+    const response = await apiFetch('/api/v1/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -739,10 +733,7 @@ export default function SalesPage() {
       // Atualizar orçamento de origem para "convertido"
       if (sourceQuoteId) {
         try {
-          await fetch('/api/v1/quotes', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ quoteId: sourceQuoteId, action: 'update-status', status: 'converted' }),
+          await apiFetch('/api/v1/quotes', { method: 'PATCH', body: JSON.stringify({ quoteId: sourceQuoteId, action: 'update-status', status: 'converted'  }),
           });
           setSourceQuoteId(null);
           await loadQuotes();
@@ -755,7 +746,7 @@ export default function SalesPage() {
   }
 
   async function handleStatusChange(orderId: string, status: Order['status']) {
-    const response = await fetch('/api/v1/orders', {
+    const response = await apiFetch('/api/v1/orders', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -823,7 +814,7 @@ export default function SalesPage() {
     const logoCost = calculateLogoCost(editLogoColors);
     const totalPrice = itemsPrice + (logoCost > 0 ? calculateSalePrice(logoCost) : 0);
 
-    const response = await fetch('/api/v1/orders', {
+    const response = await apiFetch('/api/v1/orders', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({
@@ -857,10 +848,7 @@ export default function SalesPage() {
     let restored = 0;
     for (const order of deletedItems) {
       try {
-        const resp = await fetch('/api/v1/orders', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({ action: 'restore', restoreData: order }),
+        const resp = await apiFetch('/api/v1/orders', { method: 'PATCH', body: JSON.stringify({ action: 'restore', restoreData: order  }),
         });
         if (resp.ok) restored++;
       } catch { /* skip */ }
@@ -880,7 +868,7 @@ export default function SalesPage() {
     if (!confirmed) return;
 
     const orderToDelete = orders.find(o => o.id === orderId);
-    const response = await fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}`, {
+    const response = await apiFetch(`/api/orders?orderId=${encodeURIComponent(orderId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -915,7 +903,7 @@ export default function SalesPage() {
     for (const id of idsToDelete) {
       const orderToDelete = orders.find(o => o.id === id);
       try {
-        const response = await fetch(`/api/orders?orderId=${encodeURIComponent(id)}`, {
+        const response = await apiFetch(`/api/orders?orderId=${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });

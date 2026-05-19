@@ -10,6 +10,7 @@ import { ValidatedInput } from '../components/validated-field';
 import { SkeletonProductList, SkeletonOrderList, SkeletonForm } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 import type { UnitOfMeasure, Supplier, PurchaseItem, PurchaseOrder, PurchaseCartItem, VariableOption, GroupOption, ProductOption } from '../../types';
@@ -184,7 +185,7 @@ export default function PurchasesPage() {
   // ==========================================
 
   async function loadDashboard() {
-    const response = await fetch('/api/v1/purchases', {
+    const response = await apiFetch('/api/v1/purchases', {
       cache: 'no-store',
       headers: getAuthHeaders(),
     });
@@ -239,11 +240,8 @@ export default function PurchasesPage() {
   // ==========================================
 
   async function handleCreateSupplier(data: SupplierFormData) {
-    const response = await fetch('/api/v1/suppliers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify(data),
-    });
+    const response = await apiFetch('/api/v1/suppliers', { method: 'POST', body: JSON.stringify(data),
+     });
     const result = await safeJson(response);
     if (!response.ok) {
       setMessage(result.message || 'Falha ao criar fornecedor.');
@@ -318,14 +316,11 @@ export default function PurchasesPage() {
       unitCost: item.unitCost,
     }));
 
-    const response = await fetch('/api/v1/purchases', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
+    const response = await apiFetch('/api/v1/purchases', { method: 'POST', body: JSON.stringify({
         supplierId: selectedSupplierId,
         purchasedAt: purchaseDate || undefined,
         items,
-      }),
+       }),
     });
     const data = await safeJson(response);
     if (!response.ok) {
@@ -365,15 +360,12 @@ export default function PurchasesPage() {
       return;
     }
 
-    const response = await fetch('/api/v1/purchases', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
+    const response = await apiFetch('/api/v1/purchases', { method: 'PATCH', body: JSON.stringify({
         id: editingPurchase.id,
         supplierId: editSupplierId,
         purchasedAt: editDate,
         items: editItems,
-      }),
+       }),
     });
     const data = await safeJson(response);
     if (!response.ok) {
@@ -387,7 +379,7 @@ export default function PurchasesPage() {
 
   async function handleDeletePurchase(purchaseId: string) {
     if (!confirm(`Excluir a compra ${purchaseId}?`)) return;
-    const response = await fetch(`/api/purchases?id=${encodeURIComponent(purchaseId)}`, {
+    const response = await apiFetch(`/api/purchases?id=${encodeURIComponent(purchaseId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });

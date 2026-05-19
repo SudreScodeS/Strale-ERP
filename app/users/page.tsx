@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PageHeader, Select } from '../components/ui';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
+import { apiFetch } from '../lib/apiFetch';
 import { useLayout, type SectionConfig } from '../components/layout-context';
 import { DraggableSection, LayoutToolbar } from '../components/draggable-section';
 
@@ -35,7 +36,7 @@ export default function UsersPage() {
   const sections = getPageLayout(PAGE_PATH, DEFAULT_SECTIONS);
 
   async function loadUsers() {
-    const response = await fetch('/api/v1/users', { cache: 'no-store', headers: getAuthHeaders() });
+    const response = await apiFetch('/api/v1/users', { cache: 'no-store', headers: getAuthHeaders() });
     const data = await response.json();
     if (response.ok) setUsers(data.users || []);
     else setMessage(data.message || 'Falha ao carregar.');
@@ -47,7 +48,7 @@ export default function UsersPage() {
 
   async function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch('/api/v1/users', {
+    const response = await apiFetch('/api/v1/users', {
       method: 'POST',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -66,7 +67,7 @@ export default function UsersPage() {
   async function handleUpdateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingUserId) return;
-    const response = await fetch('/api/v1/users', {
+    const response = await apiFetch('/api/v1/users', {
       method: 'PATCH',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
