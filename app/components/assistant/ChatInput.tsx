@@ -33,7 +33,7 @@ export function ChatInput({ value, onChange, onSend, onStop, isLoading, disabled
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="mt-4 flex gap-2">
       <input
         ref={inputRef}
         type="text"

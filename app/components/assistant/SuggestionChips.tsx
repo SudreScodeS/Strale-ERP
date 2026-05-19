@@ -12,7 +12,7 @@ interface SuggestionChipsProps {
 
 export function SuggestionChips({ suggestions, onSelect, disabled }: SuggestionChipsProps) {
   return (
-    <div className="mt-3 flex flex-wrap gap-1.5">
+    <div className="mt-3 mb-2 flex flex-wrap gap-2">
       {suggestions.map((s) => (
         <button
           key={s.label}
