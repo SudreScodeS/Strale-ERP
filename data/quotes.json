@@ -32,7 +32,7 @@
     "totalCost": 5000,
     "totalPrice": 6000,
     "logoCost": 0,
-    "status": "approved",
+    "status": "converted",
     "notes": "Sacolas TNT azuis para evento corporativo",
     "createdAt": "2026-05-11T22:07:03.837Z"
   },
@@ -278,5 +278,50 @@
     "notes": "Urgente",
     "createdAt": "2026-05-16T17:06:12.053Z",
     "convertedOrderId": "11"
+  },
+  {
+    "id": "765ff133-8732-45b3-a0cb-73d703de93c3",
+    "userId": "user-admin",
+    "customerName": "Maduzinha",
+    "name": "cubos mágicos",
+    "items": [
+      {
+        "productId": "product-1",
+        "productName": "Sacola Personalizada",
+        "selectedVariables": [
+          {
+            "variableId": "variable-color-vermelho",
+            "groupId": "group-color",
+            "groupName": "Cor",
+            "variableName": "Vermelho",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "groupName": "Material",
+            "variableName": "TNT",
+            "quantity": 1
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 37,
+        "unitPrice": 46.25,
+        "dimensions": {
+          "width": 60,
+          "height": 40
+        },
+        "printType": "bordado",
+        "printPosition": "front",
+        "printSize": "medium"
+      }
+    ],
+    "totalCost": 3750,
+    "totalPrice": 4685,
+    "logoCost": 50,
+    "status": "converted",
+    "validUntil": "2026-05-26T12:25:41.338Z",
+    "createdAt": "2026-05-19T12:25:41.339Z",
+    "convertedOrderId": "14"
   }
 ]

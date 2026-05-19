@@ -503,5 +503,110 @@
     "entity": "quote",
     "entityId": "21ade169-3eb3-4aad-a0aa-cb1817b9bd04",
     "description": "Alterou status do orçamento \"Teste Sudré (cópia)\" para rejected"
+  },
+  {
+    "id": "log_1779113089538_5x1wrp",
+    "timestamp": "2026-05-18T14:04:49.538Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "create",
+    "entity": "order",
+    "entityId": "12",
+    "description": "Criou pedido \"teste yan\"",
+    "details": "Total: R$ 508.80"
+  },
+  {
+    "id": "log_1779113116946_7tp4b1",
+    "timestamp": "2026-05-18T14:05:16.946Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "update",
+    "entity": "order",
+    "entityId": "12",
+    "description": "Marcou pedido \"teste yan\" como entregue"
+  },
+  {
+    "id": "log_1779149005798_7cja9t",
+    "timestamp": "2026-05-19T00:03:25.798Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "create",
+    "entity": "order",
+    "entityId": "13",
+    "description": "Criou pedido \"Orçamento 12/05/2026\"",
+    "details": "Total: R$ 6000.00"
+  },
+  {
+    "id": "log_1779149206165_ua7w80",
+    "timestamp": "2026-05-19T00:06:46.165Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "status_change",
+    "entity": "order",
+    "entityId": "13",
+    "description": "Alterou status do pedido \"Orçamento 12/05/2026\" para cancelled"
+  },
+  {
+    "id": "log_1779149211971_pokv5f",
+    "timestamp": "2026-05-19T00:06:51.971Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "delete",
+    "entity": "order",
+    "entityId": "13",
+    "description": "Removeu pedido \"Orçamento 12/05/2026\""
+  },
+  {
+    "id": "log_1779149249617_yvewzp",
+    "timestamp": "2026-05-19T00:07:29.617Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "create",
+    "entity": "order",
+    "entityId": "13",
+    "description": "Criou pedido \"Orçamento 12/05/2026\"",
+    "details": "Total: R$ 6000.00"
+  },
+  {
+    "id": "log_1779149249727_e78him",
+    "timestamp": "2026-05-19T00:07:29.727Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "e77a0dc4-1848-412a-851e-db87ad36a04b",
+    "description": "Alterou status do orçamento \"Orçamento 12/05/2026\" para converted"
+  },
+  {
+    "id": "log_1779193541344_rv3yzr",
+    "timestamp": "2026-05-19T12:25:41.344Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "create",
+    "entity": "quote",
+    "entityId": "765ff133-8732-45b3-a0cb-73d703de93c3",
+    "description": "Criou orçamento \"cubos mágicos\"",
+    "details": "Cliente: Maduzinha"
+  },
+  {
+    "id": "log_1779193591802_q34jg4",
+    "timestamp": "2026-05-19T12:26:31.802Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "status_change",
+    "entity": "quote",
+    "entityId": "765ff133-8732-45b3-a0cb-73d703de93c3",
+    "description": "Alterou status do orçamento \"cubos mágicos\" para sent"
+  },
+  {
+    "id": "log_1779193611941_vrjvlj",
+    "timestamp": "2026-05-19T12:26:51.941Z",
+    "userId": "user-admin",
+    "username": "admin",
+    "action": "convert",
+    "entity": "quote",
+    "entityId": "765ff133-8732-45b3-a0cb-73d703de93c3",
+    "description": "Converteu orçamento \"cubos mágicos\" em pedido #14",
+    "details": "Pedido: 14"
   }
 ]

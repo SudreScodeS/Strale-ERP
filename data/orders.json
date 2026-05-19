@@ -502,5 +502,118 @@
     "status": "completed",
     "deliveryDate": "2026-05-19",
     "createdAt": "2026-05-16T17:28:48.055Z"
+  },
+  {
+    "id": "12",
+    "userId": "user-admin",
+    "name": "teste yan",
+    "items": [
+      {
+        "productId": "product-caneca",
+        "selectedVariables": [
+          {
+            "variableId": "variable-caneca-material-inox",
+            "groupId": "group-caneca-material",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-caneca-cor-preta",
+            "groupId": "group-caneca-cor",
+            "quantity": 1
+          }
+        ],
+        "quantity": 12,
+        "unitCost": 32,
+        "unitPrice": 38.4,
+        "printType": "bordado",
+        "printPosition": "front",
+        "printSize": "medium"
+      }
+    ],
+    "totalCost": 384,
+    "totalPrice": 508.79999999999995,
+    "logoCost": 40,
+    "status": "completed",
+    "deliveryDate": "2026-05-19",
+    "createdAt": "2026-05-18T14:04:48.963Z",
+    "delivered": true,
+    "deliveredAt": "2026-05-18T14:05:16.941Z"
+  },
+  {
+    "id": "13",
+    "userId": "user-admin",
+    "name": "Orçamento 12/05/2026",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-nylon",
+            "groupId": "group-material",
+            "quantity": 200,
+            "groupName": "Material",
+            "variableName": "Nylon"
+          },
+          {
+            "variableId": "variable-medium",
+            "groupId": "group-size",
+            "quantity": 200,
+            "groupName": "group-size",
+            "variableName": "variable-medium"
+          },
+          {
+            "variableId": "variable-color-azul",
+            "groupId": "group-color",
+            "quantity": 200,
+            "groupName": "Cor",
+            "variableName": "Azul"
+          }
+        ],
+        "quantity": 200,
+        "unitCost": 25,
+        "unitPrice": 30
+      }
+    ],
+    "totalCost": 5000,
+    "totalPrice": 6000,
+    "logoCost": 0,
+    "status": "completed",
+    "deliveryDate": "2026-05-28",
+    "createdAt": "2026-05-19T00:07:29.559Z"
+  },
+  {
+    "id": "14",
+    "userId": "user-admin",
+    "name": "cubos mágicos",
+    "items": [
+      {
+        "productId": "product-1",
+        "selectedVariables": [
+          {
+            "variableId": "variable-color-vermelho",
+            "groupId": "group-color",
+            "groupName": "Cor",
+            "variableName": "Vermelho",
+            "quantity": 1
+          },
+          {
+            "variableId": "variable-tnt",
+            "groupId": "group-material",
+            "groupName": "Material",
+            "variableName": "TNT",
+            "quantity": 1
+          }
+        ],
+        "quantity": 100,
+        "unitCost": 37,
+        "unitPrice": 46.25
+      }
+    ],
+    "totalCost": 3700,
+    "totalPrice": 4685,
+    "logoCost": 50,
+    "status": "completed",
+    "deliveryDate": "2026-05-25",
+    "createdAt": "2026-05-19T12:26:51.501Z"
   }
 ]

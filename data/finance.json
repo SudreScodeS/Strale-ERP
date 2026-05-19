@@ -118,5 +118,29 @@
     "description": "Vinho 1x",
     "date": "2026-01-01T00:00:00.000Z",
     "orderId": "po-1779002249130-f1275004"
+  },
+  {
+    "id": "06fe1dd9-2a10-406e-bdcf-4fff50721322",
+    "type": "sale",
+    "amount": 508.79999999999995,
+    "description": "Pedido: teste yan",
+    "date": "2026-05-18T14:04:49.038Z",
+    "orderId": "12"
+  },
+  {
+    "id": "e9f26610-2cb9-4a35-bc36-fff6c58bafb6",
+    "type": "sale",
+    "amount": 6000,
+    "description": "Pedido: Orçamento 12/05/2026",
+    "date": "2026-05-19T00:07:29.559Z",
+    "orderId": "13"
+  },
+  {
+    "id": "11ce3c90-25ec-467b-ab24-9a02303093db",
+    "type": "sale",
+    "amount": 4685,
+    "description": "Pedido: cubos mágicos",
+    "date": "2026-05-19T12:26:51.501Z",
+    "orderId": "14"
   }
 ]

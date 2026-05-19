@@ -108,5 +108,45 @@
     "changedBy": "7b735e51-2408-4dab-9b97-505420324cf3",
     "reason": "Pedido #11 - Kit evento",
     "createdAt": "2026-05-16T17:28:48.115Z"
+  },
+  {
+    "id": "af469237-f857-43ba-8d52-b06463abb3e7",
+    "entityType": "product",
+    "entityId": "product-caneca",
+    "oldPrice": 18,
+    "newPrice": 32,
+    "changedBy": "user-admin",
+    "reason": "Pedido #12 - teste yan",
+    "createdAt": "2026-05-18T14:04:49.312Z"
+  },
+  {
+    "id": "c316dd67-c5f3-42ae-8aa3-18e9c3a29838",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 25,
+    "changedBy": "user-admin",
+    "reason": "Pedido #13 - Orçamento 12/05/2026",
+    "createdAt": "2026-05-19T00:03:25.789Z"
+  },
+  {
+    "id": "4d0529f8-af2d-4d14-9628-675fd3dce3fd",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 25,
+    "changedBy": "user-admin",
+    "reason": "Pedido #13 - Orçamento 12/05/2026",
+    "createdAt": "2026-05-19T00:07:29.606Z"
+  },
+  {
+    "id": "ce456b13-73c7-4a95-9b0a-cc9858368c8c",
+    "entityType": "product",
+    "entityId": "product-1",
+    "oldPrice": 20,
+    "newPrice": 37,
+    "changedBy": "user-admin",
+    "reason": "Pedido #14 - cubos mágicos",
+    "createdAt": "2026-05-19T12:26:51.866Z"
   }
 ]

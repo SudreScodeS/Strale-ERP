@@ -3,7 +3,7 @@
     "id": "variable-nylon",
     "name": "Nylon",
     "additionalPrice": 3,
-    "stock": 497,
+    "stock": 297,
     "groupId": "group-material",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "unitOfMeasure": "un"
@@ -12,7 +12,7 @@
     "id": "variable-tnt",
     "name": "TNT",
     "additionalPrice": 5,
-    "stock": 998,
+    "stock": 997,
     "groupId": "group-material",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "unitOfMeasure": "un"
@@ -21,7 +21,7 @@
     "id": "variable-color-azul",
     "name": "Azul",
     "additionalPrice": 0,
-    "stock": 199,
+    "stock": 0,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z",
     "unitOfMeasure": "un"
@@ -48,7 +48,7 @@
     "id": "variable-color-vermelho",
     "name": "Vermelho",
     "additionalPrice": 0,
-    "stock": 999,
+    "stock": 998,
     "groupId": "group-color",
     "createdAt": "2026-05-06T06:23:00.000Z",
     "unitOfMeasure": "un"
@@ -117,9 +117,9 @@
     "unitOfMeasure": "un"
   },
   {
-    "id": "variable-garrafa-material-pl\u00e1stico-abs",
+    "id": "variable-garrafa-material-plástico-abs",
     "groupId": "group-garrafa-material",
-    "name": "Pl\u00e1stico ABS",
+    "name": "Plástico ABS",
     "additionalPrice": 2,
     "stock": 300,
     "createdAt": "2026-05-16T00:00:00.000Z",
@@ -139,7 +139,7 @@
     "groupId": "group-caneca-cor",
     "name": "Preta",
     "additionalPrice": 2,
-    "stock": 200,
+    "stock": 199,
     "createdAt": "2026-05-16T00:00:00.000Z",
     "unitOfMeasure": "un"
   },
@@ -162,9 +162,9 @@
     "unitOfMeasure": "un"
   },
   {
-    "id": "variable-caneca-material-cer\u00e2mica",
+    "id": "variable-caneca-material-cerâmica",
     "groupId": "group-caneca-material",
-    "name": "Cer\u00e2mica",
+    "name": "Cerâmica",
     "additionalPrice": 0,
     "stock": 400,
     "createdAt": "2026-05-16T00:00:00.000Z",
@@ -184,14 +184,14 @@
     "groupId": "group-caneca-material",
     "name": "Inox",
     "additionalPrice": 12,
-    "stock": 200,
+    "stock": 199,
     "createdAt": "2026-05-16T00:00:00.000Z",
     "unitOfMeasure": "un"
   },
   {
-    "id": "variable-caneca-material-pl\u00e1stico",
+    "id": "variable-caneca-material-plástico",
     "groupId": "group-caneca-material",
-    "name": "Pl\u00e1stico",
+    "name": "Plástico",
     "additionalPrice": -3,
     "stock": 300,
     "createdAt": "2026-05-16T00:00:00.000Z",
@@ -243,9 +243,9 @@
     "unitOfMeasure": "un"
   },
   {
-    "id": "variable-bone-tamanho-\u00fanico-ajust\u00e1vel",
+    "id": "variable-bone-tamanho-único-ajustável",
     "groupId": "group-bone-tamanho",
-    "name": "\u00danico (Ajust\u00e1vel)",
+    "name": "Único (Ajustável)",
     "additionalPrice": 0,
     "stock": 499,
     "createdAt": "2026-05-16T00:00:00.000Z",

@@ -662,5 +662,158 @@
       "issuedAt": "2026-05-16T17:28:48.131Z"
     },
     "createdAt": "2026-05-16T17:28:48.131Z"
+  },
+  {
+    "id": "b73175a2-b431-42b3-a006-a4072697ce02",
+    "orderId": "12",
+    "number": "NF-1779113089375",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-caneca",
+          "selectedVariables": [
+            {
+              "variableId": "variable-caneca-material-inox",
+              "groupId": "group-caneca-material",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-caneca-cor-preta",
+              "groupId": "group-caneca-cor",
+              "quantity": 1
+            }
+          ],
+          "quantity": 12,
+          "unitCost": 32,
+          "unitPrice": 38.4,
+          "printType": "bordado",
+          "printPosition": "front",
+          "printSize": "medium"
+        }
+      ],
+      "totalPrice": 508.79999999999995,
+      "issuedAt": "2026-05-18T14:04:49.375Z"
+    },
+    "createdAt": "2026-05-18T14:04:49.375Z"
+  },
+  {
+    "id": "4f23d5a8-3e1b-4d05-8445-703cf78d574a",
+    "orderId": "13",
+    "number": "NF-1779149005793",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 200,
+              "groupName": "Material",
+              "variableName": "Nylon"
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 200,
+              "groupName": "group-size",
+              "variableName": "variable-medium"
+            },
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 200,
+              "groupName": "Cor",
+              "variableName": "Azul"
+            }
+          ],
+          "quantity": 200,
+          "unitCost": 25,
+          "unitPrice": 30
+        }
+      ],
+      "totalPrice": 6000,
+      "issuedAt": "2026-05-19T00:03:25.793Z"
+    },
+    "createdAt": "2026-05-19T00:03:25.793Z"
+  },
+  {
+    "id": "b717ed4a-3f9a-47a2-aa75-9528fdfa38a1",
+    "orderId": "13",
+    "number": "NF-1779149249613",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-nylon",
+              "groupId": "group-material",
+              "quantity": 200,
+              "groupName": "Material",
+              "variableName": "Nylon"
+            },
+            {
+              "variableId": "variable-medium",
+              "groupId": "group-size",
+              "quantity": 200,
+              "groupName": "group-size",
+              "variableName": "variable-medium"
+            },
+            {
+              "variableId": "variable-color-azul",
+              "groupId": "group-color",
+              "quantity": 200,
+              "groupName": "Cor",
+              "variableName": "Azul"
+            }
+          ],
+          "quantity": 200,
+          "unitCost": 25,
+          "unitPrice": 30
+        }
+      ],
+      "totalPrice": 6000,
+      "issuedAt": "2026-05-19T00:07:29.613Z"
+    },
+    "createdAt": "2026-05-19T00:07:29.613Z"
+  },
+  {
+    "id": "eccf6bd2-95c2-44b2-88d3-da3b12ed5362",
+    "orderId": "14",
+    "number": "NF-1779193611880",
+    "data": {
+      "customer": "user-admin",
+      "items": [
+        {
+          "productId": "product-1",
+          "selectedVariables": [
+            {
+              "variableId": "variable-color-vermelho",
+              "groupId": "group-color",
+              "groupName": "Cor",
+              "variableName": "Vermelho",
+              "quantity": 1
+            },
+            {
+              "variableId": "variable-tnt",
+              "groupId": "group-material",
+              "groupName": "Material",
+              "variableName": "TNT",
+              "quantity": 1
+            }
+          ],
+          "quantity": 100,
+          "unitCost": 37,
+          "unitPrice": 46.25
+        }
+      ],
+      "totalPrice": 4685,
+      "issuedAt": "2026-05-19T12:26:51.880Z"
+    },
+    "createdAt": "2026-05-19T12:26:51.880Z"
   }
 ]
