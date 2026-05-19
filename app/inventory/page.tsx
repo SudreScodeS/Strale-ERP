@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { PageHeader, Select } from '../components/ui';
+import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../components/validated-field';
+import { SkeletonProductList, SkeletonMetrics } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -12,6 +17,33 @@ import type { UnitOfMeasure } from '../../types';
 
 const DEFAULT_WATCH_STOCK_ALERT = 30;
 const DEFAULT_CRITICAL_STOCK_ALERT = 10;
+
+// ==========================================
+// VALIDATION SCHEMAS
+// ==========================================
+
+const productSchema = z.object({
+  name: z.string().min(1, 'Informe o nome do produto').min(2, 'Mínimo de 2 caracteres'),
+  basePrice: z.coerce.number().min(0.01, 'O preço deve ser maior que zero'),
+  profitMargin: z.coerce.number().min(0, 'Mínimo 0%').max(100, 'Máximo 100%'),
+  description: z.string().optional(),
+});
+
+const groupSchema = z.object({
+  name: z.string().min(1, 'Informe o nome do grupo').min(2, 'Mínimo de 2 caracteres'),
+  productId: z.string().min(1, 'Selecione um produto'),
+});
+
+const variableSchema = z.object({
+  name: z.string().min(1, 'Informe o nome da variável').min(2, 'Mínimo de 2 caracteres'),
+  groupId: z.string().min(1, 'Selecione um grupo'),
+  additionalPrice: z.coerce.number().min(0, 'O preço não pode ser negativo'),
+  stock: z.coerce.number().min(0, 'O estoque não pode ser negativo'),
+});
+
+type ProductFormData = z.infer<typeof productSchema>;
+type GroupFormData = z.infer<typeof groupSchema>;
+type VariableFormData = z.infer<typeof variableSchema>;
 
 interface VariableOption {
   id: string;
@@ -77,6 +109,7 @@ export default function InventoryPage() {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [pageTab, setPageTab] = useState<'list' | 'create'>('list');
+  const [loading, setLoading] = useState(true);
 
   const PAGE_PATH = '/inventory';
   const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -101,6 +134,7 @@ export default function InventoryPage() {
     const data = await safeJson(response);
     const list = data.inventory || [];
     setInventory(list);
+    setLoading(false);
     if (list.length > 0) {
       setGroupProductId((prev) => prev || list[0].id);
       const firstGroup = list[0].groups?.[0];
@@ -377,6 +411,19 @@ export default function InventoryPage() {
         ) : null}
 
         {/* Cards de resumo */}
+        {loading ? (
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                <div className="animate-pulse space-y-3">
+                  <div className="h-3 w-20 rounded" style={{ background: 'var(--surface-muted)' }} />
+                  <div className="h-8 w-16 rounded" style={{ background: 'var(--surface-muted)' }} />
+                  <div className="h-3 w-32 rounded" style={{ background: 'var(--surface-muted)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
             <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Produtos</p>
@@ -394,6 +441,7 @@ export default function InventoryPage() {
             <p className="text-xs" style={{ color: 'var(--warning)', opacity: 0.7 }}>variáveis próximas do limite</p>
           </div>
         </div>
+        )}
 
         {/* Tabs de navegação */}
         <div className="mb-6 flex gap-1 rounded-xl p-1" style={{ background: 'var(--surface-muted)', width: 'fit-content' }}>
@@ -440,7 +488,9 @@ export default function InventoryPage() {
                 />
               </div>
 
-              {filteredInventory.length === 0 ? (
+              {loading ? (
+                <SkeletonProductList count={4} />
+              ) : filteredInventory.length === 0 ? (
                 <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                   <p style={{ color: 'var(--text-muted)' }}>{searchTerm ? 'Nenhum resultado encontrado.' : 'Nenhum produto cadastrado.'}</p>
                 </div>
@@ -709,9 +759,15 @@ export default function InventoryPage() {
                         onChange={(event) => setProductName(event.target.value)}
                         placeholder="Ex: Sacola TNT"
                         className="w-full rounded-lg px-4 py-2.5 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        style={{ background: 'var(--input-bg)', border: `1px solid ${productName.trim() && productName.trim().length < 2 ? 'var(--danger, #dc2626)' : 'var(--input-border)'}`, color: 'var(--text-primary)' }}
                         required
                       />
+                      {productName.trim() && productName.trim().length < 2 && (
+                        <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--danger, #dc2626)' }}>
+                          <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                          Mínimo de 2 caracteres
+                        </p>
+                      )}
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Preço base (R$) *</span>
@@ -722,9 +778,15 @@ export default function InventoryPage() {
                         value={productPrice}
                         onChange={(event) => setProductPrice(Number(event.target.value))}
                         className="w-full rounded-lg px-4 py-2.5 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        style={{ background: 'var(--input-bg)', border: `1px solid ${productPrice < 0 ? 'var(--danger, #dc2626)' : 'var(--input-border)'}`, color: 'var(--text-primary)' }}
                         required
                       />
+                      {productPrice < 0 && (
+                        <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--danger, #dc2626)' }}>
+                          <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                          O preço não pode ser negativo
+                        </p>
+                      )}
                     </label>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                       <span className="text-sm font-medium">Margem de lucro (%)</span>
@@ -909,9 +971,15 @@ export default function InventoryPage() {
                         onChange={(event) => setVariableName(event.target.value)}
                         placeholder="Ex: Vermelho, Grande, Algodão"
                         className="w-full rounded-lg px-4 py-2.5 text-sm"
-                        style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                        style={{ background: 'var(--input-bg)', border: `1px solid ${variableName.trim() && variableName.trim().length < 2 ? 'var(--danger, #dc2626)' : 'var(--input-border)'}`, color: 'var(--text-primary)' }}
                         required
                       />
+                      {variableName.trim() && variableName.trim().length < 2 && (
+                        <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--danger, #dc2626)' }}>
+                          <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                          Mínimo de 2 caracteres
+                        </p>
+                      )}
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
@@ -923,11 +991,18 @@ export default function InventoryPage() {
                           value={variablePrice}
                           onChange={(event) => setVariablePrice(Number(event.target.value))}
                           className="w-full rounded-lg px-4 py-2.5 text-sm"
-                          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                          style={{ background: 'var(--input-bg)', border: `1px solid ${variablePrice < 0 ? 'var(--danger, #dc2626)' : 'var(--input-border)'}`, color: 'var(--text-primary)' }}
                         />
-                        <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                          Valor somado ao preço base do produto para cada unidade
-                        </p>
+                        {variablePrice < 0 ? (
+                          <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--danger, #dc2626)' }}>
+                            <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                            Não pode ser negativo
+                          </p>
+                        ) : (
+                          <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                            Valor somado ao preço base do produto para cada unidade
+                          </p>
+                        )}
                       </label>
                       <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
                         <span className="text-sm font-medium">Estoque inicial *</span>
@@ -937,9 +1012,15 @@ export default function InventoryPage() {
                           value={variableStock}
                           onChange={(event) => setVariableStock(Number(event.target.value))}
                           className="w-full rounded-lg px-4 py-2.5 text-sm"
-                          style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-primary)' }}
+                          style={{ background: 'var(--input-bg)', border: `1px solid ${variableStock < 0 ? 'var(--danger, #dc2626)' : 'var(--input-border)'}`, color: 'var(--text-primary)' }}
                           required
                         />
+                        {variableStock < 0 && (
+                          <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--danger, #dc2626)' }}>
+                            <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                            Não pode ser negativo
+                          </p>
+                        )}
                       </label>
                     </div>
                     <label className="block space-y-1.5" style={{ color: 'var(--text-secondary)' }}>

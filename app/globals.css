@@ -556,6 +556,14 @@ html[data-theme='dark'] input[type="date"] { color-scheme: dark; }
   100% { transform: scale(1); }
 }
 
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+.animate-progress-indeterminate {
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
 /* ==========================================
    ANIMATION UTILITIES
    ========================================== */

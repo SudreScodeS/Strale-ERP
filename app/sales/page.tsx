@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calculateLogoCost, calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
 import { PageHeader, Select, Checkbox } from '../components/ui';
+import { SkeletonOrderList, SkeletonForm } from '../components/skeleton';
+import { ProgressBar } from '../components/progress-bar';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { useLayout, type SectionConfig } from '../components/layout-context';
@@ -33,6 +35,7 @@ interface ProductOption {
   id: string;
   name: string;
   basePrice: number;
+  profitMargin?: number;
   description?: string;
   imageUrl?: string;
   groups: GroupOption[];
@@ -213,6 +216,9 @@ export default function SalesPage() {
 
   const [configLoaded, setConfigLoaded] = useState(false);
   const [formIsDirty, setFormIsDirty] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingInventory, setLoadingInventory] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   // Track if any form field has changed from initial state
   useEffect(() => {
@@ -307,6 +313,7 @@ export default function SalesPage() {
       const data = await safeJson(response);
       if (!response.ok) {
         setStatusMessage(data.error || 'Falha ao carregar estoque.');
+        setLoadingInventory(false);
         return;
       }
       const list = data.inventory || [];
@@ -316,6 +323,8 @@ export default function SalesPage() {
       }
     } catch {
       setStatusMessage('Conexão instável ao carregar estoque. Tente atualizar.');
+    } finally {
+      setLoadingInventory(false);
     }
   }
 
@@ -328,6 +337,7 @@ export default function SalesPage() {
       const data = await safeJson(response);
       if (!response.ok) {
         setStatusMessage(data.error || 'Falha ao carregar pedidos.');
+        setLoadingOrders(false);
         return;
       }
       const list = data.orders || [];
@@ -339,6 +349,8 @@ export default function SalesPage() {
       setOrderStatusUpdates(initialStatuses);
     } catch {
       setStatusMessage('Conexão instável ao carregar pedidos. Tente atualizar.');
+    } finally {
+      setLoadingOrders(false);
     }
   }
 
@@ -694,6 +706,7 @@ export default function SalesPage() {
       return;
     }
 
+    setSubmitting(true);
     const response = await fetch('/api/orders', {
       method: 'POST',
       headers: {
@@ -753,6 +766,7 @@ export default function SalesPage() {
     } else {
       setStatusMessage(result.error || 'Erro ao finalizar pedido.');
     }
+    setSubmitting(false);
   }
 
   async function handleStatusChange(orderId: string, status: Order['status']) {
@@ -1060,7 +1074,9 @@ export default function SalesPage() {
             </div>
           </div>
 
-          {filteredOrders.length === 0 ? (
+          {loadingOrders ? (
+            <SkeletonOrderList count={4} />
+          ) : filteredOrders.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhum pedido registrado ainda.</p>
           ) : (
             <div className="space-y-4">
@@ -1223,8 +1239,18 @@ export default function SalesPage() {
                 value={orderName}
                 onChange={(event) => setOrderName(event.target.value)}
                 placeholder="Ex: Sacola - 10 materiais"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3"
+                style={{
+                  borderColor: orderName.trim() && orderName.trim().length < 2 ? 'var(--danger, #dc2626)' : undefined,
+                  background: '#f8fafc',
+                }}
               />
+              {orderName.trim() && orderName.trim().length < 2 && (
+                <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--danger, #dc2626)' }}>
+                  <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                  Mínimo de 2 caracteres
+                </p>
+              )}
             </label>
             <label className="space-y-2 text-slate-700">
               <span>Data de entrega *</span>
@@ -1232,8 +1258,15 @@ export default function SalesPage() {
                 type="date"
                 value={deliveryDate}
                 onChange={(event) => setDeliveryDate(event.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3"
+                style={{ background: '#f8fafc' }}
               />
+              {!deliveryDate && cartItems.length > 0 && (
+                <p className="flex items-center gap-1 text-xs" style={{ color: 'var(--warning, #f59e0b)' }}>
+                  <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                  Informe a data de entrega
+                </p>
+              )}
             </label>
             <div className="md:col-span-2">
               <button
@@ -1629,8 +1662,21 @@ export default function SalesPage() {
           </div>
 
           <div className="flex gap-3">
-            <button className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80" style={{ background: 'var(--brand)', color: '#fff' }} type="submit">
-              Finalizar Pedido
+            <button
+              className="inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition-all hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: 'var(--brand)', color: '#fff' }}
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Processando…
+                </span>
+              ) : 'Finalizar Pedido'}
             </button>
             {formIsDirty && (
               <button

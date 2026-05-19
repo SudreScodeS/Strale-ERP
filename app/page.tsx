@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { MetricCard, PageHeader } from './components/ui';
+import { SkeletonPage } from './components/skeleton';
 import { ProtectedPage } from './components/protected';
 import { getAuthHeaders, getCurrentUser } from './lib/authClient';
 import { useLayout, type SectionConfig } from './components/layout-context';
@@ -362,9 +363,7 @@ export default function Home() {
   if (!summary) {
     return (
       <ProtectedPage allowedRoles={['admin']}>
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--brand)]" />
-        </div>
+        <SkeletonPage />
       </ProtectedPage>
     );
   }

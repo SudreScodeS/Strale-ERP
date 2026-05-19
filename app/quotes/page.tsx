@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calculateSalePrice, globalConfig, applyServerConfig } from '../../config/global';
 import { PageHeader, Select, Checkbox } from '../components/ui';
+import { SkeletonOrderList } from '../components/skeleton';
 import { ProtectedPage } from '../components/protected';
 import { getAuthHeaders, getCurrentUser } from '../lib/authClient';
 import { Quote } from '../../types';
@@ -29,6 +30,7 @@ interface ProductOption {
   id: string;
   name: string;
   basePrice: number;
+  profitMargin?: number;
   description?: string;
   groups: GroupOption[];
 }
@@ -243,6 +245,7 @@ export default function QuotesPage() {
   const [quotes, setQuotes] = useState<QuoteView[]>([]);
   const [activeSection, setActiveSection] = useState<'list' | 'create'>('list');
   const [statusMessage, setStatusMessage] = useState('');
+  const [loadingQuotes, setLoadingQuotes] = useState(true);
   const [undoData, setUndoData] = useState<{ message: string; items: QuoteView[]; timer: ReturnType<typeof setTimeout> } | null>(null);
 
   // Auto-dismiss status messages after 4 seconds
@@ -474,6 +477,7 @@ export default function QuotesPage() {
       const data = await safeJson(response);
       if (response.ok) setQuotes(data.quotes || []);
     } catch { setStatusMessage('Erro ao carregar orçamentos.'); }
+    finally { setLoadingQuotes(false); }
   }
 
   useEffect(() => { void loadInventory(); }, []);
@@ -854,7 +858,9 @@ export default function QuotesPage() {
               </div>
             </div>
 
-            {filteredQuotes.length === 0 ? (
+            {loadingQuotes ? (
+              <SkeletonOrderList count={4} />
+            ) : filteredQuotes.length === 0 ? (
               <p className="text-sm text-slate-500">Nenhum orçamento encontrado.</p>
             ) : (
               <div className="space-y-4">
