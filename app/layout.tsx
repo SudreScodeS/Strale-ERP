@@ -6,7 +6,6 @@ import { LayoutProvider } from './components/layout-context';
 import { ServiceWorkerRegistration } from './components/ServiceWorkerRegistration';
 import { NavigationProvider } from './components/NavigationProvider';
 import { ToastProvider } from './components/ui/Toast';
-import { SkipLink } from './components/SkipLink';
 import './globals.css';
 
 const geistSans = Geist({
@@ -102,7 +101,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full">
-        <SkipLink />
         <ServiceWorkerRegistration />
         <ToastProvider>
           <NavigationProvider>
