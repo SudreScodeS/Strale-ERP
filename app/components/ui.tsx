@@ -78,7 +78,7 @@ function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return createPortal(
-    <div className="fixed right-4 top-4 z-[100] flex flex-col gap-2 pointer-events-none" style={{ maxWidth: '380px' }}>
+    <div className="fixed right-4 top-4 z-[100] flex flex-col gap-2 pointer-events-none" role="status" aria-live="polite" aria-label="Notificações" style={{ maxWidth: '380px' }}>
       {toasts.map((toast, i) => (
         <div
           key={toast.id}
@@ -109,6 +109,7 @@ function ToastContainer() {
             onClick={() => removeToast(toast.id)}
             className="flex-shrink-0 rounded-md p-1 transition-colors hover:bg-[var(--surface-muted)]"
             style={{ color: 'var(--text-muted)' }}
+            aria-label="Fechar notificação"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -527,6 +528,7 @@ export function Sidebar({ children }: SidebarProps) {
         <button
           type="button"
           onClick={toggleTheme}
+          aria-label={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
           style={{ color: 'var(--sidebar-text)' }}
           onMouseEnter={(e) => {
@@ -722,6 +724,7 @@ export function Sidebar({ children }: SidebarProps) {
                 type="button"
                 onClick={toggleTheme}
                 title={theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+                aria-label={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
                 className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors"
                 style={{ color: 'var(--sidebar-text)' }}
                 onMouseEnter={(e) => {

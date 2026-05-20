@@ -147,8 +147,8 @@ html[data-theme='light'] {
   /* Text — dark purple-gray */
   --text-primary: #1a1528;
   --text-secondary: #504670;
-  --text-muted: #8478a0;
-  --text-faint: #a8a0c0;
+  --text-muted: #6b5f8a;
+  --text-faint: #8a80a8;
 
   --input-bg: #f8f6fc;
   --input-border: #e0daf0;
@@ -598,10 +598,17 @@ html[data-theme='dark'] input[type="date"] { color-scheme: dark; }
   .animate-fade-in,
   .animate-fade-in-up,
   .animate-fade-in-scale,
-  .animate-slide-in {
+  .animate-slide-in,
+  .animate-spin,
+  .animate-bounce,
+  .animate-progress-indeterminate {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+  .transition-all,
+  .transition-colors {
+    transition: none !important;
   }
 }
 

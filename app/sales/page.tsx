@@ -997,6 +997,7 @@ export default function SalesPage() {
                 value={orderSearch}
                 onChange={(event) => setOrderSearch(event.target.value)}
                 placeholder="Buscar por ID ou nome do pedido"
+                aria-label="Buscar pedidos por ID ou nome"
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2"
               />
               <label className="text-sm text-slate-600">
@@ -1272,6 +1273,7 @@ export default function SalesPage() {
                   value={quoteSearch}
                   onChange={(e) => setQuoteSearch(e.target.value)}
                   placeholder="Buscar orçamento por nome..."
+                  aria-label="Buscar orçamento por nome"
                   className="mb-3 w-full rounded-xl border border-[var(--success-border)] bg-white px-3 py-2 text-sm"
                 />
                 <div className="max-h-60 space-y-2 overflow-y-auto">
@@ -1433,7 +1435,7 @@ export default function SalesPage() {
             <div className="grid gap-3 md:grid-cols-3">
               <label className="space-y-1 text-sm text-slate-600">
                 <span>Tipo</span>
-                <Select value={printType} onChange={e => setPrintType(e.target.value)}>
+                <Select value={printType} onChange={e => setPrintType(e.target.value)} ariaLabel="Tipo de impressão">
                   {printTypesList.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </Select>
               </label>
@@ -1441,13 +1443,13 @@ export default function SalesPage() {
                 <>
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Tamanho</span>
-                    <Select value={printSize} onChange={e => setPrintSize(e.target.value)}>
+                    <Select value={printSize} onChange={e => setPrintSize(e.target.value)} ariaLabel="Tamanho da impressão">
                       {PRINT_SIZES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </Select>
                   </label>
                   <label className="space-y-1 text-sm text-slate-600">
                     <span>Posição</span>
-                    <Select value={printPosition} onChange={e => setPrintPosition(e.target.value)}>
+                    <Select value={printPosition} onChange={e => setPrintPosition(e.target.value)} ariaLabel="Posição da impressão">
                       {PRINT_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </Select>
                   </label>
@@ -1536,6 +1538,8 @@ export default function SalesPage() {
                         <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
                           <button
                             type="button"
+                            aria-label="Diminuir margem"
+                            title="Diminuir margem"
                             onClick={() => {
                               const newMargin = Math.max(item.minMargin, item.profitMargin - 0.5);
                               setCartItems((prev) => prev.map((ci, ciIdx) => {
@@ -1563,6 +1567,8 @@ export default function SalesPage() {
                           />
                           <button
                             type="button"
+                            aria-label="Aumentar margem"
+                            title="Aumentar margem"
                             onClick={() => {
                               const newMargin = item.profitMargin + 0.5;
                               setCartItems((prev) => prev.map((ci, ciIdx) => {
@@ -1679,7 +1685,11 @@ export default function SalesPage() {
       {selectedOrder ? createPortal(
         <div
           className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Detalhes do pedido ${selectedOrder?.name || selectedOrder?.id}`}
           onClick={(e) => { if (e.target === e.currentTarget) { setSelectedOrder(null); setEditingOrder(false); } }}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setSelectedOrder(null); setEditingOrder(false); } }}
         >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '1rem' }}>
           <div
@@ -1807,6 +1817,8 @@ export default function SalesPage() {
                             <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
                               <button
                                 type="button"
+                                aria-label="Diminuir margem"
+                                title="Diminuir margem"
                                 onClick={() => {
                                   const newMargin = Math.max(minMargin, item.profitMargin - 0.5);
                                   setEditItems((prev) => prev.map((ci, ciIdx) => {
@@ -1834,6 +1846,8 @@ export default function SalesPage() {
                               />
                               <button
                                 type="button"
+                                aria-label="Aumentar margem"
+                                title="Aumentar margem"
                                 onClick={() => {
                                   const newMargin = item.profitMargin + 0.5;
                                   setEditItems((prev) => prev.map((ci, ciIdx) => {
@@ -2116,7 +2130,7 @@ export default function SalesPage() {
 
         {/* Toast de undo para remoção de pedidos */}
         {undoOrderData && createPortal(
-          <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg">
+          <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 text-sm text-white shadow-lg" role="status" aria-live="polite">
             <span>{undoOrderData.message}</span>
             <button
               type="button"
@@ -2125,7 +2139,7 @@ export default function SalesPage() {
             >
               Desfazer
             </button>
-            <button type="button" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">×</button>
+            <button type="button" aria-label="Fechar notificação" onClick={() => { if (undoOrderData.timer) clearTimeout(undoOrderData.timer); setUndoOrderData(null); }} className="ml-1 text-white/60 hover:text-white">×</button>
           </div>
         , document.body)}
 
@@ -2133,6 +2147,8 @@ export default function SalesPage() {
         {statusMessage && createPortal(
           <div
             className="fixed bottom-0 left-0 right-0 z-[100] flex items-center justify-center px-6 py-3"
+            role="status"
+            aria-live="polite"
             style={{
               background: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger-bg, #fef2f2)' : 'var(--success-bg, #f0fdf4)',
               borderTop: `2px solid ${statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)'}`,
@@ -2142,7 +2158,7 @@ export default function SalesPage() {
             <span className="text-sm font-semibold" style={{ color: statusMessage.includes('Erro') || statusMessage.includes('erro') ? 'var(--danger, #dc2626)' : 'var(--success, #16a34a)' }}>
               {statusMessage.includes('Erro') || statusMessage.includes('erro') ? '×' : '✓'} {statusMessage}
             </span>
-            <button type="button" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>×</button>
+            <button type="button" aria-label="Fechar mensagem" onClick={() => setStatusMessage('')} className="ml-4 text-xs font-medium opacity-60 hover:opacity-100" style={{ color: 'var(--text-secondary)' }}>×</button>
           </div>
         , document.body)}
 

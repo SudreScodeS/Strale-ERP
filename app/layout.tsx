@@ -1,26 +1,34 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Geist, Geist_Mono, Alumni_Sans } from 'next/font/google';
 import { Sidebar } from './components/ui';
 import { LayoutProvider } from './components/layout-context';
 import { ServiceWorkerRegistration } from './components/ServiceWorkerRegistration';
 import { NavigationProvider } from './components/NavigationProvider';
 import { ToastProvider } from './components/ui/Toast';
+import { SkipLink } from './components/SkipLink';
 import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
+  display: 'swap',
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  display: 'swap',
+  preload: false,
 });
 
 const alumniSans = Alumni_Sans({
   variable: '--font-alumni-sans',
   subsets: ['latin'],
   weight: ['400', '600', '700'],
+  display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -91,6 +99,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full">
+        <SkipLink />
         <ServiceWorkerRegistration />
         <ToastProvider>
           <NavigationProvider>
