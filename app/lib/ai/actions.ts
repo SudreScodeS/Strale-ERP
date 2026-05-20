@@ -68,9 +68,11 @@ function validateParams(
 }
 
 function logAction(actionName: string, context: ActionContext, params: Record<string, unknown>, result: ActionResult) {
-  console.log(
-    `[ai:action] ${actionName} by ${context.userId} (${context.userRole}) → ${result.success ? 'OK' : 'FAIL'}: ${result.message}`,
-  );
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `[ai:action] ${actionName} by ${context.userId} (${context.userRole}) → ${result.success ? 'OK' : 'FAIL'}: ${result.message}`,
+    );
+  }
 }
 
 // ── Action Definitions ─────────────────────────────────────────

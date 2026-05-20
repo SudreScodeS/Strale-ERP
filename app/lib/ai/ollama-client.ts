@@ -3,6 +3,7 @@
 
 const OLLAMA_BASE = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
+const DEBUG = process.env.NODE_ENV === 'development';
 
 // ── Configuration ──────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ export async function chat(
     try {
       if (attempt > 0) {
         const backoff = computeBackoff(attempt - 1);
-        console.log(`[ai] Retry ${attempt}/${config.maxRetries} after ${backoff}ms`);
+        if (DEBUG) console.log(`[ai] Retry ${attempt}/${config.maxRetries} after ${backoff}ms`);
         await sleep(backoff);
       }
 
@@ -172,7 +173,7 @@ export async function chat(
       }
 
       const data: OllamaChatResponse = await res.json();
-      console.log(
+      if (DEBUG) console.log(
         `[ai] ${model} responded in ${data.total_duration ? (data.total_duration / 1e6).toFixed(0) : '?'}ms ` +
         `(${data.eval_count ?? '?'} tokens)`,
       );
@@ -181,13 +182,13 @@ export async function chat(
       lastError = err instanceof Error ? err : new Error(String(err));
 
       if (lastError.name === 'AbortError') {
-        console.error(`[ai] Timeout after ${timeout}ms (attempt ${attempt + 1})`);
+        if (DEBUG) console.error(`[ai] Timeout after ${timeout}ms (attempt ${attempt + 1})`);
         // Don't retry on user-aborted signals
         if (opts?.signal?.aborted) throw lastError;
         continue;
       }
 
-      console.error(`[ai] Error (attempt ${attempt + 1}):`, lastError.message);
+      if (DEBUG) console.error(`[ai] Error (attempt ${attempt + 1}):`, lastError.message);
     }
   }
 
@@ -230,7 +231,7 @@ export async function* chatStream(
 
   if (!res.ok) {
     // Fallback to non-streaming
-    console.warn('[ai] Stream failed, falling back to non-stream');
+    if (DEBUG) console.warn('[ai] Stream failed, falling back to non-stream');
     const result = await chat(messages, opts);
     yield { content: result.message.content, done: true, toolCalls: result.message.tool_calls };
     return;

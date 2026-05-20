@@ -6,6 +6,7 @@ import { LayoutProvider } from './components/layout-context';
 import { ServiceWorkerRegistration } from './components/ServiceWorkerRegistration';
 import { NavigationProvider } from './components/NavigationProvider';
 import { ToastProvider } from './components/ui/Toast';
+import { I18nProvider } from './i18n/I18nProvider';
 import './globals.css';
 
 const geistSans = Geist({
@@ -102,6 +103,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full">
         <ServiceWorkerRegistration />
+        <I18nProvider>
         <ToastProvider>
           <NavigationProvider>
             <LayoutProvider>
@@ -111,6 +113,7 @@ export default function RootLayout({
             </LayoutProvider>
           </NavigationProvider>
         </ToastProvider>
+        </I18nProvider>
       </body>
     </html>
   );

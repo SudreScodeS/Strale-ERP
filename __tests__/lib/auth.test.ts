@@ -28,6 +28,18 @@ jest.mock('../../app/lib/data', () => ({
   },
 }));
 
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'mock-uuid'),
+}));
+
+jest.mock('../../app/lib/token-store', () => ({
+  storeToken: jest.fn(),
+  getToken: jest.fn(),
+  deleteToken: jest.fn(),
+  deleteTokensByUserId: jest.fn(),
+  cleanupExpired: jest.fn(),
+}));
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { hashPassword, comparePassword, generateJWT, verifyJWT, requireAuth, requireRole } from '../../app/lib/auth';

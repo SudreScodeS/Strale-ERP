@@ -40,8 +40,8 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     mode: 'onBlur',
     defaultValues: {
-      username: 'admin',
-      password: 'admin123',
+      username: '',
+      password: '',
     },
   });
 

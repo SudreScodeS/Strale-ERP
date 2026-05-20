@@ -8,6 +8,8 @@ import { toolDefinitions, executeTool } from './tools';
 import { TOOL_DEFINITIONS } from './tool-definitions';
 import { actionRegistry, type ActionContext, type ActionResult } from './actions';
 import { buildSystemPrompt, buildConversationContext } from './prompts';
+
+const DEBUG = process.env.NODE_ENV === 'development';
 import { addMessage, getChatMessages, clearHistory } from './memory';
 import { processQuestion } from '../assistant';
 
@@ -134,7 +136,7 @@ export async function processWithAI(
 
     return result;
   } catch (err) {
-    console.warn('[ai:engine] LLM failed, falling back to pattern matching:', err instanceof Error ? err.message : err);
+    if (DEBUG) console.warn('[ai:engine] LLM failed, falling back to pattern matching:', err instanceof Error ? err.message : err);
   }
 
   // 3. Fallback: pattern matching
@@ -234,7 +236,7 @@ export async function* streamResponse(
             params: toolArgs,
           };
 
-          console.log(`[ai:engine] Executing tool: ${toolName}`);
+          if (DEBUG) console.log(`[ai:engine] Executing tool: ${toolName}`);
           const { result, actionResult } = await executeToolCall(toolName, toolArgs, actionContext);
 
           if (actionResult) {
@@ -285,7 +287,7 @@ export async function* streamResponse(
       toolsUsed,
     };
   } catch (err) {
-    console.warn('[ai:engine] Stream failed:', err instanceof Error ? err.message : err);
+    if (DEBUG) console.warn('[ai:engine] Stream failed:', err instanceof Error ? err.message : err);
 
     // Fallback to pattern matching
     const fallback = processQuestion(question);
@@ -349,7 +351,7 @@ async function callLLMWithTools(
       const toolArgs = tc.function.arguments || {};
       toolsUsed.push(toolName);
 
-      console.log(`[ai:engine] Executing tool: ${toolName}`);
+      if (DEBUG) console.log(`[ai:engine] Executing tool: ${toolName}`);
       const { result, actionResult } = await executeToolCall(toolName, toolArgs, actionContext);
 
       if (actionResult) {

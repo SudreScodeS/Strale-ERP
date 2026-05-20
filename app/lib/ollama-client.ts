@@ -5,6 +5,7 @@
 
 const OLLAMA_BASE = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
+const DEBUG = process.env.NODE_ENV === 'development';
 
 // Modelos em ordem de preferência (fallback automático)
 const MODEL_FALLBACKS = [
@@ -78,14 +79,14 @@ async function findAvailableModel(): Promise<string | null> {
       const baseName = candidate.split(':')[0];
       const found = availableNames.find(name => name.includes(baseName));
       if (found) {
-        console.log(`[ollama] Modelo encontrado: ${found}`);
+        if (DEBUG) console.log(`[ollama] Modelo encontrado: ${found}`);
         return found;
       }
     }
 
     // Se nenhum fallback foi encontrado, usa o primeiro modelo disponível
     if (availableNames.length > 0) {
-      console.log(`[ollama] Nenhum modelo preferido encontrado. Usando: ${availableNames[0]}`);
+      if (DEBUG) console.log(`[ollama] Nenhum modelo preferido encontrado. Usando: ${availableNames[0]}`);
       return availableNames[0];
     }
 
@@ -109,7 +110,7 @@ export async function extractParamsFromQuestion(question: string): Promise<Extra
   // 1. Verifica se Ollama está disponível e encontra modelo
   const model = await findAvailableModel();
   if (!model) {
-    console.log('[ollama] Nenhum modelo disponível — usando pattern matching');
+    if (DEBUG) console.log('[ollama] Nenhum modelo disponível — usando pattern matching');
     return null;
   }
 
@@ -151,7 +152,7 @@ Pergunta: "quanto custa 200 sacolas sublimação grande frente e verso?"
   ];
 
   try {
-    console.log(`[ollama] Enviando pergunta para modelo ${model}...`);
+    if (DEBUG) console.log(`[ollama] Enviando pergunta para modelo ${model}...`);
     const startTime = Date.now();
 
     const response = await fetch(`${OLLAMA_BASE}/api/chat`, {
@@ -173,7 +174,7 @@ Pergunta: "quanto custa 200 sacolas sublimação grande frente e verso?"
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'unknown');
-      console.error(`[ollama] Erro ${response.status}: ${errorText}`);
+      if (DEBUG) console.error(`[ollama] Erro ${response.status}: ${errorText}`);
       return null;
     }
 
@@ -181,16 +182,16 @@ Pergunta: "quanto custa 200 sacolas sublimação grande frente e verso?"
     const content = data.message?.content?.trim();
 
     if (!content) {
-      console.error('[ollama] Resposta vazia do modelo');
+      if (DEBUG) console.error('[ollama] Resposta vazia do modelo');
       return null;
     }
 
-    console.log(`[ollama] Resposta recebida em ${elapsed}ms: ${content.substring(0, 100)}...`);
+    if (DEBUG) console.log(`[ollama] Resposta recebida em ${elapsed}ms: ${content.substring(0, 100)}...`);
 
     // Tenta parsear o JSON da resposta
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('[ollama] Nenhum JSON encontrado na resposta');
+      if (DEBUG) console.error('[ollama] Nenhum JSON encontrado na resposta');
       return null;
     }
 
@@ -199,9 +200,9 @@ Pergunta: "quanto custa 200 sacolas sublimação grande frente e verso?"
     return parsed;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.error('[ollama] Timeout (30s) — modelo muito lento ou travado');
+      if (DEBUG) console.error('[ollama] Timeout (30s) — modelo muito lento ou travado');
     } else {
-      console.error('[ollama] Erro:', error instanceof Error ? error.message : error);
+      if (DEBUG) console.error('[ollama] Erro:', error instanceof Error ? error.message : error);
     }
     return null;
   }
