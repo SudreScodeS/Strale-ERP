@@ -772,7 +772,7 @@ export default function QuotesPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
-      <div>
+      <div className="animate-fade-in">
         <PageTitle title="Orçamentos" />
         <PageHeader title="Orçamentos" description="Crie orçamentos profissionais para seus clientes. Calcule preços automaticamente com tabelas por volume, dimensões e impressão detalhada." />
 

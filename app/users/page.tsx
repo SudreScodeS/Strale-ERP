@@ -110,7 +110,7 @@ export default function UsersPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
-      <div>
+      <div className="animate-fade-in">
         <PageHeader title="Usuarios" description="Gerencie contas do sistema." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 

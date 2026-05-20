@@ -1000,7 +1000,7 @@ export default function ReportsPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
-      <div>
+      <div className="animate-fade-in">
         <PageHeader
           title="Relatórios"
           description={isSeller ? "Seus relatórios de vendas e orçamentos." : "Gere relatórios estilizados para impressão ou exporte dados em CSV para análise externa."}

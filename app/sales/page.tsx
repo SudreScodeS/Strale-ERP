@@ -948,7 +948,7 @@ export default function SalesPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin', 'seller']}>
-      <div>
+      <div className="animate-fade-in">
         <PageHeader title="Pedidos" description="Fluxo de venda com seleção de produto, variáveis, cálculo automático de preço e prévia visual real do produto." />
         <LayoutToolbar pagePath={PAGE_PATH} />
         <div

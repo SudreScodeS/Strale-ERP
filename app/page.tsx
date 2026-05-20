@@ -357,7 +357,7 @@ export default function Home() {
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
-      <div>
+      <div className="animate-fade-in">
         <PageHeader title="Dashboard" description="Visao geral do negocio." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 

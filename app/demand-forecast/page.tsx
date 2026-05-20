@@ -276,7 +276,7 @@ export default function DemandForecastPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
-      <div>
+      <div className="animate-fade-in">
         <PageHeader title="Previsao de Demanda" description="Analise baseada em dados reais de pedidos e estoque." />
         <LayoutToolbar pagePath={PAGE_PATH} />
 

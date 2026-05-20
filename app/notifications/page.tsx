@@ -405,7 +405,7 @@ export default function NotificationsPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
-      <div>
+      <div className="animate-fade-in">
         <PageHeader title="Notificações" description="Gerencie alertas e visualize o histórico de ações do sistema." />
 
         {/* Tab Toggle Bar */}

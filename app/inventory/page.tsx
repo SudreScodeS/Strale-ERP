@@ -355,7 +355,7 @@ export default function InventoryPage() {
 
   return (
     <ProtectedPage allowedRoles={['admin']}>
-      <div>
+      <div className="animate-fade-in">
         <PageTitle title="Estoque" />
         <PageHeader title="Estoque" description="Gestão de estoque com grupos e variáveis configuráveis dinamicamente." />
         <LayoutToolbar pagePath={PAGE_PATH} />

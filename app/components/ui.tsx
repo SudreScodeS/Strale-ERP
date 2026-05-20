@@ -566,6 +566,7 @@ export function Sidebar({ children }: SidebarProps) {
             </div>
             {role ? (
               <button
+                type="button"
                 onClick={logout}
                 className="rounded-lg p-1.5 transition-colors hover:bg-[var(--danger-bg)]"
                 style={{ color: 'var(--text-muted)' }}
@@ -1022,6 +1023,41 @@ export function Input({ type = 'text', value, onChange, placeholder, className =
         e.currentTarget.style.boxShadow = '0 1px 0 rgba(167, 139, 250, 0.04) inset, 0 -1px 0 rgba(0, 0, 0, 0.08) inset';
       }}
     />
+  );
+}
+
+// ==========================================
+// EMPTY STATE
+// ==========================================
+
+/** Empty state — professional placeholder when no data exists */
+export function EmptyState({ icon, title, description, action }: {
+  icon?: React.ReactNode;
+  title: string;
+  description?: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-fade-in">
+      {icon && (
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+          style={{ background: 'var(--surface-muted)', color: 'var(--text-faint)' }}>
+          {icon}
+        </div>
+      )}
+      <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+      {description && <p className="mt-2 max-w-sm text-sm" style={{ color: 'var(--text-muted)' }}>{description}</p>}
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="mt-4 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
+          style={{ background: 'var(--brand)' }}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
   );
 }
 

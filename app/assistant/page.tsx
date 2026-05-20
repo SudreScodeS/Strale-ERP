@@ -289,7 +289,7 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
+    <div className="flex h-[calc(100vh-4rem)] flex-col animate-fade-in">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
