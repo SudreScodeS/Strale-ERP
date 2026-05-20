@@ -1,5 +1,5 @@
-// middleware.ts
-// Security middleware for all /api/v1/* routes.
+// proxy.ts
+// Security proxy for all /api/v1/* routes.
 // Applies: security headers, request ID, rate limiting.
 
 import { NextResponse } from 'next/server';
@@ -33,7 +33,7 @@ function getClientIp(request: NextRequest): string {
 
 // ── Middleware ──────────────────────────────────────────────────
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only apply to /api/v1/* routes
