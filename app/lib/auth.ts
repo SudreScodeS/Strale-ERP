@@ -5,8 +5,10 @@
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 import { userData } from './data';
 import { User } from '../../types';
+import { storeToken, getToken, deleteToken, deleteTokensByUserId } from './token-store';
 
 // ==========================================
 // CONFIGURAÇÕES DE SEGURANÇA
@@ -27,20 +29,6 @@ function getJwtSecret(): string {
 // Define quanto tempo um usuário fica logado sem precisar renovar
 const TOKEN_EXPIRATION = '1h';
 const REFRESH_TOKEN_EXPIRATION = '7d';
-
-// ==========================================
-// REFRESH TOKEN MANAGEMENT
-// ==========================================
-
-const refreshTokens = new Map<string, { token: string; userId: string; expiresAt: number }>();
-
-// Auto-cleanup expired refresh tokens every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of refreshTokens) {
-    if (now > entry.expiresAt) refreshTokens.delete(key);
-  }
-}, 10 * 60 * 1000);
 
 // ==========================================
 // UTILITÁRIOS DE SENHA
@@ -95,7 +83,8 @@ export function generateRefreshToken(user: User): string {
     expiresIn: REFRESH_TOKEN_EXPIRATION,
   });
   const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-  refreshTokens.set(token, { token, userId: user.id, expiresAt });
+  const family = uuidv4();
+  storeToken(token, user.id, expiresAt, family);
   return token;
 }
 
@@ -103,12 +92,8 @@ export function verifyRefreshToken(token: string): { userId: string } | null {
   try {
     const payload = jwt.verify(token, getJwtSecret()) as { id: string; type?: string };
     if (payload.type !== 'refresh') return null;
-    const entry = refreshTokens.get(token);
+    const entry = getToken(token);
     if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-      refreshTokens.delete(token);
-      return null;
-    }
     return { userId: payload.id };
   } catch {
     return null;
@@ -123,7 +108,7 @@ export function refreshAccessToken(refreshToken: string): { accessToken: string;
   if (!user) return null;
 
   // Revoke old refresh token (token rotation)
-  refreshTokens.delete(refreshToken);
+  deleteToken(refreshToken);
 
   // Generate new pair
   const accessToken = generateJWT(user);
@@ -132,9 +117,7 @@ export function refreshAccessToken(refreshToken: string): { accessToken: string;
 }
 
 export function revokeRefreshToken(userId: string): void {
-  for (const [key, entry] of refreshTokens) {
-    if (entry.userId === userId) refreshTokens.delete(key);
-  }
+  deleteTokensByUserId(userId);
 }
 
 // ==========================================
@@ -189,16 +172,3 @@ export function requireRole(req: Request, roles: string[]) {
   }
   return payload;
 }
-
-// ==========================================
-// NOTAS DE SEGURANÇA E MELHORIAS
-// ==========================================
-
-// MELHORIAS RECOMENDADAS:
-// 1. Implementar refresh tokens para sessões longas
-// 2. Adicionar rate limiting para prevenir ataques de força bruta
-// 3. Implementar logout (blacklist de tokens)
-// 4. Adicionar 2FA para contas admin
-// 5. Logs de segurança (tentativas de login falhadas)
-// 6. Validação de força de senha no cadastro
-// 7. Implementar bloqueio de conta após múltiplas tentativas falhadas

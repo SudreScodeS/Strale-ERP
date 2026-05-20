@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { revokeRefreshToken } from '../../../../lib/auth';
 import { ok, unauthorized, fromError } from '../../../../lib/api-response';
 import { getClearCookieFlags } from '../../../../lib/cookie-flag';
@@ -12,7 +13,6 @@ export async function POST(request: Request) {
     if (refreshToken) {
       // Verify and revoke
       try {
-        const jwt = require('jsonwebtoken');
         const payload = jwt.decode(refreshToken) as { id?: string } | null;
         if (payload?.id) {
           revokeRefreshToken(payload.id);

@@ -35,8 +35,8 @@
   /* Text — crisp silver */
   --text-primary: #ecedf0;
   --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
-  --text-faint: #52525b;
+  --text-muted: #8e8e98;
+  --text-faint: #a0a0a8;
 
   /* Inputs */
   --input-bg: rgba(12, 12, 15, 0.75);
@@ -77,7 +77,7 @@
   --sidebar-hover: rgba(167, 139, 250, 0.08);
   --sidebar-active: linear-gradient(135deg, #7c3aed, #a78bfa);
   --sidebar-active-text: #ffffff;
-  --sidebar-text: #71717a;
+  --sidebar-text: #8e8e98;
   --sidebar-text-strong: #ecedf0;
 
   /* Modal */
@@ -147,8 +147,8 @@ html[data-theme='light'] {
   /* Text — dark purple-gray */
   --text-primary: #1a1528;
   --text-secondary: #504670;
-  --text-muted: #6b5f8a;
-  --text-faint: #8a80a8;
+  --text-muted: #5e5474;
+  --text-faint: #6b638a;
 
   --input-bg: #f8f6fc;
   --input-border: #e0daf0;
